@@ -1,0 +1,14 @@
+*.pyc
+*.o
+*.a
+.DS_Store
+._*
+*~
+Copy*
+*copy.*
+*save.*
+*.egg-info
+.vscode
+*/.ipynb_checkpoints/
+*.swp
+infrapy-data/

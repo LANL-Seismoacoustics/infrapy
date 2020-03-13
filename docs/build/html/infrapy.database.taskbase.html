@@ -1,0 +1,379 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Database Processing Taskbase &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Beamforming/Detection" href="infrapy.detection.html" />
+    <link rel="prev" title="Database Processing" href="infrapy.database.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
+            <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.characterization.html">Characterization</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="infrapy.database.html">Database Processing</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Database Processing Taskbase</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.detection.html">Beamforming/Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Infrapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="infrapy.html">API</a> &raquo;</li>
+        
+          <li><a href="infrapy.database.html">Database Processing</a> &raquo;</li>
+        
+      <li>Database Processing Taskbase</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/infrapy.database.taskbase.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="database-processing-taskbase">
+<h1>Database Processing Taskbase<a class="headerlink" href="#database-processing-taskbase" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-infrapy.database.taskbase.fdet"></span><p>Updated Fall 2019
+&#64;fkdd &#64;omarcillo</p>
+<dl class="class">
+<dt id="infrapy.database.taskbase.fdet.FDet">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.taskbase.fdet.</code><code class="sig-name descname">FDet</code><span class="sig-paren">(</span><em class="sig-param">conf_file=[]</em>, <em class="sig-param">ARRAY_NAME=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.database.taskbase.base.Base</span></code></p>
+<p>classdocs</p>
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.data_processing">
+<code class="sig-name descname">data_processing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.data_processing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.data_retrieving">
+<code class="sig-name descname">data_retrieving</code><span class="sig-paren">(</span><em class="sig-param">dayofyear</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.data_retrieving" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.database_connecting">
+<code class="sig-name descname">database_connecting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.database_connecting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.distfit">
+<code class="sig-name descname">distfit</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">F</em>, <em class="sig-param">dofnum</em>, <em class="sig-param">dofden</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.distfit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the correlation coefficient between the theoretical F-distribution and the
+distribution of the input F-statistics, scaled by a c-value</p>
+<p>Inputs:
+- x is the set of F-statistics for binning
+- F are the measured F-statistics
+- dofnum is the number of degrees of freedom on the numerator
+- dofden is the number of degrees of freedom on the denominator
+- c is the c value</p>
+<p>Outputs:
+- corr is the correlation coefficient</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.event_detection">
+<code class="sig-name descname">event_detection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.event_detection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.event_detection2">
+<code class="sig-name descname">event_detection2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.event_detection2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.fdet.FDet.getdet">
+<code class="sig-name descname">getdet</code><span class="sig-paren">(</span><em class="sig-param">time</em>, <em class="sig-param">fval_corr</em>, <em class="sig-param">pf</em>, <em class="sig-param">p</em>, <em class="sig-param">corr</em>, <em class="sig-param">corr_thres</em>, <em class="sig-param">min_no_samples</em>, <em class="sig-param">fval=None</em>, <em class="sig-param">c=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.fdet.FDet.getdet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtains the start and end points for significant detections given a p-value.
+Inputs:
+- pf is the array of p-values as a function of time
+- p is the threshold p-value
+Outputs:
+- start_pt is the list of indices corresponding to the starts of detections
+- stop_pt is the list of indices corresponding to the ends of detections</p>
+</dd></dl>
+
+</dd></dl>
+
+<blockquote>
+<div><span class="target" id="module-infrapy.database.taskbase.assoc"></span><p>Created on Oct 31, 2014
+Updated Jan 2020</p>
+<p>&#64;author: omarcillo, fkdd</p>
+<dl class="class">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.taskbase.assoc.</code><code class="sig-name descname">AssocInfraPy_LANL</code><span class="sig-paren">(</span><em class="sig-param">conf_file=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.database.taskbase.base.Base</span></code></p>
+<p>classdocs</p>
+<dl class="attribute">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = 'Blom and Euler'</em><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_processing">
+<code class="sig-name descname">data_processing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_processing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_processingASSOC">
+<code class="sig-name descname">data_processingASSOC</code><span class="sig-paren">(</span><em class="sig-param">t_start</em>, <em class="sig-param">t_end</em>, <em class="sig-param">src_win</em>, <em class="sig-param">max_prop_tm</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_processingASSOC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_retrievingS">
+<code class="sig-name descname">data_retrievingS</code><span class="sig-paren">(</span><em class="sig-param">win_start</em>, <em class="sig-param">win_end</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_retrievingS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.assoc.AssocInfraPy_LANL.database_connecting">
+<code class="sig-name descname">database_connecting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.database_connecting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
+<span class="target" id="module-infrapy.database.taskbase.loc"></span><p>Created on Oct 31, 2014</p>
+<p>&#64;author: omarcillo</p>
+<dl class="class">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.taskbase.loc.</code><code class="sig-name descname">LocInfraPy</code><span class="sig-paren">(</span><em class="sig-param">conf_file=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.database.taskbase.base.Base</span></code></p>
+<p>classdocs</p>
+<dl class="attribute">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = 'Blom/BISL III'</em><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.data_processing">
+<code class="sig-name descname">data_processing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.data_processing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.data_processingLOC">
+<code class="sig-name descname">data_processingLOC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.data_processingLOC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.data_retrieving">
+<code class="sig-name descname">data_retrieving</code><span class="sig-paren">(</span><em class="sig-param">dayofyear</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.data_retrieving" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.database_connecting">
+<code class="sig-name descname">database_connecting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.database_connecting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.taskbase.loc.LocInfraPy.meanlocations">
+<code class="sig-name descname">meanlocations</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.LocInfraPy.meanlocations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.database.taskbase.loc.run_bislSC_wrapper">
+<code class="sig-prename descclassname">infrapy.database.taskbase.loc.</code><code class="sig-name descname">run_bislSC_wrapper</code><span class="sig-paren">(</span><em class="sig-param">args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.taskbase.loc.run_bislSC_wrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>wrapper for multicore and quality control</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="infrapy.detection.html" class="btn btn-neutral float-right" title="Beamforming/Detection" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="infrapy.database.html" class="btn btn-neutral float-left" title="Database Processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

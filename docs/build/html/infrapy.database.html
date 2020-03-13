@@ -1,0 +1,1341 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Database Processing &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Database Processing Taskbase" href="infrapy.database.taskbase.html" />
+    <link rel="prev" title="Characterization" href="infrapy.characterization.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
+            <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.characterization.html">Characterization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Database Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="infrapy.database.taskbase.html">Database Processing Taskbase</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.detection.html">Beamforming/Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Infrapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="infrapy.html">API</a> &raquo;</li>
+        
+      <li>Database Processing</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/infrapy.database.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-infrapy.database">
+<span id="database-processing"></span><h1>Database Processing<a class="headerlink" href="#module-infrapy.database" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="infrapy.database.taskbase.html">Database Processing Taskbase</a></li>
+</ul>
+</div>
+<div class="section" id="module-infrapy.database.schema">
+<span id="database-schema"></span><h2>Database Schema<a class="headerlink" href="#module-infrapy.database.schema" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="infrapy.database.schema.ASSOC_params">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">ASSOC_params</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.ASSOC_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.beamwidth">
+<code class="sig-name descname">beamwidth</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.beamwidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.clusterthresh">
+<code class="sig-name descname">clusterthresh</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.clusterthresh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.duration">
+<code class="sig-name descname">duration</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.duration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.ASSOC_params.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.minarraypop">
+<code class="sig-name descname">minarraypop</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.minarraypop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.mindetpop">
+<code class="sig-name descname">mindetpop</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.mindetpop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.passocid">
+<code class="sig-name descname">passocid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.passocid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.rangemax">
+<code class="sig-name descname">rangemax</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.rangemax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.trimthresh">
+<code class="sig-name descname">trimthresh</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.trimthresh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_params.trimthreshscalar">
+<code class="sig-name descname">trimthreshscalar</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_params.trimthreshscalar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.ASSOC_results">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">ASSOC_results</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.ASSOC_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.associd">
+<code class="sig-name descname">associd</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.associd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.eventid">
+<code class="sig-name descname">eventid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.eventid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.fdid">
+<code class="sig-name descname">fdid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.fdid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.fdtable">
+<code class="sig-name descname">fdtable</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.fdtable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.ASSOC_results.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.net">
+<code class="sig-name descname">net</code><em class="property"> = Column(None, String(length=8), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.net" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.passocid">
+<code class="sig-name descname">passocid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.passocid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.qassoc">
+<code class="sig-name descname">qassoc</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.qassoc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.qdetcluster">
+<code class="sig-name descname">qdetcluster</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.qdetcluster" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.sta">
+<code class="sig-name descname">sta</code><em class="property"> = Column(None, String(length=6), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.sta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.timeend">
+<code class="sig-name descname">timeend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.timeend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.ASSOC_results.timeini">
+<code class="sig-name descname">timeini</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.ASSOC_results.timeini" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.EDetectParams">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">EDetectParams</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.EDetectParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.filterh">
+<code class="sig-name descname">filterh</code><em class="property"> = Column(None, Float(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.filterh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.filterl">
+<code class="sig-name descname">filterl</code><em class="property"> = Column(None, Float(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.filterl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.filtertype">
+<code class="sig-name descname">filtertype</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.filtertype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.EDetectParams.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.EDetectParams.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.overlapwlen">
+<code class="sig-name descname">overlapwlen</code><em class="property"> = Column(None, Float(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.overlapwlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.pedetectid">
+<code class="sig-name descname">pedetectid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.pedetectid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.wlenlong">
+<code class="sig-name descname">wlenlong</code><em class="property"> = Column(None, Float(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.wlenlong" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.EDetectParams.wlenshort">
+<code class="sig-name descname">wlenshort</code><em class="property"> = Column(None, Float(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.EDetectParams.wlenshort" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.fd_params">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">fd_params</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fd_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.additional1">
+<code class="sig-name descname">additional1</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.additional1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.additional2">
+<code class="sig-name descname">additional2</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.additional2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.backazlim">
+<code class="sig-name descname">backazlim</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.backazlim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.cthr">
+<code class="sig-name descname">cthr</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.cthr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.detwinlen">
+<code class="sig-name descname">detwinlen</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.detwinlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.dsegmin">
+<code class="sig-name descname">dsegmin</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.dsegmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.fd_params.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fd_params.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.minlen">
+<code class="sig-name descname">minlen</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.minlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.numsources">
+<code class="sig-name descname">numsources</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.numsources" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.pfdid">
+<code class="sig-name descname">pfdid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.pfdid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.pthreshold">
+<code class="sig-name descname">pthreshold</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.pthreshold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_params.tb_prod">
+<code class="sig-name descname">tb_prod</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_params.tb_prod" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.fd_results">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">fd_results</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fd_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.c">
+<code class="sig-name descname">c</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.c" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.ebz">
+<code class="sig-name descname">ebz</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.ebz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.ec">
+<code class="sig-name descname">ec</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.ec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.etimeend">
+<code class="sig-name descname">etimeend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.etimeend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.etimeini">
+<code class="sig-name descname">etimeini</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.etimeini" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.etrvel">
+<code class="sig-name descname">etrvel</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.etrvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.fdid">
+<code class="sig-name descname">fdid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.fdid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.fktablename">
+<code class="sig-name descname">fktablename</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.fktablename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.fd_results.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fd_results.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.maxfc">
+<code class="sig-name descname">maxfc</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.maxfc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.maxfo">
+<code class="sig-name descname">maxfo</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.maxfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.pfdid">
+<code class="sig-name descname">pfdid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.pfdid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.pfkid">
+<code class="sig-name descname">pfkid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.pfkid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.sourcenum">
+<code class="sig-name descname">sourcenum</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.sourcenum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.sta">
+<code class="sig-name descname">sta</code><em class="property"> = Column(None, String(length=6), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.sta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.tend">
+<code class="sig-name descname">tend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.tend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.timeend">
+<code class="sig-name descname">timeend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.timeend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.timeini">
+<code class="sig-name descname">timeini</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.timeini" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.tonset">
+<code class="sig-name descname">tonset</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.tonset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fd_results.trvel">
+<code class="sig-name descname">trvel</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fd_results.trvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.fk_params">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">fk_params</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fk_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.additional1">
+<code class="sig-name descname">additional1</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.additional1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.additional2">
+<code class="sig-name descname">additional2</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.additional2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.backazmax">
+<code class="sig-name descname">backazmax</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.backazmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.backazmin">
+<code class="sig-name descname">backazmin</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.backazmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.backazstep">
+<code class="sig-name descname">backazstep</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.backazstep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.beamwinlen">
+<code class="sig-name descname">beamwinlen</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.beamwinlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.beamwinstep">
+<code class="sig-name descname">beamwinstep</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.beamwinstep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.domain">
+<code class="sig-name descname">domain</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.filter">
+<code class="sig-name descname">filter</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.freqmax">
+<code class="sig-name descname">freqmax</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.freqmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.freqmin">
+<code class="sig-name descname">freqmin</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.freqmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.fk_params.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fk_params.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.maxslowness">
+<code class="sig-name descname">maxslowness</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.maxslowness" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.minslowness">
+<code class="sig-name descname">minslowness</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.minslowness" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.numsources">
+<code class="sig-name descname">numsources</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.numsources" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.pfkid">
+<code class="sig-name descname">pfkid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.pfkid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.stepslowness">
+<code class="sig-name descname">stepslowness</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.stepslowness" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.trvelmax">
+<code class="sig-name descname">trvelmax</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.trvelmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.trvelmin">
+<code class="sig-name descname">trvelmin</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.trvelmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_params.trvelstep">
+<code class="sig-name descname">trvelstep</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_params.trvelstep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.fk_results">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">fk_results</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fk_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.additional1">
+<code class="sig-name descname">additional1</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.additional1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.additional2">
+<code class="sig-name descname">additional2</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.additional2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.bz">
+<code class="sig-name descname">bz</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.bz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.chan">
+<code class="sig-name descname">chan</code><em class="property"> = Column(None, String(length=8), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.chan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.coher">
+<code class="sig-name descname">coher</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.coher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.ebz">
+<code class="sig-name descname">ebz</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.ebz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.eslofk">
+<code class="sig-name descname">eslofk</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.eslofk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.esx">
+<code class="sig-name descname">esx</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.esx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.esy">
+<code class="sig-name descname">esy</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.esy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.etrvel">
+<code class="sig-name descname">etrvel</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.etrvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.fkid">
+<code class="sig-name descname">fkid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.fkid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.fk_results.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.fk_results.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.fval">
+<code class="sig-name descname">fval</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.fval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.nchan">
+<code class="sig-name descname">nchan</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.nchan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.pfkid">
+<code class="sig-name descname">pfkid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.pfkid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.rmsval">
+<code class="sig-name descname">rmsval</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.rmsval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.slofk">
+<code class="sig-name descname">slofk</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.slofk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.sourcenum">
+<code class="sig-name descname">sourcenum</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.sourcenum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.sta">
+<code class="sig-name descname">sta</code><em class="property"> = Column(None, String(length=6), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.sta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.sx">
+<code class="sig-name descname">sx</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.sx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.sy">
+<code class="sig-name descname">sy</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.sy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.timeend">
+<code class="sig-name descname">timeend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.timeend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.timeini">
+<code class="sig-name descname">timeini</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.timeini" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.trvel">
+<code class="sig-name descname">trvel</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.trvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.xcorrvalmax">
+<code class="sig-name descname">xcorrvalmax</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.xcorrvalmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.xcorrvalmean">
+<code class="sig-name descname">xcorrvalmean</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.xcorrvalmean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.fk_results.xcorrvalmin">
+<code class="sig-name descname">xcorrvalmin</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.fk_results.xcorrvalmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.loc_params">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">loc_params</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.loc_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.loc_params.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.loc_params.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.maxlat">
+<code class="sig-name descname">maxlat</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.maxlat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.maxlon">
+<code class="sig-name descname">maxlon</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.maxlon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.minlat">
+<code class="sig-name descname">minlat</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.minlat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.minlon">
+<code class="sig-name descname">minlon</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.minlon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.plocid">
+<code class="sig-name descname">plocid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.plocid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_params.priors">
+<code class="sig-name descname">priors</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_params.priors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.loc_results">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">loc_results</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.loc_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.additional1">
+<code class="sig-name descname">additional1</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.additional1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.additional2">
+<code class="sig-name descname">additional2</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.additional2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.additional3">
+<code class="sig-name descname">additional3</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.additional3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.additional4">
+<code class="sig-name descname">additional4</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.additional4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.eventid">
+<code class="sig-name descname">eventid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.eventid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.loc_results.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.loc_results.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.latlonorigcovar">
+<code class="sig-name descname">latlonorigcovar</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.latlonorigcovar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.latorigmap">
+<code class="sig-name descname">latorigmap</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.latorigmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.latorigmean">
+<code class="sig-name descname">latorigmean</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.latorigmean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.latorigvar">
+<code class="sig-name descname">latorigvar</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.latorigvar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.locid">
+<code class="sig-name descname">locid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.locid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.lonorigmap">
+<code class="sig-name descname">lonorigmap</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.lonorigmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.lonorigmean">
+<code class="sig-name descname">lonorigmean</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.lonorigmean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.lonorigvar">
+<code class="sig-name descname">lonorigvar</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.lonorigvar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.net">
+<code class="sig-name descname">net</code><em class="property"> = Column(None, String(length=8), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.net" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.numstations">
+<code class="sig-name descname">numstations</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.numstations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.par_a">
+<code class="sig-name descname">par_a</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.par_a" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.par_b">
+<code class="sig-name descname">par_b</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.par_b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.par_theta">
+<code class="sig-name descname">par_theta</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.par_theta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.plocid">
+<code class="sig-name descname">plocid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.plocid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeend">
+<code class="sig-name descname">timeend</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeini">
+<code class="sig-name descname">timeini</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeini" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeorigmap">
+<code class="sig-name descname">timeorigmap</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeorigmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeorigmax">
+<code class="sig-name descname">timeorigmax</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeorigmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeorigmean">
+<code class="sig-name descname">timeorigmean</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeorigmean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeorigmin">
+<code class="sig-name descname">timeorigmin</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeorigmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.loc_results.timeorigvar">
+<code class="sig-name descname">timeorigvar</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.loc_results.timeorigvar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="infrapy.database.schema.noise_params">
+<em class="property">class </em><code class="sig-prename descclassname">infrapy.database.schema.</code><code class="sig-name descname">noise_params</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.noise_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pisces.schema.util.Base</span></code></p>
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.algorithm">
+<code class="sig-name descname">algorithm</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.algorithm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.filterh">
+<code class="sig-name descname">filterh</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.filterh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.filterl">
+<code class="sig-name descname">filterl</code><em class="property"> = Column(None, Float(precision=24), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.filterl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.filtertype">
+<code class="sig-name descname">filtertype</code><em class="property"> = Column(None, String(length=15), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.filtertype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="infrapy.database.schema.noise_params.from_string">
+<em class="property">classmethod </em><code class="sig-name descname">from_string</code><span class="sig-paren">(</span><em class="sig-param">line</em>, <em class="sig-param">default_on_error=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.database.schema.noise_params.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mapped table instance from correctly formatted flat file line.</p>
+<p>Works with fixed-length fields, separated by a single whitespace.</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Flat file line (best to remove newline, but maybe not a problem).</p>
+</dd>
+<dt>default_on_error: list, optional</dt><dd><p>Supply a list of column names that return default values if they
+produce an error during parsing (e.g. lddate).</p>
+</dd>
+</dl>
+<p>ValueError:  Can’t properly parse the line.</p>
+<p>default_on_error is useful for malformed fields, but it will also mask
+other problems with line parsing. It’s better to pre-process tables 
+to match the table specifications or catch exceptions and isolate 
+these lines.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line)</span>
+<span class="go">or</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;TA.site&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffsite</span><span class="p">:</span>
+<span class="go">        for line in ffsite:</span>
+<span class="go">            isite = Site.from_string(line, default_on_error=[&#39;lddate&#39;])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.n_octave">
+<code class="sig-name descname">n_octave</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.n_octave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.name">
+<code class="sig-name descname">name</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.overlapwlen">
+<code class="sig-name descname">overlapwlen</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.overlapwlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.pnoiseid">
+<code class="sig-name descname">pnoiseid</code><em class="property"> = Column(None, Integer(), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.pnoiseid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.database.schema.noise_params.wlen">
+<code class="sig-name descname">wlen</code><em class="property"> = Column(None, Float(precision=53), table=None)</em><a class="headerlink" href="#infrapy.database.schema.noise_params.wlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="infrapy.database.taskbase.html" class="btn btn-neutral float-right" title="Database Processing Taskbase" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="infrapy.characterization.html" class="btn btn-neutral float-left" title="Characterization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

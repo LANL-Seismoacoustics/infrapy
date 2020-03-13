@@ -1,0 +1,772 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Beamforming/Detection &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Location" href="infrapy.location.html" />
+    <link rel="prev" title="Database Processing Taskbase" href="infrapy.database.taskbase.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
+            <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.characterization.html">Characterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.database.html">Database Processing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Beamforming/Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Infrapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="infrapy.html">API</a> &raquo;</li>
+        
+      <li>Beamforming/Detection</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/infrapy.detection.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="beamforming-detection">
+<h1>Beamforming/Detection<a class="headerlink" href="#beamforming-detection" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-infrapy.detection.beamforming">
+<span id="beamforming"></span><h2>Beamforming<a class="headerlink" href="#module-infrapy.detection.beamforming" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="infrapy.detection.beamforming.AIC">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">AIC</code><span class="sig-paren">(</span><em class="sig-param">eigenV</em>, <em class="sig-param">n</em>, <em class="sig-param">m</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.AIC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.MDL">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">MDL</code><span class="sig-paren">(</span><em class="sig-param">eigenV</em>, <em class="sig-param">n</em>, <em class="sig-param">m</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.MDL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.bfstat">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">bfstat</code><span class="sig-paren">(</span><em class="sig-param">beam</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.bfstat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the F-statistic using the formalism of Blandford (1974) for a particular window
+(FK sliding window)</p>
+<p>Inputs:
+- beam is the time-aligned waveform in a particular window (FK sliding window)</p>
+<p>Outputs:
+- F is the Blandford F-statistic</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.bfstat2">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">bfstat2</code><span class="sig-paren">(</span><em class="sig-param">beam</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.bfstat2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the F-statistic using the formalism of Blandford (1974) for a particular window
+(FK sliding window)</p>
+<p>Inputs:
+- beam is the time-aligned waveform in a particular window (FK sliding window)</p>
+<p>Outputs:
+- F is the Blandford F-statistic</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.bfstatT">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">bfstatT</code><span class="sig-paren">(</span><em class="sig-param">beam</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.bfstatT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the F-statistic using the formalism of Blandford (1974) for a particular window
+(FK sliding window)</p>
+<p>Inputs:
+- beam is the time-aligned waveform in a particular window (FK sliding window)</p>
+<p>Outputs:
+- F is the Blandford F-statistic</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.corrp">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">corrp</code><span class="sig-paren">(</span><em class="sig-param">beam</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.corrp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the maximum average cross correlation from all triplets of elements in an
+array for a particular window (FK sliding window)</p>
+<p>Inputs:
+- beam is the time-aligned waveform in a particular window (FK sliding-window)</p>
+<p>Outputs:
+- C is the minimum, maximum, mean average cross-correlation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.corrpT">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">corrpT</code><span class="sig-paren">(</span><em class="sig-param">beam</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.corrpT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the maximum average cross correlation from all triplets of elements in an
+array for a particular window (FK sliding window)</p>
+<p>Inputs:
+- beam is the time-aligned waveform in a particular window (FK sliding-window)</p>
+<p>Outputs:
+- C is the minimum, maximum, mean average cross-correlation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.detect_peaks">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">detect_peaks</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">size=3</em>, <em class="sig-param">num_peaks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.detect_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes an image and detect the peaks using the local maximum filter.
+Returns a boolean mask of the peaks (i.e. 1 when
+the pixel’s value is the neighborhood maximum, 0 otherwise)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.dist_az">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">dist_az</code><span class="sig-paren">(</span><em class="sig-param">X1</em>, <em class="sig-param">X2</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.dist_az" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the angular distance and direction between two locations</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.fkPROC">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">fkPROC</code><span class="sig-paren">(</span><em class="sig-param">method</em>, <em class="sig-param">stream</em>, <em class="sig-param">sps</em>, <em class="sig-param">slow</em>, <em class="sig-param">mult_vectors</em>, <em class="sig-param">fN</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">timeSTAMP</em>, <em class="sig-param">func</em>, <em class="sig-param">freqN</em>, <em class="sig-param">aux</em>, <em class="sig-param">num_sources=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.fkPROC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.fkfromOStream">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">fkfromOStream</code><span class="sig-paren">(</span><em class="sig-param">St</em>, <em class="sig-param">wlen</em>, <em class="sig-param">overlap</em>, <em class="sig-param">freqmin</em>, <em class="sig-param">freqmax</em>, <em class="sig-param">slow=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.fkfromOStream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.getXY_array">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">getXY_array</code><span class="sig-paren">(</span><em class="sig-param">stream</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.getXY_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the site coordinates for a specific array in the format required
+by fk</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.procPEAKS">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">procPEAKS</code><span class="sig-paren">(</span><em class="sig-param">peaks</em>, <em class="sig-param">slow</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.procPEAKS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.svdAV_wv">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">svdAV_wv</code><span class="sig-paren">(</span><em class="sig-param">stream</em>, <em class="sig-param">sps</em>, <em class="sig-param">slow</em>, <em class="sig-param">mult_vectors</em>, <em class="sig-param">fN</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">timeSTAMP</em>, <em class="sig-param">func</em>, <em class="sig-param">freqN</em>, <em class="sig-param">number_div=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.svdAV_wv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.tapering">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">tapering</code><span class="sig-paren">(</span><em class="sig-param">st_aux</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.tapering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.tdelay">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">tdelay</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">sps</em>, <em class="sig-param">bazimuth</em>, <em class="sig-param">slowness</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.tdelay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the time-delay-and-sum beam of data for a particular window (FK sliding window)</p>
+<p>Inputs:
+- data is the non-time-aligned waveform in a particular window (FK sliding window), this may be already in real values
+- samprate is the sampling rate
+- x is the array of x coordinates
+- y is the array of y coordinates
+- azimuth is the azimuth for calculating the beam
+- slowness is the slowness for calculating the beam</p>
+<p>Outputs:
+- beam is the time-aligned waveform in a particular window (FK sliding window)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.tdelayT">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">tdelayT</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">sps</em>, <em class="sig-param">bazimuth</em>, <em class="sig-param">slowness</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">slowx</em>, <em class="sig-param">slowy</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.tdelayT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the time-delay-and-sum beam of data for a particular window (FK sliding window)</p>
+<p>Inputs:
+- data is the non-time-aligned waveform in a particular window (FK sliding window), this may be already in real values
+- samprate is the sampling rate
+- x is the array of x coordinates
+- y is the array of y coordinates
+- azimuth is the azimuth for calculating the beam
+- slowness is the slowness for calculating the beam</p>
+<p>Outputs:
+- beam is the time-aligned waveform in a particular window (FK sliding window)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming.xcorr_beam">
+<code class="sig-prename descclassname">infrapy.detection.beamforming.</code><code class="sig-name descname">xcorr_beam</code><span class="sig-paren">(</span><em class="sig-param">dat_st</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming.xcorr_beam" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-infrapy.detection.beamforming_new">
+<span id="beamforming-new"></span><h2>Beamforming_new<a class="headerlink" href="#module-infrapy.detection.beamforming_new" title="Permalink to this headline">¶</a></h2>
+<p>infrapy.detection.beamforming_new.py</p>
+<p>Methods for reading in time series data, analyzing
+it, and identifying infrasonic signals using various
+beamforming methods.</p>
+<p>Author            Philip Blom (<a class="reference external" href="mailto:pblom&#37;&#52;&#48;lanl&#46;gov">pblom<span>&#64;</span>lanl<span>&#46;</span>gov</a>)</p>
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.build_slowness">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">build_slowness</code><span class="sig-paren">(</span><em class="sig-param">back_azs</em>, <em class="sig-param">trc_vels</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.build_slowness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the slowness values for a polar grid</p>
+<p>Computes the slowness grid usingg a polar grid defined by a series of back azimuth
+values and trave velocity values.  Returns a grid specified such that grid[n] is
+the x and y component of the nth slowness vector.</p>
+<dl class="simple">
+<dt>back_azs<span class="classifier">1darray</span></dt><dd><p>Back azimuth values for slowness grid, K_1 values</p>
+</dd>
+<dt>trc_vels<span class="classifier">1darray</span></dt><dd><p>Trace velocity values for slowness grid K_2 values</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>grid<span class="classifier">2darray</span></dt><dd><p>(K_1 x K_2) by 2 array of slowness vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.compute_beam_power">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">compute_beam_power</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">steering</em>, <em class="sig-param">method='bartlett'</em>, <em class="sig-param">ns_covar_inv=None</em>, <em class="sig-param">signal_cnt=1</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.compute_beam_power" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the beampower for a specific frequency</p>
+<p>Cmoputes the beampower at a single frequency using either the FFT’d data, X(f),
+for Bartlett or GLS analysis or the covariance matrix, S(f), for Capon and MUSIC.</p>
+<p>Generalized Least Square (GLS) analysis requires a noise covariance for the
+background which must be M x M where M is the length of X(f).</p>
+<p>MUltiple SIgnal Classification (MUSIC) analysis requires knowledge of the number
+of coherent signals in the data specified as signal_cnt.</p>
+<dl class="simple">
+<dt>data<span class="classifier">ndarray</span></dt><dd><p>Vector of length M, X_m(f_n), for “bartlett” and “gls” or matrix of
+dimension M x M, S(f_n), for covariance based methods</p>
+</dd>
+<dt>steering<span class="classifier">2darray</span></dt><dd><p>Matrix representing K steering vectors each of length K</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>Beamforming method to be applied to the data (must match
+for of data)</p>
+</dd>
+<dt>ns_covar_inv<span class="classifier">2darray</span></dt><dd><p>Noise covariance used in “gls” beamforming method</p>
+</dd>
+<dt>signal_cnt<span class="classifier">int</span></dt><dd><p>Number of signals assumed in MUSIC algorithm</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>beam_power<span class="classifier">1darray</span></dt><dd><p>Beam power for each steering vector (length K)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.compute_beam_power_wrapper">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">compute_beam_power_wrapper</code><span class="sig-paren">(</span><em class="sig-param">args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.compute_beam_power_wrapper" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.compute_delays">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">compute_delays</code><span class="sig-paren">(</span><em class="sig-param">dxdy</em>, <em class="sig-param">param_grid</em>, <em class="sig-param">param_opt='planar'</em>, <em class="sig-param">sph_vel=340.0</em>, <em class="sig-param">sph_src_ht=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.compute_delays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the delays for a planewave</p>
+<p>Computes the time delays for each pair in param_grid given the
+array geometry in dxdy.  For planar parameterization, grid
+specifies s_x and s_y of the slowness.  For spherical
+parameterization, it specifies the x,y location of the source
+and requires specification of the velocity of the wavefront.</p>
+<p>For the slowness grid, use the build_slowness function to
+convert back azimuth and trace velocity values into a grid.
+Use np.meshgrid and flatten to produce a grid for the
+spherical wavefront source grid.</p>
+<dl class="simple">
+<dt>dxdy<span class="classifier">2darray</span></dt><dd><p>M x 2 matrix describing the array geometry</p>
+</dd>
+<dt>param_grid<span class="classifier">2darray</span></dt><dd><p>K x 2 matrix of parameterization vectors containing
+either the slowness components (for ‘planar’) or
+the source location (for ‘spherical’)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>delays<span class="classifier">2darray</span></dt><dd><p>K x M of time delays across the array for each slowness</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.detect_signals">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">detect_signals</code><span class="sig-paren">(</span><em class="sig-param">times</em>, <em class="sig-param">beam_results</em>, <em class="sig-param">win_len</em>, <em class="sig-param">det_thresh=0.99</em>, <em class="sig-param">min_seq=5</em>, <em class="sig-param">back_az_lim=15</em>, <em class="sig-param">method='kde'</em>, <em class="sig-param">TB_prod=None</em>, <em class="sig-param">channel_cnt=None</em>, <em class="sig-param">use_det_mask=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.detect_signals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify detections with beamforming results</p>
+<p>Identify detection in the beamforming results using either Kernel Density
+Estimate (KDE) fits to the f-statistic distribution or the adaptive
+F-detector methods developed by Arrowsmith.</p>
+<dl class="simple">
+<dt>times<span class="classifier">1darray</span></dt><dd><p>Times of beamforming results as numpy datetime64’s</p>
+</dd>
+<dt>beam_results<span class="classifier">2darray</span></dt><dd><p>Beamforming results consisting of back azimuth, trace velocity, and
+f-value at each time step</p>
+</dd>
+<dt>win_len<span class="classifier">2darray</span></dt><dd><p>Array geometry</p>
+</dd>
+<dt>det_thresh<span class="classifier">float</span></dt><dd><p>Threshold for declaring a detction</p>
+</dd>
+<dt>min_seq<span class="classifier">int</span></dt><dd><p>Threshold for the number of sequential above-threshold values to declare
+a detection</p>
+</dd>
+<dt>back_az_lim<span class="classifier">float</span></dt><dd><p>Threshold below which the maximum separation of back azimuths must be
+in order to declare a detection</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>Method to use for detection.  Options are “kde” for Kernel density
+estimate and “fstat” for adaptive Fisher statistics</p>
+</dd>
+<dt>TB_prod<span class="classifier">int</span></dt><dd><p>Time-bandwidth product needed to compute the Fisher statistic, not used
+by the KDE method</p>
+</dd>
+<dt>channel_cnt<span class="classifier">int</span></dt><dd><p>Number of channels on the array; needed to compute the Fisher statistic,
+not used by the KDE method</p>
+</dd>
+<dt>use_det_mask<span class="classifier">bool</span></dt><dd><p>Boolean to use a detection mask for restricting f-values used in
+defining the threshold</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>dets<span class="classifier">list</span></dt><dd><p>List of identified detections including detection time, relative start
+and end times of the detection, back azimuth, trace velocity, and f-stat.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.extract_signal">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">extract_signal</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">f</em>, <em class="sig-param">slowness</em>, <em class="sig-param">dxdy</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.extract_signal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the signal along the beam for a given slowness vector</p>
+<p>Extract the “best beam” signal from the array data for a given slowness pair and
+array geometry.  Returns both the extracted signal and the residual on each trace
+of the array</p>
+<dl class="simple">
+<dt>Note: following Laslo’s work, the frequency domain Fisher ratio can be computed as:</dt><dd><p>F[nf] = abs(sig_est)**2 / np.mean(np.abs(residual), axis=1)**2 * (X.shape[1] - 1)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>f<span class="classifier">1darray</span></dt><dd><p>Frequencies</p>
+</dd>
+<dt>X<span class="classifier">2darray</span></dt><dd><p>FFT of data in analysis window, x(t) –&gt; X(f)</p>
+</dd>
+<dt>slowness<span class="classifier">2darray</span></dt><dd><p>Slowness components (either back azimuth and trace velocity or
+s_x and s_y depending on slowness option)</p>
+</dd>
+<dt>dxdy<span class="classifier">2darray</span></dt><dd><p>Array geometry</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>sig_estimate<span class="classifier">1darray</span></dt><dd><p>Extracted frequency domain signal along the beam</p>
+</dd>
+<dt>residual<span class="classifier">2darray</span></dt><dd><p>Residual across the array once beamed signal is extracted</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.fft_array_data">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">fft_array_data</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">t</em>, <em class="sig-param">window=None</em>, <em class="sig-param">sub_window_len=None</em>, <em class="sig-param">sub_window_overlap=0.5</em>, <em class="sig-param">fft_window='hanning'</em>, <em class="sig-param">normalize_windowing=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.fft_array_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the Fourier transform of the array data to perform analysis</p>
+<p>Compute the Fourier transform of the array data within an analysis window defined by window = [t1, t2]
+and potentially using subwindows to obtain a full rank covariance matrix for beamforming analyses
+requiring such data.  Multiple FFT window options are available and a normalization option scales to
+account for the amplitude loss at the window edges.</p>
+<dl class="simple">
+<dt>x<span class="classifier">2darray</span></dt><dd><p>M x N matrix of array data, x[m][n] = x_m(t_n)</p>
+</dd>
+<dt>t<span class="classifier">1darray</span></dt><dd><p>Vector of N sampled points in time, t[n] = t_n</p>
+</dd>
+<dt>window<span class="classifier">float</span></dt><dd><p>Start and end time of the window relative to times in t, [t_1, t_2]</p>
+</dd>
+<dt>sub_window_len<span class="classifier">float</span></dt><dd><p>Duration of the subwindow in seconds</p>
+</dd>
+<dt>sub_window_overlap<span class="classifier">float</span></dt><dd><p>Fraction of subwindow to overlap (limited range of 0.0 to 0.9)</p>
+</dd>
+<dt>fft_window<span class="classifier">str</span></dt><dd><p>Fourier windowing method</p>
+</dd>
+<dt>normalize_windowing<span class="classifier">boolean</span></dt><dd><p>Boolean to apply normalization of window scaling</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>X<span class="classifier">2darray</span></dt><dd><p>M x N_f matrix of the FFT’d data, X[m][n] = X_m(f_n)</p>
+</dd>
+<dt>S<span class="classifier">3darray</span></dt><dd><p>M x M x N_f cube of the covariance matrices, S[m1][m2][n] = mean(X_{m1}(f_n) conj(X_{m2}(f_n)))</p>
+</dd>
+<dt>f<span class="classifier">1darray</span></dt><dd><p>Vector of N_f frequencies for the FFT’d data, f[n] = f_n</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.find_peaks">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">find_peaks</code><span class="sig-paren">(</span><em class="sig-param">beam_power</em>, <em class="sig-param">slowness_vals1</em>, <em class="sig-param">slowness_vals2</em>, <em class="sig-param">signal_cnt=1</em>, <em class="sig-param">freq_weights=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.find_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify the peak(s) in the beampower defined over a slowness grid</p>
+<p>Finds the peaks of a distribution using a frequency averaged beamforming result
+over a defined slowness grid.</p>
+<dl class="simple">
+<dt>beam_power<span class="classifier">2darray</span></dt><dd><p>Beam power for each steering vector at each frequency in the
+band (dimension K x N_f)</p>
+</dd>
+<dt>slowness_vals1<span class="classifier">1darray</span></dt><dd><p>Slowness values along first axis (polar or Cartesian grid)</p>
+</dd>
+<dt>slowness_vals2<span class="classifier">1darray</span></dt><dd><p>Slowness values along second axis (polar or Cartesian grid)</p>
+</dd>
+<dt>signal_cnt<span class="classifier">int</span></dt><dd><p>Number of signals to identify in the slowness grid</p>
+</dd>
+<dt>freq_weights<span class="classifier">string or 1darray</span></dt><dd><p>Weights or method to use in frequency averaging of the beam power</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>peaks<span class="classifier">ndarray</span></dt><dd><p>signal_cnt x 3 array of the peaks identified containing slowness
+value 1 (back azimuth), slowness value 2 (trace velocity),
+and beam value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.detection.beamforming_new.project_ABA">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">project_ABA</code><a class="headerlink" href="#infrapy.detection.beamforming_new.project_ABA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project matrix of K vectors, a_k, onto Hermitian matrix B</p>
+<blockquote>
+<div><p>Projects each of K vectors, a_k, in matrix, A, of dimension K x M
+onto a Hermitian matrix, B, of dimension M x M producing a
+vector of scalars, c, of length K</p>
+<dl class="simple">
+<dt>A<span class="classifier">2darray</span></dt><dd><p>K x M matrix representing a set of K vectors, a_k, each of length M</p>
+</dd>
+<dt>B<span class="classifier">2darray</span></dt><dd><p>M x M Hermitian matrix</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>c<span class="classifier">1darray</span></dt><dd><p>Vector c where each scalar c_k = a_k^dagger B a_k</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.detection.beamforming_new.project_ABc">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">project_ABc</code><a class="headerlink" href="#infrapy.detection.beamforming_new.project_ABc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project matrix of K vectors, a_k, through Hermitian matrix B and onto vector c</p>
+<p>Projects each of K vectors, a_k, in matrix, A, of dimension K x M
+through a Hermitian matrix, B, of dimension M x M and onto a vector,
+c, producing a vector of scalars, d, of length K</p>
+<dl class="simple">
+<dt>A<span class="classifier">2darray</span></dt><dd><p>K x M matrix representing a set of K vectors, a_k, each of length M</p>
+</dd>
+<dt>B<span class="classifier">2darray</span></dt><dd><p>M x M Hermitian matrix</p>
+</dd>
+<dt>c<span class="classifier">1darray</span></dt><dd><p>Vector of length M</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>d<span class="classifier">1darray</span></dt><dd><p>Vector d where each scalar d_k = a_k^dagger B c</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="infrapy.detection.beamforming_new.project_Ab">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">project_Ab</code><a class="headerlink" href="#infrapy.detection.beamforming_new.project_Ab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project matrix of K vectors, a_k, onto a vector b</p>
+<p>Projects a vector, b, of length M onto a set of K vectors, a_k,
+each of length M producing a vector, c, of length K</p>
+<dl class="simple">
+<dt>A<span class="classifier">2darray</span></dt><dd><p>K x M matrix representing a set of K vectors, a_k, each of length M</p>
+</dd>
+<dt>b<span class="classifier">1darray</span></dt><dd><p>Vector of length M to project onto each a_k</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>c<span class="classifier">1darray</span></dt><dd><p>Vector c where each scalar c_k = a_k^dagger b</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.project_beam">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">project_beam</code><span class="sig-paren">(</span><em class="sig-param">beam_power</em>, <em class="sig-param">back_az_vals</em>, <em class="sig-param">trc_vel_vals</em>, <em class="sig-param">freq_weights=None</em>, <em class="sig-param">method='max'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.project_beam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project polar slowness grid onto only azimuth</p>
+<p>Projects the polar slowness grid onto back azimuth and trace velocity in order to
+more easily view each.  The method can either use the maximum value to project or
+average to approximate the marginal distribution</p>
+<dl class="simple">
+<dt>beam_power<span class="classifier">2darray</span></dt><dd><p>Beam power for each steering vector at each frequency in the band (K x N_f)</p>
+</dd>
+<dt>back_az_vals<span class="classifier">1darray</span></dt><dd><p>Back azimuth values defining polar slowness grid</p>
+</dd>
+<dt>trc_vel_vals<span class="classifier">1darray</span></dt><dd><p>Trace velocity values defining polar slowness grid</p>
+</dd>
+<dt>freq_weights<span class="classifier">1darray</span></dt><dd><p>Weights to use in frequency averaging of the beam power</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>Determines whether mean or maximum along trace velocity axis is used to
+define the projections</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>back_az_proj<span class="classifier">1darray</span></dt><dd><p>Projection of the beam power onto the back azimuth axis</p>
+</dd>
+<dt>trc_vel_proj<span class="classifier">1darray</span></dt><dd><p>Projection of the beam power onto the trace velocity axis</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.pure_state_filter">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">pure_state_filter</code><span class="sig-paren">(</span><em class="sig-param">S</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.pure_state_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the pure state filter applied to a Hermitian matrix, S(f)</p>
+<p>Computes the pure state filter for a matrix.  Here, the covariance matrix is utilized
+to measure the average coeherence across the entire array at a given frequency.</p>
+<p>Pure state filter value are useful for weighting a multi-frequency beam average.</p>
+<dl class="simple">
+<dt>S<span class="classifier">3darray</span></dt><dd><p>Covariance matrix of data in analysis window for all frequencies,
+x(t) –&gt; S(f) = mean(X(f) X^dagger(f))</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>pure_state<span class="classifier">1darray</span></dt><dd><p>Pure state filter value at each frequency</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.run">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">S</em>, <em class="sig-param">f</em>, <em class="sig-param">dxdy</em>, <em class="sig-param">delays</em>, <em class="sig-param">freq_band</em>, <em class="sig-param">method='bartlett'</em>, <em class="sig-param">ns_covar_inv=None</em>, <em class="sig-param">signal_cnt=1</em>, <em class="sig-param">normalize_beam=True</em>, <em class="sig-param">pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run beamforming analysis over frequencies of interest</p>
+<p>Computes the beam at multiple frequencies within a specified band given data in X(f)
+and S(f) and frequencies f as produced by the fft_array_data function.</p>
+<p>Normalization of the beam returns coherence in the case of Bartlett and a normalized
+version of the Capon beam but does not alter the output of the MUSIC algorithm as
+its result is a mathematical projection onto a noise subspace.</p>
+<p>A multiprocessing pool can be used to accelerate calculation of different frequencies
+in parallel.</p>
+<dl class="simple">
+<dt>X<span class="classifier">2darray</span></dt><dd><p>M x N_f matrix of the FFT’d data, X[m][n] = X_m(f_n)</p>
+</dd>
+<dt>S<span class="classifier">3darray</span></dt><dd><p>M x M x N_f cube of the covariance matrices, S[m1][m2][n] = mean(X_{m1}(f_n) conj(X_{m2}(f_n)))</p>
+</dd>
+<dt>f<span class="classifier">1darray</span></dt><dd><p>Frequencies</p>
+</dd>
+<dt>delays<span class="classifier">1darray</span></dt><dd><p>Set of delays for the parameterization (length K)</p>
+</dd>
+<dt>freq_band<span class="classifier">iterable</span></dt><dd><p>List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>Beamforming method to be applied to the data (must match form of data)</p>
+</dd>
+<dt>signal_cnt<span class="classifier">int</span></dt><dd><p>Number of signals assumed in MUSIC algorithm</p>
+</dd>
+<dt>ns_covar_inv<span class="classifier">2darray</span></dt><dd><p>Noise covariance used in “gls” beamforming method</p>
+</dd>
+<dt>normalize_beam<span class="classifier">boolean</span></dt><dd><p>Option to normalize the beam and return coherence (value between 0 and 1)</p>
+</dd>
+<dt>pool<span class="classifier">multiprocessing pool</span></dt><dd><p>Multiprocessing pool for accelerating caluclation (maps over frequency)</p>
+</dd>
+<dt>param_opt<span class="classifier">string</span></dt><dd><p>Option for the solution parameterization: ‘planar’ or ‘spherical’</p>
+</dd>
+<dt>sph_vel<span class="classifier">float</span></dt><dd><p>Velocity of the wavefront in the ‘spherical’ param_opt method</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>bmpwr<span class="classifier">2darray</span></dt><dd><p>Beam power for each steering vector at each frequency in the band (dimension K x N_f)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.detection.beamforming_new.stream_to_array_data">
+<code class="sig-prename descclassname">infrapy.detection.beamforming_new.</code><code class="sig-name descname">stream_to_array_data</code><span class="sig-paren">(</span><em class="sig-param">stream</em>, <em class="sig-param">latlon=None</em>, <em class="sig-param">t_start=None</em>, <em class="sig-param">t_end=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.stream_to_array_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract time series from ObsPy stream on common time samples and define the array geometry</p>
+<p>Extracts the time series from individual traces of an Obspy stream and identifies a
+common set of time samples where all are defined.  Interpolates the individual traces
+into a single numpy array (x) for which x[m] = x_m(t).  The geometry of the array is
+also extracted to enable beamforming analysis.</p>
+<dl class="simple">
+<dt>stream<span class="classifier">ObsPy stream</span></dt><dd><p>Obspy stream containing traces for all array elements</p>
+</dd>
+<dt>latlon<span class="classifier">2darray</span></dt><dd><p>(M x 2) 2darray containing the latitudes and longitudes of the array elements if they aren’t in the stream</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>x<span class="classifier">2darray</span></dt><dd><p>M x N matrix of array data, x[m][n] = x_m(t_n)</p>
+</dd>
+<dt>t<span class="classifier">1darray</span></dt><dd><p>Vector of N sampled points in time, t[n] = t_n</p>
+</dd>
+<dt>t_ref<span class="classifier">datetime64</span></dt><dd><p>Datetime corresponding to t[0]</p>
+</dd>
+<dt>dxdy<span class="classifier">2darray</span></dt><dd><p>M x 2 matrix of slowness vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="infrapy.location.html" class="btn btn-neutral float-right" title="Location" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="infrapy.database.taskbase.html" class="btn btn-neutral float-left" title="Database Processing Taskbase" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

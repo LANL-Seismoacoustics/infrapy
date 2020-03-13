@@ -1,0 +1,287 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Interfacing with Pisces &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Algorithms" href="algorithms.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
+            <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infrapy.html">API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Infrapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Interfacing with Pisces</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/pisces.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="interfacing-with-pisces">
+<span id="pisces"></span><h1>Interfacing with Pisces<a class="headerlink" href="#interfacing-with-pisces" title="Permalink to this headline">¶</a></h1>
+<p>Infrapy leverages pisces to connect with and process data in either local sqlite databases or oracle databases. More information about pisces can be found at <a class="reference external" href="https://jkmacc-lanl.github.io/pisces/">https://jkmacc-lanl.github.io/pisces/</a>.</p>
+<div class="section" id="converting-data-into-sqlite-databases">
+<h2>Converting Data into Sqlite Databases<a class="headerlink" href="#converting-data-into-sqlite-databases" title="Permalink to this headline">¶</a></h2>
+<p>Data in miniseed or sac formats can be loaded into a sqlite database for pipeline processing using commands from pisces.</p>
+<ol class="arabic simple">
+<li><p>mseed to database (ms2db.py)</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">ms2db</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="n">mslist</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>sac to database (sac2db)</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">pisces</span> <span class="n">sac2db</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">*.</span><span class="n">sac</span>
+</pre></div>
+</div>
+<p>As infrapy is an array processing tool, after your sqlite database is created, you will need to update the REFSTA for each array using update_refsta.py</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">update_refsta</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">&lt;</span><span class="n">array</span> <span class="n">name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>You can update the calibration for each array using update_calib.py</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">update_calib</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">&lt;</span><span class="n">array</span> <span class="n">name</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">calibration</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="connecting-to-a-sql-database">
+<h2>Connecting to a SQL Database<a class="headerlink" href="#connecting-to-a-sql-database" title="Permalink to this headline">¶</a></h2>
+<p>Infrapy employs two main methods for connecting to either Oracle or sqlite databases.  Example files to facilitate these connections are found in tutorials/.</p>
+<div class="section" id="defining-schema-specific-tables">
+<h3>Defining Schema Specific Tables<a class="headerlink" href="#defining-schema-specific-tables" title="Permalink to this headline">¶</a></h3>
+<p>Pipeline processing in infrapy utilizes information from CSS3.0 Site and Wfdisc tables.  If your database schema differs from the CSS3.0 schema in any way, you can define the differences using a _global.py file.  An example _global.py file is found in tutorial/ .</p>
+</div>
+<div class="section" id="connection-within-pipeline-processing-configuration-file">
+<h3>Connection within pipeline processing configuration file<a class="headerlink" href="#connection-within-pipeline-processing-configuration-file" title="Permalink to this headline">¶</a></h3>
+<p>The first three lines of your configuration file define the database you will connect to:</p>
+<p><strong>Example Configuration File for Sqlite Processing (Sqlite_Config.txt)</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
+# url to database where you have the pointers to data and metadata
+url = sqlite:///example.sqlite
+# schema specific tables for your site and wfdisc files.  If you are processing in a sqlite database, these variables will refer to schema specified in pisces. If you are processing in an oracle database, these variables will refer to schema specified in your global_.py file
+site = pisces.tables.css3:Site
+wfdisc = pisces.tables.css3:Wfdisc
+</pre></div>
+</div>
+<p><strong>Example Configuration File for Oracle DB Processing (Oracle_Config.txt)</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
+url = oracle://&lt;database name&gt;:&lt;port&gt;
+site = global_:Site
+wfdisc = global_:Wfdisc_raw
+</pre></div>
+</div>
+</div>
+<div class="section" id="connection-with-a-db-cfg-file">
+<h3>Connection with a db.cfg file<a class="headerlink" href="#connection-with-a-db-cfg-file" title="Permalink to this headline">¶</a></h3>
+<p>Some modules in infrapy (db2sac) require a .cfg file to establish connection with a database.  Examples are found in tutorial/ . More information can be found in the pisces documentation.</p>
+<p><strong>Example Configuration File for Oracle DB Processing (oracle_connection.cfg)</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
+url = oracle://&lt;db name&gt;:&lt;db port&gt;
+site = global_:Site
+wfdisc = global_:Wfdisc_raw
+origin = global_:Origin
+</pre></div>
+</div>
+<p><strong>Example Configuration File for Sqlite Processing (sqlite_connection.cfg)</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
+url = sqlite:///example.sqlite
+site = pisces.tables.css3:Site
+wfdisc = pisces.tables.css3:Wfdisc
+origin = pisces.tables.css3:Origin
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="algorithms.html" class="btn btn-neutral float-right" title="Algorithms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

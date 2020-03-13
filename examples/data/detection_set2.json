@@ -1,0 +1,50 @@
+[
+    {
+        "Name": "",
+        "Peak F-Stat Time (UTC)": "2004-06-02T17:42:14",
+        "F Statistic": 75.0,
+        "Trace Velocity (m/s)": null,
+        "Back Azimuth": -125.6,
+        "Latitude": 42.7668,
+        "Longitude": -109.5939,
+        "Elevation": null,
+        "Start": null,
+        "End": null,
+        "Array Dimension": 4,
+        "Method": "",
+        "Event": "",
+        "Note": ""
+    },
+    {
+        "Name": "",
+        "Peak F-Stat Time (UTC)": "2004-06-02T17:50:38",
+        "F Statistic": 75.0,
+        "Trace Velocity (m/s)": null,
+        "Back Azimuth": 56.6,
+        "Latitude": 38.4296,
+        "Longitude": -118.3036,
+        "Elevation": null,
+        "Start": null,
+        "End": null,
+        "Array Dimension": 4,
+        "Method": "",
+        "Event": "",
+        "Note": ""
+    },
+    {
+        "Name": "",
+        "Peak F-Stat Time (UTC)": "2004-06-02T18:09:14",
+        "F Statistic": 75.0,
+        "Trace Velocity (m/s)": null,
+        "Back Azimuth": 157.5,
+        "Latitude": 48.2641,
+        "Longitude": -117.1257,
+        "Elevation": null,
+        "Start": null,
+        "End": null,
+        "Array Dimension": 4,
+        "Method": "",
+        "Event": "",
+        "Note": ""
+    }
+]

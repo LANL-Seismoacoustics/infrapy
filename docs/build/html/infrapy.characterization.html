@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Characterization &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Database Processing" href="infrapy.database.html" />
+    <link rel="prev" title="Association" href="infrapy.association.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
+            <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Characterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.database.html">Database Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.detection.html">Beamforming/Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Infrapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="infrapy.html">API</a> &raquo;</li>
+        
+      <li>Characterization</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/infrapy.characterization.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="characterization">
+<h1>Characterization<a class="headerlink" href="#characterization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-infrapy.characterization.spye">
+<span id="spye"></span><h2>SPYE<a class="headerlink" href="#module-infrapy.characterization.spye" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="infrapy.characterization.spye.blastwave">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">blastwave</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">p0</em>, <em class="sig-param">t0</em>, <em class="sig-param">alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Acoustic blastwave that can be used as a source</dt><dd><p>for surface explosions out to several scale
+kilometers.</p>
+</dd>
+<dt>Note: alpha = 0 produces the Friedlander</dt><dd><p>blastwave model.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>t<span class="classifier">float</span></dt><dd><p>Time [s]</p>
+</dd>
+<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure</p>
+</dd>
+<dt>t0<span class="classifier">float</span></dt><dd><p>Time scale [s]</p>
+</dd>
+<dt>alpha<span class="classifier">float</span></dt><dd><p>Shaping parameter (positive)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>p<span class="classifier">float</span></dt><dd><p>Overpressure at time t</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.characterization.spye.blastwave_spectrum">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">blastwave_spectrum</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">p0</em>, <em class="sig-param">t0</em>, <em class="sig-param">alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><dl class="simple">
+<dt>Fourier transform amplitude for the acoustic</dt><dd><p>blastwave in sasm.acoustic.blastwave().</p>
+</dd>
+</dl>
+<p>Note: alpha = 0 produces the Friedlander
+blastwave model.</p>
+<p>Note: the peak of the spectrum occurs at
+f_0 =</p>
+</div></blockquote>
+<p>rac{1}{2 pi t_0} 
+rac{1}{sqrt{lpha + 1}</p>
+<blockquote>
+<div><p>and t0 corresponding to a given peak frequency is
+t_0 =</p>
+</div></blockquote>
+<p>rac{1}{2 pi f_0} 
+rac{1}{sqrt{lpha + 1}</p>
+<blockquote>
+<div><dl class="simple">
+<dt>f<span class="classifier">float</span></dt><dd><p>Frequency [Hz]</p>
+</dd>
+<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure</p>
+</dd>
+<dt>t0<span class="classifier">float</span></dt><dd><p>Time scale [s]</p>
+</dd>
+<dt>alpha<span class="classifier">float</span></dt><dd><p>Shaping parameter (positive)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>P<span class="classifier">float</span></dt><dd><p>Spectral value at frequency f</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.characterization.spye.extract_spectra">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">extract_spectra</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">st_list</em>, <em class="sig-param">win_buffer=0.25</em>, <em class="sig-param">ns_opt='pre'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.extract_spectra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Extract spectra for a list of detections using a list of</dt><dd><p>obspy streams with a defined window buffer and noise
+window option</p>
+</dd>
+</dl>
+<dl>
+<dt>det_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></span></dt><dd><p>Iterable of detections with defined start and end times</p>
+</dd>
+<dt>st_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">obspy.Stream</span></code></span></dt><dd><p>Iterable of Obspy streams containing the array channels for each detection</p>
+</dd>
+<dt>win_buffer<span class="classifier">float</span></dt><dd><dl class="simple">
+<dt>Scaling factor defining the window buffer (a 20 second detection with a </dt><dd><p>buffer of 0.25 adds 5 seconds to the start and end of the window)</p>
+</dd>
+</dl>
+</dd>
+<dt>ns_opt<span class="classifier">string</span></dt><dd><dl class="simple">
+<dt>Option defining how the noise window is defined.  Options include “pre”,</dt><dd><p>“post”, and “beam” to use the preceding, following, or beam residual</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="simple">
+<dt>smn_spec<span class="classifier">ndarray</span></dt><dd><p>Spectral amplitude of the signal-minus-noise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.characterization.spye.kg_op">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">kg_op</code><span class="sig-paren">(</span><em class="sig-param">W</em>, <em class="sig-param">r</em>, <em class="sig-param">p_amb=101.325</em>, <em class="sig-param">T_amb=288.15</em>, <em class="sig-param">type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kinney &amp; Graham scaling law peak overpressure model</p>
+<dl class="simple">
+<dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
+</dd>
+<dt>r<span class="classifier">float</span></dt><dd><p>Propagation distance [km]</p>
+</dd>
+<dt>p_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric pressure [kPa]</p>
+</dd>
+<dt>T_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+</dd>
+<dt>type<span class="classifier">string</span></dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure [Pa]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.characterization.spye.kg_ppd">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">kg_ppd</code><span class="sig-paren">(</span><em class="sig-param">W</em>, <em class="sig-param">r</em>, <em class="sig-param">p_amb=101.325</em>, <em class="sig-param">T_amb=288.15</em>, <em class="sig-param">type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_ppd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kinney &amp; Graham scaling law positive phase duration model</p>
+<dl class="simple">
+<dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
+</dd>
+<dt>r<span class="classifier">float</span></dt><dd><p>Propagation distance [km]</p>
+</dd>
+<dt>p_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric pressure [kPa]</p>
+</dd>
+<dt>T_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+</dd>
+<dt>type<span class="classifier">string</span></dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>t0<span class="classifier">float</span></dt><dd><p>Positive phase duration [s]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="infrapy.characterization.spye.run">
+<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">smn_spec</em>, <em class="sig-param">src_loc</em>, <em class="sig-param">freq_band</em>, <em class="sig-param">tloss_models</em>, <em class="sig-param">resol=150</em>, <em class="sig-param">yld_rng=array([   10.</em>, <em class="sig-param">10000.])</em>, <em class="sig-param">ref_src_rng=1.0</em>, <em class="sig-param">grnd_brst=True</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield</p>
+<dl>
+<dt>det_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></span></dt><dd><p>Iterable of detections with defined start and end times</p>
+</dd>
+<dt>smn_spec<span class="classifier">ndarray</span></dt><dd><p>Spectral amplitude of the signal-minus-noise</p>
+</dd>
+<dt>freq_band<span class="classifier">iterable</span></dt><dd><p>List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])</p>
+</dd>
+<dt>tloss_models<span class="classifier">list of frequencies and infrapy.propagation.TLossModel instances</span></dt><dd><dl class="simple">
+<dt>Propagation transmission loss model list with reference frequencies (see</dt><dd><p>test/test_yield.py for construction example)</p>
+</dd>
+</dl>
+</dd>
+<dt>resol<span class="classifier">int</span></dt><dd><p>Resolution used in analysis</p>
+</dd>
+<dt>yld_rng<span class="classifier">iterable</span></dt><dd><p>List or tuple with minimum and maximum yields (e.g., [yld_min, yld_max])</p>
+</dd>
+<dt>ref_src_rng<span class="classifier">float</span></dt><dd><p>Standoff distance used to define source model distance</p>
+</dd>
+<dt>grnd_brst<span class="classifier">boolean</span></dt><dd><dl class="simple">
+<dt>Boolean declaring whether the source is a ground burst (interaction with source</dt><dd><p>doubles the effective yield for a ground burst vs. air burst)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="simple">
+<dt>yld_vals: </dt><dd><p>Values of explosive yield for the PDF</p>
+</dd>
+<dt>yld_pdf<span class="classifier"></span></dt><dd><p>Probability of the observed source having a given yield</p>
+</dd>
+<dt>conf_bnds<span class="classifier">ndarray</span></dt><dd><p>Limits for the 68% and 95% confidence bounds on yield</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="infrapy.database.html" class="btn btn-neutral float-right" title="Database Processing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="infrapy.association.html" class="btn btn-neutral float-left" title="Association" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

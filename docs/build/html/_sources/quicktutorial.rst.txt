@@ -1,0 +1,10 @@
+.. _quicktutorial:
+
+=====================================
+Getting Started with Infrapy
+=====================================
+.. toctree::
+    :maxdepth: 5
+    :titlesonly:
+
+    quickstart_tut.nblink

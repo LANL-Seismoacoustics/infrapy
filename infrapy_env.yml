@@ -1,0 +1,39 @@
+name: infrapy_env
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - matplotlib-base
+  - cartopy
+  - numpy
+  - python=3.6
+  - scipy
+  - numba
+  - obspy
+  - pyqt=5.9.2
+    # I pin pyqtgraph to 0.10 because 0.11 has an bad error when trying to add a legend to a plot
+  - pyqtgraph=0.10
+  - pathlib
+  - pandas
+    # I pin cx_oracle to 7.2.3 because there are no binaries (at the time of this writing) on windows for 7.3
+  - cx_Oracle
+  - scikit-learn
+  - ipython
+  - joblib
+  - pygments
+  - pexpect
+  - prompt_toolkit
+  - jedi
+  - parso
+  - sphinx
+  - sphinx_rtd_theme
+  - pandoc
+  - jupyterlab
+  - pip
+
+  - pip:
+    - pisces==0.3.0
+    - -e .
+

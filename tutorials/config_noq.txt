@@ -1,0 +1,73 @@
+[database] # required
+url = sqlite:///test.sqlite
+site = pisces.tables.css3:Site
+wfdisc = pisces.tables.css3:Wfdisc
+affiliation = pisces.tables.css3:Affiliation
+
+
+
+[GeneralParams]
+year=2012
+dayofyearini=206
+dayofyearend=208
+station=NOQ
+channel=EDF
+cpucnt=30
+domain=time
+
+
+[FKParams]
+name=mid band fk test
+freqmin=1
+freqmax=5.0
+beamwinlen=60
+beamwinstep=30
+algorithm=bartlett
+fkresults=fk_res_noq
+numsources = 1
+backazmin=-180.0
+backazmax=180.0
+backazstep=1.5
+trvelmin=300.0
+trvelmax=600.0
+trvelstep=2.5
+minslowness=-3.6
+maxslowness=3.6
+stepslowness=0.1
+
+#func_fk = None
+
+[FDetectParams]
+backazlim=10
+detwinlen=300.0
+detthresh=0.99
+dsegmin=5
+detmethod=fstat
+tb_prod=4000
+adaptivewlen=120
+pthreshold=0.01
+corrthreshold=0.5
+mineventlength=10
+pfkid=0
+fkresults=fk_res_noq
+fdresults=fd_res_noq
+
+
+
+[AssocLocParams]
+network=YJ
+pfdetectid=0
+pfkid=2
+beamwidth=10.0
+rangemax=1000.0
+clusterthresh=4.0
+trimthresh=None
+eventdetmin=3
+eventarrmin=2
+duration = 60
+
+fdtable_1=fd_res_test_brp
+#fdtable_2=fd_res_fsu
+#fdtable_3=fd_res_wmu
+resultstable = test_assoc
+
