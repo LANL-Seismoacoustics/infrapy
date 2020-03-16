@@ -56,6 +56,12 @@ Then navigate to the /example directory located in the infrapy base directory, a
 
 If infrapy was successfully installed, all of the test scripts should run and finish without any errors.
 
+## Supplemental Data
+
+Some of the example scripts included with infrapy in the /scripts directory depend on some supplemental data.  This data can be found at [https://github.com/LANL-Seismoacoustics/infrapy-data](https://github.com/LANL-Seismoacoustics/infrapy-data)
+
+Instructions found there will guide you in its installation.
+
 ## Infraview
 
 We supply a GUI application to help with quick data, beamforming, and location analysis. Once installation is complete, and the new environment is activated, you can run the GUI with the command:
