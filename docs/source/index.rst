@@ -5,7 +5,8 @@
 
 .. _index:
 
-
+=====================================
+Infrapy  (LA-UR-20-22311)
 =====================================
 
 Welcome to Infrapy's documentation.  Get started with :ref:`installation` and then get an overview with the :ref:`quickstart`.  There is also a more detailed :ref:`tutorial` that demonstrates the various processing capabilities of infrapy.  The rest of the docs describe each component in detail, with a full reference in the :ref:`api` section.
