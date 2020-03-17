@@ -5,7 +5,7 @@ Bayesian Infrasonic Source Localization
 ========================================
 
 
-* Event analysis using the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty
+* Event analysis uses the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty
 * Preliminary analysis of the back projections can be used to define the spatial region of interest or it can be specified by the analysis
 * Analysis identifies the maximum posteriori solution
 * The marginalized spatial distribution is approximated as 2d-normal to define 95 and 99% confidence ellipse bounds
