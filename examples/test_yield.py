@@ -21,7 +21,7 @@ if __name__ == '__main__':
     #     Define Parameters     #
     # ######################### #
     det_file = "data/detection_HRR-5.json"
-    data_path = "data/hrr-5/"
+    data_path = "../infrapy-data/hrr-5/"
     data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]
 
     ns_opt = "post"
