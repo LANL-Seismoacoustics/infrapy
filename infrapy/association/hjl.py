@@ -286,7 +286,7 @@ def compute_assoc_pair_wrapper(args):
 
 
 def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180,  pool=None, progress=False):
-    """Computes the joint-likelihiood for all pairs of detections to define the distance matrix
+    """Computes the joint-likelihood for all pairs of detections to define the distance matrix
 
         Computes the joint-likelihood value for each unique pair of detections in a provided list and
         uses a negative-log-joint-likelihood to convert to non-Euclidean distance for clustering analysis
@@ -356,6 +356,16 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
     return dist_mat
 
 def view_distance_matrix(distance_matrix, file_id=None, ordering=None):
+
+    """View distance matrix used for clustering analysis
+
+        Parameters
+        ----------
+
+        dist_matrix : 2darray
+            Distance matrix describing joint-likelihood separations for all pairs
+
+        """
     det_cnt = len(distance_matrix)
 
     plt.figure()

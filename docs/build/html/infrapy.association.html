@@ -176,7 +176,7 @@
 <dl class="function">
 <dt id="infrapy.association.hjl.build_distance_matrix">
 <code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">build_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">bm_width=10.0</em>, <em class="sig-param">rng_max=10005.97260168349</em>, <em class="sig-param">rad_min=100.0</em>, <em class="sig-param">rad_max=1000.0</em>, <em class="sig-param">resol=180</em>, <em class="sig-param">pool=None</em>, <em class="sig-param">progress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.build_distance_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the joint-likelihiood for all pairs of detections to define the distance matrix</p>
+<dd><p>Computes the joint-likelihood for all pairs of detections to define the distance matrix</p>
 <p>Computes the joint-likelihood value for each unique pair of detections in a provided list and
 uses a negative-log-joint-likelihood to convert to non-Euclidean distance for clustering analysis</p>
 <dl>
@@ -396,7 +396,12 @@ trim_indices : <code class="xref py py-obj docutils literal notranslate"><span c
 <dl class="function">
 <dt id="infrapy.association.hjl.view_distance_matrix">
 <code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">view_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">distance_matrix</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">ordering=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.view_distance_matrix" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>View distance matrix used for clustering analysis</p>
+<dl class="simple">
+<dt>dist_matrix<span class="classifier">2darray</span></dt><dd><p>Distance matrix describing joint-likelihood separations for all pairs</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 </div>

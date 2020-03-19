@@ -84,7 +84,7 @@ def plot_dets(det_list,display=True,save_fig=None):
     if save_fig:
 
         #plt.figure(1)
-        fig1.savefig(str(save_fig) + '_detections_priors.png')
+        fig1.savefig(str(save_fig) + '_detections.png')
 
 
     if display == True:
@@ -140,7 +140,7 @@ def plot_loc(det_list,result,pdf,confidence,display=True,save_fig=None,grnd_trth
     if save_fig:
 
         plt.figure(2)
-        plt.savefig(str(save_fig) + '_location_priors.png')
+        plt.savefig(str(save_fig) + '_location.png')
         #plt.close('all')
     if display == True:
         plt.close('all')
@@ -166,7 +166,7 @@ def plot_time(result,display=False,save_fig=None,grnd_trth=None):
      if save_fig:
 
          plt.figure(3)
-         plt.savefig(str(save_fig) + '_source_time_priors.png')
+         plt.savefig(str(save_fig) + '_source_time.png')
          plt.close('all')
 
      if display==True:
