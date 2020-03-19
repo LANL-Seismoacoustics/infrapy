@@ -55,6 +55,12 @@ how to activate and deactivate the new environment:
     To deactivate an active environment, use
 
         >> conda deactivate
+        
+## Updating
+
+Infrapy is in continued development.  Features are added, bugs are fixed, and documentation is improved fairly continuously. It's good practice to pull the latest updates on a regular basis.  To do this in a terminal, simply navigate into the infrapy directory and run:
+
+    >> git pull
  
 ## Testing
 
