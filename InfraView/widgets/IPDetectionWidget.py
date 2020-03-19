@@ -210,11 +210,19 @@ class IPDetectionWidget(QWidget):
         if self._savefile is None:
             self.saveDetectionsAs()
         else:
-            df = self.get_data().copy(deep=True)
-            df['associatedPickLine'] = None
+            data_to_save = []
+            for entry in self._detections:
+                data_to_save.append(entry.generateDict())
+            with open(self._savefile[0], 'w') as of:
+                json.dump(data_to_save, of, indent=4)
+                path = os.path.dirname(self._savefile[0])
+                self._parent.get_settings().setValue("last_detectionfile_directory", path)
+                fileText = 'savefile: ' + self._savefile[0]
 
-            if df is None:
-                return  # nothing to save
+                # this bit is to shorten long filenames for pretty display
+                if len(fileText) > 40:  # the 40 here is arbitrary, maybe there's a better way to determine that value?
+                    fileText = 'savefile: ...' + fileText[-28:]
+                self.fileLabel.setText(fileText)
 
     def saveDetectionsAs_old(self):
 
@@ -257,6 +265,7 @@ class IPDetectionWidget(QWidget):
                 self._parent.get_settings().setValue("last_detectionfile_directory", path)
                 fileText = 'savefile: ' + self._savefile[0]
 
+                # this bit is to shorten long filenames for pretty displayß
                 if len(fileText) > 40:  # the 40 here is arbitrary, maybe there's a better way to determine that value?
                     fileText = 'savefile: ...' + fileText[-28:]
                 self.fileLabel.setText(fileText)

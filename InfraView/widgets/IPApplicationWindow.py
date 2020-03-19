@@ -277,7 +277,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                     # has been, leave it alone.  We do need to remove inventory that does
                     pass
 
-            print(new_inventory)
             self.sig_stream_changed.emit(self.waveformWidget._sts)
             if new_inventory is not None:
                 self.sig_inventory_changed.emit(new_inventory)
