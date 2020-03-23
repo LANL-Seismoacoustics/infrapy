@@ -54,6 +54,12 @@ class IPPlotViewer(QWidget):
     def show_hide_lines(self, current_filter_display_settings):
         self.pl_widget.draw_plot_lines(current_filter_display_settings)
 
+    def get_plot_lines(self):
+        return self.pl_widget.plot_lines
+
+    def get_filtered_plot_lines(self):
+        return self.pl_widget.filtered_plot_lines
+
 
 class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 

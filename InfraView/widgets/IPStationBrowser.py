@@ -1,6 +1,7 @@
 import sys
 import time
 
+import obspy
 from obspy.clients.fdsn import Client
 from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import URL_MAPPINGS
@@ -330,7 +331,7 @@ class IPStationBrowser(QWidget):
             try:
                 client = Client(service)
             except obspy.clients.fdsn.header.FDSNException as e:
-                self.errorPopup(e)
+                self.errorPopup(str(e))
                 return
 
             startDate = self.startDate_edit.date().toString("yyyy-MM-dd")

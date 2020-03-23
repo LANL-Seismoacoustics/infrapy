@@ -272,6 +272,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                     # miniseed files have no metadata, so we need to deal with
                     # the inventory seperately
 
+                    # TODO
                     # First, there's a chance that the inventory data has been
                     # loaded already, so lets check the current inventory, and if it
                     # has been, leave it alone.  We do need to remove inventory that does

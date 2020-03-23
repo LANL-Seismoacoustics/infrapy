@@ -198,6 +198,11 @@ class IPWaveformWidget(QWidget):
                                                 filter_settings)
 
         self.plotViewer.pl_widget.update_filtered_line_data(self._sts_filtered)
+        index = self.plotViewer.pl_widget.get_active_plot()
+        self.update_widgets(index, 
+                            self.plotViewer.get_plot_lines(), 
+                            self.plotViewer.get_filtered_plot_lines(), 
+                            self.plotViewer.pl_widget.plot_list[index].getSignalRegionRange())
 
     def filter_stream(self, stream, cfs):
 

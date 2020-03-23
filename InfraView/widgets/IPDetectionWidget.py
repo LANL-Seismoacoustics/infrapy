@@ -244,17 +244,20 @@ class IPDetectionWidget(QWidget):
         df.to_json(self._savefile, orient="split")
 
     def saveDetectionsAs(self):
+
         if len(self._detections) == 0:
             self.errorPopup('Oops... No Detections to Save')
             return
+
         if self._parent.getProject() is None:
             # force a new filename...
-            previousDirectory = self._parent.get_settings().value("last_detectionfile_directory", QDir.homePath())
+            default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
+            previous_directory = self._parent.settings.value("last_detectionsfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previousDirectory = str(self._parent.getProject().get_detectionsPath())
+            previous_directory = str(self._parent.getProject().get_detectionsPath())
 
-        self._savefile = QFileDialog.getSaveFileName(self, 'Save File', previousDirectory)
+        self._savefile = QFileDialog.getSaveFileName(self, 'Save File', previous_directory)
         if self._savefile[0]:
             data_to_save = []
             for entry in self._detections:
@@ -263,23 +266,24 @@ class IPDetectionWidget(QWidget):
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
                 self._parent.get_settings().setValue("last_detectionfile_directory", path)
-                fileText = 'savefile: ' + self._savefile[0]
+                fileText = 'file: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty displayß
                 if len(fileText) > 40:  # the 40 here is arbitrary, maybe there's a better way to determine that value?
-                    fileText = 'savefile: ...' + fileText[-28:]
+                    fileText = 'file: ...' + fileText[-28:]
                 self.fileLabel.setText(fileText)
 
     def loadDetections(self):
         # open a file and load the picks
         if self._parent.getProject() is None:
             # force a new filename...
-            previousDirectory = self._parent.get_settings().value("last_detectionfile_directory", QDir.homePath())
+            default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
+            previous_directory = self._parent.get_settings().value("last_detectionfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previousDirectory = str(self._parent.getProject().get_detectionsPath())
+            previous_directory = str(self._parent.getProject().get_detectionsPath())
 
-        self._openfile, _ = QFileDialog.getOpenFileName(self, 'Open File', previousDirectory)
+        self._openfile, _ = QFileDialog.getOpenFileName(self, 'Open File', previous_directory)
 
         if self._openfile == '':
             return
@@ -289,7 +293,6 @@ class IPDetectionWidget(QWidget):
             newdata = json.load(infile)
 
             # this is a bit of a hack to make sure opened files have the correct data headers
-            clean_data = []
             for entry in newdata:
                 newDetection = IPPickItem.IPPickItem()
                 newDetection.fillFromDict(entry)
@@ -326,13 +329,12 @@ class IPDetectionWidget(QWidget):
         """SLOT:
         slot called when someone is dragging a detection line.  The main purpose of this is to
         1. update the detection table with the new time
-        2. assign a detection to the _moving_detectio variable so that detectionLineMoved will know what to update (this might be superfluous)
+        2. assign a detection to the _moving_detection variable so that detectionLineMoved will know what to update (this might be superfluous)
         """
-
         est = UTCDateTime(self._parent.get_earliest_start_time())
         for detection in self._detections:
             if detection.getAssociatedPickLine() is detectionLine:
-                detection.set_peakF_UTCtime(UTCDateTime(self._parent.get_earliest_start_time()) + pos)
+                detection.set_peakF_UTCtime(est + pos)
                 self.set_data(self._detections)
                 self._moving_detection = detection
 
