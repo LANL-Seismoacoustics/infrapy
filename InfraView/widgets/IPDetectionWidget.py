@@ -22,7 +22,7 @@ class IPDetectionWidget(QWidget):
     signal_detections_changed = pyqtSignal(list)
     signal_detections_cleared = pyqtSignal()
 
-    _savefile = None        # this should hold the file with it's full path
+    _savefile = ("","")        # this should hold the file with it's full path
 
     _detections = []
 
@@ -207,7 +207,7 @@ class IPDetectionWidget(QWidget):
 
         # if there is no current filename, prompt for one...
         # TODO: if there is an open project, default to that
-        if self._savefile is None:
+        if self._savefile == ("",""):
             self.saveDetectionsAs()
         else:
             data_to_save = []
@@ -224,24 +224,7 @@ class IPDetectionWidget(QWidget):
                     fileText = 'savefile: ...' + fileText[-28:]
                 self.fileLabel.setText(fileText)
 
-    def saveDetectionsAs_old(self):
-
-        if self._parent.getProject() is None:
-            # If there is no open project, force a new filename...
-            previous_directory = self._parent.settings.value("last_detectionsfile_directory", QDir.homePath())
-        else:
-            # There is an open project, so make the default save location correspond to what the project wants
-            previous_directory = str(self._parent.getProject().get_detectionsPath())
-
-        self._savefile, _ = QFileDialog.getSaveFileName(self, 'Save File', previous_directory)
-
-        df = self.get_data().copy(deep=True)
-        # df['associatedDetectionLine'] = None
-
-        if df is None:
-            return  # nothing to save
-
-        df.to_json(self._savefile, orient="split")
+   
 
     def saveDetectionsAs(self):
 
@@ -258,6 +241,7 @@ class IPDetectionWidget(QWidget):
             previous_directory = str(self._parent.getProject().get_detectionsPath())
 
         self._savefile = QFileDialog.getSaveFileName(self, 'Save File', previous_directory)
+
         if self._savefile[0]:
             data_to_save = []
             for entry in self._detections:

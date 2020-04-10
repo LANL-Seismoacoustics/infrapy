@@ -82,7 +82,7 @@ class IPBeamformingWidget(QWidget):
 
         self.waveformPlot = IPPlotWidget.IPPlotWidget()
         self.waveformPlot.setLabel('left', 'Waveform')
-        self.waveformPlot.enableAutoRange(axis=ViewBox.YAxis)
+        self.waveformPlot.hideButtons()
 
         self.fstatPlot = IPPlotWidget.IPPlotWidget(y_label_format='nonscientific', pickable=False)
         self.fstatPlot.setLogMode(y=True)
