@@ -323,7 +323,7 @@ class IPDetectionWidget(QWidget):
                 self._moving_detection = detection
 
     @pyqtSlot(float)
-    def detectionLineMoved(self, EndingPos):
+    def detectionLineMoved(self, EndingPos, fstat, backaz, tracev):
         """ SLOT:
 
             This slot will update the table when it receives a signal that the detection
@@ -331,6 +331,9 @@ class IPDetectionWidget(QWidget):
         """
         newUTCtime = UTCDateTime(self._parent.get_earliest_start_time()) + EndingPos
         self._moving_detection.set_peakF_UTCtime(newUTCtime)
+        self._moving_detection.set_peakF_value(fstat)
+        self._moving_detection.set_back_azimuth(backaz)
+        self._moving_detection.set_trace_velocity(tracev)
         self.signal_detections_changed.emit(self._detections)
 
     def clearDetections(self):

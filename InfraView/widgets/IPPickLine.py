@@ -95,6 +95,10 @@ class IPPickLine(pg.InfiniteLine):
             pos = self.getXPos()
             self.sigPickLineMoving.emit(self, pos)
 
+            if ev.isFinish():
+                # the super() sigPositionChangeFinished doesn't include the position, so we make our own
+                self.sigPickLineMoved.emit(pos)
+
             if self._start_end_bars is not None:
                 self._start_end_bars.setRegion((pos + self._start_end[0], pos + self._start_end[1]))
 

@@ -6,10 +6,12 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
                              QLabel, QMessageBox,
-                             QHBoxLayout, QVBoxLayout)
+                             QHBoxLayout, QVBoxLayout,
+                             QStackedWidget)
 
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPlotWidget
+# from InfraView.widgets import IPSpectrogramWidget
 
 import obspy
 from obspy.core import UTCDateTime
@@ -28,17 +30,29 @@ class IPPlotViewer(QWidget):
 
     def buildUI(self):
         self.pl_widget = IPPlotLayoutWidget(self)
+        # self.spect_widget = IPSpectrogramWidget.IPSpectrogramWidget(self)
         self.lr_settings_widget = IPLinearRegionSettingsWidget(self)
 
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.addWidget(self.pl_widget)
+        # self.stacked_widget.addWidget(self.spect_widget)
+
         main_layout = QVBoxLayout()
-        main_layout.addWidget(self.pl_widget)
+        main_layout.addWidget(self.stacked_widget)
         main_layout.addWidget(self.lr_settings_widget)
 
         self.setLayout(main_layout)
 
+    def toggle_view(self):
+        if self.stacked_widget.currentIndex() == 0:
+            self.stacked_widget.setCurrentIndex(1)
+        else:
+            self.stacked_widget.setCurrentIndex(0)
+
     def set_streams(self, st, st_filtered, c_f_d_s):
         # c_f_d_s is the current filter display settings
         self.pl_widget.plot_traces(st, st_filtered, c_f_d_s)
+        # self.spect_widget.update_streams(st)
 
     def clear(self):
         self.pl_widget.sts = None
@@ -70,6 +84,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     filtered_plot_lines = []    # this list will hold references to the filtered plot lines
 
     t = []  # this will hold the list of time series for all the plots
+    freqs = [] # this will hold the frequency list for the spectrograms
+
     earliest_start_time = None
     latest_end_time = None
 
@@ -102,6 +118,25 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
     def get_active_plot(self):
         return self.active_plot
+
+    def calc_spectrograms(self, streams):
+        self.freqs.clear()
+        self.times.clear()
+        self.hist.clear()
+        self.spectrograms.clear()
+
+        self.sts = streams
+
+        if streams is None:
+            return
+
+        for trace in streams:
+            freqs, times, spectrogram = signal.spectrogram(trace.data, fs=trace.stats['sampling_rate'])
+            self.freqs.append(freqs)
+            self.times.append(times)
+            self.spectrograms.append(np.log10(spectrogram))
+
+        #self.update_images()
 
     def plot_traces(self,
                     sts,
@@ -144,7 +179,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_plot = IPPlotWidget.IPPlotWidget(mode='waveform')
             new_plot.addItem(self.plot_lines[idx], name=trace.id)
             new_plot.addItem(self.filtered_plot_lines[idx])
-            # new_plot.set_trace_id(trace.id)
 
             ###########################################################################
             # Now lets set up the signal and noise linear region items
@@ -456,7 +490,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     # Key press events...
 
     def keyPressEvent(self, evt):
-        print("key pressed")
+        #print("key pressed")
+        pass
 
     def myNoiseSpinsChanged(self):
         start = self.noiseStartSpin.value()

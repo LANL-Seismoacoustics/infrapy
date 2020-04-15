@@ -705,10 +705,10 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
                     dt = infr_tms[n] - infr_rngs[:, n] * mns[:, n, seq[n]]
                     sig = infr_rngs[:, n] * vrs[:, n, seq[n]]
 
-                    a += 1.0 / sig**2
-                    b += dt / sig**2
-                    c += (dt / sig)**2
-                    N *= wts[:, n, seq[n]] / sig
+                    a = a + 1.0 / sig**2
+                    b = b + dt / sig**2
+                    c = c + (dt / sig)**2
+                    N = N * wts[:, n, seq[n]] / sig
                 #embed()
                 rng_cel_pdf += N / np.sqrt(a) * np.exp(-1.0 / 2.0 * (c - b**2 / a))
             rng_cel_pdf /= np.power(2.0 * np.pi, (seis_cnt + infr_cnt - 1.0) / 2.0)

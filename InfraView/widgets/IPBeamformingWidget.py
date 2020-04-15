@@ -85,21 +85,34 @@ class IPBeamformingWidget(QWidget):
         self.waveformPlot.hideButtons()
 
         self.fstatPlot = IPPlotWidget.IPPlotWidget(y_label_format='nonscientific', pickable=False)
-        self.fstatPlot.setLogMode(y=True)
-        self.fstatPlot.setYRange(0.1, 5)
-        self.fstatPlot.enableAutoRange(axis=ViewBox.YAxis)
+        # self.fstatPlot.setLogMode(y=True)
+        self.fstatPlot.setYRange(0, 10)
+        # self.fstatPlot.enableAutoRange(axis=ViewBox.YAxis)
         self.fstatPlot.showGrid(x=True, y=True, alpha=0.3)
         self.fstatPlot.setLabel('left', 'F-Statistic')
+        self.fstat_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
+        self.fstatPlot.addItem(self.fstat_marker)
+        self.fstat_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
+        self.fstat_marker_label.setZValue(15)
+
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
         self.traceVPlot.showGrid(x=True, y=True, alpha=0.3)
         self.traceVPlot.setYRange(0, 500)
         self.traceVPlot.setLabel('left', 'Trace Velocity (m/s)')
+        self.traceV_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
+        self.traceVPlot.addItem(self.traceV_marker)
+        self.traceV_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
+        self.traceV_marker_label.setZValue(15)
 
         self.backAzPlot = IPPlotWidget.IPPlotWidget()
         self.backAzPlot.showGrid(x=True, y=True, alpha=0.3)
         self.backAzPlot.setYRange(-180, 180)
         self.backAzPlot.setLabel('left', 'Back Azimuth (deg)')
+        self.backAz_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
+        self.backAzPlot.addItem(self.backAz_marker)
+        self.backAz_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
+        self.backAz_marker_label.setZValue(15)
 
         self.resultPlots = {'fplot': self.fstatPlot, 'tracePlot': self.traceVPlot, 'backPlot': self.backAzPlot}
 
@@ -309,7 +322,7 @@ class IPBeamformingWidget(QWidget):
 
             # These connections need to be made for each new detection line
             newDetectionLine.sigPickLineMoving.connect(self.detectionWidget.detectionLineMoving)
-            newDetectionLine.sigPickLineMoved.connect(self.detectionWidget.detectionLineMoved)
+            newDetectionLine.sigPickLineMoved.connect(self.detectionLineMoved)
             newDetectionLine.sigDeleteMe.connect(self.detectionWidget.delete_detection)
 
             newDetectionLine.sigCreateStartEndBars.connect(self.detectionWidget.createNewDetectionStartEndRegion)
@@ -324,6 +337,17 @@ class IPBeamformingWidget(QWidget):
 
             if newDetectionLine.startEndBars() is not None:
                 self.fstatPlot.addItem(newDetectionLine.startEndBars())
+
+    @pyqtSlot(float)
+    def detectionLineMoved(self, pos):
+        # somebody moved a detection line, so we need to first find the nearest _t value to the new position, and set the detection line
+        # to that _t value
+        nearest_idx = self.nearest_in_t(pos)
+        self.detectionWidget.detectionLineMoved(self._t[nearest_idx], 
+                                                self._f_stats[nearest_idx], 
+                                                self._back_az[nearest_idx], 
+                                                self._trace_vel[nearest_idx])
+        self.plot_slowness_at_idx(nearest_idx)
 
     def clearDetectionLines(self):
         """
@@ -371,33 +395,84 @@ class IPBeamformingWidget(QWidget):
         if len(self._plot_list) == 0:
             return
 
+        if len(self._t) == 0:
+            return
+
         e_s_t = self.get_earliest_start_time()
         if e_s_t is None:
             return
 
+        # so save some cpu time, and since the plots have the same x axis, lets get the nearest time data
+        # outside of the plot loop
+        mouse_point_x = (self._plot_list[0].vb.mapSceneToView(evt)).x()
+
+        nearest_idx = self.nearest_in_t(mouse_point_x)
+
+        # get the xy values of the point nearest to the cursor
+        t_nearest = self._t[nearest_idx]
+        f_nearest = self._f_stats[nearest_idx]
+        ba_nearest = self._back_az[nearest_idx]
+        tv_nearest = self._trace_vel[nearest_idx]
+
+        self.fstat_marker_label.setText(' [' + str(t_nearest) +', '+str(f_nearest)+']')
+        self.fstat_marker_label.setPos(t_nearest, f_nearest)
+        self.backAz_marker_label.setText(' [' + str(t_nearest) +', '+str(ba_nearest)+']')
+        self.backAz_marker_label.setPos(t_nearest, ba_nearest)
+        self.traceV_marker_label.setText(' [' + str(t_nearest) +', '+str(tv_nearest)+']')
+        self.traceV_marker_label.setPos(t_nearest, tv_nearest)
+
+        #set the data of all of the cursors
+        self.fstat_marker.setData([t_nearest], [f_nearest])
+        self.backAz_marker.setData([t_nearest], [ba_nearest])
+        self.traceV_marker.setData([t_nearest], [tv_nearest])
+
+        mouse_in_plot = False   # mouse_in_plot will be used to decide if the mouse is currently hovering over a plot
+
         for idx, my_plot in enumerate(self._plot_list):
-            try:
-                mousePoint = my_plot.vb.mapSceneToView(evt)
-            except Exception:
-                return
-            self._vlines[idx].setPos(mousePoint.x())
-            self._hlines[idx].setPos(mousePoint.y())
+
+            mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
+
+            # self._vlines[idx].setPos(mouse_point_x)
+            # self._hlines[idx].setPos(mouse_point_y)
+            self._hlines[idx].setVisible(False)
+            self._vlines[idx].setVisible(False)
 
             if my_plot.sceneBoundingRect().contains(evt):
-                myRange = my_plot.viewRange()
-                vb = my_plot.getViewBox()
-                _, sy = vb.viewPixelSize()  # this is to help position the valueLabels below the positionLabels
+                mouse_in_plot = True
 
-                self._position_labels[idx].setVisible(True)
-                self._position_labels[idx].setPos(myRange[0][1], myRange[1][1])
-                self._position_labels[idx].setText("UTC = {0}".format(e_s_t + mousePoint.x()))
+                # myRange = my_plot.viewRange()
+                # vb = my_plot.getViewBox()
+                # _, sy = vb.viewPixelSize()  # this is to help position the valueLabels below the positionLabels
 
-                self._value_labels[idx].setVisible(True)
-                self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self._position_labels[idx].boundingRect().height())
-                self._value_labels[idx].setText("{}".format(round(mousePoint.y(), 4)))
+                # self._position_labels[idx].setVisible(True)
+                # self._position_labels[idx].setPos(myRange[0][1], myRange[1][1])
+                # self._position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
+
+                # self._value_labels[idx].setVisible(True)
+                # self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self._position_labels[idx].boundingRect().height())
+                # self._value_labels[idx].setText("{}".format(round(mouse_point_y, 4)))
             else:
                 self._position_labels[idx].setVisible(False)
                 self._value_labels[idx].setVisible(False)
+
+        if not mouse_in_plot:
+            # clear markers
+            self.fstat_marker.setData([], [])
+            self.backAz_marker.setData([], [])
+            self.traceV_marker.setData([], [])
+
+            self.fstat_marker_label.setText('')
+            self.backAz_marker_label.setText('')
+            self.traceV_marker_label.setText('')
+
+
+    def nearest_in_t(self, value):
+        if len(self._t) < 1:
+            return
+
+        ## Return the index of the time array that is closest to value
+        a = np.asarray(self._t)
+        return (np.abs(a-value)).argmin()
 
     def getProject(self):
         return self._parent.getProject()
@@ -456,6 +531,17 @@ class IPBeamformingWidget(QWidget):
         self.spi.clear()
         self.spi.addPoints([])
 
+        # clear out previous run
+        self.clearResultPlots()
+
+        self.fstatPlot.addItem(self.fstat_marker)
+        self.fstatPlot.addItem(self.fstat_marker_label)
+        self.traceVPlot.addItem(self.traceV_marker)
+        self.traceVPlot.addItem(self.traceV_marker_label)
+        self.backAzPlot.addItem(self.backAz_marker)
+        self.backAzPlot.addItem(self.backAz_marker_label)
+
+
         # First lets create some new curves, and add them to the pertinent plots
         self._t = []
         self._trace_vel = []
@@ -464,6 +550,7 @@ class IPBeamformingWidget(QWidget):
         self.slownessX = np.array([])
         self.slownessY = np.array([])
         self.beam_power = np.array([])
+
 
         self.max_projection = None
         self.max_projection_curve = None
@@ -507,6 +594,8 @@ class IPBeamformingWidget(QWidget):
             tcolor = (0, 130, 0)
             bcolor = (0, 0, 130)
 
+        symbol_size = '5'
+
         self.fval_curve = pg.PlotDataItem(x=self._t,
                                           y=self._f_stats,
                                           pen=None,
@@ -514,7 +603,7 @@ class IPBeamformingWidget(QWidget):
                                           symbol=symb,
                                           symbolPen=fcolor,
                                           symbolBrush=fcolor,
-                                          symbolSize='5')
+                                          symbolSize=symbol_size)
 
         self.fval_curve.sigPointsClicked.connect(self.pointsClicked)
         self.fstatPlot.addItem(self.fval_curve)
@@ -526,7 +615,7 @@ class IPBeamformingWidget(QWidget):
                                            symbol=symb,
                                            symbolPen=tcolor,
                                            symbolBrush=tcolor,
-                                           symbolSize='5')
+                                           symbolSize=symbol_size)
 
         # self.trace_curve.sigPointsClicked.connect(self.pointsClicked)
         self.traceVPlot.addItem(self.trace_curve)
@@ -538,14 +627,12 @@ class IPBeamformingWidget(QWidget):
                                                symbol=symb,
                                                symbolPen=bcolor,
                                                symbolBrush=bcolor,
-                                               symbolSize='5')
+                                               symbolSize=symbol_size)
 
         # self.backaz_curve.sigClicked.connect(self.pointsClicked)
         self.backAzPlot.addItem(self.backaz_curve)
 
         backaz_range = self.bottomSettings.getBackAzFreqRange()
-
-        slowness_length = (750. - 300) / self.bottomSettings.getTraceVelResolution() * (backaz_range[1] - backaz_range[0]) / self.bottomSettings.getBackAzResolution()
 
         self._slowness_collection = []  # Clear this array for the new run
 
@@ -595,7 +682,7 @@ class IPBeamformingWidget(QWidget):
 
         self.signal_startBeamforming.emit()
 
-    def pointsClicked(pdi, points_clicked):
+    def pointsClicked(self, pdi, points_clicked):
         print('type(pdi) = {}'.format(type(pdi)))
         print('type(points_clicked) = {}'.format(type(points_clicked)))
         for idx, point in enumerate(points_clicked):
