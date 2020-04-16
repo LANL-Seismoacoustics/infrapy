@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLa
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QLine
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QFont, QFontDatabase, QIcon
+from PyQt5.QtGui import QFont, QFontDatabase, QIcon, QPainterPath, QColor, QCursor
 
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
@@ -62,6 +62,11 @@ class IPBeamformingWidget(QWidget):
 
     _mp_pool = None
 
+    lanl_blue = QColor(10, 44, 71)
+    lanl_light_blue = QColor(34, 77, 122)
+    lanl_green = QColor(67, 137, 23)
+    lanl_orange = QColor(255, 144, 0)
+
     def __init__(self, parent, pool):
         super().__init__()
 
@@ -73,9 +78,18 @@ class IPBeamformingWidget(QWidget):
         self.buildUI()
         self.restoreSettings()
 
+    def make_crosshair(self):
+        crosshair = QPainterPath()
+        crosshair.moveTo(0, -0.5)
+        crosshair.lineTo(0,  0.5)
+        crosshair.moveTo(-0.5, 0)
+        crosshair.lineTo(0.5, 0)
+        return crosshair
+
     def buildUI(self):
 
         self.make_toolbar()
+        # crosshair_symbol = self.make_crosshair()
 
         self.lhWidget = pg.GraphicsLayoutWidget()
         self.lhWidget.setMouseTracking(True)
@@ -84,9 +98,9 @@ class IPBeamformingWidget(QWidget):
         self.waveformPlot.setLabel('left', 'Waveform')
         self.waveformPlot.hideButtons()
 
-        self.fstatPlot = IPPlotWidget.IPPlotWidget(y_label_format='nonscientific', pickable=False)
+        self.fstatPlot = IPPlotWidget.IPPlotWidget()
         # self.fstatPlot.setLogMode(y=True)
-        self.fstatPlot.setYRange(0, 10)
+        self.fstatPlot.setYRange(0, 20)
         # self.fstatPlot.enableAutoRange(axis=ViewBox.YAxis)
         self.fstatPlot.showGrid(x=True, y=True, alpha=0.3)
         self.fstatPlot.setLabel('left', 'F-Statistic')
@@ -94,7 +108,7 @@ class IPBeamformingWidget(QWidget):
         self.fstatPlot.addItem(self.fstat_marker)
         self.fstat_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.fstat_marker_label.setZValue(15)
-
+        self.fstat_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_blue)
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
         self.traceVPlot.showGrid(x=True, y=True, alpha=0.3)
@@ -104,6 +118,7 @@ class IPBeamformingWidget(QWidget):
         self.traceVPlot.addItem(self.traceV_marker)
         self.traceV_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.traceV_marker_label.setZValue(15)
+        self.traceV_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_green)
 
         self.backAzPlot = IPPlotWidget.IPPlotWidget()
         self.backAzPlot.showGrid(x=True, y=True, alpha=0.3)
@@ -113,6 +128,7 @@ class IPBeamformingWidget(QWidget):
         self.backAzPlot.addItem(self.backAz_marker)
         self.backAz_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.backAz_marker_label.setZValue(15)
+        self.backAz_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_orange)
 
         self.resultPlots = {'fplot': self.fstatPlot, 'tracePlot': self.traceVPlot, 'backPlot': self.backAzPlot}
 
@@ -151,16 +167,24 @@ class IPBeamformingWidget(QWidget):
         # Create the slowness plot and its dataitem
         self.slownessPlot = IPPolarPlot.IPPolarPlot()
         self.spi = pg.ScatterPlotItem(pxMode=False, pen=pg.mkPen(None))
+        slowness_pen = pg.mkPen(color=(60, 60, 60), width=2)
+        self.max_line = pg.PlotDataItem(x=[],
+                                        y=[],
+                                        pen=slowness_pen,
+                                        symbol=None)
+        self.max_line.setZValue(20)
+        self.slownessPlot.addItem(self.max_line)
 
         # Create the slowness widget and its dataitem
         self.projectionPlot = IPPlotWidget.IPPlotWidget()
+        
         self.projectionCurve = pg.PlotDataItem(x=[],
                                                y=[],
                                                pen=(60, 60, 60),
                                                symbol=None)
         self.max_projectionCurve = pg.PlotDataItem(x=[],
                                                    y=[],
-                                                   pen=(180, 180, 180),
+                                                   pen=(100, 100, 100),
                                                    symbol=None)
 
         self.projectionPlot.showGrid(x=True, y=True, alpha=0.3)
@@ -172,9 +196,20 @@ class IPBeamformingWidget(QWidget):
         self.projectionPlot.setXRange(-180, 180)
         self.projectionPlot.getAxis('bottom').setTicks([[(-180, '-180'), (-90, '-90'), (0, '0'), (90, '90'), (180, '180')]])
 
+        self.slowness_time_label = pg.LabelItem('t = ', color='444444')
+        self.slowness_backAz_label = pg.LabelItem('Back Azimuth (deg) = ', color='444444')
+        self.slowness_traceV_label = pg.LabelItem('Trace Velocity (m/s) = ', color='444444')
+
         slownessWidget.addItem(self.slownessPlot)
         slownessWidget.nextRow()
+        slownessWidget.addItem(self.slowness_time_label)
+        slownessWidget.nextRow()
+        slownessWidget.addItem(self.slowness_backAz_label)
+        slownessWidget.nextRow()
+        slownessWidget.addItem(self.slowness_traceV_label)
+        slownessWidget.nextRow()
         slownessWidget.addItem(self.projectionPlot)
+
 
         # ---------------------------------------------
         # the bottomWidget will hold the beamforming settings widget, and the detection widget...
@@ -279,6 +314,7 @@ class IPBeamformingWidget(QWidget):
     def connectSignalsAndSlots(self):
         # keep as many signal and slot connections as possible together in one place
         self.lhWidget.scene().sigMouseMoved.connect(self.myMouseMoved)
+        self.lhWidget.scene().sigMouseClicked.connect(self.myMouseClicked)
         self.detectionWidget.signal_detections_changed.connect(self.plotDetectionLines)
 
     def setStreams(self, streams):
@@ -349,6 +385,20 @@ class IPBeamformingWidget(QWidget):
                                                 self._trace_vel[nearest_idx])
         self.plot_slowness_at_idx(nearest_idx)
 
+        t_nearest = self._t[nearest_idx]
+        f_nearest = self._f_stats[nearest_idx]
+        ba_nearest = self._back_az[nearest_idx]
+        tv_nearest = self._trace_vel[nearest_idx]
+
+        self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+        self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+        self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+
+        self.fstatPlot.addItem(self.fstat_slowness_marker)
+        self.backAzPlot.addItem(self.backAz_slowness_marker)
+        self.traceVPlot.addItem(self.traceV_slowness_marker)
+        
+
     def clearDetectionLines(self):
         """
         Remove all detection lines from all plots, note that this does not remove detections
@@ -414,11 +464,11 @@ class IPBeamformingWidget(QWidget):
         ba_nearest = self._back_az[nearest_idx]
         tv_nearest = self._trace_vel[nearest_idx]
 
-        self.fstat_marker_label.setText(' [' + str(t_nearest) +', '+str(f_nearest)+']')
+        self.fstat_marker_label.setText(' [{:.2f}, {:.2f}]'.format(t_nearest, f_nearest))
         self.fstat_marker_label.setPos(t_nearest, f_nearest)
-        self.backAz_marker_label.setText(' [' + str(t_nearest) +', '+str(ba_nearest)+']')
+        self.backAz_marker_label.setText(' [{:.2f}, {:.2f}]'.format(t_nearest, ba_nearest))
         self.backAz_marker_label.setPos(t_nearest, ba_nearest)
-        self.traceV_marker_label.setText(' [' + str(t_nearest) +', '+str(tv_nearest)+']')
+        self.traceV_marker_label.setText(' [{:.2f}, {:.2f}]'.format(t_nearest, tv_nearest))
         self.traceV_marker_label.setPos(t_nearest, tv_nearest)
 
         #set the data of all of the cursors
@@ -430,7 +480,7 @@ class IPBeamformingWidget(QWidget):
 
         for idx, my_plot in enumerate(self._plot_list):
 
-            mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
+            # mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
 
             # self._vlines[idx].setPos(mouse_point_x)
             # self._hlines[idx].setPos(mouse_point_y)
@@ -465,6 +515,65 @@ class IPBeamformingWidget(QWidget):
             self.backAz_marker_label.setText('')
             self.traceV_marker_label.setText('')
 
+    def myMouseClicked(self, evt):
+
+        # if there's no data loaded, return immediately
+        if len(self._f_stats) == 0:
+            return
+
+        # Gather up any keyboard modifiers to check for Ctrl, or Shift, or
+        # other keypresses
+        modifiers = self._parent.ipApp.keyboardModifiers()
+        if modifiers == QtCore.Qt.ShiftModifier:
+            # Shift+click
+            pass
+
+        elif modifiers == QtCore.Qt.ControlModifier:
+            # if control click on the plot, then draw a Linear Region Item on
+            # the plot
+            if evt.button() == QtCore.Qt.LeftButton:
+                #self.mouseClick_ControlLeft(evt)
+                pass
+
+        elif modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
+            # Cntrl+Shift+Click
+            pass
+
+        else:
+            # Handle regular Left Button Click
+            if evt.button() == QtCore.Qt.LeftButton:
+                # This is the primary way of adding a pick to a plot
+                self.mouseClick_Left(evt)
+
+    def mouseClick_Left(self, evt):
+        # Go ahead and grab the position of the mouse click and also generate a
+        # QPoint out of it for some uses
+        p = QCursor.pos()  # this is the global coordinate of the mouse
+        scenePos = evt.scenePos()
+
+        for my_plot in self._plot_list:
+
+            # screenGeometry is the global rectangle of the viewbox:
+            if my_plot.vb.screenGeometry().contains(p):
+                # get the index of the point nearest to the click
+                mouse_point_x = (my_plot.vb.mapSceneToView(scenePos)).x()
+                nearest_idx = self.nearest_in_t(mouse_point_x)
+
+                self.plot_slowness_at_idx(nearest_idx)
+
+                t_nearest = self._t[nearest_idx]
+                f_nearest = self._f_stats[nearest_idx]
+                ba_nearest = self._back_az[nearest_idx]
+                tv_nearest = self._trace_vel[nearest_idx]
+
+                self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+                self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+                self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+
+                self.fstatPlot.addItem(self.fstat_slowness_marker)
+                self.backAzPlot.addItem(self.backAz_slowness_marker)
+                self.traceVPlot.addItem(self.traceV_slowness_marker)
+                
 
     def nearest_in_t(self, value):
         if len(self._t) < 1:
@@ -535,12 +644,11 @@ class IPBeamformingWidget(QWidget):
         self.clearResultPlots()
 
         self.fstatPlot.addItem(self.fstat_marker)
-        self.fstatPlot.addItem(self.fstat_marker_label)
+        self.fstatPlot.addItem(self.fstat_marker_label, ignoreBounds=True)
         self.traceVPlot.addItem(self.traceV_marker)
-        self.traceVPlot.addItem(self.traceV_marker_label)
+        self.traceVPlot.addItem(self.traceV_marker_label, ignoreBounds=True)
         self.backAzPlot.addItem(self.backAz_marker)
-        self.backAzPlot.addItem(self.backAz_marker_label)
-
+        self.backAzPlot.addItem(self.backAz_marker_label, ignoreBounds=True)
 
         # First lets create some new curves, and add them to the pertinent plots
         self._t = []
@@ -570,9 +678,9 @@ class IPBeamformingWidget(QWidget):
         method = self.bottomSettings.getMethod()
         if method == 'bartlett':
             symb = 'o'
-            fcolor = (250, 0, 0)
-            tcolor = (0, 250, 0)
-            bcolor = (0, 0, 250)
+            fcolor = self.lanl_blue
+            tcolor = self.lanl_green
+            bcolor = self.lanl_orange
         elif method == 'gls':
             symb = '+'
             fcolor = (220, 0, 0)
@@ -631,8 +739,6 @@ class IPBeamformingWidget(QWidget):
 
         # self.backaz_curve.sigClicked.connect(self.pointsClicked)
         self.backAzPlot.addItem(self.backaz_curve)
-
-        backaz_range = self.bottomSettings.getBackAzFreqRange()
 
         self._slowness_collection = []  # Clear this array for the new run
 
@@ -707,9 +813,7 @@ class IPBeamformingWidget(QWidget):
             max_slowness = np.max(slowness[:, -1])
             min_slowness = np.min(slowness[:, -1])
 
-            # maxLine = IPLine.IPLine()
-            # maxLine.setLine(0,0,slowness[idx_max, 0], slowness[idx_max, 1])
-
+        
             if method == "music" or method == "capon":
                 scaled_slowness = 100 * (1.0 - (slowness[:, -1] - min_slowness) / (max_slowness - min_slowness))
             elif method == "gls":
@@ -739,6 +843,13 @@ class IPBeamformingWidget(QWidget):
 
         slowness = self._slowness_collection[idx]
 
+        max_slowness = np.max(slowness[:, -1])
+        max_slowness_idx = np.argmax(slowness[:,-1])
+        min_slowness = np.min(slowness[:, -1])
+
+        self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
+        self.slownessPlot.addItem(self.max_line)
+
         method = self.bottomSettings.getMethod()
         if method == "music" or method == "capon":
             max_slowness = np.max(slowness[:, -1])
@@ -750,7 +861,6 @@ class IPBeamformingWidget(QWidget):
         for i in range(slowness.shape[0]):
             if method == "bartlett_covar" or method == "bartlett":
                 brush = pg.intColor(100 * (slowness[i, -1]), hues=100, values=1)
-
             else:
                 brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
 
@@ -758,6 +868,18 @@ class IPBeamformingWidget(QWidget):
 
         self.spi.clear()
         self.spi.addPoints(self.dots)
+
+        self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
+        self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
+        self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
+
+        self.fstat_slowness_marker.setData([self._t[idx]], [self._f_stats[idx]])
+        self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
+        self.traceV_slowness_marker.setData([self._t[idx]], [self._trace_vel[idx]])
+
+        self.fstatPlot.addItem(self.fstat_slowness_marker)
+        self.backAzPlot.addItem(self.backAz_slowness_marker)
+        self.traceVPlot.addItem(self.traceV_slowness_marker)
 
     @pyqtSlot(np.ndarray, np.ndarray)
     def updateProjection(self, projection, avg_beam_power):
@@ -864,6 +986,10 @@ class IPBeamformingWidget(QWidget):
 
         # clearing removes the crosshairs, so lets put them back
         self.addCrosshairs()
+
+        self.slowness_time_label.setText('t = ')
+        self.slowness_backAz_label.setText('Back Azimuth (deg) = ')
+        self.slowness_traceV_label.setText('Trace Velocity (m/s) = ')
 
     def clearWaveformPlot(self):
         self.waveformPlot.clear()

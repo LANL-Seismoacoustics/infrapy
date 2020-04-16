@@ -116,7 +116,7 @@ class IPPlotWidget(pg.PlotItem):
                     newx = mousepoint.x()
                     evt.accept()
         else:
-            evt.ignore()
+            evt.accept()
 
     def mouseDragEvent(self, evt):
         if evt.button() == QtCore.Qt.RightButton:
