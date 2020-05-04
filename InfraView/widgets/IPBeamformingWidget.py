@@ -99,9 +99,9 @@ class IPBeamformingWidget(QWidget):
         self.waveformPlot.hideButtons()
 
         self.fstatPlot = IPPlotWidget.IPPlotWidget()
-        # self.fstatPlot.setLogMode(y=True)
-        self.fstatPlot.setYRange(0, 20)
-        # self.fstatPlot.enableAutoRange(axis=ViewBox.YAxis)
+        self.fstatPlot.hideButtons()
+        self.fstatPlot.setYRange(0, 20, padding=0)
+        self.fstatPlot.disableAutoRange(axis=ViewBox.XAxis)
         self.fstatPlot.showGrid(x=True, y=True, alpha=0.3)
         self.fstatPlot.setLabel('left', 'F-Statistic')
         self.fstat_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
@@ -111,8 +111,10 @@ class IPBeamformingWidget(QWidget):
         self.fstat_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_blue)
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
+        self.traceVPlot.hideButtons()
         self.traceVPlot.showGrid(x=True, y=True, alpha=0.3)
-        self.traceVPlot.setYRange(0, 500)
+        self.traceVPlot.setYRange(0, 500, padding=0)
+        self.traceVPlot.disableAutoRange(axis=ViewBox.XAxis)
         self.traceVPlot.setLabel('left', 'Trace Velocity (m/s)')
         self.traceV_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
         self.traceVPlot.addItem(self.traceV_marker)
@@ -121,8 +123,14 @@ class IPBeamformingWidget(QWidget):
         self.traceV_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_green)
 
         self.backAzPlot = IPPlotWidget.IPPlotWidget()
+        self.backAzPlot.hideButtons()
         self.backAzPlot.showGrid(x=True, y=True, alpha=0.3)
-        self.backAzPlot.setYRange(-180, 180)
+        self.backAzPlot.setYRange(-180, 180, padding=0)
+        # I want to make sure this plot has meaningful ticks
+        la = self.backAzPlot.getAxis('left')
+        ba_ticks = [-180.0, -90.0, 0, 90.0, 180.0]
+        la.setTicks([[(tic, str(tic)) for tic in ba_ticks]])
+        self.backAzPlot.disableAutoRange(ViewBox.XAxis)
         self.backAzPlot.setLabel('left', 'Back Azimuth (deg)')
         self.backAz_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
         self.backAzPlot.addItem(self.backAz_marker)
@@ -573,6 +581,12 @@ class IPBeamformingWidget(QWidget):
                 self.fstatPlot.addItem(self.fstat_slowness_marker)
                 self.backAzPlot.addItem(self.backAz_slowness_marker)
                 self.traceVPlot.addItem(self.traceV_slowness_marker)
+
+        # move the waveform time region to reflect the location of the current selected point
+        t_range = self.timeRangeLRI.getRegion()
+        t_half_width = (t_range[1] - t_range[0]) / 2.
+        t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+        self.timeRangeLRI.setRegion(t_region)
                 
 
     def nearest_in_t(self, value):
@@ -742,6 +756,15 @@ class IPBeamformingWidget(QWidget):
 
         self._slowness_collection = []  # Clear this array for the new run
 
+        # print(self.bottomSettings.getNoiseRange())
+        # print(self.bottomSettings.getSignalRange())
+        # print(self.bottomSettings.getFreqRange())
+        # print(self.bottomSettings.getWinLength())
+        # print(self.bottomSettings.getWinStep())
+        # print(self.bottomSettings.getMethod())
+        # print(self.bottomSettings.getNumSigs())
+        # print(self.bottomSettings.getSubWinLength())
+
         self.bfWorker = BeamformingWorkerObject(self._streams,
                                                 self.resultData,
                                                 self.bottomSettings.getNoiseRange(),
@@ -795,10 +818,20 @@ class IPBeamformingWidget(QWidget):
             print('{}: x={}, y={}'.format(idx, point.x(), point.y()))
 
     def updateCurves(self):
-        # print('ttype = {}, fstatstype = {}'.format(type(self.t), type(self.fstats)))
+
         self.fval_curve.setData(self._t, self._f_stats)
         self.trace_curve.setData(self._t, self._trace_vel)
         self.backaz_curve.setData(self._t, self._back_az)
+
+        f_yrange = self.fstatPlot.vb.viewRange()[1]
+        f_max = max(self._f_stats)
+        if f_max > f_yrange[1]:
+            self.fstatPlot.setYRange(0, f_max * 1.1, padding=0)
+
+        t_yrange = self.traceVPlot.vb.viewRange()[1]
+        t_max = max(self._trace_vel)
+        if t_max > t_yrange[1]:
+            self.traceVPlot.setYRange(0, t_max * 1.1, padding=0)
 
     @pyqtSlot(np.ndarray)
     def updateSlowness(self, slowness):
@@ -900,7 +933,7 @@ class IPBeamformingWidget(QWidget):
 
         method = self.bottomSettings.getMethod()
         if method == "bartlett_covar" or method == "bartlett" or method == "gls":
-            self.projectionPlot.setYRange(0, 1)
+            self.projectionPlot.setYRange(0, 1, padding=0)
         else:
             pass
 
@@ -964,14 +997,14 @@ class IPBeamformingWidget(QWidget):
 
     def clearResultPlots(self):
         self.fstatPlot.clear()
-        self.fstatPlot.setYRange(0.1, 1)
-        self.fstatPlot.enableAutoRange(axis=ViewBox.YAxis)
+        self.fstatPlot.setYRange(0, 20, padding=0)
         self._f_stats.clear()
 
         self.backAzPlot.clear()
         self._back_az.clear()
 
         self.traceVPlot.clear()
+        self.traceVPlot.setYRange(0, 500, padding=0)
         self._trace_vel.clear()
 
         self.projectionCurve.clear()
@@ -993,7 +1026,7 @@ class IPBeamformingWidget(QWidget):
 
     def clearWaveformPlot(self):
         self.waveformPlot.clear()
-        self.waveformPlot.setYRange(0, 1)
+        self.waveformPlot.setYRange(0, 1, padding=0)
         self.clearResultPlots()     # it doesn't make sense to have results and no waveform
 
 
