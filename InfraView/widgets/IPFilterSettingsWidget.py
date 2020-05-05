@@ -191,6 +191,7 @@ class IPFilterSettingsWidget(QWidget):
         else:
             self._filter_display_settings['apply'] = False
 
+        self.sig_filter_changed.emit(self._filter_settings)
         self.sig_filter_display_changed.emit(self._filter_display_settings)
 
     def reset_filter_settings(self):

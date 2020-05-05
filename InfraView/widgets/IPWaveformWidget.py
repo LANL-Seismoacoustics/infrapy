@@ -412,8 +412,10 @@ class IPWaveformWidget(QWidget):
 
             current_filter_display_settings = self.filterSettingsWidget.get_filter_display_settings()
             if current_filter_display_settings['apply']:
+                print('filtered')
                 self._parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region)
             else:
+                print('unfiltered')
                 self._parent.beamformingWidget.setWaveform(lines[index], signal_region)
 
         else:

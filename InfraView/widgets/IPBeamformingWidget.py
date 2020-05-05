@@ -100,7 +100,7 @@ class IPBeamformingWidget(QWidget):
 
         self.fstatPlot = IPPlotWidget.IPPlotWidget()
         self.fstatPlot.hideButtons()
-        self.fstatPlot.setYRange(0, 20, padding=0)
+        self.fstatPlot.setYRange(0, 1, padding=0)
         self.fstatPlot.disableAutoRange(axis=ViewBox.XAxis)
         self.fstatPlot.showGrid(x=True, y=True, alpha=0.3)
         self.fstatPlot.setLabel('left', 'F-Statistic')
@@ -432,6 +432,7 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(pg.PlotDataItem, tuple)
     def setWaveform(self, plotLine, region):
+        print("setting waveform")
         if self._waveform_data_item is not None:
             self._waveform_data_item.clear()
         else:
@@ -582,11 +583,11 @@ class IPBeamformingWidget(QWidget):
                 self.backAzPlot.addItem(self.backAz_slowness_marker)
                 self.traceVPlot.addItem(self.traceV_slowness_marker)
 
-        # move the waveform time region to reflect the location of the current selected point
-        t_range = self.timeRangeLRI.getRegion()
-        t_half_width = (t_range[1] - t_range[0]) / 2.
-        t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
-        self.timeRangeLRI.setRegion(t_region)
+                # move the waveform time region to reflect the location of the current selected point
+                t_range = self.timeRangeLRI.getRegion()
+                t_half_width = (t_range[1] - t_range[0]) / 2.
+                t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+                self.timeRangeLRI.setRegion(t_region)
                 
 
     def nearest_in_t(self, value):
@@ -997,7 +998,7 @@ class IPBeamformingWidget(QWidget):
 
     def clearResultPlots(self):
         self.fstatPlot.clear()
-        self.fstatPlot.setYRange(0, 20, padding=0)
+        self.fstatPlot.setYRange(0, 1, padding=0)
         self._f_stats.clear()
 
         self.backAzPlot.clear()
