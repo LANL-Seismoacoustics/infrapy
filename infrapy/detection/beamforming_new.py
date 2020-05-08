@@ -75,7 +75,7 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
         x = x[:, mask]
 
     # define the geometry of the array
-    dxdy = np.empty((len(stream), 2))
+    dxdy = np.zeros((len(stream), 2))
     if latlon is None:
         for m, tr in enumerate(stream):
             temp = wgs84_proj.inv(tr.stats.sac['stlo'], tr.stats.sac['stla'], stream[0].stats.sac['stlo'], stream[0].stats.sac['stla'])
