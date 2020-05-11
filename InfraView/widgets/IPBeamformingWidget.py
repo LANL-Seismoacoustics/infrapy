@@ -432,7 +432,6 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(pg.PlotDataItem, tuple)
     def setWaveform(self, plotLine, region):
-        print("setting waveform")
         if self._waveform_data_item is not None:
             self._waveform_data_item.clear()
         else:
