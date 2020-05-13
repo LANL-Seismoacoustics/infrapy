@@ -837,11 +837,26 @@ def extract_signal(X, f, slowness, dxdy):
     return sig_estimate, residual
 
 
+
 # ###################### #
 #        Identify        #
 #       Detections       #
 # ###################### #
-def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, back_az_lim=15, method="kde", TB_prod=None, channel_cnt=None, use_det_mask=False):
+def calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt):
+    kde = stats.gaussian_kde(fstat_vals)
+    def temp_kde(f):
+        return -kde.pdf(f)
+
+    def temp_fstat(f):
+        return -stats.f(TB_prod, TB_prod * (channel_cnt - 1)).pdf(f)
+
+    c_scalar = minimize_scalar(temp_kde).x / minimize_scalar(temp_fstat).x
+
+    return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_thresh) * c_scalar[0]
+
+
+
+def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thresh=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -855,8 +870,12 @@ def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, bac
         beam_results : 2darray
             Beamforming results consisting of back azimuth, trace velocity, and
             f-value at each time step
-        win_len : 2darray
-            Array geometry
+        win_len : float
+            Window length to define the adaptive fstat threshold
+        TB_prod : int
+            Time-bandwidth product needed to compute the Fisher statistic
+        channel_cnt : int
+            Number of channels on the array; needed to compute the Fisher statistic
         det_thresh : float
             Threshold for declaring a detction
         min_seq : int
@@ -865,18 +884,9 @@ def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, bac
         back_az_lim : float
             Threshold below which the maximum separation of back azimuths must be
             in order to declare a detection
-        method : str
-            Method to use for detection.  Options are "kde" for Kernel density
-            estimate and "fstat" for adaptive Fisher statistics
-        TB_prod : int
-            Time-bandwidth product needed to compute the Fisher statistic, not used
-            by the KDE method
-        channel_cnt : int
-            Number of channels on the array; needed to compute the Fisher statistic,
-            not used by the KDE method
-        use_det_mask : bool
-            Boolean to use a detection mask for restricting f-values used in
-            defining the threshold
+        fixed_thresh : float
+            A fixed detection threshold for fstat values (overrides adaptive 
+                threshold calculation)
 
         Returns:
         ----------
@@ -888,55 +898,26 @@ def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, bac
     back_az_vals = beam_results[:, 0]
     trc_vel_vals = beam_results[:, 1]
     fstat_vals = beam_results[:, 2]
-    M = channel_cnt
 
     det_mask = np.zeros_like(fstat_vals, dtype=bool)
 
     print("Running detection analysis...")
-    # check first full window for detections using KDE of all f-values
-    kde = stats.gaussian_kde(fstat_vals)
-    if method == "kde":
-        def temp(f, thresh):
-            return kde.integrate_box_1d(0.0, f) - thresh
-        thresh = root(temp, args=det_thresh, x0=max(fstat_vals)).x[0]
-    elif method == "fstat":
-        def temp_kde(f):
-            return -kde.pdf(f)
-        def temp_fstat(f):
-            return -stats.f(TB_prod, TB_prod * (M - 1)).pdf(f)
-        c_scalar = minimize_scalar(temp_kde).x / minimize_scalar(temp_fstat).x
-        thresh = stats.f(TB_prod, TB_prod * (M - 1)).ppf(det_thresh) * c_scalar[0]
+    if fixed_thresh:
+        det_mask = (fstat_vals > fixed_thresh)
     else:
-        msg = "Invalid detection method: {}.".format(method)
-        warnings.warn(msg)
-        return None
+        # check first full window for detections using KDE of all f-values
+        thresh = calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt)
+        init_win_mask = (times - times[0]).astype('m8[s]').astype(float) < win_len
+        det_mask[init_win_mask] = (fstat_vals[init_win_mask] > thresh)
 
-    init_win_mask = (times - times[0]).astype('m8[s]').astype(float) < win_len
-    det_mask[init_win_mask] = (fstat_vals[init_win_mask] > thresh)
+        for n, tn in enumerate(times):
+            if (tn - times[0]).astype('m8[s]').astype(float) > win_len:
+                fstat_vals_win = fstat_vals[np.logical_and(tn - np.timedelta64(int(win_len), 's') <= times, times < tn)]
+                thresh = calc_det_thresh(fstat_vals_win, det_thresh, TB_prod, channel_cnt)
+                det_mask[n] = (fstat_vals[n] > thresh)
 
-    for n, tn in enumerate(times):
-        if (tn - times[0]).astype('m8[s]').astype(float) > win_len:
-            win_mask = np.logical_and(tn - np.timedelta64(int(win_len), 's') <= times, times < tn)
-            if use_det_mask:
-                fstat_vals_win = fstat_vals[np.logical_and(win_mask, np.logical_not(det_mask))]
-            else:
-                fstat_vals_win = fstat_vals[win_mask]
-
-            kde = stats.gaussian_kde(fstat_vals_win)
-            if method == "kde":
-                def temp(f, thresh):
-                    return kde.integrate_box_1d(0.0, f) - thresh
-                thresh = root(temp, args=det_thresh, x0=max(fstat_vals_win)).x[0]
-            else:
-                def temp_kde(f):
-                    return -kde.pdf(f)
-                def temp_fstat(f):
-                    return -stats.f(TB_prod, TB_prod * (M - 1)).pdf(f)
-                c_scalar = minimize_scalar(temp_kde).x / minimize_scalar(temp_fstat).x
-                thresh = stats.f(TB_prod, TB_prod * (M - 1)).ppf(det_thresh) * c_scalar[0]
-            det_mask[n] = (fstat_vals[n] > thresh)
-
-    # Remove spurious detections shorter than the minimum sequence length
+    # Check for detections shorter than the minimum sequence 
+    #   length and with too large of back azimuth deviations
     n, dets = 0, []
     while n < (len(det_mask) - min_seq):
         if np.all(det_mask[n:n + min_seq]):
@@ -944,7 +925,6 @@ def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, bac
             while np.all(det_mask[n:n + det_len]) and n + det_len < len(det_mask):
                 det_len += 1
 
-            # check that the spread of back azimuths is within the tolerance
             back_az_min = np.argmin(back_az_vals[n:n + det_len])
             back_az_max = np.argmax(back_az_vals[n:n + det_len])
 
@@ -954,14 +934,12 @@ def detect_signals(times, beam_results, win_len, det_thresh=0.99, min_seq=5, bac
                     det_time = times[n + pk_index]
                     det_start = (times[n] - times[n + pk_index]).astype('m8[s]').astype(float)
                     det_end = (times[n + det_len] - times[n + pk_index]).astype('m8[s]').astype(float)
-                    #print("n == "+str(n))
                     print(det_time)
-                    #print(det_start)
 
                     back_az = back_az_vals[n + pk_index]
                     trc_vel = trc_vel_vals[n + pk_index]
                     fstat = fstat_vals[n + pk_index]
-                    dets = dets + [[det_time, det_start, det_end, back_az, trc_vel, fstat,c_scalar[0]]]
+                    dets = dets + [[det_time, det_start, det_end, back_az, trc_vel, fstat]]
                 except Exception as ex1:
                     print('Issue with detection time' + str(det_time), ex1)
 
