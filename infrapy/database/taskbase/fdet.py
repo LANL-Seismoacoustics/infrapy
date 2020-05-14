@@ -1,5 +1,5 @@
 '''
-Updated Fall 2019
+Updated May 2020
 @fkdd @omarcillo
 '''
 
@@ -108,6 +108,7 @@ class FDet(Base):
 
         self.pthreshold=float(self.task_PARAM['pthreshold'])
         self.detwinlen=self.task_PARAM['detwinlen']
+	self.adapwlen=self.task_PARAM['adaptivewlen']
         #self.pthr=float(self.task_PARAM['pthreshold'])
         self.cthr=float(self.task_PARAM['corrthreshold'])
         self.minlen=int(self.task_PARAM['mineventlength'])
@@ -466,8 +467,8 @@ class FDet(Base):
         M = self.nchan
         #detections = beamforming_new.detect_signals(times, beam_results, float(self.detwinlen), det_thresh=float(self.pthresholdeshold), min_seq=int(self.dsegmin), method=self.detmethod, TB_prod=self.tb_prod,channel_cnt=M)
 
-        detections = beamforming_new.detect_signals(times, beam_results, float(self.detwinlen), det_thresh=float(1-self.pthreshold), min_seq=int(self.dsegmin), back_az_lim=self.backazlim, method=self.detmethod, TB_prod=self.tb_prod,channel_cnt=M, use_det_mask=False)
-
+        #detections = beamforming_new.detect_signals(times, beam_results, float(self.detwinlen), det_thresh=float(1-self.pthreshold), min_seq=int(self.dsegmin), back_az_lim=self.backazlim, method=self.detmethod, TB_prod=self.tb_prod,channel_cnt=M, use_det_mask=False)
+	detections=beamforming_new.detect_signals(times,beam_results,float(self.adapwlen), float(self.detwinlen)*band_w,M,det_thresh=float(1-self.pthreshold),min_seq=int(self.dsegmin),back_az_lim=self.backazlim,fixed_thresh=det_thresh)
         if len(detections)>0:
             for idet in range(len(detections)):
                 ti = UTCDateTime(detections[idet][0].astype(datetime)).timestamp
