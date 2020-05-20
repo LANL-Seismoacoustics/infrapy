@@ -376,6 +376,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     time_pdf_fit = interp1d(dts, time_marg_pdf, kind='cubic')
 
     # Analyze the resulting pdf to identify mean, variance, and exact 95% and 99% confidence bounds
+    time_bnds_90 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.90)
     time_bnds_95 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.95)
     time_bnds_99 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.99)
 
@@ -415,8 +416,8 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
               'covar': covar,
               't_mean': time_lims[0] + np.timedelta64(int(time_mean * 1e3), 'ms'),
               't_var': time_var,
-              't_min' : time_lims[0] + np.timedelta64(int(min(time_bnds_95[0]) * 1e3), 'ms'),
-              't_max' : time_lims[0] + np.timedelta64(int(max(time_bnds_95[0]) * 1e3), 'ms'),
+              't_min' : time_lims[0] + np.timedelta64(int(min(time_bnds_90[0]) * 1e3), 'ms'),
+              't_max' : time_lims[0] + np.timedelta64(int(max(time_bnds_90[0]) * 1e3), 'ms'),
               'lat_MaP': MaP.x[0],
               'lon_MaP': MaP.x[1],
               't_MaP': time_lims[0] + np.timedelta64(int(MaP.x[2] * 1e3), 'ms'),
