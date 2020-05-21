@@ -17,7 +17,7 @@ import copyreg
 
 import numpy as np
 
-from scipy.integrate import quad, nquad
+from scipy.integrate import quad, nquad, simps
 from scipy.interpolate import interp1d, interp2d
 from scipy.optimize import minimize, bisect
 from scipy.special import i0
@@ -143,19 +143,19 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
     return center, radius
 
 
-def calc_conf_ellipse(means, variances, conf_lvl, pnts=100):
+def calc_conf_ellipse(means, st_devs, conf_lvl, pnts=100):
     """Compute the confidence ellipse around a latitude longitude point
 
         Computes the points on an ellipse centered at a latitude, longitude point with
-        variances (E/W, N/S, and covariance) defiend in kilometers for a given confidence
+        standard deviations (E/W, N/S, and covariance) defiend in kilometers for a given confidence
         level.
 
         Parameters
         ----------
         means : float
             Latitude and longitude of the center
-        variances : float
-            East/West, North/South, and covariance for the ellipse
+        st_devs : float
+            East/West and North/South standard deviations, and covariance for the ellipse
         conf_lvl : float
             Confidence level in percentage (e.g., 95.0 = 95%)
         pnts : int
@@ -170,11 +170,11 @@ def calc_conf_ellipse(means, variances, conf_lvl, pnts=100):
 
     width = chi2(2).ppf(conf_lvl / 100.0)
 
-    lat_vals = np.linspace(means[0] - variances[0] * np.sqrt(width), means[0] + variances[0] * np.sqrt(width), pnts)
-    ellps = np.array([lat_vals[0], means[1] + variances[1] * (variances[2] * (lat_vals[0] - means[0]) / variances[0] + np.sqrt(max(width - ((lat_vals[0] - means[0]) / variances[0])**2, 0.0) * (1.0 - variances[2]**2)))])
+    lat_vals = np.linspace(means[0] - st_devs[0] * np.sqrt(width), means[0] + st_devs[0] * np.sqrt(width), pnts)
+    ellps = np.array([lat_vals[0], means[1] + st_devs[1] * (st_devs[2] * (lat_vals[0] - means[0]) / st_devs[0] + np.sqrt(max(width - ((lat_vals[0] - means[0]) / st_devs[0])**2, 0.0) * (1.0 - st_devs[2]**2)))])
 
-    for n in range(1, pnts):          ellps = np.vstack((ellps, [lat_vals[n], means[1] + variances[1] * (variances[2] * (lat_vals[n] - means[0]) / variances[0] + np.sqrt(max(width - ((lat_vals[n] - means[0]) / variances[0])**2, 0.0) * (1.0 - variances[2]**2)))]))
-    for n in range(pnts - 1, -1, -1): ellps = np.vstack((ellps, [lat_vals[n], means[1] + variances[1] * (variances[2] * (lat_vals[n] - means[0]) / variances[0] - np.sqrt(max(width - ((lat_vals[n] - means[0]) / variances[0])**2, 0.0) * (1.0 - variances[2]**2)))]))
+    for n in range(1, pnts):          ellps = np.vstack((ellps, [lat_vals[n], means[1] + st_devs[1] * (st_devs[2] * (lat_vals[n] - means[0]) / st_devs[0] + np.sqrt(max(width - ((lat_vals[n] - means[0]) / st_devs[0])**2, 0.0) * (1.0 - st_devs[2]**2)))]))
+    for n in range(pnts - 1, -1, -1): ellps = np.vstack((ellps, [lat_vals[n], means[1] + st_devs[1] * (st_devs[2] * (lat_vals[n] - means[0]) / st_devs[0] - np.sqrt(max(width - ((lat_vals[n] - means[0]) / st_devs[0])**2, 0.0) * (1.0 - st_devs[2]**2)))]))
     return np.array(ellps[:, 0]), np.array(ellps[:, 1])
 
 
@@ -204,7 +204,7 @@ def find_confidence(func, lims, conf_lvl):
 
     if conf_lvl > 1.0:
         print('WARNING - find_confidence cannot use conf > 1.0')
-        return [lim0, lim1]
+        return [lims[0], lims[1]]
 
     def conf_func(x, thresh):
         val = func(x)
@@ -273,11 +273,11 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
             Dictionary containing all localization results:
                 'lat_mean': Mean latitude for the marginalized spatial distribution
                 'lon_mean' : Mean longitude for the marginalized spatial distribution
-                'EW_var': Variance of the marginalized spatial distribution in the east/west direction in km
-                'NS_var': Variance of the marginalized spatial distribution in the north/south direction in km
+                'EW_stdev': Standard deviation of the marginalized spatial distribution in the east/west direction in km
+                'NS_stdev': Standard deviation of the marginalized spatial distribution in the north/south direction in km
                 'covar': Relative covariance, \sigma_{xy}^2 / (\sigma_x \sigma_y)
                 't_mean': Mean marginalized temporal distribution
-                't_var': Variance of the marginalized temporal distribution
+                't_stdev': Standard deviation of the marginalized temporal distribution
                 't_min' : 95% confidence bound lower limit for the marginalized temporal distribution
                 't_max' : 95% confidence bound upper limit for the marginalized temporal distribution
                 'lat_MaP': Maximum a Posteriori latitude
@@ -306,51 +306,33 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     # Project the marginal spacial posterior in the region of interest for analysis
     pdf = lklhds.marginal_spatial_pdf(proj_lats, proj_lons, det_list, path_geo_model=path_geo_model)
     spatial_pdf = np.vstack((proj_lons, proj_lats, pdf))
+
+    # compute 2d normal approximation
+    pdf_temp = pdf.reshape(resol, resol).T
+
+    norm = simps(np.array([simps(pdf_temp[nr, :] * rngs[nr], angles) for nr in range(resol)]), rngs)
     
-    pdf_fit = interp2d(rngs, angles, pdf.reshape(resol, resol), kind='cubic')
-
-    # Compute spatial means and variances
-    #   dxdy -> r dr daz and absorb degrees/radians into normalization
-    #   x = r sin(az), y = r cos(az)
-    def integrand(r, az):
-        return pdf_fit(r, az)[0] * r
-    norm = nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts, int_opts])[0]
-
-    def integrand(r, az):
-        return r * np.sin(np.radians(az)) * pdf_fit(r, az)[0] * r
-    x_mean = nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts,int_opts])[0] / norm
-
-    def integrand(r, az):
-        return r * np.cos(np.radians(az)) * pdf_fit(r, az)[0] * r
-    y_mean = nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts,int_opts])[0] / norm
+    x_mean = simps(np.array([simps(pdf_temp[nr, :] * rngs[nr] * (rngs[nr] * np.sin(np.radians(angles))), angles) for nr in range(resol)]), rngs) / norm
+    y_mean = simps(np.array([simps(pdf_temp[nr, :] * rngs[nr] * (rngs[nr] * np.cos(np.radians(angles))), angles) for nr in range(resol)]), rngs) / norm
 
     temp = sph_proj.fwd(center[1], center[0], np.degrees(np.arctan2(x_mean, y_mean)), np.sqrt(x_mean**2 + y_mean**2) * 1e3)
     lat_mean, lon_mean = temp[1], temp[0]
 
-    def integrand(r, az):
-        return (r * np.sin(np.radians(az)) - x_mean)**2 * pdf_fit(r, az)[0] * r
-    x_var = np.sqrt(nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts,int_opts])[0] / norm)
-
-    def integrand(r, az):
-        return (r * np.cos(np.radians(az)) - y_mean)**2 * pdf_fit(r, az)[0] * r
-    y_var = np.sqrt(nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts,int_opts])[0] / norm)
-
-    def integrand(r, az):
-        return (r * np.sin(np.radians(az)) - x_mean) * (r * np.cos(np.radians(az)) - y_mean) * pdf_fit(r, az)[0] * r
-    covar = nquad(integrand, [[0.0, radius],[-180.0, 179.0]], opts=[int_opts,int_opts])[0] / (norm * x_var * y_var)
+    x_stdev = np.sqrt(simps(np.array([simps(pdf_temp[nr, :] * rngs[nr] * (rngs[nr] * np.sin(np.radians(angles)) - x_mean)**2, angles) for nr in range(resol)]), rngs) / norm)
+    y_stdev = np.sqrt(simps(np.array([simps(pdf_temp[nr, :] * rngs[nr] * (rngs[nr] * np.cos(np.radians(angles)) - y_mean)**2, angles) for nr in range(resol)]), rngs) / norm)
+    covar = simps(np.array([simps(pdf_temp[nr, :] * rngs[nr] * (rngs[nr] * np.sin(np.radians(angles)) - x_mean) * (rngs[nr] * np.cos(np.radians(angles)) - y_mean), angles) for nr in range(resol)]), rngs) / (norm * x_stdev * y_stdev)
 
     # Temporal analysis
     # Use region edge to determine limits of possible source times with celerities between 0.2 and 0.4 km/s
     time_lims = [det_list[0].peakF_UTCtime - np.timedelta64(int(rng_max / 0.2 * 1e3), 'ms'), det_list[0].peakF_UTCtime - np.timedelta64(int(0.01 / 0.4 * 1e3), 'ms')]
 
-    conf_x, conf_y = calc_conf_ellipse([x_mean, y_mean], [x_var, y_var, covar], 99.0)
+    conf_x, conf_y = calc_conf_ellipse([x_mean, y_mean], [x_stdev, y_stdev, covar], 99.0)
     edge_lons, edge_lats = sph_proj.fwd(np.array([center[1]] * len(conf_x)), np.array([center[0]] * len(conf_x)), np.degrees(np.arctan2(conf_x, conf_y)), np.sqrt(conf_x**2 + conf_y**2) * 1e3)[:2]
 
     for det in det_list:
         det_rngs = sph_proj.inv(np.array([det.longitude] * len(edge_lats)), np.array([det.latitude] * len(edge_lats)), edge_lons, edge_lats, radians=False)[2] / 1000.0
         time_lims[0] = max(det.peakF_UTCtime - np.timedelta64(int(max(det_rngs) / 0.2 * 1e3), 'ms'), time_lims[0])
         time_lims[1] = min(det.peakF_UTCtime - np.timedelta64(int(min(det_rngs) / 0.4 * 1e3), 'ms'), time_lims[1])
-    #prog_bar.increment(3)
 
     # For each time step, project the joint likelihood at constant time and integrate out r, az
     dts = np.linspace(0.0, (time_lims[1] - time_lims[0]).astype('m8[ms]').astype(float) / 1e3, resol)
@@ -358,47 +340,31 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     for n in range(len(dts)):
         t_vals[n] = t_vals[n] + np.timedelta64(int(dts[n] * 1e3), 'ms')
 
-    time_marg_pdf = np.empty_like(dts)
-    for n in range(resol):
-        skip = int(np.sqrt(resol * 4.0))
-        pdf = lklhds.joint_pdf(proj_lats[::skip], proj_lons[::skip], np.array([t_vals[n]] * len(proj_lats[::skip])), det_list, path_geo_model=path_geo_model)
-        time_marg_pdf[n] = np.mean(pdf) * (np.pi * radius**2)
+    skip = int(np.sqrt(resol * 4.0))
+    time_marg_pdf = np.array([np.mean(lklhds.joint_pdf(proj_lats[::skip], proj_lons[::skip], np.array([tn] * len(proj_lats[::skip])), det_list, path_geo_model=path_geo_model)) for tn in t_vals])
 
-    time_pdf_fit = interp1d(dts, time_marg_pdf, kind='cubic')
+    time_norm = simps(time_marg_pdf, dts)
+    time_mean = simps(time_marg_pdf / time_norm * dts, dts)
+    time_stdev = np.sqrt(simps(time_marg_pdf / time_norm * (dts - time_mean)**2, dts))
 
-    def integrand(t):
-        return time_pdf_fit(t)
-    time_norm = quad(integrand, dts[0], dts[-1], epsrel=1.0e-3)[0]
-    time_marg_pdf /= time_norm
-
-    temporal_pdf = [t_vals, time_marg_pdf]
-
-    time_pdf_fit = interp1d(dts, time_marg_pdf, kind='cubic')
-
-    # Analyze the resulting pdf to identify mean, variance, and exact 95% and 99% confidence bounds
+    time_pdf_fit = interp1d(dts, time_marg_pdf / time_norm, kind='cubic')
     time_bnds_95 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.95)
     time_bnds_99 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.99)
 
-    def integrand(t):
-        return t * time_pdf_fit(t)
-    time_mean = quad(integrand, dts[0], dts[-1], epsrel=1.0e-3)[0]
-
-    def integrand(t):
-        return (t - time_mean)**2 * time_pdf_fit(t)
-    time_var =  np.sqrt(quad(integrand, dts[0], dts[-1], epsrel=1.0e-3)[0])
+    temporal_pdf = [t_vals, time_marg_pdf / norm]
 
     # Maximum a Posteriori analysis
     if MaP_mthd=='random':
         n_coarse = int(1e5)
 
-        map_lons, map_lats = sph_proj.fwd(np.array([lon_mean] * n_coarse), np.array([lat_mean] * n_coarse), np.random.uniform(-180.0, 180.0, n_coarse), abs(np.random.normal(scale=np.sqrt(x_var**2 + y_var**2), size=n_coarse)))[:2]
-        map_dts = np.random.normal(loc=time_mean, scale=time_var, size=n_coarse)
+        map_lons, map_lats = sph_proj.fwd(np.array([lon_mean] * n_coarse), np.array([lat_mean] * n_coarse), np.random.uniform(-180.0, 180.0, n_coarse), abs(np.random.normal(scale=np.sqrt(x_stdev**2 + y_stdev**2), size=n_coarse)))[:2]
+        map_dts = np.random.normal(loc=time_mean, scale=time_stdev, size=n_coarse)
     else:
         grid_resol = 200
 
-        R, ANG = np.meshgrid(np.linspace(0.0, 3.0 * np.sqrt(x_var**2 + y_var**2), int(grid_resol)), np.linspace(-180.0, 179.0, int(grid_resol)))
+        R, ANG = np.meshgrid(np.linspace(0.0, 3.0 * np.sqrt(x_stdev**2 + y_stdev**2), int(grid_resol)), np.linspace(-180.0, 179.0, int(grid_resol)))
         map_lons, map_lats = sph_proj.fwd(np.array([lon_mean] * int(grid_resol)**2), np.array([lat_mean] * int(grid_resol)**2), ANG.flatten(), R.flatten() * 1e3)[:2]
-        map_dts = np.linspace(max(time_mean - 3.0 * time_var, 0.0), min(time_mean + 3.0 * time_var, (time_lims[1] - time_lims[0]).astype('m8[ms]').astype(float) / 1e3), grid_resol**2)
+        map_dts = np.linspace(max(time_mean - 3.0 * time_stdev, 0.0), min(time_mean + 3.0 * time_stdev, (time_lims[1] - time_lims[0]).astype('m8[ms]').astype(float) / 1e3), grid_resol**2)
 
     map_tms = np.array([time_lims[0]] * len(map_dts))
     for n in range(len(map_dts)):
@@ -411,10 +377,10 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     MaP = minimize(f, best_est, method='SLSQP', options={'maxiter':1000, 'disp':False})
 
     result = {'lat_mean': lat_mean, 'lon_mean' : lon_mean,
-              'EW_var': x_var, 'NS_var': y_var,
+              'EW_stdev': x_stdev, 'NS_stdev': y_stdev,
               'covar': covar,
               't_mean': time_lims[0] + np.timedelta64(int(time_mean * 1e3), 'ms'),
-              't_var': time_var,
+              't_stdev': time_stdev,
               't_min' : time_lims[0] + np.timedelta64(int(min(time_bnds_95[0]) * 1e3), 'ms'),
               't_max' : time_lims[0] + np.timedelta64(int(max(time_bnds_95[0]) * 1e3), 'ms'),
               'lat_MaP': MaP.x[0],
@@ -443,13 +409,13 @@ def summarize(result, confidence_level=95):
                '\tSource time: {stime} \n'
 
                'Source location analysis:\n'
-               '\tLatitude (mean and variance): {slatmean} +/- {nsvar} km. \n'
-               '\tLongitude (mean and variance): {slonmean} +/- {ewvar} km.\n'
+               '\tLatitude (mean and standard deviation): {slatmean} +/- {nsvar} km. \n'
+               '\tLongitude (mean and standard deviation): {slonmean} +/- {ewvar} km.\n'
                '\tCovariance: ' + str(round(result['covar'],3)) + '\n'
                '\tArea of {s_confidence}% confidence ellipse: {conf} square kilometers\n'
 
                'Source time analysis:\n'
-               '\tMean and variance: {stmean} +/- {stvar} second\n'
+               '\tMean and standard deviation: {stmean} +/- {stvar} second\n'
                '\tExact 95% confidence bounds: [{ex95confmin}, {ex95confmax}]\n'
                )
     summary = summary.format(
@@ -457,13 +423,13 @@ def summarize(result, confidence_level=95):
         slon = round(result['lon_MaP'],3),
         stime = result['t_MaP'],
         slatmean = round(result['lat_mean'],3),
-        nsvar = round(result['NS_var'], 3),
+        nsvar = round(result['NS_stdev'], 3),
         slonmean = round(result['lon_mean'], 3),
-        ewvar = round(result['EW_var'], 3),
+        ewvar = round(result['EW_stdev'], 3),
         s_confidence = str(confidence_level),
-        conf = round(np.pi * result['NS_var'] * result['EW_var'] * chi2(2).ppf(confidence_level/100), 3),
+        conf = round(np.pi * result['NS_stdev'] * result['EW_stdev'] * chi2(2).ppf(confidence_level/100), 3),
         stmean = result['t_mean'],
-        stvar = round(result['t_var'],3),
+        stvar = round(result['t_stdev'],3),
         ex95confmin = result['t_min'],
         ex95confmax = result['t_max']
         )
