@@ -854,8 +854,6 @@ def calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt):
 
     return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_thresh) * c_scalar[0]
 
-
-
 def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thresh=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None):
     """Identify detections with beamforming results
 
@@ -869,7 +867,9 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
             Times of beamforming results as numpy datetime64's
         beam_results : 2darray
             Beamforming results consisting of back azimuth, trace velocity, and
-            f-value at each time step
+            f-value at each time step. This is a 2D array with dimensions (len(times), 3), 
+            where the first column has back azimuth values, the second has trace velocity 
+            values, and the third has f-statistic values
         win_len : float
             Window length to define the adaptive fstat threshold
         TB_prod : int
@@ -877,7 +877,7 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
         channel_cnt : int
             Number of channels on the array; needed to compute the Fisher statistic
         det_thresh : float
-            Threshold for declaring a detction
+            Threshold for declaring a detection
         min_seq : int
             Threshold for the number of sequential above-threshold values to declare
             a detection
@@ -930,18 +930,23 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
 
             if abs(back_az_max - back_az_min) < back_az_lim or abs(back_az_max - back_az_min) - 360.0 < back_az_lim:
                 pk_index = np.argmax(fstat_vals[n:n + det_len])
+
+                if n == 0:
+                    warnings.warn("Detection is close to start of analysis.  Detection start time is set to beginning of data, but this might be incorrect")
+                if n + det_len == len(times):
+                    warnings.warn("Detection is close to end of analysis. Detection end time is set to end of data, but this might be incorrect")
+
                 try:
                     det_time = times[n + pk_index]
                     det_start = (times[n] - times[n + pk_index]).astype('m8[s]').astype(float)
-                    det_end = (times[n + det_len] - times[n + pk_index]).astype('m8[s]').astype(float)
-                    print(det_time)
+                    det_end = (times[n + det_len - 1] - times[n + pk_index]).astype('m8[s]').astype(float)
 
                     back_az = back_az_vals[n + pk_index]
                     trc_vel = trc_vel_vals[n + pk_index]
                     fstat = fstat_vals[n + pk_index]
                     dets = dets + [[det_time, det_start, det_end, back_az, trc_vel, fstat]]
                 except Exception as ex1:
-                    print('Issue with detection time' + str(det_time), ex1)
+                    print('Issue with detection time ' + str(det_time), ex1)
 
             n += det_len
         else:

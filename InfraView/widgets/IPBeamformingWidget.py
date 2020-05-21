@@ -18,6 +18,7 @@ from operator import itemgetter
 
 # import infraview widgets here
 from InfraView.widgets import IPDetectionWidget
+from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPickItem
 from InfraView.widgets import IPPlotWidget
@@ -259,6 +260,9 @@ class IPBeamformingWidget(QWidget):
 
         # Create a thread for the beamforming to run in
         self.bfThread = QThread()
+
+        #Temporary
+        self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
@@ -956,6 +960,51 @@ class IPBeamformingWidget(QWidget):
         # self.clearButton.setEnabled(True)
         self.clearAct.setEnabled(True)
 
+        # add a detection at the place were fstat was a maximum
+        center = self._parent.waveformWidget.stationViewer.get_current_center()
+
+        # Gather data for input into the beamforming peak detector
+
+        # can this be done in one line?
+        beam_results = np.array([self._back_az, self._trace_vel, self._f_stats])
+        beam_results = beam_results.T 
+        # beamforming_new uses numpy datetime64 to hold the times, so we have to 
+        # convert our times to that format
+        num_times = []
+        for t in self._t:
+            num_times.append(np.datetime64(self.get_earliest_start_time() + t))
+        num_times = np.asarray(num_times)
+
+        channel_count = len(self._streams)
+        det_threshold = 0.99
+        det_window_length = 300
+        min_sequence = 5
+        tb_prod = 400
+        back_az_lim = 10
+        fixed_threshold = 10
+
+        dets = beamforming_new.detect_signals(num_times, 
+                                              beam_results, 
+                                              det_window_length, 
+                                              tb_prod, 
+                                              channel_count, 
+                                              det_thresh=det_threshold, 
+                                              min_seq=min_sequence, 
+                                              back_az_lim=back_az_lim,
+                                              fixed_thresh=fixed_threshold)
+
+        if len(dets) == 0:
+            self.errorPopup("No Detections Found")
+            return
+        self.detectionWidget.new_detections(dets,
+                                            center[0],
+                                            center[1],
+                                            elev=center[2],
+                                            event='',
+                                            element_cnt=len(self._streams),
+                                            method=self.bottomSettings.getMethod(),
+                                            fr=self.bottomSettings.getFreqRange())
+        
         # find peak F-value location and the corresponding back azimuth and trace velocity
         f_max = max(self._f_stats)
         f_max_idx = self._f_stats.index(f_max)
@@ -967,7 +1016,7 @@ class IPBeamformingWidget(QWidget):
         # make the slowness plot show the data at the time of fstat max
         self.plot_slowness_at_idx(f_max_idx)
 
-        # make the projection plot shot the data at the time of fstat max
+        # make the projection plot show the data at the time of fstat max
         if self._max_projection_data is not None:
             self.projectionCurve.setData(self._max_projection_data)
             self.projectionPlot.addItem(self.projectionCurve)
@@ -978,20 +1027,17 @@ class IPBeamformingWidget(QWidget):
         t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
         self.timeRangeLRI.setRegion(t_region)
 
-        # add a detection at the place were fstat was a maximum
-        center = self._parent.waveformWidget.stationViewer.get_current_center()
-
-        self.detectionWidget.newDetection('',
-                                          UTCDateTime(self.get_earliest_start_time()) + f_max_time,
-                                          f_max,
-                                          _trace_vel_at_max,
-                                          _back_az_at_max,
-                                          center[0],
-                                          center[1],
-                                          elev=center[2],
-                                          element_cnt=len(self._streams),
-                                          method=self.bottomSettings.getMethod(),
-                                          fr=self.bottomSettings.getFreqRange())
+        # self.detectionWidget.newDetection('',
+        #                                   UTCDateTime(self.get_earliest_start_time()) + f_max_time,
+        #                                   f_max,
+        #                                   _trace_vel_at_max,
+        #                                   _back_az_at_max,
+        #                                   center[0],
+        #                                   center[1],
+        #                                   elev=center[2],
+        #                                   element_cnt=len(self._streams),
+        #                                   method=self.bottomSettings.getMethod(),
+        #                                   fr=self.bottomSettings.getFreqRange())
 
         self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
