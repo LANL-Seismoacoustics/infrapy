@@ -17,7 +17,7 @@ import copyreg
 
 import numpy as np
 
-from scipy.integrate import quad, nquad, simps
+from scipy.integrate import simps
 from scipy.interpolate import interp1d, interp2d
 from scipy.optimize import minimize, bisect
 from scipy.special import i0
@@ -208,26 +208,28 @@ def find_confidence(func, lims, conf_lvl):
 
     def conf_func(x, thresh):
         val = func(x)
-        if val >= thresh: return val
-        else: return 0.0
+        if val >= thresh:
+            return val
+        else:
+            return 0.0
 
-    resol = 300
+    resol = 500
     x_vals = np.linspace(lims[0], lims[1], resol)
     f_vals = func(x_vals)
 
     f_max = max(f_vals)
     thresh_vals = np.linspace(0.0, f_max * 0.5, resol)
 
-    norm = quad(func, lims[0], lims[1], limit=100, epsrel=1.0e-3)[0]
+    norm = simps(f_vals, x_vals)
 
     conf_prev=1.0
     bnds=[]
     for n in range(resol):
-        conf = quad(conf_func, lims[0], lims[1], (thresh_vals[n],), limit=100, epsrel=1.0e-3)[0] / norm
+        conf = simps(np.array([conf_func(xj, thresh_vals[n]) for xj in x_vals]), x_vals) / norm
 
         if conf < conf_lvl < conf_prev:
             thresh = thresh_vals[n - 1] - (thresh_vals[n-1] - thresh_vals[n]) / (conf_prev - conf) * (conf_lvl - conf)
-            conf = quad(conf_func, lims[0], lims[1], (thresh,), limit=100, epsrel=1.0e-3)[0] / norm
+            conf = simps(np.array([conf_func(xj, thresh_vals[n]) for xj in x_vals]), x_vals) / norm
 
             for n in range(resol - 1):
                 if (f_vals[n] - thresh) * (f_vals[n+1] - thresh) < 0.0:
