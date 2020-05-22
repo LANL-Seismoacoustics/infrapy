@@ -19,7 +19,7 @@ import numpy as np
 import obspy
 from obspy import UTCDateTime
 
-from scipy.integrate import quad, nquad, simps
+from scipy.integrate import simps
 from scipy.interpolate import interp1d, interp2d
 from scipy.special import i0
 
