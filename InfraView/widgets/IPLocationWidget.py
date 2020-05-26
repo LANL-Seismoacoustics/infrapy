@@ -257,8 +257,8 @@ class IPLocationWidget(QWidget):
             return  # nothing to plot
 
         conf_dx, conf_dy = bisl.calc_conf_ellipse([0.0, 0.0],
-                                                  [self._bisl_result['EW_var'],
-                                                  self._bisl_result['NS_var'],
+                                                  [self._bisl_result['EW_stdev'],
+                                                  self._bisl_result['NS_stdev'],
                                                   self._bisl_result['covar']],
                                                   confidence)
         # tell the mapWidget to plot the results

@@ -119,7 +119,7 @@ def plot_loc(det_list,result,pdf,confidence,display=True,save_fig=None,grnd_trth
     ax.scatter(pdf[0], pdf[1], c=pdf[2], s = 5.0, cmap=cm.Blues, marker="s", alpha=0.5, edgecolor='none', vmin=0.0,transform=pc_proj)
     for aa in range(len(confidence)):
         conf = confidence[aa]
-        conf_x, conf_y = bisl.calc_conf_ellipse([0.0, 0.0],[result['EW_var'], result['NS_var'], result['covar']],conf)
+        conf_x, conf_y = bisl.calc_conf_ellipse([0.0, 0.0],[result['EW_stdev'], result['NS_stdev'], result['covar']],conf)
 
         conf_lons, conf_lats = sph_proj.fwd(np.array([result['lon_mean']] * len(conf_x)),
                                             np.array([result['lat_mean']] * len(conf_y)),
