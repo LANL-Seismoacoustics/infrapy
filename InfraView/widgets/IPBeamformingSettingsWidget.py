@@ -140,19 +140,21 @@ class IPBeamformingSettingsWidget(QWidget):
         self.tracev_resol_spin.setValue(5.0)
         self.tracev_resol_spin.setSuffix(' m/s')
 
-        label_backaz_startF = QLabel(self.tr(' Back Azimuth Start F: '))
-        self.backaz_startF_spin = QDoubleSpinBox()
-        self.backaz_startF_spin.setMinimum(-180.0)
-        self.backaz_startF_spin.setMaximum(179.0)
-        self.backaz_startF_spin.setValue(-180.0)
-        self.backaz_startF_spin.setSuffix(' Hz')
+        label_backaz_startF = QLabel(self.tr(' Back Azimuth Start Angle: '))
+        self.backaz_start_spin = QDoubleSpinBox()
+        self.backaz_start_spin.setMinimum(-180.0)
+        self.backaz_start_spin.setMaximum(179.0)
+        self.backaz_start_spin.setValue(-180.0)
+        self.backaz_start_spin.setSuffix(' deg')
+        self.backaz_start_spin.editingFinished.connect(self.checkBackAzRange)
 
-        label_backaz_endF = QLabel(self.tr(' Back Azimuth End F: '))
-        self.backaz_endF_spin = QDoubleSpinBox()
-        self.backaz_endF_spin.setMinimum(-179.0)
-        self.backaz_endF_spin.setMaximum(180.0)
-        self.backaz_endF_spin.setValue(180.0)
-        self.backaz_endF_spin.setSuffix(' Hz')
+        label_backaz_endF = QLabel(self.tr(' Back Azimuth End ANgle: '))
+        self.backaz_end_spin = QDoubleSpinBox()
+        self.backaz_end_spin.setMinimum(-179.0)
+        self.backaz_end_spin.setMaximum(180.0)
+        self.backaz_end_spin.setValue(180.0)
+        self.backaz_end_spin.setSuffix(' deg')
+        self.backaz_end_spin.editingFinished.connect(self.checkBackAzRange)
 
         gridLayout = QGridLayout()
         gridLayout.addWidget(label_method, 0, 0)
@@ -186,9 +188,9 @@ class IPBeamformingSettingsWidget(QWidget):
         gridLayout.addWidget(label_backaz_resol, 0, 11)
         gridLayout.addWidget(self.backaz_resol_spin, 0, 12)
         gridLayout.addWidget(label_backaz_startF, 1, 11)
-        gridLayout.addWidget(self.backaz_startF_spin, 1, 12)
+        gridLayout.addWidget(self.backaz_start_spin, 1, 12)
         gridLayout.addWidget(label_backaz_endF, 2, 11)
-        gridLayout.addWidget(self.backaz_endF_spin, 2, 12)
+        gridLayout.addWidget(self.backaz_end_spin, 2, 12)
         gridLayout.addWidget(label_tracev_resol, 3, 11)
         gridLayout.addWidget(self.tracev_resol_spin, 3, 12)
 
@@ -259,8 +261,18 @@ class IPBeamformingSettingsWidget(QWidget):
     def getBackAzResolution(self):
         return self.backaz_resol_spin.value()
 
-    def getBackAzFreqRange(self):
-        return (self.backaz_startF_spin.value(), self.backaz_endF_spin.value())
+    def getBackAzRange(self):
+        return (self.backaz_start_spin.value(), self.backaz_end_spin.value())
+
+    @QtCore.pyqtSlot()
+    def checkBackAzRange(self):
+        start,stop = self.getBackAzRange()
+        if start >= stop:
+            self.backaz_start_spin.setStyleSheet("color: rgb(200,0,0); ")
+            self.backaz_end_spin.setStyleSheet("color: rgb(200,0,0); ")
+        else:
+            self.backaz_start_spin.setStyleSheet("color: rgb(0, 0, 0);")
+            self.backaz_end_spin.setStyleSheet("color: rgb(0, 0, 0);")
 
     @QtCore.pyqtSlot(tuple)
     def setNoiseValues(self, values):   # values is a tuple containing (start, stop)
