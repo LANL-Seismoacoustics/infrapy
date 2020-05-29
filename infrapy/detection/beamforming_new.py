@@ -929,7 +929,7 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
             back_az_max = np.argmax(back_az_vals[n:n + det_len])
 
             if abs(back_az_max - back_az_min) < back_az_lim or abs(back_az_max - back_az_min) - 360.0 < back_az_lim:
-                pk_index = np.argmax(fstat_vals[n:n + det_len])
+                pk_index = np.argmax(fstat_vals[n:n + det_len]) 
 
                 if n == 0:
                     warnings.warn("Detection is close to start of analysis.  Detection start time is set to beginning of data, but this might be incorrect")

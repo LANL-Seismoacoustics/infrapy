@@ -769,6 +769,14 @@ class IPBeamformingWidget(QWidget):
         # print(self.bottomSettings.getNumSigs())
         # print(self.bottomSettings.getSubWinLength())
 
+        # do any checks of the input here before you create the worker object.
+        # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
+        baz_start, baz_end = self.bottomSettings.getBackAzRange()
+        if baz_start >= baz_end:
+            self.errorPopup('The back azimuth start angle must be less than the end angle. Please correct this in the Beamformer Settings tab.')
+            # and bail out before going farther
+            return
+
         self.bfWorker = BeamformingWorkerObject(self._streams,
                                                 self.resultData,
                                                 self.bottomSettings.getNoiseRange(),
@@ -783,7 +791,7 @@ class IPBeamformingWidget(QWidget):
                                                 self._mp_pool,
                                                 self.bottomSettings.getBackAzResolution(),
                                                 self.bottomSettings.getTraceVelResolution(),
-                                                self.bottomSettings.getBackAzFreqRange())
+                                                self.bottomSettings.getBackAzRange())
 
         self.bfWorker.moveToThread(self.bfThread)
 

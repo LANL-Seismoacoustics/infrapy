@@ -49,6 +49,7 @@ setup(name = "infrapy",
                'scripts/read_rlocBISL.py',
                'scripts/read_rloc.py',
                'scripts/update_calib.py',
+               'scripts/update_chan.py',
                'scripts/update_refsta.py'],
 
       package_dir={'infrapy.propagation' : 'infrapy/propagation'},

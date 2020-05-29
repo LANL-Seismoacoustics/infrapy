@@ -17,9 +17,7 @@ developed by the LANL Seismoacoustics (LANL-SA) Team.
 
 ## Operating Systems
 
-Infrapy can currently be installed on machines running newer versions of Linux or Apple OSX. A Windows-compatible version is in development. 
-
-Additionally, it is assumed that you will have internet access for the installation.  If you don't then please contact us directly and we will help you get this installed.
+Infrapy can currently be installed on machines running newer versions of Linux, Apple OSX, and Windows.
 
 ## Anaconda
 
@@ -55,6 +53,15 @@ how to activate and deactivate the new environment:
     To deactivate an active environment, use
 
         >> conda deactivate
+        
+## e1 Compression
+
+The current version of Pisces no longer installs the e1 compression module by default.  If you need this (if you don't know what it is, you don't need it), then you can install it on OSX and Linux by activating the infrapy environment and installing it with pip...
+
+    >> conda activate infrapy_env
+    >> pip install e1
+    
+At this time, the e1 module is not supported on Windows.  Let us know if you really need this, and we can work towards getting that fixed.
         
 ## Updating
 

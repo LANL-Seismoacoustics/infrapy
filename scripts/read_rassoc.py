@@ -54,16 +54,16 @@ if __name__ == '__main__':
 		assocresultsT=args.assocresults
 	else:
 		print("default table FD_RESULTS")
-		assocresultsT='assoc_results'
+		assocresultsT='ASSOC_results'
 
 	if args.passocid:
 		passocid=int(args.passocid)
 
 
 	class Assoc_params(schema.ASSOC_params):
-		__tablename__ = 'assoc_params'
+		__tablename__ = 'ASSOC_params'
 
-	AssocT=type(assocresultsT,(schema.assoc_results,),{'__tablename__':assocresultsT})
+	AssocT=type(assocresultsT,(schema.ASSOC_results,),{'__tablename__':assocresultsT})
 	'''
 	class Assoc_results(ab.assoc_results):
 		__tablename__ = assocresultsT
