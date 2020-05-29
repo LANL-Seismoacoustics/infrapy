@@ -1087,7 +1087,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
                  inventory, pool, back_az_resol, tracev_resol,
-                 back_az_freqs):
+                 back_az_range):
         super().__init__()
         self.resultData = resultData
         self.streams = streams
@@ -1101,8 +1101,8 @@ class BeamformingWorkerObject(QtCore.QObject):
         self._inv = inventory
         self._pool = pool
         self._back_az_resolution = back_az_resol
-        self._back_az_startF = back_az_freqs[0]
-        self._back_az_endF = back_az_freqs[1]
+        self._back_az_start = back_az_range[0]
+        self._back_az_end = back_az_range[1]
         self._trace_v_resolution = tracev_resol
 
         self.threadStopped = True
@@ -1111,6 +1111,11 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.sub_window_len = self.win_length
         else:
             self.sub_window_len = sub_window_len
+
+        # Items below could be added to the beamformer settings
+        self.sub_window_overlap = 0.5
+        self.fft_window = 'hanning'
+        self.normalize_windowing = False
 
     @pyqtSlot()
     def stop(self):
@@ -1123,13 +1128,42 @@ class BeamformingWorkerObject(QtCore.QObject):
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
+    # function and wrapper to beamform different windows using pool
+    @staticmethod
+    def window_beamforming(x, t, window, geom, delays, ns_covar_inv, sub_win_len, sub_win_over, fft_win, normalize):
+        X, S, f = beamforming_new.fft_array_data(x,
+                                                 t,
+                                                 window,
+                                                 sub_window_len=sub_win_len, 
+                                                 sub_window_overlap=sub_win_over, 
+                                                 fft_window=fft_win, 
+                                                 normalize_windowing=normalize)
+
+        beam_power = beamforming_new.run(X, 
+                                         S, 
+                                         f, 
+                                         geom,
+                                         delays, 
+                                         self.freqRange, 
+                                         method=self.method, 
+                                         ns_covar_inv=ns_covar_inv, 
+                                         signal_cnt=self.signal_cnt, 
+                                         normalize_beam=True)
+
+        # return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
+
+
+    def window_beamforming_wrapper(self, args):
+        return self.window_beamforming(*args)
+
     @pyqtSlot()
     def run(self):
 
         self.threadStopped = False
 
-        back_az_vals = np.arange(self._back_az_startF, self._back_az_endF, self._back_az_resolution)
+        back_az_vals = np.arange(self._back_az_start, self._back_az_end, self._back_az_resolution)
         # note if you make the 300 and 750 into a control, then you need to do that when you calculate the slowness size as well
+        # TODO: the trace velocity range should be added to the settings widget
         trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
 
         latlon = []
@@ -1158,19 +1192,53 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.errorPopup("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \\Aborting")
             return
 
-        x, t, t0, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
+        x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
 
         # define slowness_grid... these are the x,y values that correspond to the beam_power values
         slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
         delays = beamforming_new.compute_delays(geom, slowness)
-        # slowness = slowness_grid.copy()
 
-        _, S, _ = beamforming_new.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
-        ns_covar_inv = np.empty_like(S)
-        for n in range(S.shape[2]):
-            S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
-            ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
+        # Compute the noise covariance if using GLS and the detection threshold
+        if self.method == "gls":
+            _, S, _ = beamforming_new.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
+            ns_covar_inv = np.empty_like(S)
+            for n in range(S.shape[2]):
+                S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
+                ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
+        else:
+            ns_covar_inv = None
+
+        # #################################################### 
+        # Compute detection threshold here...
+        
+        print("Computing detection threshold...")
+        if self._pool:
+            args = []
+            for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                if window_start + self.win_length > self.noiseRange[1]:
+                    break
+                args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv]]
+            beam_results = np.array(self._pool.map(self.window_beamforming_wrapper, args))[:,0,:]
+        else:
+            beam_results = []
+            for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                if window_start + self.win_length > self.sigRange[1]:
+                    break
+                # peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
+                # TODO: deal with this properly
+                self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
+
+                for j in range(self.signal_cnt):
+                    beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
+            beam_results = np.array(beam_results)
+
+        f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
+        det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, window_length * (freq_max - freq_min), M)
+
+        print('det_thresh = {}'.format(det_thresh))
+
+        # ########## Finished calculating threshold ######################
 
         # Run beamforming in windowed data and write to file
 

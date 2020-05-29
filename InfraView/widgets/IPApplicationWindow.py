@@ -74,6 +74,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # initialize the multiproccessor pool
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
+        print("cpu count = {}".format(cpu_count()))
 
         self.buildUI()
         self.restoreSettings()
