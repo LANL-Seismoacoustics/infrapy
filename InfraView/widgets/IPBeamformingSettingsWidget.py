@@ -148,7 +148,7 @@ class IPBeamformingSettingsWidget(QWidget):
         self.backaz_start_spin.setSuffix(' deg')
         self.backaz_start_spin.editingFinished.connect(self.checkBackAzRange)
 
-        label_backaz_endF = QLabel(self.tr(' Back Azimuth End ANgle: '))
+        label_backaz_endF = QLabel(self.tr(' Back Azimuth End Angle: '))
         self.backaz_end_spin = QDoubleSpinBox()
         self.backaz_end_spin.setMinimum(-179.0)
         self.backaz_end_spin.setMaximum(180.0)

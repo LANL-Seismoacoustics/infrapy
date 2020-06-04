@@ -229,7 +229,7 @@ class IPBeamformingWidget(QWidget):
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
         self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')
-        self.bottomTabWidget.addTab(self.bottomSettings, 'Beamformer Settings')
+        self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings, 'Beamformer Settings')
 
         bottomLayout = QHBoxLayout()
         bottomLayout.addWidget(self.bottomTabWidget)
@@ -769,11 +769,13 @@ class IPBeamformingWidget(QWidget):
         # print(self.bottomSettings.getNumSigs())
         # print(self.bottomSettings.getSubWinLength())
 
+
         # do any checks of the input here before you create the worker object.
         # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
         baz_start, baz_end = self.bottomSettings.getBackAzRange()
         if baz_start >= baz_end:
             self.errorPopup('The back azimuth start angle must be less than the end angle. Please correct this in the Beamformer Settings tab.')
+            self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             # and bail out before going farther
             return
 
@@ -1004,6 +1006,7 @@ class IPBeamformingWidget(QWidget):
         if len(dets) == 0:
             self.errorPopup("No Detections Found")
             return
+
         self.detectionWidget.new_detections(dets,
                                             center[0],
                                             center[1],
@@ -1136,33 +1139,60 @@ class BeamformingWorkerObject(QtCore.QObject):
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
-    # function and wrapper to beamform different windows using pool
+
+    # the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
+    # as a result we must make this a static method and pass all variables through the call instead of using the
+    # standard "self.x" way.
     @staticmethod
-    def window_beamforming(x, t, window, geom, delays, ns_covar_inv, sub_win_len, sub_win_over, fft_win, normalize):
+    def map_window_beamforming(x, 
+                               t, 
+                               window, 
+                               geom, 
+                               delays, 
+                               ns_covar_inv, 
+                               sub_win_len, 
+                               sub_win_over, 
+                               fft_win, 
+                               norm_win,
+                               f_range,
+                               method,
+                               sig_count,
+                               norm_beam):
+
         X, S, f = beamforming_new.fft_array_data(x,
                                                  t,
                                                  window,
                                                  sub_window_len=sub_win_len, 
                                                  sub_window_overlap=sub_win_over, 
                                                  fft_window=fft_win, 
-                                                 normalize_windowing=normalize)
-
+                                                 normalize_windowing=norm_win)
+        
         beam_power = beamforming_new.run(X, 
                                          S, 
                                          f, 
                                          geom,
                                          delays, 
-                                         self.freqRange, 
-                                         method=self.method, 
+                                         f_range, 
+                                         method=method, 
                                          ns_covar_inv=ns_covar_inv, 
-                                         signal_cnt=self.signal_cnt, 
-                                         normalize_beam=True)
+                                         signal_cnt=sig_count, 
+                                         normalize_beam=norm_beam)
+        
+        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
+    
+    @staticmethod
+    def window_beamforming_map(x, t, window, geom, delays, ns_covar_inv):
+        X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
+        beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
+        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
-        # return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
+    # function and wrapper to beamform different windows using pool
+    def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
+        X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
+        beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
+        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
-    def window_beamforming_wrapper(self, args):
-        return self.window_beamforming(*args)
 
     @pyqtSlot()
     def run(self):
@@ -1173,6 +1203,8 @@ class BeamformingWorkerObject(QtCore.QObject):
         # note if you make the 300 and 750 into a control, then you need to do that when you calculate the slowness size as well
         # TODO: the trace velocity range should be added to the settings widget
         trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
+
+        det_p_val = 0.99
 
         latlon = []
 
@@ -1220,31 +1252,29 @@ class BeamformingWorkerObject(QtCore.QObject):
         # #################################################### 
         # Compute detection threshold here...
         
-        print("Computing detection threshold...")
         if self._pool:
             args = []
             for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
                 if window_start + self.win_length > self.noiseRange[1]:
                     break
                 args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv]]
-            beam_results = np.array(self._pool.map(self.window_beamforming_wrapper, args))[:,0,:]
+
+            print(*args)
+
+            beam_results = np.array(self._pool.map(self.window_beamforming_map, *args))[:,0,:]
+
         else:
             beam_results = []
             for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
-                if window_start + self.win_length > self.sigRange[1]:
+                if window_start + self.win_length > self.noiseRange[1]:
                     break
-                # peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
-                # TODO: deal with this properly
-                self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
-
+                peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
                 for j in range(self.signal_cnt):
                     beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
             beam_results = np.array(beam_results)
 
         f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-        det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, window_length * (freq_max - freq_min), M)
-
-        print('det_thresh = {}'.format(det_thresh))
+        det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
 
         # ########## Finished calculating threshold ######################
 
