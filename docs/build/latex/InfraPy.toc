@@ -1,0 +1,84 @@
+\babel@toc {english}{}
+\contentsline {chapter}{\numberline {1}Contents}{1}{chapter.1}
+\contentsline {section}{\numberline {1.1}Authorship}{1}{section.1.1}
+\contentsline {section}{\numberline {1.2}Installation}{1}{section.1.2}
+\contentsline {subsection}{\numberline {1.2.1}Operating Systems}{1}{subsection.1.2.1}
+\contentsline {subsection}{\numberline {1.2.2}Anaconda}{1}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.3}Infrapy Installation}{1}{subsection.1.2.3}
+\contentsline {subsection}{\numberline {1.2.4}Testing}{2}{subsection.1.2.4}
+\contentsline {subsection}{\numberline {1.2.5}Running the InfraView GUI Application}{2}{subsection.1.2.5}
+\contentsline {section}{\numberline {1.3}Quickstart}{2}{section.1.3}
+\contentsline {section}{\numberline {1.4}Interfacing with Pisces}{3}{section.1.4}
+\contentsline {subsection}{\numberline {1.4.1}Converting Data into Sqlite Databases}{3}{subsection.1.4.1}
+\contentsline {subsection}{\numberline {1.4.2}Connecting to a SQL Database}{3}{subsection.1.4.2}
+\contentsline {subsubsection}{\numberline {1.4.2.1}Defining Schema Specific Tables}{3}{subsubsection.1.4.2.1}
+\contentsline {subsubsection}{\numberline {1.4.2.2}Connection within pipeline processing configuration file}{4}{subsubsection.1.4.2.2}
+\contentsline {subsubsection}{\numberline {1.4.2.3}Connection with a db.cfg file}{4}{subsubsection.1.4.2.3}
+\contentsline {section}{\numberline {1.5}Algorithms}{4}{section.1.5}
+\contentsline {subsection}{\numberline {1.5.1}Station Level Processing}{5}{subsection.1.5.1}
+\contentsline {subsubsection}{\numberline {1.5.1.1}Array Processing}{5}{subsubsection.1.5.1.1}
+\contentsline {subsubsection}{\numberline {1.5.1.2}The Adaptive F-Detector}{5}{subsubsection.1.5.1.2}
+\contentsline {subsection}{\numberline {1.5.2}Network Level Processing}{5}{subsection.1.5.2}
+\contentsline {subsubsection}{\numberline {1.5.2.1}Association}{5}{subsubsection.1.5.2.1}
+\contentsline {subsubsection}{\numberline {1.5.2.2}Bayesian Infrasonic Source Localization}{5}{subsubsection.1.5.2.2}
+\contentsline {paragraph}{\numberline {1.5.2.2.1}Array Processing}{5}{paragraph.1.5.2.2.1}
+\contentsline {paragraph}{\numberline {1.5.2.2.2}The Adaptive F-Detector}{6}{paragraph.1.5.2.2.2}
+\contentsline {paragraph}{\numberline {1.5.2.2.3}Association}{6}{paragraph.1.5.2.2.3}
+\contentsline {paragraph}{\numberline {1.5.2.2.4}Bayesian Infrasonic Source Localization}{7}{paragraph.1.5.2.2.4}
+\contentsline {section}{\numberline {1.6}Data Processing Flow}{7}{section.1.6}
+\contentsline {subsection}{\numberline {1.6.1}The Adaptive F-Detector}{7}{subsection.1.6.1}
+\contentsline {subsection}{\numberline {1.6.2}Association}{8}{subsection.1.6.2}
+\contentsline {subsection}{\numberline {1.6.3}Bayesian Infrasonic Source Localization}{8}{subsection.1.6.3}
+\contentsline {subsubsection}{\numberline {1.6.3.1}Stand-Alone Processing}{8}{subsubsection.1.6.3.1}
+\contentsline {subsubsection}{\numberline {1.6.3.2}Running Pipeline Processing in Infrapy}{9}{subsubsection.1.6.3.2}
+\contentsline {paragraph}{\numberline {1.6.3.2.1}Configuration Files}{9}{paragraph.1.6.3.2.1}
+\contentsline {paragraph}{\numberline {1.6.3.2.2}Infrapy FK Processing}{11}{paragraph.1.6.3.2.2}
+\contentsline {paragraph}{\numberline {1.6.3.2.3}Infrapy Detection (FD) Processing}{11}{paragraph.1.6.3.2.3}
+\contentsline {subparagraph}{Configuration file}{12}{subparagraph*.3}
+\contentsline {paragraph}{\numberline {1.6.3.2.4}Infrapy Assoc Processing}{12}{paragraph.1.6.3.2.4}
+\contentsline {paragraph}{\numberline {1.6.3.2.5}Scripts}{12}{paragraph.1.6.3.2.5}
+\contentsline {subparagraph}{Scripts to manipulate Infrapy FK results}{12}{subparagraph*.4}
+\contentsline {subparagraph}{Scripts to manipulate Infrapy FD results}{14}{subparagraph*.5}
+\contentsline {section}{\numberline {1.7}Tutorial}{15}{section.1.7}
+\contentsline {section}{\numberline {1.8}Schema}{15}{section.1.8}
+\contentsline {subsection}{\numberline {1.8.1}Table Descriptions}{15}{subsection.1.8.1}
+\contentsline {subsubsection}{\numberline {1.8.1.1}Conventions}{15}{subsubsection.1.8.1.1}
+\contentsline {subsubsection}{\numberline {1.8.1.2}Table Definitions: Infrapy-Specific Tables}{16}{subsubsection.1.8.1.2}
+\contentsline {section}{\numberline {1.9}API}{18}{section.1.9}
+\contentsline {subsection}{\numberline {1.9.1}Association}{18}{subsection.1.9.1}
+\contentsline {subsubsection}{\numberline {1.9.1.1}HJL}{18}{subsubsection.1.9.1.1}
+\contentsline {subsection}{\numberline {1.9.2}Characterization}{18}{subsection.1.9.2}
+\contentsline {subsubsection}{\numberline {1.9.2.1}SPYE}{18}{subsubsection.1.9.2.1}
+\contentsline {subsection}{\numberline {1.9.3}Database Processing}{18}{subsection.1.9.3}
+\contentsline {subsubsection}{\numberline {1.9.3.1}Database Processing Taskbase}{18}{subsubsection.1.9.3.1}
+\contentsline {subsubsection}{\numberline {1.9.3.2}Database Schema}{18}{subsubsection.1.9.3.2}
+\contentsline {subsection}{\numberline {1.9.4}Beamforming/Detection}{18}{subsection.1.9.4}
+\contentsline {subsubsection}{\numberline {1.9.4.1}Beamforming}{18}{subsubsection.1.9.4.1}
+\contentsline {subsubsection}{\numberline {1.9.4.2}Beamforming\_new}{18}{subsubsection.1.9.4.2}
+\contentsline {subsection}{\numberline {1.9.5}Location}{18}{subsection.1.9.5}
+\contentsline {subsubsection}{\numberline {1.9.5.1}BISL}{18}{subsubsection.1.9.5.1}
+\contentsline {subsection}{\numberline {1.9.6}Propagation}{18}{subsection.1.9.6}
+\contentsline {subsubsection}{\numberline {1.9.6.1}Infrasound}{18}{subsubsection.1.9.6.1}
+\contentsline {subsubsection}{\numberline {1.9.6.2}Likelihoods}{18}{subsubsection.1.9.6.2}
+\contentsline {subsubsection}{\numberline {1.9.6.3}Seismic}{18}{subsubsection.1.9.6.3}
+\contentsline {subsection}{\numberline {1.9.7}Utils}{18}{subsection.1.9.7}
+\contentsline {subsubsection}{\numberline {1.9.7.1}infrapy.utils.cart2pol module}{18}{subsubsection.1.9.7.1}
+\contentsline {subsubsection}{\numberline {1.9.7.2}infrapy.utils.confidence module}{18}{subsubsection.1.9.7.2}
+\contentsline {subsubsection}{\numberline {1.9.7.3}infrapy.utils.db2db module}{18}{subsubsection.1.9.7.3}
+\contentsline {subsubsection}{\numberline {1.9.7.4}infrapy.utils.db2sac module}{18}{subsubsection.1.9.7.4}
+\contentsline {subsubsection}{\numberline {1.9.7.5}infrapy.utils.files2db module}{18}{subsubsection.1.9.7.5}
+\contentsline {subsubsection}{\numberline {1.9.7.6}infrapy.utils.get\_arraywaveforms module}{18}{subsubsection.1.9.7.6}
+\contentsline {subsubsection}{\numberline {1.9.7.7}infrapy.utils.get\_header\_table module}{18}{subsubsection.1.9.7.7}
+\contentsline {subsubsection}{\numberline {1.9.7.8}infrapy.utils.get\_mean\_locations module}{18}{subsubsection.1.9.7.8}
+\contentsline {subsubsection}{\numberline {1.9.7.9}infrapy.utils.latlon module}{18}{subsubsection.1.9.7.9}
+\contentsline {subsubsection}{\numberline {1.9.7.10}infrapy.utils.ms2db module}{18}{subsubsection.1.9.7.10}
+\contentsline {subsubsection}{\numberline {1.9.7.11}infrapy.utils.obspy\_conversion module}{18}{subsubsection.1.9.7.11}
+\contentsline {subsubsection}{\numberline {1.9.7.12}infrapy.utils.prog\_bar module}{18}{subsubsection.1.9.7.12}
+\contentsline {subsubsection}{\numberline {1.9.7.13}infrapy.utils.ref2sac module}{18}{subsubsection.1.9.7.13}
+\contentsline {subsubsection}{\numberline {1.9.7.14}infrapy.utils.sac\_stats module}{18}{subsubsection.1.9.7.14}
+\contentsline {subsubsection}{\numberline {1.9.7.15}infrapy.utils.seed2sac module}{18}{subsubsection.1.9.7.15}
+\contentsline {subsubsection}{\numberline {1.9.7.16}infrapy.utils.short\_time module}{18}{subsubsection.1.9.7.16}
+\contentsline {subsubsection}{\numberline {1.9.7.17}infrapy.utils.skew\_norm module}{18}{subsubsection.1.9.7.17}
+\contentsline {subsubsection}{\numberline {1.9.7.18}infrapy.utils.zip2ref module}{18}{subsubsection.1.9.7.18}
+\contentsline {chapter}{\numberline {2}User\IeC {\textquoteright }s Guide}{21}{chapter.2}
+\contentsline {section}{\numberline {2.1}Overview}{21}{section.2.1}
