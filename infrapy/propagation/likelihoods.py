@@ -19,7 +19,7 @@ import numpy as np
 import obspy
 from obspy import UTCDateTime
 
-from scipy.integrate import quad, nquad, simps
+from scipy.integrate import simps
 from scipy.interpolate import interp1d, interp2d
 from scipy.special import i0
 
@@ -584,7 +584,7 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
                 t1, t2 = infr_t1, infr_t2
 
             t_vals = np.array([t1 + (t2 - t1) / (resol - 1) * m for m in range(resol)])
-            pdf_vals = joint_pdf(np.array([la] * resol),np.array([lo] * resol), t_vals, det_list)
+            pdf_vals = joint_pdf(np.array([la] * resol),np.array([lo] * resol), t_vals, det_list, path_geo_model=path_geo_model)
 
             return simps(pdf_vals, (t2 - t1).astype('m8[ms]').astype(float) * 1.0e-3 / (resol - 1) * range(resol))
 
