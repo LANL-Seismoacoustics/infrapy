@@ -901,12 +901,13 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
 
     det_mask = np.zeros_like(fstat_vals, dtype=bool)
 
-    print("Running detection analysis...")
     if fixed_thresh:
         det_mask = (fstat_vals > fixed_thresh)
     else:
         # check first full window for detections using KDE of all f-values
         thresh = calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt)
+        print("det thresh = {}".format(det_thresh))
+        print("thresh = {}".format(thresh))
         init_win_mask = (times - times[0]).astype('m8[s]').astype(float) < win_len
         det_mask[init_win_mask] = (fstat_vals[init_win_mask] > thresh)
 

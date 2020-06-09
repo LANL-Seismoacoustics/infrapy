@@ -4,7 +4,7 @@ import json
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
                              QLabel, QGridLayout, QHBoxLayout,
-                             QVBoxLayout, QLayout)
+                             QVBoxLayout, QLayout, QMessageBox)
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDir, pyqtSignal, pyqtSlot
 
@@ -146,6 +146,9 @@ class IPDetectionWidget(QWidget):
             notes = self.new_detections_dialog.get_notes()
 
             for idx, detection in enumerate(detections):
+
+
+
                 new_detection = IPPickItem.IPPickItem(names[idx])
                 new_detection.set_peakF_UTCtime(detection[0])
                 new_detection.set_start(detection[1])
@@ -166,10 +169,18 @@ class IPDetectionWidget(QWidget):
                 if element_cnt is not None:
                     new_detection.set_array_dim(element_cnt)
 
-                # append the new detection
-                self._detections.append(new_detection)
+                # check for duplication
+                duplicate = False
+                for jdx, d in enumerate(self._detections):
+                    if new_detection.is_equal_to(d):
+                        # we already have that detection in the list, so pop up warning and discard the new one
+                        duplicate = True
+                        self.errorPopup("A detection is already in the list at index {}.  The new detection will be discarded".format(jdx), title="Duplicate Detection")
 
-                self.signal_detections_changed.emit(self._detections)
+                if not duplicate:
+                    # append the new detection
+                    self._detections.append(new_detection)
+                    self.signal_detections_changed.emit(self._detections)
 
             return True
         else:
@@ -444,3 +455,10 @@ class IPDetectionWidget(QWidget):
                 detection.set_end(start_end[1])
                 self.set_data(self._detections)
                 return  # and we're done here
+
+    def errorPopup(self, message, title='Oops...'):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()

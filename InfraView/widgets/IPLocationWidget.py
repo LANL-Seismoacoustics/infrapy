@@ -327,6 +327,8 @@ class IPLocationWidget(QWidget):
     @pyqtSlot()
     def calc_associations(self):
 
+        print("dist matrix = {}".format(self.dist_matrix))
+
         if self.dist_matrix is None:
             self.errorPopup("No distance matrix...I need a distance matrix")
             return  # Nothing to do
@@ -347,6 +349,9 @@ class IPLocationWidget(QWidget):
 
     @pyqtSlot(np.ndarray, np.ndarray)
     def cluster_run_finished(self, links, labels):
+
+        print('links = {}'.format(links))
+        print('labels = {}'.format(labels))
 
         self.dendrogram.set_data(links, self.assocSettings.threshold_edit.value())
 

@@ -18,6 +18,7 @@ from operator import itemgetter
 
 # import infraview widgets here
 from InfraView.widgets import IPDetectionWidget
+from InfraView.widgets import IPDetectorSettingsWidget
 from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPickItem
@@ -87,6 +88,11 @@ class IPBeamformingWidget(QWidget):
         crosshair.lineTo(0.5, 0)
         return crosshair
 
+    def set_textitem_fontsize(self, item, int):
+        font = item.textItem.font()
+        font.setPointSize(int)
+        item.textItem.setFont(font)
+
     def buildUI(self):
 
         self.make_toolbar()
@@ -109,7 +115,16 @@ class IPBeamformingWidget(QWidget):
         self.fstatPlot.addItem(self.fstat_marker)
         self.fstat_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.fstat_marker_label.setZValue(15)
+        self.set_textitem_fontsize(self.fstat_marker_label, 10)
         self.fstat_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_blue)
+
+        self.threshold_line = pg.InfiniteLine(pos=0.0, angle=0.0, pen=pg.mkPen('b', width=2, moveable=True, style=QtCore.Qt.DotLine))
+        self.threshold_label = pg.InfLineLabel(line=self.threshold_line, text='', movable=True, position=0.04)
+        self.threshold_label.setColor((0,0,255))
+        t_font = self.threshold_label.textItem.font()
+        t_font.setPointSize(10)
+        self.threshold_label.textItem.setFont(t_font)
+        self.fstatPlot.addItem(self.threshold_line)
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
         self.traceVPlot.hideButtons()
@@ -121,6 +136,7 @@ class IPBeamformingWidget(QWidget):
         self.traceVPlot.addItem(self.traceV_marker)
         self.traceV_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.traceV_marker_label.setZValue(15)
+        self.set_textitem_fontsize(self.traceV_marker_label, 10)
         self.traceV_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_green)
 
         self.backAzPlot = IPPlotWidget.IPPlotWidget()
@@ -137,6 +153,7 @@ class IPBeamformingWidget(QWidget):
         self.backAzPlot.addItem(self.backAz_marker)
         self.backAz_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.backAz_marker_label.setZValue(15)
+        self.set_textitem_fontsize(self.backAz_marker_label, 10)
         self.backAz_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_orange)
 
         self.resultPlots = {'fplot': self.fstatPlot, 'tracePlot': self.traceVPlot, 'backPlot': self.backAzPlot}
@@ -226,10 +243,12 @@ class IPBeamformingWidget(QWidget):
         self.bottomTabWidget = QTabWidget()
 
         self.bottomSettings = IPBeamformingSettingsWidget.IPBeamformingSettingsWidget(self)
+        self.detector_settings = IPDetectorSettingsWidget.IPDetectorSettingsWidget(self)
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
         self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')
         self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings, 'Beamformer Settings')
+        self.det_settings_tab_idx = self.bottomTabWidget.addTab(self.detector_settings, 'Detector Settings')
 
         bottomLayout = QHBoxLayout()
         bottomLayout.addWidget(self.bottomTabWidget)
@@ -806,6 +825,7 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_projectionUpdated.connect(self.updateProjection)
         self.bfWorker.signal_timeWindowChanged.connect(self.updateWaveformTimeWindow)
         self.bfWorker.signal_runFinished.connect(self.runFinished)
+        self.bfWorker.signal_threshold_autodetected.connect(self.detector_settings.set_auto_threshold_level)
 
         # show the time range
         self.waveformPlot.addItem(self.timeRangeLRI)
@@ -986,12 +1006,19 @@ class IPBeamformingWidget(QWidget):
         num_times = np.asarray(num_times)
 
         channel_count = len(self._streams)
-        det_threshold = 0.99
         det_window_length = 300
+        det_threshold = 0.99
         min_sequence = 5
         tb_prod = 400
         back_az_lim = 10
-        fixed_threshold = 10
+        
+        if self.detector_settings.is_auto_threshold():
+            fixed_threshold = self.detector_settings.get_auto_threshold_level()
+        else:
+            fixed_threshold = self.detector_settings.get_manual_threshold_level()
+        self.threshold_line.setPos(fixed_threshold)
+        self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
+        self.fstatPlot.addItem(self.threshold_line)
 
         dets = beamforming_new.detect_signals(num_times, 
                                               beam_results, 
@@ -1038,18 +1065,6 @@ class IPBeamformingWidget(QWidget):
         t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
         self.timeRangeLRI.setRegion(t_region)
 
-        # self.detectionWidget.newDetection('',
-        #                                   UTCDateTime(self.get_earliest_start_time()) + f_max_time,
-        #                                   f_max,
-        #                                   _trace_vel_at_max,
-        #                                   _back_az_at_max,
-        #                                   center[0],
-        #                                   center[1],
-        #                                   elev=center[2],
-        #                                   element_cnt=len(self._streams),
-        #                                   method=self.bottomSettings.getMethod(),
-        #                                   fr=self.bottomSettings.getFreqRange())
-
         self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
     def clearResultPlots(self):
@@ -1094,6 +1109,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_slownessUpdated = pyqtSignal(np.ndarray)
     signal_projectionUpdated = pyqtSignal(np.ndarray, np.ndarray)
     signal_timeWindowChanged = pyqtSignal(tuple)
+    signal_threshold_autodetected = pyqtSignal(float)
 
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
@@ -1127,6 +1143,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self.sub_window_overlap = 0.5
         self.fft_window = 'hanning'
         self.normalize_windowing = False
+        self.normalize_beam = True
 
     @pyqtSlot()
     def stop(self):
@@ -1139,53 +1156,10 @@ class BeamformingWorkerObject(QtCore.QObject):
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
-
-    # the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
-    # as a result we must make this a static method and pass all variables through the call instead of using the
-    # standard "self.x" way.
     @staticmethod
-    def map_window_beamforming(x, 
-                               t, 
-                               window, 
-                               geom, 
-                               delays, 
-                               ns_covar_inv, 
-                               sub_win_len, 
-                               sub_win_over, 
-                               fft_win, 
-                               norm_win,
-                               f_range,
-                               method,
-                               sig_count,
-                               norm_beam):
-
-        X, S, f = beamforming_new.fft_array_data(x,
-                                                 t,
-                                                 window,
-                                                 sub_window_len=sub_win_len, 
-                                                 sub_window_overlap=sub_win_over, 
-                                                 fft_window=fft_win, 
-                                                 normalize_windowing=norm_win)
-        
-        beam_power = beamforming_new.run(X, 
-                                         S, 
-                                         f, 
-                                         geom,
-                                         delays, 
-                                         f_range, 
-                                         method=method, 
-                                         ns_covar_inv=ns_covar_inv, 
-                                         signal_cnt=sig_count, 
-                                         normalize_beam=norm_beam)
-        
-        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
+    def window_beamforming_map_wrapper(args):
+        return window_beamforming_map(*args)
     
-    @staticmethod
-    def window_beamforming_map(x, t, window, geom, delays, ns_covar_inv):
-        X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
-        beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
-        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
-
 
     # function and wrapper to beamform different windows using pool
     def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
@@ -1257,11 +1231,12 @@ class BeamformingWorkerObject(QtCore.QObject):
             for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
                 if window_start + self.win_length > self.noiseRange[1]:
                     break
-                args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv]]
 
-            print(*args)
+                args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
+                                    self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
+                                    self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
 
-            beam_results = np.array(self._pool.map(self.window_beamforming_map, *args))[:,0,:]
+            beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:,0,:]
 
         else:
             beam_results = []
@@ -1275,6 +1250,8 @@ class BeamformingWorkerObject(QtCore.QObject):
 
         f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
         det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+
+        self.signal_threshold_autodetected.emit(det_thresh)
 
         # ########## Finished calculating threshold ######################
 
@@ -1337,3 +1314,47 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.signal_projectionUpdated.emit(projection, avg_beam_power)
 
             self.signal_slownessUpdated.emit(np.c_[slowness, avg_beam_power])
+
+
+
+# the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
+    # as a result we must make this a static method and pass all variables through the call instead of using the
+    # standard "self.x" way.
+
+def window_beamforming_map(x, 
+                           t, 
+                           window, 
+                           geom, 
+                           delays, 
+                           ns_covar_inv, 
+                           sub_win_len, 
+                           sub_win_over, 
+                           fft_win, 
+                           norm_win,
+                           f_range,
+                           method,
+                           sig_count,
+                           norm_beam,
+                           back_az_vals,
+                           trace_vel_vals):
+
+    X, S, f = beamforming_new.fft_array_data(x,
+                                             t,
+                                             window,
+                                             sub_window_len=sub_win_len, 
+                                             sub_window_overlap=sub_win_over, 
+                                             fft_window=fft_win, 
+                                             normalize_windowing=norm_win)
+        
+    beam_power = beamforming_new.run(X, 
+                                     S, 
+                                     f, 
+                                     geom,
+                                     delays, 
+                                     f_range, 
+                                     method=method, 
+                                     ns_covar_inv=ns_covar_inv, 
+                                     signal_cnt=sig_count, 
+                                     normalize_beam=norm_beam)
+       
+    return beamforming_new.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)

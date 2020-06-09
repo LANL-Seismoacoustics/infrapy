@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
                              QGridLayout,
-                             QVBoxLayout, QHBoxLayout, QGroupBox,
-                             QButtonGroup, QFrame)
+                             QVBoxLayout, QHBoxLayout, QGroupBox, QFrame)
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, QSettings, Qt
 import sys

@@ -117,6 +117,13 @@ class InfrasoundDetection(object):
 
         self.vm_norm = 2.0 * np.pi * i0(self.kappa)
 
+    def is_equal_to(self, other_detection):
+        if self.__lat == other_detection.get_lat() and self.__lon == other_detection.get_lon() and self.__peakF_UTCtime == other_detection.get_peakF_UTCtime():
+            # The two detections are pretty much the same, so return True
+            return True
+        else:
+            return False
+
     def az_pdf(self, lat, lon, path_geo_model=None):
         if len(np.atleast_1d(lat)) == 1:
             temp = sph_proj.inv(self.__lon, self.__lat, lon, lat, radians=False)
