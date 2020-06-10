@@ -124,6 +124,7 @@ class IPBeamformingWidget(QWidget):
         t_font = self.threshold_label.textItem.font()
         t_font.setPointSize(10)
         self.threshold_label.textItem.setFont(t_font)
+        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
         self.fstatPlot.addItem(self.threshold_line)
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
@@ -660,6 +661,16 @@ class IPBeamformingWidget(QWidget):
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
+    @pyqtSlot(bool)
+    def show_calculating_threshold_label(self, show):
+        if show:
+            xRange = self.fstatPlot.viewRange()[0]
+            yRange = self.fstatPlot.viewRange()[1]
+            self.fstatPlot.addItem(self.threshold_calculating_label)
+            self.threshold_calculating_label.setPos(xRange[0], yRange[1])
+        else:
+            self.fstatPlot.removeItem(self.threshold_calculating_label)
+
     def runBeamforming(self):
         if self._streams is None:
             self.errorPopup('No data Loaded')
@@ -812,7 +823,8 @@ class IPBeamformingWidget(QWidget):
                                                 self._mp_pool,
                                                 self.bottomSettings.getBackAzResolution(),
                                                 self.bottomSettings.getTraceVelResolution(),
-                                                self.bottomSettings.getBackAzRange())
+                                                self.bottomSettings.getBackAzRange(),
+                                                self.detector_settings.is_auto_threshold())
 
         self.bfWorker.moveToThread(self.bfThread)
 
@@ -825,7 +837,8 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_projectionUpdated.connect(self.updateProjection)
         self.bfWorker.signal_timeWindowChanged.connect(self.updateWaveformTimeWindow)
         self.bfWorker.signal_runFinished.connect(self.runFinished)
-        self.bfWorker.signal_threshold_autodetected.connect(self.detector_settings.set_auto_threshold_level)
+        self.bfWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
+        self.bfWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
 
         # show the time range
         self.waveformPlot.addItem(self.timeRangeLRI)
@@ -1016,6 +1029,7 @@ class IPBeamformingWidget(QWidget):
             fixed_threshold = self.detector_settings.get_auto_threshold_level()
         else:
             fixed_threshold = self.detector_settings.get_manual_threshold_level()
+
         self.threshold_line.setPos(fixed_threshold)
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
@@ -1109,12 +1123,13 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_slownessUpdated = pyqtSignal(np.ndarray)
     signal_projectionUpdated = pyqtSignal(np.ndarray, np.ndarray)
     signal_timeWindowChanged = pyqtSignal(tuple)
-    signal_threshold_autodetected = pyqtSignal(float)
+    signal_threshold_calc_is_running = pyqtSignal(bool)
+    signal_threshold_calculated = pyqtSignal(float)
 
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
                  inventory, pool, back_az_resol, tracev_resol,
-                 back_az_range):
+                 back_az_range, auto_thresh):
         super().__init__()
         self.resultData = resultData
         self.streams = streams
@@ -1131,6 +1146,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self._back_az_start = back_az_range[0]
         self._back_az_end = back_az_range[1]
         self._trace_v_resolution = tracev_resol
+        self.is_auto_threshold = auto_thresh
 
         self.threadStopped = True
 
@@ -1225,33 +1241,35 @@ class BeamformingWorkerObject(QtCore.QObject):
 
         # #################################################### 
         # Compute detection threshold here...
-        
-        if self._pool:
-            args = []
-            for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
-                if window_start + self.win_length > self.noiseRange[1]:
-                    break
+        if self.is_auto_threshold:
+            self.signal_threshold_calc_is_running.emit(True)
+            if self._pool:
+                args = []
+                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                    if window_start + self.win_length > self.noiseRange[1]:
+                        break
 
-                args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
-                                    self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
-                                    self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
+                    args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
+                                        self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
+                                        self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
 
-            beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:,0,:]
+                beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:,0,:]
 
-        else:
-            beam_results = []
-            for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
-                if window_start + self.win_length > self.noiseRange[1]:
-                    break
-                peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
-                for j in range(self.signal_cnt):
-                    beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
-            beam_results = np.array(beam_results)
+            else:
+                beam_results = []
+                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                    if window_start + self.win_length > self.noiseRange[1]:
+                        break
+                    peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
+                    for j in range(self.signal_cnt):
+                        beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
+                beam_results = np.array(beam_results)
 
-        f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-        det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
+            det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
 
-        self.signal_threshold_autodetected.emit(det_thresh)
+            self.signal_threshold_calc_is_running.emit(False)
+            self.signal_threshold_calculated.emit(det_thresh)
 
         # ########## Finished calculating threshold ######################
 

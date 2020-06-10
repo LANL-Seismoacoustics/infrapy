@@ -180,8 +180,8 @@ class IPDetectionWidget(QWidget):
                 if not duplicate:
                     # append the new detection
                     self._detections.append(new_detection)
-                    self.signal_detections_changed.emit(self._detections)
-
+                    
+            self.signal_detections_changed.emit(self._detections)
             return True
         else:
             return False

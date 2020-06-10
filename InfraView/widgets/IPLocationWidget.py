@@ -868,9 +868,9 @@ class DistanceMatrixWorkerObject(QObject):
 
         self.signal_runFinished.emit(self.dist_matrix)
 
-        @pyqtSlot()
-        def stop(self):
-            self.thread_stopped = True
+    @pyqtSlot()
+    def stop(self):
+        self.thread_stopped = True
 
 
 class BISLWorkerObject(QObject):
