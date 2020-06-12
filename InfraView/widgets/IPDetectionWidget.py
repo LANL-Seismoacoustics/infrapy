@@ -33,7 +33,7 @@ class IPDetectionWidget(QWidget):
 
         self._parent = parent
 
-        self.buildUI()
+        self.buildUI() 
 
         self.show()
 
@@ -289,7 +289,7 @@ class IPDetectionWidget(QWidget):
     def saveDetectionsAs(self):
 
         if len(self._detections) == 0:
-            self.errorPopup('Oops... No Detections to Save')
+            self.errorPopup('No Detections to Save')
             return
 
         if self._parent.getProject() is None:

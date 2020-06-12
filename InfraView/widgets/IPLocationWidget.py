@@ -327,8 +327,6 @@ class IPLocationWidget(QWidget):
     @pyqtSlot()
     def calc_associations(self):
 
-        print("dist matrix = {}".format(self.dist_matrix))
-
         if self.dist_matrix is None:
             self.errorPopup("No distance matrix...I need a distance matrix")
             return  # Nothing to do
@@ -349,9 +347,6 @@ class IPLocationWidget(QWidget):
 
     @pyqtSlot(np.ndarray, np.ndarray)
     def cluster_run_finished(self, links, labels):
-
-        print('links = {}'.format(links))
-        print('labels = {}'.format(labels))
 
         self.dendrogram.set_data(links, self.assocSettings.threshold_edit.value())
 
@@ -862,7 +857,7 @@ class DistanceMatrixWorkerObject(QObject):
                                                          resol=self._resol,
                                                          pool=self._pool)
         except Exception:
-            print("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
+            self.errorPopup("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
             return
 
@@ -871,6 +866,13 @@ class DistanceMatrixWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.thread_stopped = True
+
+    def errorPopup(self, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle("Oops...")
+        msgBox.exec_()
 
 
 class BISLWorkerObject(QObject):
@@ -910,7 +912,7 @@ class BISLWorkerObject(QObject):
                                          rng_max=self._rng_max,
                                          resol=self._resol)
         except Exception:
-            print("Error while running BISL: {}".format(sys.exc_info()[0]))
+            self.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
             return
 
@@ -919,6 +921,13 @@ class BISLWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
+
+    def errorPopup(self, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle("Oops...")
+        msgBox.exec_()
 
 
 class ClusterWorkerObject(QObject):
@@ -949,14 +958,14 @@ class ClusterWorkerObject(QObject):
         try:
             links = linkage(squareform(self._dist_matrix), self._linkage_method)
         except Exception:
-            print("Error while calculating the linkage: {}".format(sys.exc_info()))
+            self.errorPopup("Error while calculating the linkage: {}".format(sys.exc_info()))
             self.thread_stopped = True
             return
 
         try:
             labels = fcluster(links, self._threshold, criterion='distance') - 1
         except Exception:
-            print("Error while calculating the labels: {}".format(sys.exc_info()))
+            self.errorPopup("Error while calculating the labels: {}".format(sys.exc_info()))
             self.thread_stopped = True
             return
 
@@ -965,6 +974,13 @@ class ClusterWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.thread_stopped = True
+
+    def errorPopup(self, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle("Oops...")
+        msgBox.exec_()
 
 
 class IPDendrogramWidget(QWidget):

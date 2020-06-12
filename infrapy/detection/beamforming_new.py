@@ -743,7 +743,7 @@ def find_peaks(beam_power, slowness_vals1, slowness_vals2, signal_cnt=1, freq_we
     peaks = peaks[sorting]
 
     if len(peaks) < signal_cnt:
-        print("WARNING. Only found " + str(len(peaks) + " local maxima in the grid."))
+        warnings.warn(("Only found " + str(len(peaks) + " local maxima in the grid.")))
     peaks = peaks[:signal_cnt]
 
     return peaks[:, :3]
@@ -906,8 +906,6 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
     else:
         # check first full window for detections using KDE of all f-values
         thresh = calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt)
-        print("det thresh = {}".format(det_thresh))
-        print("thresh = {}".format(thresh))
         init_win_mask = (times - times[0]).astype('m8[s]').astype(float) < win_len
         det_mask[init_win_mask] = (fstat_vals[init_win_mask] > thresh)
 
@@ -932,11 +930,6 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
             if abs(back_az_max - back_az_min) < back_az_lim or abs(back_az_max - back_az_min) - 360.0 < back_az_lim:
                 pk_index = np.argmax(fstat_vals[n:n + det_len]) 
 
-                if n == 0:
-                    warnings.warn("Detection is close to start of analysis.  Detection start time is set to beginning of data, but this might be incorrect")
-                if n + det_len == len(times):
-                    warnings.warn("Detection is close to end of analysis. Detection end time is set to end of data, but this might be incorrect")
-
                 try:
                     det_time = times[n + pk_index]
                     det_start = (times[n] - times[n + pk_index]).astype('m8[s]').astype(float)
@@ -947,7 +940,12 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
                     fstat = fstat_vals[n + pk_index]
                     dets = dets + [[det_time, det_start, det_end, back_az, trc_vel, fstat]]
                 except Exception as ex1:
-                    print('Issue with detection time ' + str(det_time), ex1)
+                    warnings.warn(('Issue with detection time ' + str(det_time), ex1))
+
+                if n == 0:
+                    warnings.warn("Detection at time {} is close to the start of analysis.  Detection start time is set to beginning of the data, but this might be incorrect. It is recommended that you rerun the beamforming with a larger analysis window.".format(det_time))
+                if n + det_len == len(times):
+                    warnings.warn("Detection at time {} is close to end of analysis. Detection end time is set to end of data, but this might be incorrect.  It is recommended that you rerun the beamforming with a larger analysis window.".format(det_time))
 
             n += det_len
         else:

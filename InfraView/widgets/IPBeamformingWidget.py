@@ -12,9 +12,11 @@ import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
 import platform
+import warnings
 import numpy as np
 from scipy import signal
 from operator import itemgetter
+
 
 # import infraview widgets here
 from InfraView.widgets import IPDetectionWidget
@@ -119,13 +121,14 @@ class IPBeamformingWidget(QWidget):
         self.fstat_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_blue)
 
         self.threshold_line = pg.InfiniteLine(pos=0.0, angle=0.0, pen=pg.mkPen('b', width=2, moveable=True, style=QtCore.Qt.DotLine))
-        self.threshold_label = pg.InfLineLabel(line=self.threshold_line, text='', movable=True, position=0.04)
+        self.threshold_label = pg.InfLineLabel(line=self.threshold_line, text='', movable=True, position=0.04, anchors=[(0.5,1), (0.5,1)])
         self.threshold_label.setColor((0,0,255))
         t_font = self.threshold_label.textItem.font()
         t_font.setPointSize(10)
         self.threshold_label.textItem.setFont(t_font)
-        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
         self.fstatPlot.addItem(self.threshold_line)
+        # this is the label that pops up to alert someone that the program is calculating the threshold
+        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
 
         self.traceVPlot = IPPlotWidget.IPPlotWidget()
         self.traceVPlot.hideButtons()
@@ -654,11 +657,11 @@ class IPBeamformingWidget(QWidget):
 
         self._parent.settings.endGroup()
 
-    def errorPopup(self, message):
+    def errorPopup(self, message, title="Oops..."):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
+        msgBox.setWindowTitle(title)
         msgBox.exec_()
 
     @pyqtSlot(bool)
@@ -789,16 +792,6 @@ class IPBeamformingWidget(QWidget):
         self.backAzPlot.addItem(self.backaz_curve)
 
         self._slowness_collection = []  # Clear this array for the new run
-
-        # print(self.bottomSettings.getNoiseRange())
-        # print(self.bottomSettings.getSignalRange())
-        # print(self.bottomSettings.getFreqRange())
-        # print(self.bottomSettings.getWinLength())
-        # print(self.bottomSettings.getWinStep())
-        # print(self.bottomSettings.getMethod())
-        # print(self.bottomSettings.getNumSigs())
-        # print(self.bottomSettings.getSubWinLength())
-
 
         # do any checks of the input here before you create the worker object.
         # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
@@ -1021,7 +1014,6 @@ class IPBeamformingWidget(QWidget):
         channel_count = len(self._streams)
         det_window_length = 300
         det_threshold = 0.99
-        min_sequence = 5
         tb_prod = 400
         back_az_lim = 10
         
@@ -1034,15 +1026,21 @@ class IPBeamformingWidget(QWidget):
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
-        dets = beamforming_new.detect_signals(num_times, 
-                                              beam_results, 
-                                              det_window_length, 
-                                              tb_prod, 
-                                              channel_count, 
-                                              det_thresh=det_threshold, 
-                                              min_seq=min_sequence, 
-                                              back_az_lim=back_az_lim,
-                                              fixed_thresh=fixed_threshold)
+        with warnings.catch_warnings(record=True) as w_array:
+            dets = beamforming_new.detect_signals(num_times, 
+                                                  beam_results, 
+                                                  det_window_length, 
+                                                  tb_prod, 
+                                                  channel_count, 
+                                                  det_thresh=det_threshold, 
+                                                  min_seq=self.detector_settings.min_peak_width.value(), 
+                                                  back_az_lim=self.detector_settings.back_az_limit.value(),
+                                                  fixed_thresh=fixed_threshold)
+
+            
+            for w in w_array:
+                self.errorPopup(str(w.message), "Warning...")
+        
 
         if len(dets) == 0:
             self.errorPopup("No Detections Found")
