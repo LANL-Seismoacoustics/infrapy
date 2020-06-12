@@ -8,6 +8,8 @@ class IPPickItem(InfrasoundDetection):
     def __init__(self, name=""):
         super().__init__()
 
+        self.set_name(name)
+
     def getAssociatedPickLine(self):
         return self._associatedPickLine
 

@@ -33,10 +33,9 @@ times_file, beam_results_file = "data/times.npy", "data/beam_results.npy"
 det_win_len = 60 * 5
 det_thresh = 0.99
 min_seq = 5
-det_method = "fstat"
 TB_prod = 40 * 10
 back_az_lim = 10
-M=4
+channel_cnt = 4
 
 if __name__ == '__main__':
     ######################################
@@ -52,9 +51,9 @@ if __name__ == '__main__':
     ######################################
     ##      Run detection analysis      ##
     ######################################
-    #dets = beamforming_new.detect_signals(times, beam_results, det_win_len, det_thresh=det_thresh, min_seq=min_seq, method=det_method, TB_prod=TB_prod)
-    dets = beamforming_new.detect_signals(times, beam_results, det_win_len, det_thresh=det_thresh, min_seq=min_seq, back_az_lim=back_az_lim, method=det_method, TB_prod=TB_prod,channel_cnt=M, use_det_mask=False)
+    dets = beamforming_new.detect_signals(times, beam_results, det_win_len, TB_prod, channel_cnt, det_thresh=det_thresh, min_seq=min_seq, back_az_lim=back_az_lim)
+
     print('\n' + "Detection Summary:")
     for det in dets:
         print("Detection time:", det[0], '\t', "Rel. detection onset:", det[1], '\t',"Rel. detection end:", det[2], '\t',end=' ')
-        print("Back azimuth:", det[3], '\t', "Trace velocity:", det[4], '\t', "F-stat:", det[5], '\t', "Array dim:", M)
+        print("Back azimuth:", np.round(det[3], 2), '\t', "Trace velocity:", np.round(det[4], 2), '\t', "F-stat:", np.round(det[5], 2), '\t', "Array dim:", channel_cnt)
