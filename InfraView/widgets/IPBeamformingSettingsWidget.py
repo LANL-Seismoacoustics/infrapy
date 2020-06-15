@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
-                             QGridLayout,
-                             QVBoxLayout, QHBoxLayout, QGroupBox, QFrame)
+                             QHBoxLayout, QFormLayout, QGroupBox, QFrame)
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, QSettings, Qt
 import sys
@@ -15,8 +14,6 @@ class IPBeamformingSettingsWidget(QWidget):
 
     def buildUI(self):
 
-        label_windowLength = QLabel(self.tr('   Window Length: '))
-        label_windowLength.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.windowLength_spin = QDoubleSpinBox()
         self.windowLength_spin.setMaximumWidth(60)
         self.windowLength_spin.setSuffix(' s')
@@ -24,8 +21,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.windowLength_spin.setMaximum(1000000)
         self.windowLength_spin.setValue(10.0)
 
-        label_windowStep = QLabel(self.tr('   Window Step: '))
-        label_windowStep.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.windowStep_spin = QDoubleSpinBox()
         self.windowStep_spin.setMaximumWidth(60)
         self.windowStep_spin.setSuffix(' s')
@@ -33,8 +28,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.windowStep_spin.setMaximum(1000000)
         self.windowStep_spin.setValue(2.5)
 
-        label_fmin = QLabel(self.tr('   Freq. Min.: '))
-        label_fmin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.fmin_spin = QDoubleSpinBox()
         self.fmin_spin.setMaximumWidth(60)
         self.fmin_spin.setSuffix(' Hz')
@@ -43,8 +36,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.fmin_spin.setReadOnly(True)
         self.fmin_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
 
-        label_fmax = QLabel(self.tr('   Freq. Max.: '))
-        label_fmax.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.fmax_spin = QDoubleSpinBox()
         self.fmax_spin.setMaximumWidth(60)
         self.fmax_spin.setSuffix(' Hz')
@@ -53,16 +44,12 @@ class IPBeamformingSettingsWidget(QWidget):
         self.fmax_spin.setReadOnly(True)
         self.fmax_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
 
-        label_numSigs = QLabel(self.tr('    Num. of Signals: '))
-        label_numSigs.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.numSigs_spin = QSpinBox()
         self.numSigs_spin.setMaximumWidth(40)
         self.numSigs_spin.setMinimum(1)
         self.numSigs_spin.setValue(1)
         self.numSigs_spin.setEnabled(False)
 
-        label_method = QLabel(self.tr('   Method: '))
-        label_method.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.method_cb = QComboBox()
         self.method_cb.addItem('bartlett')
         self.method_cb.addItem('gls')
@@ -71,8 +58,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.method_cb.addItem('music')
         self.method_cb.currentTextChanged.connect(self.methodChanged)
 
-        label_noiseStart = QLabel(self.tr('     Noise Range Start: '))
-        label_noiseStart.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.noiseStart_spin = QDoubleSpinBox()
         self.noiseStart_spin.setMinimum(0.0)
         self.noiseStart_spin.setMaximum(1000000)
@@ -81,8 +66,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.noiseStart_spin.setReadOnly(True)
         self.noiseStart_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
 
-        label_noiseDuration = QLabel(self.tr(' Duration: '))
-        label_noiseDuration.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.noiseDuration_spin = QDoubleSpinBox()
         self.noiseDuration_spin.setMaximumWidth(60)
         self.noiseDuration_spin.setMinimum(0.0)
@@ -91,8 +74,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.noiseDuration_spin.setReadOnly(True)
         self.noiseDuration_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
 
-        label_sigStart = QLabel(self.tr('     Signal Range Start: '))
-        label_sigStart.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.sigStart_spin = QDoubleSpinBox()
         self.sigStart_spin.setMaximumWidth(60)
         self.sigStart_spin.setMinimum(0.0)
@@ -101,8 +82,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.sigStart_spin.setReadOnly(True)
         self.sigStart_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
 
-        label_sigDuration = QLabel(self.tr(' Duration: '))
-        label_sigDuration.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.sigDuration_spin = QDoubleSpinBox()
         self.sigDuration_spin.setMaximumWidth(60)
         self.sigDuration_spin.setMinimum(0.0)
@@ -115,8 +94,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.subwindow_cb.setEnabled(False)
         self.subwindow_cb.stateChanged.connect(self.updateSubwindow)
 
-        label_subwindow = QLabel(self.tr(' Subwindow Length: '))
-        label_subwindow.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.subWinLength_spin = QDoubleSpinBox()
         self.subWinLength_spin.setMaximumWidth(60)
         self.subWinLength_spin.setMinimum(0.0)
@@ -125,21 +102,18 @@ class IPBeamformingSettingsWidget(QWidget):
         self.subWinLength_spin.setSuffix(' s')
         self.subWinLength_spin.setEnabled(False)
 
-        label_backaz_resol = QLabel(self.tr(' Back Azimuth Resolution: '))
         self.backaz_resol_spin = QDoubleSpinBox()
         self.backaz_resol_spin.setMinimum(0.1)
         self.backaz_resol_spin.setMaximum(20.)
         self.backaz_resol_spin.setValue(3.0)
         self.backaz_resol_spin.setSuffix(' deg')
 
-        label_tracev_resol = QLabel(self.tr(' Trace Velocity Resolution: '))
         self.tracev_resol_spin = QDoubleSpinBox()
         self.tracev_resol_spin.setMinimum(0.1)
         self.tracev_resol_spin.setMaximum(20.)
         self.tracev_resol_spin.setValue(5.0)
         self.tracev_resol_spin.setSuffix(' m/s')
 
-        label_backaz_startF = QLabel(self.tr(' Back Azimuth Start Angle: '))
         self.backaz_start_spin = QDoubleSpinBox()
         self.backaz_start_spin.setMinimum(-180.0)
         self.backaz_start_spin.setMaximum(179.0)
@@ -147,7 +121,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.backaz_start_spin.setSuffix(' deg')
         self.backaz_start_spin.editingFinished.connect(self.checkBackAzRange)
 
-        label_backaz_endF = QLabel(self.tr(' Back Azimuth End Angle: '))
         self.backaz_end_spin = QDoubleSpinBox()
         self.backaz_end_spin.setMinimum(-179.0)
         self.backaz_end_spin.setMaximum(180.0)
@@ -155,53 +128,66 @@ class IPBeamformingSettingsWidget(QWidget):
         self.backaz_end_spin.setSuffix(' deg')
         self.backaz_end_spin.editingFinished.connect(self.checkBackAzRange)
 
-        gridLayout = QGridLayout()
-        gridLayout.addWidget(label_method, 0, 0)
-        gridLayout.addWidget(self.method_cb, 0, 1)
-        gridLayout.addWidget(label_numSigs, 1, 0)
-        gridLayout.addWidget(self.numSigs_spin, 1, 1)
+        self.tracev_min_spin = QDoubleSpinBox()
+        self.tracev_min_spin.setMinimum(1)
+        self.tracev_min_spin.setMaximum(10000.)
+        self.tracev_min_spin.setValue(300.0)
+        self.tracev_min_spin.setSuffix(' m/s')
+        self.tracev_min_spin.editingFinished.connect(self.checkTraceVRange)
+        
+        self.tracev_max_spin = QDoubleSpinBox()
+        self.tracev_max_spin.setMinimum(2)
+        self.tracev_max_spin.setMaximum(10000.)
+        self.tracev_max_spin.setValue(750.0)
+        self.tracev_max_spin.setSuffix(' m/s')
+        self.tracev_max_spin.editingFinished.connect(self.checkTraceVRange)
 
-        gridLayout.addWidget(label_windowLength, 0, 2)
-        gridLayout.addWidget(self.windowLength_spin, 0, 3)
-        gridLayout.addWidget(label_windowStep, 1, 2)
-        gridLayout.addWidget(self.windowStep_spin, 1, 3)
-        gridLayout.addWidget(label_subwindow, 2, 2)
-        gridLayout.addWidget(self.subWinLength_spin, 2, 3)
-        gridLayout.addWidget(self.subwindow_cb, 2, 4)
 
-        gridLayout.addWidget(label_fmin, 0, 5)
-        gridLayout.addWidget(self.fmin_spin, 0, 6)
-        gridLayout.addWidget(label_fmax, 1, 5)
-        gridLayout.addWidget(self.fmax_spin, 1, 6)
+        formlayout_col1 = QFormLayout()
+        formlayout_col1.addRow("Method: ", self.method_cb)
+        formlayout_col1.addRow("Num. of Signals: ", self.numSigs_spin)
 
-        gridLayout.addWidget(label_noiseStart, 0, 7)
-        gridLayout.addWidget(self.noiseStart_spin, 0, 8)
-        gridLayout.addWidget(label_noiseDuration, 0, 9)
-        gridLayout.addWidget(self.noiseDuration_spin, 0, 10)
+        formlayout_col2 = QFormLayout()
+        formlayout_col2.addRow("Window Length: ", self.windowLength_spin)
+        formlayout_col2.addRow("Window Step: ", self.windowStep_spin)
+        sub_win_layout = QHBoxLayout()
+        sub_win_layout.addWidget(self.subWinLength_spin)
+        sub_win_layout.addWidget(self.subwindow_cb)
+        formlayout_col2.addRow("Subwindow Length: ", sub_win_layout)
 
-        gridLayout.addWidget(label_sigStart, 1, 7)
-        gridLayout.addWidget(self.sigStart_spin, 1, 8)
-        gridLayout.addWidget(label_sigDuration, 1, 9)
-        gridLayout.addWidget(self.sigDuration_spin, 1, 10)
+        formlayout_col3 = QFormLayout()
+        formlayout_col3.addRow("Freq Min: ", self.fmin_spin)
+        formlayout_col3.addRow("Freq Max: ", self.fmax_spin)
 
-        gridLayout.addWidget(label_backaz_resol, 0, 11)
-        gridLayout.addWidget(self.backaz_resol_spin, 0, 12)
-        gridLayout.addWidget(label_backaz_startF, 1, 11)
-        gridLayout.addWidget(self.backaz_start_spin, 1, 12)
-        gridLayout.addWidget(label_backaz_endF, 2, 11)
-        gridLayout.addWidget(self.backaz_end_spin, 2, 12)
-        gridLayout.addWidget(label_tracev_resol, 3, 11)
-        gridLayout.addWidget(self.tracev_resol_spin, 3, 12)
+        formlayout_col4 = QFormLayout()
+        formlayout_col4.addRow("Noise Range Start: ", self.noiseStart_spin)
+        formlayout_col4.addRow("Signal Range Start: ", self.sigStart_spin)
+
+        formlayout_col5 = QFormLayout()
+        formlayout_col5.addRow("Duration: ", self.noiseDuration_spin)
+        formlayout_col5.addRow("Duration: ", self.sigDuration_spin)
+
+        formlayout_col6 = QFormLayout()
+        formlayout_col6.addRow("Back Azimuth Resolution: ", self.backaz_resol_spin)
+        formlayout_col6.addRow("Back Azimuth Start Angle: ", self.backaz_start_spin)
+        formlayout_col6.addRow("Back Azimuth End Angle: ", self.backaz_end_spin)
+
+        formlayout_col7 = QFormLayout()
+        formlayout_col7.addRow("Trace Vel. Resolution: ", self.tracev_resol_spin)
+        formlayout_col7.addRow("Trace Vel Min: ", self.tracev_min_spin)
+        formlayout_col7.addRow("Trace Vel Max: ", self.tracev_max_spin)
 
         horizLayout = QHBoxLayout()
-        horizLayout.addLayout(gridLayout)
+        horizLayout.addLayout(formlayout_col1)
+        horizLayout.addLayout(formlayout_col2)
+        horizLayout.addLayout(formlayout_col3)
+        horizLayout.addLayout(formlayout_col4)
+        horizLayout.addLayout(formlayout_col5)
+        horizLayout.addLayout(formlayout_col6)
+        horizLayout.addLayout(formlayout_col7)
         horizLayout.addStretch()
 
-        vertLayout = QVBoxLayout()
-        vertLayout.addLayout(horizLayout)
-        vertLayout.addStretch()
-
-        self.setLayout(vertLayout)
+        self.setLayout(horizLayout)
 
     def HLine(self):
         hl = QFrame()
@@ -254,8 +240,6 @@ class IPBeamformingSettingsWidget(QWidget):
     def getMethod(self):
         return self.method_cb.currentText()
 
-    def getTraceVelResolution(self):
-        return self.tracev_resol_spin.value()
 
     def getBackAzResolution(self):
         return self.backaz_resol_spin.value()
@@ -272,6 +256,22 @@ class IPBeamformingSettingsWidget(QWidget):
         else:
             self.backaz_start_spin.setStyleSheet("color: rgb(0, 0, 0);")
             self.backaz_end_spin.setStyleSheet("color: rgb(0, 0, 0);")
+
+    def getTraceVelResolution(self):
+        return self.tracev_resol_spin.value()
+
+    def getTraceVRange(self):
+        return (self.tracev_min_spin.value(), self.tracev_max_spin.value())
+
+    @QtCore.pyqtSlot()
+    def checkTraceVRange(self):
+        min, max = self.getTraceVRange()
+        if min >= max:
+            self.tracev_min_spin.setStyleSheet("color: rgb(200,0,0);")
+            self.tracev_max_spin.setStyleSheet("color: rgb(200,0,0);")
+        else:
+            self.tracev_min_spin.setStyleSheet("color: rgb(0,0,0);")
+            self.tracev_max_spin.setStyleSheet("color: rgb(0,0,0);")
 
     @QtCore.pyqtSlot(tuple)
     def setNoiseValues(self, values):   # values is a tuple containing (start, stop)

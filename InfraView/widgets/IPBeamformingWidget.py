@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLabel,
                              QMessageBox, QPushButton, QSpinBox, QDoubleSpinBox,
                              QGroupBox, QComboBox, QSplitter, QTabWidget, QAction,
-                             QToolBar, QToolButton)
+                             QScrollArea, QToolBar, QToolButton)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QLine
 from PyQt5 import QtCore, QtGui
@@ -247,11 +247,13 @@ class IPBeamformingWidget(QWidget):
         self.bottomTabWidget = QTabWidget()
 
         self.bottomSettings = IPBeamformingSettingsWidget.IPBeamformingSettingsWidget(self)
+        self.bottomSettings_scrollarea = QScrollArea()
+        self.bottomSettings_scrollarea.setWidget(self.bottomSettings)
         self.detector_settings = IPDetectorSettingsWidget.IPDetectorSettingsWidget(self)
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
         self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')
-        self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings, 'Beamformer Settings')
+        self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings_scrollarea, 'Beamformer Settings')
         self.det_settings_tab_idx = self.bottomTabWidget.addTab(self.detector_settings, 'Detector Settings')
 
         bottomLayout = QHBoxLayout()
@@ -802,6 +804,13 @@ class IPBeamformingWidget(QWidget):
             # and bail out before going farther
             return
 
+        # Ditto for the trace velocity range
+        tv_min, tv_max = self.bottomSettings.getTraceVRange()
+        if tv_min >= tv_max:
+            self.errorPopup('The minimum trace velocity must be less than the max.  Please correct this in the Beamformer Settings tab.')
+            self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
+            return
+
         self.bfWorker = BeamformingWorkerObject(self._streams,
                                                 self.resultData,
                                                 self.bottomSettings.getNoiseRange(),
@@ -816,6 +825,7 @@ class IPBeamformingWidget(QWidget):
                                                 self._mp_pool,
                                                 self.bottomSettings.getBackAzResolution(),
                                                 self.bottomSettings.getTraceVelResolution(),
+                                                self.bottomSettings.getTraceVRange(),
                                                 self.bottomSettings.getBackAzRange(),
                                                 self.detector_settings.is_auto_threshold())
 
@@ -1126,7 +1136,7 @@ class BeamformingWorkerObject(QtCore.QObject):
 
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
-                 inventory, pool, back_az_resol, tracev_resol,
+                 inventory, pool, back_az_resol, tracev_resol, tracev_range,
                  back_az_range, auto_thresh):
         super().__init__()
         self.resultData = resultData
@@ -1144,6 +1154,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self._back_az_start = back_az_range[0]
         self._back_az_end = back_az_range[1]
         self._trace_v_resolution = tracev_resol
+        self._trace_v_range = tracev_range
         self.is_auto_threshold = auto_thresh
 
         self.threadStopped = True
@@ -1176,10 +1187,10 @@ class BeamformingWorkerObject(QtCore.QObject):
     
 
     # function and wrapper to beamform different windows using pool
-    def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
-        X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
-        beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
-        return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
+    # def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
+    #     X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
+    #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
+    #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
 
     @pyqtSlot()
@@ -1190,7 +1201,8 @@ class BeamformingWorkerObject(QtCore.QObject):
         back_az_vals = np.arange(self._back_az_start, self._back_az_end, self._back_az_resolution)
         # note if you make the 300 and 750 into a control, then you need to do that when you calculate the slowness size as well
         # TODO: the trace velocity range should be added to the settings widget
-        trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
+        #trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
+        trc_vel_vals = np.arange(self._trace_v_range[0], self._trace_v_range[1], self._trace_v_resolution)
 
         det_p_val = 0.99
 
