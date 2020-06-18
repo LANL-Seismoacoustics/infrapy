@@ -45,7 +45,7 @@ class IPPickLine(pg.InfiniteLine):
 
         self.label = InfLineLabel(self, text=self._Name, movable=True, color=(0, 0, 0))
         self.label.fill = pg.mkBrush(255, 255, 255, 0)
-        self.label.setPosition(0.05)
+        self.label.setPosition(0.90)
         self.label.setZValue(20)
 
         self.setHoverPen('r', width=3)

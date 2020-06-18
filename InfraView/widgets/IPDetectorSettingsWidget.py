@@ -58,7 +58,6 @@ class IPDetectorSettingsWidget(QWidget):
         form_layout_col2.addRow("Back azimuth limit: ", self.back_az_limit)
         form_layout_col2.addRow("Minimum peak width: ", self.min_peak_width)
         
-        main_layout.addStretch()
         main_layout.addLayout(form_layout_col1)
         main_layout.addLayout(form_layout_col2)
         main_layout.addStretch()
