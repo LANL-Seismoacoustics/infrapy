@@ -67,7 +67,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         pg.setConfigOption('foreground', 'k')
         pg.setConfigOptions(antialias=False)
 
-        self.settings = QSettings('LANL', 'InfraView')
+        self.settings = QSettings('LANL', 'infraview')
 
         self.progname = progname
         self.progversion = progversion

@@ -249,7 +249,11 @@ class IPBeamformingWidget(QWidget):
         self.bottomSettings = IPBeamformingSettingsWidget.IPBeamformingSettingsWidget(self)
         self.bottomSettings_scrollarea = QScrollArea()
         self.bottomSettings_scrollarea.setWidget(self.bottomSettings)
+        
         self.detector_settings = IPDetectorSettingsWidget.IPDetectorSettingsWidget(self)
+        self.detector_settings_scrollarea = QScrollArea()
+        self.detector_settings_scrollarea.setWidget(self.detector_settings)
+        
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
         self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')

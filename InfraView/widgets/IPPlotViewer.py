@@ -7,18 +7,18 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
                              QLabel, QMessageBox,
                              QHBoxLayout, QVBoxLayout,
-                             QStackedWidget)
+                             QScrollArea, QSplitter, QStackedWidget)
 
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPlotWidget
-# from InfraView.widgets import IPSpectrogramWidget
+from InfraView.widgets import IPWaveformSelectorWidget
 
 import obspy
 from obspy.core import UTCDateTime
 from obspy.core.stream import Stream
 
 
-class IPPlotViewer(QWidget):
+class IPPlotViewer(QSplitter):
 
     def __init__(self, parent, fs_widget):
         super().__init__(parent)
@@ -29,36 +29,33 @@ class IPPlotViewer(QWidget):
         self.buildUI()
 
     def buildUI(self):
+
         self.pl_widget = IPPlotLayoutWidget(self)
-        # self.spect_widget = IPSpectrogramWidget.IPSpectrogramWidget(self)
+        self.waveform_selector = IPWaveformSelectorWidget.IPWaveformSelectorWidget(self)
+        waveform_selector_scrollarea = QScrollArea()
+        waveform_selector_scrollarea.setWidget(self.waveform_selector)
         self.lr_settings_widget = IPLinearRegionSettingsWidget(self)
+        
+        rhs_widget = QWidget()
+        rhs_layout = QVBoxLayout()
+        rhs_layout.addWidget(self.pl_widget)
+        rhs_layout.addWidget(self.lr_settings_widget)
+        rhs_widget.setLayout(rhs_layout)
 
-        self.stacked_widget = QStackedWidget()
-        self.stacked_widget.addWidget(self.pl_widget)
-        # self.stacked_widget.addWidget(self.spect_widget)
-
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(self.stacked_widget)
-        main_layout.addWidget(self.lr_settings_widget)
-
-        self.setLayout(main_layout)
-
-    def toggle_view(self):
-        if self.stacked_widget.currentIndex() == 0:
-            self.stacked_widget.setCurrentIndex(1)
-        else:
-            self.stacked_widget.setCurrentIndex(0)
+        self.addWidget(self.waveform_selector)
+        self.addWidget(rhs_widget)
 
     def set_streams(self, st, st_filtered, c_f_d_s):
         # c_f_d_s is the current filter display settings
+        self.waveform_selector.update_selections(st)
         self.pl_widget.plot_traces(st, st_filtered, c_f_d_s)
-        # self.spect_widget.update_streams(st)
 
     def clear(self):
         self.pl_widget.sts = None
         self.pl_widget.plot_list.clear()
         self.pl_widget.filtered_plot_lines.clear()
         self.pl_widget.clear()
+        self.waveform_selector.clear_form()
 
     @pyqtSlot(Stream, Stream)
     def update(self, sts, filtered_sts):
@@ -164,7 +161,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.addLabel(self.earliest_start_time, 0, 0)
 
         for idx, trace in enumerate(sts):
-            #######
+
+            #####################################
             # First let's assemble the trace data, raw and, if needed, filtered
 
             # trace.data is the unfiltered data for the current trace.  Lets create a plot line for it
@@ -238,8 +236,10 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             self.plot_list.append(new_plot)
 
             # add the new plot to the layout
-            self.nextRow()
-            self.addItem(new_plot)
+            #self.nextRow()
+            #self.addItem(new_plot)
+        
+        self.draw_plots()
 
         # now that we have the plots, lets draw the data lines on the plots
         self.draw_plot_lines(current_filter_display_settings)
@@ -277,11 +277,55 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 my_plot.getNoiseRegion().sigRegionChanged.emit(my_plot.getNoiseRegion())
                 my_plot.getSignalRegion().sigRegionChanged.emit(my_plot.getSignalRegion())
 
+    def draw_plots(self):
+        # this function draws only the plots that are checked in the waveform_selector widget
+        
+        # first clear out current plots
+        self.clear()
+        # next get the reference to the checkbox list
+        values = self._parent.waveform_selector.get_value_list()
+
+        # we need to handle the special case where NO plots are visible
+        if not any(values):
+            # we can stop here, but we need to signal the other widgets to clear out if needed
+            # lets first set the active plot to 0 for when things are visible again
+            self.active_plot = 0
+            # send a -1 in the signal to indicate that none of the plots are visible
+            self.sig_active_plot_changed.emit(-1,
+                                              self.plot_lines,
+                                              self.filtered_plot_lines,
+                                              self.plot_list[0].getSignalRegion().getRegion())
+            return
+        
+        # we need to make sure that if the current active plot index is not in the displayed list, we set 
+        # the current active plot to one of the plots that is in the list...might be a slicker way to do this
+        is_in = values[self.active_plot]
+
+        if not is_in:
+            # the current active plot is hidden, so we need to set the active plot to the first visible one
+            for idx, v in enumerate(values):
+                if v:
+                    self.active_plot = idx
+                    self.sig_active_plot_changed.emit(idx,
+                                                      self.plot_lines,
+                                                      self.filtered_plot_lines,
+                                                      self.plot_list[0].getSignalRegion().getRegion())
+                    break
+
+        for idx, plot in enumerate(self.plot_list):
+            if values[idx]:
+                if idx == self.active_plot:
+                    plot.setBackgroundColor(255, 255, 255)
+                else:
+                    plot.setBackgroundColor(200, 200, 200)
+                self.nextRow()
+                self.addItem(plot)
+
     def draw_plot_lines(self, current_filter_display_settings):
 
         # Now we need to make sure the correct plot lines are turned on/off
         if current_filter_display_settings['apply']:
-            for idx, trace in enumerate(self.plot_lines):
+            for idx, _ in enumerate(self.plot_lines):
                 self.filtered_plot_lines[idx].setVisible(True)
                 if current_filter_display_settings['showUnfiltered']:
                     self.plot_lines[idx].setVisible(True)
@@ -372,6 +416,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             N = trace.stats.npts
             dt = trace.stats.delta
             self.t.append(offsets[idx] + np.arange(0, N) * dt)
+
     # ---------------------------------------------------------------------------
 
     def setXaxisCoupling(self, coupled):
