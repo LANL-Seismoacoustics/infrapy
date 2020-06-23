@@ -253,6 +253,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.draw_plots()
         # and finally draw the data lines on the plots
         self.draw_plot_lines(current_filter_display_settings)
+        # updateAxes currently only links the x-axes
+        self.updateAxes()
         # signal to the psd viewer that the plots are loaded and to draw the initial psd
         self.sig_active_plot_changed.emit(self.active_plot,
                                               self.plot_lines,
