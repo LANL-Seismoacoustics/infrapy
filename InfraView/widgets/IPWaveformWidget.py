@@ -421,6 +421,8 @@ class IPWaveformWidget(QWidget):
         else:
             self.spectraWidget.set_title(self._sts[index].id)
             self.spectraWidget.set_fs(self._sts[index].stats.sampling_rate)
+            # self.spectraWidget.updateSignalPSD()
+            #    self.spectraWidget.updateNoiesPSD()
 
             noise_region_item = self.plotViewer.pl_widget.plot_list[index].getNoiseRegion()
             noise_region_item.sigRegionChanged.emit(noise_region_item)
