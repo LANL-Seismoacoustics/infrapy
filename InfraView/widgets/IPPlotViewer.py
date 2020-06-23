@@ -93,6 +93,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     pick_line_list = []  # array to hold the references to pick lines
 
     active_plot = 0
+    last_range = []
 
     def __init__(self, parent):
         super().__init__(parent=parent)
@@ -145,7 +146,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.filtered_plot_lines.clear()
         self.position_labels.clear()
         self.t.clear()
-        self.clear()
+        self.clearAll()
 
         self.active_plot = 0
 
@@ -205,16 +206,14 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_plot.getNoiseRegion().sigRegionChanged.connect(self._parent._parent.update_noise_PSD)
             new_plot.getSignalRegion().sigRegionChanged.connect(self._parent._parent.update_signal_PSD)
 
-
-
             ##################################################################################
             #  Now we can initialize the background colors of the plots
             #
             # we want to highlight the active plot, so set the background color here
-            if idx == self.active_plot:
-                new_plot.setBackgroundColor(255, 255, 255)
-            else:
-                new_plot.setBackgroundColor(200, 200, 200)
+            # if idx == self.active_plot:
+            #     new_plot.setBackgroundColor(255, 255, 255)
+            # else:
+            #     new_plot.setBackgroundColor(200, 200, 200)
 
             # cluge because setting background color covers axis for some reason
             new_plot.getAxis("top").setZValue(0)
@@ -235,15 +234,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             # keep the new_plot reference in a list
             self.plot_list.append(new_plot)
 
-            # add the new plot to the layout
-            #self.nextRow()
-            #self.addItem(new_plot)
-        
-        self.draw_plots()
-
-        # now that we have the plots, lets draw the data lines on the plots
-        self.draw_plot_lines(current_filter_display_settings)
-
         # Now set up the crosshairs and position labels for each plot. 
         self.v_lines.clear()
         self.h_lines.clear()
@@ -259,65 +249,49 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             my_plot.addItem(self.h_lines[idx], ignoreBounds=True)
             my_plot.addItem(self.position_labels[idx], ignoreBounds=True)
 
-        # update traces may have been triggered by a change in the filter.  If so, the amplitudes of the
-        # traces may have changed.  We don't want to autoscale the x-axis, but making the y-axes adjust to
-        # the changes is reasonable.     
-        self.normalize_traces_to_largest(sts)
-
-        # update Axes settings
-        self.updateAxes()
+        # now draw the plots...
+        self.draw_plots()
+        # and finally draw the data lines on the plots
+        self.draw_plot_lines(current_filter_display_settings)
+        # signal to the psd viewer that the plots are loaded and to draw the initial psd
         self.sig_active_plot_changed.emit(self.active_plot,
-                                          self.plot_lines,
-                                          self.filtered_plot_lines,
-                                          self.plot_list[0].getSignalRegion().getRegion())
-
-        # finally, find the active plot and populate the psd widget with the current data in its signal/noise regions
-        for idx, my_plot in enumerate(self.plot_list):
-            if idx == self.active_plot:
-                my_plot.getNoiseRegion().sigRegionChanged.emit(my_plot.getNoiseRegion())
-                my_plot.getSignalRegion().sigRegionChanged.emit(my_plot.getSignalRegion())
+                                              self.plot_lines,
+                                              self.filtered_plot_lines,
+                                              self.plot_list[self.active_plot].getSignalRegion().getRegion())
 
     def draw_plots(self):
-        # this function draws only the plots that are checked in the waveform_selector widget
-        
-        # first clear out current plots
+        # The idea here is to draw the plots that are currently selected in the waveformselectorwidget
+
+        # first step is to clear out the current layout
         self.clear()
-        # next get the reference to the checkbox list
+
+        # now, iterate through the current checked items and add the plots that are at each index
         values = self._parent.waveform_selector.get_value_list()
 
-        # we need to handle the special case where NO plots are visible
+        # if there are no checked plots...
         if not any(values):
-            # we can stop here, but we need to signal the other widgets to clear out if needed
-            # lets first set the active plot to 0 for when things are visible again
-            self.active_plot = 0
-            # send a -1 in the signal to indicate that none of the plots are visible
             self.sig_active_plot_changed.emit(-1,
                                               self.plot_lines,
                                               self.filtered_plot_lines,
                                               self.plot_list[0].getSignalRegion().getRegion())
             return
-        
-        # we need to make sure that if the current active plot index is not in the displayed list, we set 
-        # the current active plot to one of the plots that is in the list...might be a slicker way to do this
-        is_in = values[self.active_plot]
 
-        if not is_in:
-            # the current active plot is hidden, so we need to set the active plot to the first visible one
-            for idx, v in enumerate(values):
-                if v:
-                    self.active_plot = idx
-                    self.sig_active_plot_changed.emit(idx,
-                                                      self.plot_lines,
-                                                      self.filtered_plot_lines,
-                                                      self.plot_list[0].getSignalRegion().getRegion())
-                    break
+        # if the active_plot is not currently checked, make the first checked plot the active plot
+        if not values[self.active_plot]:
+            self.active_plot = values.index(True)
+            self.sig_active_plot_changed.emit(self.active_plot,
+                                              self.plot_lines,
+                                              self.filtered_plot_lines,
+                                              self.plot_list[self.active_plot].getSignalRegion().getRegion())
 
         for idx, plot in enumerate(self.plot_list):
+            # set the color of the plots
+            if idx == self.active_plot:
+                plot.setBackgroundColor(255, 255, 255)
+            else:
+                plot.setBackgroundColor(200, 200, 200)
+            # add the checked plots in the waveformselector to the layout
             if values[idx]:
-                if idx == self.active_plot:
-                    plot.setBackgroundColor(255, 255, 255)
-                else:
-                    plot.setBackgroundColor(200, 200, 200)
                 self.nextRow()
                 self.addItem(plot)
 
@@ -332,7 +306,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 else:
                     self.plot_lines[idx].setVisible(False)
         else:
-            for idx, trace in enumerate(self.plot_lines):
+            for idx, _ in enumerate(self.plot_lines):
                 self.filtered_plot_lines[idx].setVisible(False)
                 self.plot_lines[idx].setVisible(True)
 
@@ -340,14 +314,14 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         # this could be contained in the setVisible bit above, but I separate
         # them for clarity
         if current_filter_display_settings['apply']:
-            for idx, trace in enumerate(self.plot_lines):
+            for idx, _ in enumerate(self.plot_lines):
                 self.filtered_plot_lines[idx].setPen(pg.mkPen(color=(100, 100, 100), width=1))
                 self.plot_lines[idx].setPen(pg.mkPen(color=(220, 220, 220), width=1))
 
                 self.filtered_plot_lines[idx].setZValue(5)
                 self.plot_lines[idx].setZValue(4)
         else:
-            for idx, trace in enumerate(self.plot_lines):
+            for idx, _ in enumerate(self.plot_lines):
                 self.plot_lines[idx].setPen(pg.mkPen(color=(100, 100, 100), width=1))
                 self.plot_lines[idx].setZValue(5)
 
@@ -359,10 +333,10 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         # This little bit links the axes of the newly created plot to those of the first one
         # so they scale the same (this could be optional)
         self.setXaxisCoupling(True)
-        self.setYaxisCoupling(True)
+        # self.setYaxisCoupling(True)
 
-        if len(self.plot_list) > 0 and self.latest_end_time is not None and self.earliest_start_time is not None:
-            self.plot_list[-1].setRange(xRange=(0, UTCDateTime(self.latest_end_time) - UTCDateTime(self.earliest_start_time)))
+        #if len(self.plot_list) > 0 and self.latest_end_time is not None and self.earliest_start_time is not None:
+        #    self.plot_list[-1].setRange(xRange=(0, UTCDateTime(self.latest_end_time) - UTCDateTime(self.earliest_start_time)), padding=0)
 
     def normalize_traces_to_largest(self, stream):
         my_max = 0
@@ -372,7 +346,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             if m > my_max:
                 my_max = m
                 max_i = idx
-        self.plot_list[max_i].getViewBox().autoRange()
+        self.plot_list[max_i].getViewBox().autoRange(padding=0)
         
 
     @pyqtSlot(object, object)
@@ -419,26 +393,26 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
     # ---------------------------------------------------------------------------
 
-    def setXaxisCoupling(self, coupled):
+    def setXaxisCoupling(self, coupled, index=0):
         if coupled:
             for idx, my_plot in enumerate(self.plot_list):
-                if idx > 0:
-                    my_plot.setXLink(self.plot_list[0])
+                if idx != index:
+                    my_plot.setXLink(self.plot_list[index])
         else:
             for my_plot in self.plot_list:
                 my_plot.setXLink(None)
 
-    def setYaxisCoupling(self, coupled):
+    def setYaxisCoupling(self, coupled, index=0):
         if coupled:
             for idx, my_plot in enumerate(self.plot_list):
-                if idx > 0:
-                    my_plot.setYLink(self.plot_list[0])
+                if idx != index:
+                    my_plot.setYLink(self.plot_list[index])
         else:
             for my_plot in self.plot_list:
                 my_plot.setYLink(None) 
                 my_plot.enableAutoRange(axis=my_plot.vb.YAxis, enable=True)
 
-    def clear(self):
+    def clearAll(self):
 
         self.plot_lines.clear()
         self.filtered_plot_lines.clear()
@@ -446,6 +420,11 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.t.clear()
         self.v_lines.clear()
         self.h_lines.clear()
+        self.active_plot = 0
+
+    def clearLayout(self):
+        for plot in reversed(self.plot_list):
+            self.removeItem(plot)
 
     # -----------------------------------------------------------------------------
     # Mouse Handlers
@@ -504,7 +483,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     def mouseClick_Left(self, evt):
 
         scenePos = evt.scenePos()
-        qscenePos = QPoint(scenePos.x(), scenePos.y())
 
         for idx, my_plot in enumerate(self.plot_list):
             # we want to ignore clicks if they aren't actually in the plot area (ie ignore axis labels etc)
@@ -599,14 +577,12 @@ class IPLinearRegionSettingsWidget(QWidget):
     def updateSpinValues(self, regionItem):
         nrange = regionItem.getRegion()
 
-        # All of the regions are linked, so pull of the values of the first one
+        # All of the regions are linked, so pull off the values of the first one
         if type(regionItem) is IPPlotWidget.IPLinearRegionItem_Noise:
-
             self.noiseStartSpin.setValue(nrange[0])
             self.noiseDurationSpin.setValue(nrange[1] - nrange[0])
 
         elif type(regionItem) is IPPlotWidget.IPLinearRegionItem_Signal:
-
             self.signalStartSpin.setValue(nrange[0])
             self.signalDurationSpin.setValue(nrange[1] - nrange[0])
 
