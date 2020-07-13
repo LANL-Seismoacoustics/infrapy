@@ -4,7 +4,7 @@ import json
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
                              QLabel, QGridLayout, QHBoxLayout,
-                             QVBoxLayout, QLayout)
+                             QVBoxLayout, QLayout, QMessageBox)
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDir, pyqtSignal, pyqtSlot
 
@@ -33,7 +33,7 @@ class IPDetectionWidget(QWidget):
 
         self._parent = parent
 
-        self.buildUI()
+        self.buildUI() 
 
         self.show()
 
@@ -80,6 +80,7 @@ class IPDetectionWidget(QWidget):
 
         # Create the newpickdialog for later use
         self.newDetectionDialog = IPNewDetectionDialog.IPNewDetectionDialog(self)
+        self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
 
         self.connectSignalsAndSlots()
 
@@ -128,6 +129,64 @@ class IPDetectionWidget(QWidget):
         else:  # it must be a dataframe already
             self.detection_view.set_data(data)
 
+    def new_detections(self, 
+                       detections,
+                       lat,
+                       lon,
+                       elev=None,
+                       event=None,
+                       element_cnt=None,
+                       method=None,
+                       fr=None):
+
+        if self.new_detections_dialog.exec_(detections, lat, lon, elev, method, fr):
+            detections = self.new_detections_dialog.get_detections()
+            names = self.new_detections_dialog.get_names()
+            events = self.new_detections_dialog.get_events()
+            notes = self.new_detections_dialog.get_notes()
+
+            for idx, detection in enumerate(detections):
+
+
+
+                new_detection = IPPickItem.IPPickItem(names[idx])
+                new_detection.set_peakF_UTCtime(detection[0])
+                new_detection.set_start(detection[1])
+                new_detection.set_end(detection[2])
+                new_detection.set_back_azimuth(detection[3])
+                new_detection.set_trace_velocity(detection[4])
+                new_detection.set_peakF_value(detection[5])
+                new_detection.set_lat(lat)
+                new_detection.set_lon(lon)
+                new_detection.set_event_id(events[idx])
+                new_detection.set_note(notes[idx])
+                new_detection.set_method(method)
+                new_detection.set_freq_range(fr)
+
+                # optional info
+                if elev is not None:
+                    new_detection.set_ele(elev)
+                if element_cnt is not None:
+                    new_detection.set_array_dim(element_cnt)
+
+                # check for duplication
+                duplicate = False
+                for jdx, d in enumerate(self._detections):
+                    if new_detection.is_equal_to(d):
+                        # we already have that detection in the list, so pop up warning and discard the new one
+                        duplicate = True
+                        self.errorPopup("A detection is already in the list at index {}.  The new detection will be discarded".format(jdx), title="Duplicate Detection")
+
+                if not duplicate:
+                    # append the new detection
+                    self._detections.append(new_detection)
+                    
+            self.signal_detections_changed.emit(self._detections)
+            return True
+        else:
+            return False
+
+
     def newDetection(self,
                      pick_name,
                      time,
@@ -143,6 +202,7 @@ class IPDetectionWidget(QWidget):
                      method=None,
                      fr=None):
 
+        
         if self.newDetectionDialog.exec_(time,
                                          F_value,
                                          trace_vel,
@@ -157,7 +217,7 @@ class IPDetectionWidget(QWidget):
             event = self.newDetectionDialog.getEvent()
             note = self.newDetectionDialog.getNote()
 
-            new_detection = IPPickItem.IPPickItem(pick_name)
+            new_detection = IPPickItem.IPPickItem(name)
 
             # required info
             new_detection.set_name(name)
@@ -229,7 +289,7 @@ class IPDetectionWidget(QWidget):
     def saveDetectionsAs(self):
 
         if len(self._detections) == 0:
-            self.errorPopup('Oops... No Detections to Save')
+            self.errorPopup('No Detections to Save')
             return
 
         if self._parent.getProject() is None:
@@ -395,3 +455,10 @@ class IPDetectionWidget(QWidget):
                 detection.set_end(start_end[1])
                 self.set_data(self._detections)
                 return  # and we're done here
+
+    def errorPopup(self, message, title='Oops...'):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()

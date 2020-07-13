@@ -51,7 +51,7 @@ class IPWaveformWidget(QWidget):
         self.spectraWidget = IPPSDWidget.IPPSDWidget(self)
 
         self.plotViewer = IPPlotViewer.IPPlotViewer(self, self.filterSettingsWidget)
-
+        
         self.lh_splitter = QSplitter(Qt.Vertical)
         self.lh_splitter.addWidget(self.plotViewer)
         self.lh_splitter.addWidget(self.info_tabs)
@@ -72,6 +72,9 @@ class IPWaveformWidget(QWidget):
         self.setLayout(main_layout)
 
         self.connect_signals_and_slots()
+
+        
+
 
     def connect_signals_and_slots(self):
         self.filterSettingsWidget.sig_filter_changed.connect(self.update_filtered_data)
@@ -259,6 +262,7 @@ class IPWaveformWidget(QWidget):
         self._parent.settings.setValue("main_splitterSettings", self.main_splitter.saveState())
         self._parent.settings.setValue("rh_splitterSettings", self.rh_splitter.saveState())
         self._parent.settings.setValue("lh_splitterSettings", self.lh_splitter.saveState())
+        self._parent.settings.setValue("plotviewer_splitterSettings", self.plotViewer.saveState())
         self._parent.settings.endGroup()
 
     def restoreSettings(self):
@@ -276,6 +280,15 @@ class IPWaveformWidget(QWidget):
         lh_splitterSettings = self._parent.settings.value("lh_splitterSettings")
         if lh_splitterSettings:
             self.lh_splitter.restoreState(lh_splitterSettings)
+
+        pv_splitterSettings = self._parent.settings.value("plotviewer_splitterSettings")
+        if pv_splitterSettings:
+            self.plotViewer.restoreState(pv_splitterSettings)
+        else:
+            pv_width = self.plotViewer.width()
+            wsw = pv_width//6
+            pww = pv_width - wsw
+            self.plotViewer.setSizes([wsw, pww])
 
         self._parent.settings.endGroup()
 
@@ -398,12 +411,18 @@ class IPWaveformWidget(QWidget):
 
         self.spectraWidget.updateNoisePSD(self._sts[active_plot][start:stop])
 
-
     @pyqtSlot(int, list, list, tuple)
     def update_widgets(self, index, lines, filtered_lines, signal_region):
-        if len(self._sts) > 0:
+        # the -1 is sent if none of the plots are visible
+        if len(self._sts) < 1 or index == -1:
+            self.spectraWidget.set_title('...')
+            self.spectraWidget.clearPlot()
+
+        else:
             self.spectraWidget.set_title(self._sts[index].id)
             self.spectraWidget.set_fs(self._sts[index].stats.sampling_rate)
+            # self.spectraWidget.updateSignalPSD()
+            #    self.spectraWidget.updateNoiesPSD()
 
             noise_region_item = self.plotViewer.pl_widget.plot_list[index].getNoiseRegion()
             noise_region_item.sigRegionChanged.emit(noise_region_item)
@@ -416,5 +435,4 @@ class IPWaveformWidget(QWidget):
             else:
                 self._parent.beamformingWidget.setWaveform(lines[index], signal_region)
 
-        else:
-            self.spectraWidget.set_title('...')
+            

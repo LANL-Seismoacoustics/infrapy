@@ -151,7 +151,7 @@ class fd_params(schem.Base):
     pthreshold = sa.Column(Float(53),info={'default': -1, 'parse': parse_float, 'dtype': 'float', 'width':9, 'format': '9.4f'})
     cthr = sa.Column(Float(53),info={'default': -1, 'parse': parse_float, 'dtype': 'float', 'width':9, 'format': '9.4f'})
     numsources = sa.Column(Integer,info={'default': 1, 'parse': parse_int, 'dtype': 'int', 'width': 9, 'format': '9d'})
-    #adapwlen = wlen.copy()
+    adapwlen = wlen.copy()
     minlen = wlen.copy()
     #detthresh = sa.Column(Float(53),info={'default': -1, 'parse': parse_float, 'dtype': 'float', 'width':9, 'format': '9.4f'})
     dsegmin = sa.Column(Float(53),info={'default': -1, 'parse': parse_float, 'dtype': 'float', 'width':9, 'format': '9.4f'})
