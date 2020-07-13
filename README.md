@@ -54,6 +54,10 @@ how to activate and deactivate the new environment:
 
         >> conda deactivate
         
+## Tutorials
+
+A series of Jupyter Notebook tutorials are located in /tutorials.  These tutorials can be used to gain familiarity with both Infrapy scripting and command line interfact (CLI).
+        
 ## e1 Compression
 
 The current version of Pisces no longer installs the e1 compression module by default.  If you need this (if you don't know what it is, you don't need it), then you can install it on OSX and Linux by activating the infrapy environment and installing it with pip...
