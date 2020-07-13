@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  5 JUN 2020 13:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  8 JUN 2020 08:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -7,7 +7,7 @@ entering extended mode
 LaTeX2e <2018-04-01> patch level 2
 Babel <3.18> and hyphenation patterns for 84 language(s) loaded.
 (./sphinxmanual.cls
-Document Class: sphinxmanual 2018/12/23 v2.0 Document class (Sphinx manual)
+Document Class: sphinxmanual 2019/12/01 v2.3.0 Document class (Sphinx manual)
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/report.cls
 Document Class: report 2014/09/29 v1.4h Standard LaTeX document class
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/size10.clo
@@ -25,7 +25,9 @@ File: size10.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
 \abovecaptionskip=\skip41
 \belowcaptionskip=\skip42
 \bibindent=\dimen102
-))
+)
+LaTeX Info: Redefining \and on input line 35.
+)
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/inputenc.sty
 Package: inputenc 2018/04/06 v1.3b Input encoding file
 \inpenc@prehook=\toks14
@@ -153,7 +155,7 @@ Package: fncychap 2007/07/30 v1.34 LaTeX package (Revised chapters)
 \c@AlphaDecCnt=\count104
 )
 (./sphinx.sty
-Package: sphinx 2019/06/04 v2.1.1 LaTeX package (Sphinx markup)
+Package: sphinx 2019/09/02 v2.3.0 LaTeX package (Sphinx markup)
 
 (/usr/local/texlive/2018/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
 Package: ltxcmds 2016/05/16 v1.23 LaTeX kernel commands for general use (HO)
@@ -526,6 +528,7 @@ Package etexcmds Info: Could not find \expanded.
 \sphinxcontinuationbox=\box41
 \sphinxvisiblespacebox=\box42
 \sphinxVerbatim@TitleBox=\box43
+\sphinxVerbatim@ContentsBox=\box44
 \py@argswidth=\skip71
 \lineblockindentation=\skip72
 \DUlineblockindent=\skip73
@@ -682,29 +685,29 @@ Writing index file InfraPy.idx
 (./InfraPy.aux)
 \openout1 = `InfraPy.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 80.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 80.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 81.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 81.
  (/usr/local/texlive/2018/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 80.
-LaTeX Font Info:    ... okay on input line 80.
-LaTeX Font Info:    Try loading font information for T1+ptm on input line 80.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 81.
+LaTeX Font Info:    ... okay on input line 81.
+LaTeX Font Info:    Try loading font information for T1+ptm on input line 81.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
@@ -713,7 +716,7 @@ File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count131
 \scratchdimen=\dimen157
-\scratchbox=\box44
+\scratchbox=\box45
 \nofMPsegments=\count132
 \nofMParguments=\count133
 \everyMPshowfont=\toks29
@@ -773,8 +776,8 @@ e
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-\AtBeginShipoutBox=\box45
-Package hyperref Info: Link coloring ON on input line 80.
+\AtBeginShipoutBox=\box46
+Package hyperref Info: Link coloring ON on input line 81.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 
@@ -783,47 +786,47 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count137
 )
-LaTeX Info: Redefining \ref on input line 80.
-LaTeX Info: Redefining \pageref on input line 80.
-LaTeX Info: Redefining \nameref on input line 80.
+LaTeX Info: Redefining \ref on input line 81.
+LaTeX Info: Redefining \pageref on input line 81.
+LaTeX Info: Redefining \nameref on input line 81.
 
 (./InfraPy.out) (./InfraPy.out)
 \@outlinefile=\write5
 \openout5 = `InfraPy.out'.
 
-Package hyperref Info: Option `pageanchor' set `false' on input line 83.
-LaTeX Font Info:    Try loading font information for T1+phv on input line 83.
+Package hyperref Info: Option `pageanchor' set `false' on input line 84.
+LaTeX Font Info:    Try loading font information for T1+phv on input line 84.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2001/06/04 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <24.88> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <10> not available
-(Font)              Font shape `T1/phv/b/it' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/it' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <10> not available
-(Font)              Font shape `T1/phv/b/sl' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/sl' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <17.28> not available
-(Font)              Font shape `T1/phv/b/it' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/it' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <17.28> not available
-(Font)              Font shape `T1/phv/b/sl' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/sl' tried instead on input line 84.
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 84.
 <<ot1.cmap>><<oml.cmap>><<oms.cmap>><<omx.cmap>>
-LaTeX Font Info:    Try loading font information for U+msa on input line 83.
+LaTeX Font Info:    Try loading font information for U+msa on input line 84.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 83.
+LaTeX Font Info:    Try loading font information for U+msb on input line 84.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 83.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 84.
  [1
 
 {/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2
@@ -831,7 +834,7 @@ LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12> not available
 
 ]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 85.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 86.
  (./InfraPy.toc
 LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <10> not available
 (Font)              Font shape `T1/ptm/b/n' tried instead on input line 2.
@@ -844,119 +847,2104 @@ LaTeX Font Info:    Font shape `T1/ptm/bx/n' in size <10> not available
 
  [2]
 Chapter 1.
-LaTeX Font Info:    Try loading font information for T1+pcr on input line 133.
+<infrapy.png, id=435, 1714.2444pt x 1120.9077pt>
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 98.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
-) [1
+)
+File: infrapy.png Graphic file (type png)
+<use infrapy.png>
+Package pdftex.def Info: infrapy.png  used on input line 98.
+(pdftex.def)             Requested size: 469.75769pt x 307.16449pt.
+ [1
 
 
-] [2] [3]
+ <./infrapy.png>] [2] [3] [4]
 LaTeX Font Info:    Try loading font information for TS1+ptm on input line 366.
 
-
-(/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
-) [4] [5]
-<AFD.png, id=469, 331.2375pt x 224.33812pt>
+) [5] [6]
+<AFD.png, id=481, 331.2375pt x 224.33812pt>
 File: AFD.png Graphic file (type png)
 <use AFD.png>
 Package pdftex.def Info: AFD.png  used on input line 456.
 (pdftex.def)             Requested size: 331.23668pt x 224.33757pt.
-
-[6 <./AFD.png>]
-<detection_data_flow.png, id=481, 472.76625pt x 251.94125pt>
+ [7 <./AFD.png>]
+<detection_data_flow.png, id=493, 472.76625pt x 251.94125pt>
 File: detection_data_flow.png Graphic file (type png)
 <use detection_data_flow.png>
 Package pdftex.def Info: detection_data_flow.png  used on input line 519.
 (pdftex.def)             Requested size: 469.76413pt x 250.33754pt.
-<association_data_flow.png, id=483, 464.73625pt x 247.92625pt>
+ [8]
+<association_data_flow.png, id=499, 464.73625pt x 247.92625pt>
 File: association_data_flow.png Graphic file (type png)
 <use association_data_flow.png>
 Package pdftex.def Info: association_data_flow.png  used on input line 524.
 (pdftex.def)             Requested size: 464.7351pt x 247.92564pt.
- [7 <./detection_data_flow.png>]
-<localization_data_flow.png, id=490, 464.73625pt x 248.93pt>
+ [9 <./detection_data_flow.png> <./association_data_flow.png>]
+<localization_data_flow.png, id=507, 464.73625pt x 248.93pt>
 File: localization_data_flow.png Graphic file (type png)
 <use localization_data_flow.png>
 Package pdftex.def Info: localization_data_flow.png  used on input line 529.
 (pdftex.def)             Requested size: 464.7351pt x 248.92938pt.
- [8 <./association_data_flow.png> <./localization_data_flow.png>] [9]
-Underfull \vbox (badness 10000) detected at line 700
+ [10 <./localization_data_flow.png>] [11]
+Underfull \vbox (badness 10000) detected at line 696
  []
 
 
-Overfull \vbox (2.68169pt too high) detected at line 700
+Overfull \vbox (2.68169pt too high) detected at line 696
  []
 
-[10]
+[12]
 File: AFD.png Graphic file (type png)
 <use AFD.png>
-Package pdftex.def Info: AFD.png  used on input line 714.
+Package pdftex.def Info: AFD.png  used on input line 710.
 (pdftex.def)             Requested size: 331.23668pt x 224.33757pt.
- [11] [12]
-<FKres_Fval.png, id=525, 1734.48pt x 433.62pt>
+ [13] [14]
+<FKres_Fval.png, id=540, 1734.48pt x 433.62pt>
 File: FKres_Fval.png Graphic file (type png)
 <use FKres_Fval.png>
-Package pdftex.def Info: FKres_Fval.png  used on input line 809.
+Package pdftex.def Info: FKres_Fval.png  used on input line 799.
 (pdftex.def)             Requested size: 469.74503pt x 117.43625pt.
-<FKres_trcvel.png, id=526, 1734.48pt x 433.62pt>
+<FKres_trcvel.png, id=541, 1734.48pt x 433.62pt>
 File: FKres_trcvel.png Graphic file (type png)
 <use FKres_trcvel.png>
-Package pdftex.def Info: FKres_trcvel.png  used on input line 811.
+Package pdftex.def Info: FKres_trcvel.png  used on input line 801.
 (pdftex.def)             Requested size: 469.74503pt x 117.43625pt.
- [13 <./FKres_Fval.png>]
-<FKres_bz.png, id=533, 1734.48pt x 433.62pt>
+<FKres_bz.png, id=542, 1734.48pt x 433.62pt>
 File: FKres_bz.png Graphic file (type png)
 <use FKres_bz.png>
-Package pdftex.def Info: FKres_bz.png  used on input line 813.
+Package pdftex.def Info: FKres_bz.png  used on input line 803.
 (pdftex.def)             Requested size: 469.74503pt x 117.43625pt.
- [14 <./FKres_trcvel.png> <./FKres_bz.png>] [15] [16] [17]
-Overfull \vbox (285.45683pt too high) has occurred while \output is active []
+ [15 <./FKres_Fval.png> <./FKres_trcvel.png> <./FKres_bz.png>]
+[16] [17]
+LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <10> not available
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 978.
 
+Underfull \hbox (badness 10000) in paragraph at lines 978--978
+[]\T1/ptm/m/it/10 det_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 bm_width=10.0\T1/ptm
+/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 978--978
+\T1/ptm/m/it/10 rng_max=10005.97260168349\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 978--978
+\T1/ptm/m/it/10 rad_min=100.0\T1/ptm/m/n/10 , \T1/ptm/m/it/10 rad_max=1000.0\T1
+/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1019--1019
+[]\T1/ptm/m/it/10 distance_matrix\T1/ptm/m/n/10 , \T1/ptm/m/it/10 thresh-old\T1
+/ptm/m/n/10 , \T1/ptm/m/it/10 link-age_method=\TS1/ptm/m/it/10 '\T1/ptm/m/it/10
+ weighted\TS1/ptm/m/it/10 '\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1019--1019
+\T1/ptm/m/it/10 show_result=False\T1/ptm/m/n/10 , \T1/ptm/m/it/10 file_id=None\
+T1/ptm/m/n/10 , \T1/ptm/m/it/10 den_label_size=9\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1071--1071
+[]\T1/ptm/m/it/10 det1\T1/ptm/m/n/10 , \T1/ptm/m/it/10 det2\T1/ptm/m/n/10 , \T1
+/ptm/m/it/10 bm_width=10.0\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1071--1071
+\T1/ptm/m/it/10 rng_max=10005.97260168349\T1/ptm/m/n/10 ,
+ []
 
 [18]
-<infrapy.png, id=566, 1714.2444pt x 1120.9077pt>
-File: infrapy.png Graphic file (type png)
-<use infrapy.png>
-Package pdftex.def Info: infrapy.png  used on input line 1095.
-(pdftex.def)             Requested size: 469.75769pt x 307.16449pt.
- [19 <./infrapy.png>] [20
+Underfull \hbox (badness 10000) in paragraph at lines 1122--1122
+[]\T1/ptm/m/it/10 det_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 thresh-old\T1/ptm/m/
+n/10 , \T1/ptm/m/it/10 dist_max=10.0\T1/ptm/m/n/10 , \T1/ptm/m/it/10 bm_width=1
+0.0\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1122--1122
+\T1/ptm/m/it/10 resol=180\T1/ptm/m/n/10 , \T1/ptm/m/it/10 show_result=None\T1/p
+tm/m/n/10 , \T1/ptm/m/it/10 file_id=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 link-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1122--1122
+\T1/ptm/m/it/10 age_method=\TS1/ptm/m/it/10 '\T1/ptm/m/it/10 weighted\TS1/ptm/m
+/it/10 '\T1/ptm/m/n/10 , \T1/ptm/m/it/10 trim-ming_thresh=None\T1/ptm/m/n/10 ,
+ []
+
+[19]
+Underfull \hbox (badness 10000) in paragraph at lines 1183--1183
+[]\T1/ptm/m/it/10 det1\T1/ptm/m/n/10 , \T1/ptm/m/it/10 det2\T1/ptm/m/n/10 , \T1
+/ptm/m/it/10 bm_width=10.0\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1183--1183
+\T1/ptm/m/it/10 rng_max=10005.97260168349\T1/ptm/m/n/10 , \T1/ptm/m/it/10 rad_m
+in=100.0\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1252--1252
+[]\T1/ptm/m/it/10 labels\T1/ptm/m/n/10 , \T1/ptm/m/it/10 dis-tance_matrix\T1/pt
+m/m/n/10 , \T1/ptm/m/it/10 pop-u-la-tion_min=3\T1/ptm/m/n/10 , \T1/ptm/m/it/10 
+ra-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1285--1285
+[]\T1/ptm/m/it/10 distance_matrix\T1/ptm/m/n/10 , \T1/ptm/m/it/10 file_id=None\
+T1/ptm/m/n/10 , \T1/ptm/m/it/10 or-der-
+ []
+
+[20]
+
+! Package inputenc Error: Unicode character ^^G (U+7)
+(inputenc)                not set up for use with LaTeX.
+
+See the inputenc package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1353 rac\{1\}\{sqrt\{^^G
+                          lpha + 1\}
+? 
+
+! Package inputenc Error: Unicode character ^^G (U+7)
+(inputenc)                not set up for use with LaTeX.
+
+See the inputenc package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1361 rac\{1\}\{sqrt\{^^G
+                          lpha + 1\}
+? 
+
+Underfull \hbox (badness 10000) in paragraph at lines 1389--1389
+[]\T1/ptm/m/it/10 det_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 st_list\T1/ptm/m/n/1
+0 , \T1/ptm/m/it/10 win_buffer=0.25\T1/ptm/m/n/10 ,
+ []
+
+[21]
+Underfull \hbox (badness 10000) in paragraph at lines 1456--1456
+[]\T1/ptm/m/it/10 W\T1/ptm/m/n/10 , \T1/ptm/m/it/10 r\T1/ptm/m/n/10 , \T1/ptm/m
+/it/10 p_amb=101.325\T1/ptm/m/n/10 , \T1/ptm/m/it/10 T_amb=288.15\T1/ptm/m/n/10
+ ,
+ []
+
+
+Underfull \hbox (badness 5446) in paragraph at lines 1486--1486
+[]\T1/ptm/m/it/10 det_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 smn_spec\T1/ptm/m/n/
+10 , \T1/ptm/m/it/10 src_loc\T1/ptm/m/n/10 , \T1/ptm/m/it/10 freq_band\T1/ptm/m
+/n/10 , \T1/ptm/m/it/10 tloss_models\T1/ptm/m/n/10 ,
+ []
+
+[22]
+LaTeX Font Info:    Try loading font information for TS1+pcr on input line 1.
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/ts1pcr.fd
+File: ts1pcr.fd 2001/06/04 font definitions for TS1/pcr.
+)
+LaTeX Font Info:    Font shape `TS1/pcr/bx/n' in size <10> not available
+(Font)              Font shape `TS1/pcr/b/n' tried instead on input line 1.
+ [23]
+LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <9> not available
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 1790.
+
+[24] [25] [26] [27] [28] [29] [30] [31] [32]
+Underfull \hbox (badness 10000) in paragraph at lines 3214--3214
+[]\T1/ptm/m/it/10 St\T1/ptm/m/n/10 , \T1/ptm/m/it/10 wlen\T1/ptm/m/n/10 , \T1/p
+tm/m/it/10 over-lap\T1/ptm/m/n/10 , \T1/ptm/m/it/10 fre-qmin\T1/ptm/m/n/10 , \T
+1/ptm/m/it/10 fre-q-max\T1/ptm/m/n/10 ,
+ []
+
+[33]
+Underfull \hbox (badness 10000) in paragraph at lines 3327--3327
+[]\T1/ptm/m/it/10 fstat_vals\T1/ptm/m/n/10 , \T1/ptm/m/it/10 det_thresh\T1/ptm/
+m/n/10 , \T1/ptm/m/it/10 TB_prod\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3333--3333
+[]\T1/ptm/m/it/10 data\T1/ptm/m/n/10 , \T1/ptm/m/it/10 steer-ing\T1/ptm/m/n/10 
+,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3333--3333
+\T1/ptm/m/it/10 method=\TS1/ptm/m/it/10 '\T1/ptm/m/it/10 bartlett\TS1/ptm/m/it/
+10 '\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3333--3333
+\T1/ptm/m/it/10 ns_covar_inv=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 sig-
+ []
+
+[34]
+Underfull \hbox (badness 10000) in paragraph at lines 3380--3380
+[]\T1/ptm/m/it/10 dxdy\T1/ptm/m/n/10 , \T1/ptm/m/it/10 param_grid\T1/ptm/m/n/10
+ ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3414--3414
+[]\T1/ptm/m/it/10 times\T1/ptm/m/n/10 , \T1/ptm/m/it/10 beam_results\T1/ptm/m/n
+/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3414--3414
+\T1/ptm/m/it/10 win_len\T1/ptm/m/n/10 , \T1/ptm/m/it/10 TB_prod\T1/ptm/m/n/10 ,
+ \T1/ptm/m/it/10 chan-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3414--3414
+\T1/ptm/m/it/10 nel_cnt\T1/ptm/m/n/10 , \T1/ptm/m/it/10 det_thresh=0.99\T1/ptm/
+m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3414--3414
+\T1/ptm/m/it/10 min_seq=5\T1/ptm/m/n/10 , \T1/ptm/m/it/10 back_az_lim=15\T1/ptm
+/m/n/10 ,
+ []
+
+[35]
+Underfull \hbox (badness 10000) in paragraph at lines 3476--3478
+[]\T1/ptm/m/n/10 F[nf] =
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3509--3509
+[]\T1/ptm/m/it/10 x\T1/ptm/m/n/10 , \T1/ptm/m/it/10 t\T1/ptm/m/n/10 , \T1/ptm/m
+/it/10 win-dow=None\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3509--3509
+\T1/ptm/m/it/10 sub_window_len=None\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3509--3509
+\T1/ptm/m/it/10 sub_window_overlap=0.5\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3509--3509
+\T1/ptm/m/it/10 fft_window=\TS1/ptm/m/it/10 '\T1/ptm/m/it/10 hanning\TS1/ptm/m/
+it/10 '\T1/ptm/m/n/10 , \T1/ptm/m/it/10 nor-mal-
+ []
+
+[36]
+Underfull \hbox (badness 10000) in paragraph at lines 3556--3556
+[]\T1/ptm/m/it/10 beam_power\T1/ptm/m/n/10 , \T1/ptm/m/it/10 slow-ness_vals1\T1
+/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3556--3556
+\T1/ptm/m/it/10 slow-ness_vals2\T1/ptm/m/n/10 , \T1/ptm/m/it/10 sig-nal_cnt=1\T
+1/ptm/m/n/10 ,
+ []
+
+[37]
+Underfull \hbox (badness 10000) in paragraph at lines 3671--3671
+[]\T1/ptm/m/it/10 beam_power\T1/ptm/m/n/10 , \T1/ptm/m/it/10 back_az_vals\T1/pt
+m/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3671--3671
+\T1/ptm/m/it/10 trc_vel_vals\T1/ptm/m/n/10 , \T1/ptm/m/it/10 freq_weights=None\
+T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3733--3733
+\T1/ptm/m/it/10 ns_covar_inv=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 sig-nal_cnt=1
+\T1/ptm/m/n/10 , \T1/ptm/m/it/10 nor-mal-
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 3794--3794
+[]\T1/ptm/m/it/10 stream\T1/ptm/m/n/10 , \T1/ptm/m/it/10 lat-lon=None\T1/ptm/m/
+n/10 ,
+ []
+
+[39]
+Underfull \hbox (badness 10000) in paragraph at lines 3896--3896
+\T1/ptm/m/it/10 bm_width=10.0, rng_max=10005.97260168349, rad_min=100.0,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3958--3958
+[]\T1/ptm/m/it/10 det_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 bm_width=10.0\T1/ptm
+/m/n/10 , \T1/ptm/m/it/10 rng_max=10005.97260168349\T1/ptm/m/n/10 ,
+ []
+
+[40] [41]
+LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <10> not available
+(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 4186.
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+[]\T1/ptm/m/it/10 *\T1/ptm/m/n/10 , \T1/ptm/m/it/10 skip-keys=False\T1/ptm/m/n/
+10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+\T1/ptm/m/it/10 en-sure_ascii=True\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+\T1/ptm/m/it/10 check_circular=True\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+\T1/ptm/m/it/10 al-low_nan=True\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+\T1/ptm/m/it/10 sort_keys=False\T1/ptm/m/n/10 , \T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4223--4223
+\T1/ptm/m/it/10 dent=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 sep-a-ra-
+ []
+
+LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <9> not available
+(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 4244.
+
+Underfull \hbox (badness 10000) in paragraph at lines 4256--4256
+[]\T1/ptm/m/it/10 lat_loc=None\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4256--4256
+\T1/ptm/m/it/10 lon_loc=None\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4256--4256
+\T1/ptm/m/it/10 time=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 az-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4256--4256
+\T1/ptm/m/it/10 imuth=None\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4256--4256
+\T1/ptm/m/it/10 f_stat=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 ar-
+ []
+
+[42] [43] [44]
+Underfull \hbox (badness 10000) in paragraph at lines 4705--4705
+[]\T1/ptm/m/it/10 lat\T1/ptm/m/n/10 , \T1/ptm/m/it/10 lon\T1/ptm/m/n/10 , \T1/p
+tm/m/it/10 det_list\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4705--4705
+\T1/ptm/m/it/10 path_geo_model=None\T1/ptm/m/n/10 ,
+ []
+
+[45] [46]
+Underfull \hbox (badness 6032) in paragraph at lines 4925--4925
+[]\T1/ptm/m/it/10 session\T1/ptm/m/n/10 , \T1/ptm/m/it/10 Site\T1/ptm/m/n/10 , 
+\T1/ptm/m/it/10 Wfdisc\T1/ptm/m/n/10 , \T1/ptm/m/it/10 ar-ray\T1/ptm/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4925--4925
+\T1/ptm/m/it/10 t0=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 te=None\T1/ptm/m/n/10 ,
+ \T1/ptm/m/it/10 chan-
+ []
+
+[47]
+Underfull \hbox (badness 10000) in paragraph at lines 5047--5049
+[]
+ []
+
+[48]
+Overfull \hbox (49.11253pt too wide) in paragraph at lines 5151--5162
+[]\T1/ptm/m/n/10 LATLONI0,LATLONI1=GC_INTERSECT(LATLONA0,LATLONA1,LATLONB0,LATL
+ONB1)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5172--5174
+[]
+ []
+
+
+Overfull \hbox (14.96252pt too wide) in paragraph at lines 5189--5202
+[]\T1/ptm/m/n/10 LATLONI=GCARC_INTERSECT(LATLONA0,LATLONA1,LATLONB0,LATLONB1)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5217--5220
+[]\T1/ptm/m/n/10 # Do 2 great cir-cle arcs on the same great cir-cle in-ter-sec
+t? >>>
+ []
+
+
+Underfull \hbox (badness 8056) in paragraph at lines 5227--5230
+[]\T1/ptm/m/n/10 # You can also do sev-eral in-ter-sec-tions: >>> gcarc_interse
+ct([0,0],[0,10],[[0,5],[-
+ []
+
+[49]
+Underfull \hbox (badness 10000) in paragraph at lines 5235--5237
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5321--5323
+[]\T1/ptm/m/n/10 [ 6.12323400e-17, 1.00000000e+00, 0.00000000e+00], [ 6.1232340
+0e-17,
+ []
+
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 5437--5455
+[]\T1/ptm/m/n/10 # Plot dis-tance dis-crep-ancy for SPHER-I-CAL-INV and HAVER-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5437--5455
+\T1/ptm/m/n/10 SINE: d2m=1000*6371*np.pi/180 d0=10**(np.linspace(-1,7.2,num=83)
+)/d2m
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5437--5455
+\T1/ptm/m/n/10 d0=d0[:,np.newaxis] pos=np.zeros((83,2)) pos[:,[1]]=d0 dc,_,_=sp
+hericalinv((0,0),pos)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5437--5455
+\T1/ptm/m/n/10 hhav,=plt.plot(d2m*d0,d2m*abs(d0-dh),'g',label='HAVERSINE') plt.
+xscale(`log')
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5437--5455
+\T1/ptm/m/n/10 plt.yscale(`log') plt.xlabel(`distance (m)') plt.ylabel(`discrep
+ancy (m)')
+ []
+
+[51] [52]
+Underfull \hbox (badness 5893) in paragraph at lines 5662--5666
+[]\T1/ptm/m/n/10 WLON=LONMOD(LON,WRAP) is LON-N.*WRAP where N=round(LON./WRAP) 
+if
+ []
+
+[53] [54]
+Underfull \hbox (badness 10000) in paragraph at lines 5860--5864
+[]\T1/ptm/m/n/10 # St. Louis, MO to Yaounde, Cameroon: >>> sphericalinv((38.649
+,-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5860--5864
+\T1/ptm/m/n/10 90.305),(3.861,11.521)) (ar-ray([[ 96.75578437]]), ar-ray([[ 79.
+53972827]]), ar-ray([[
+ []
+
+[55] [56] [57] [58]<<ot1tt.cmap>> [59] [60] [61] [62] [63] [64] [65] [66]
+[67] [68] [69] [70] [71] [72] [73] [74] [75] [76] [77] [78] [79] [80] [81]
+[82] [83] [84] [85] [86] [87] [88] [89] [90] [91] [92] [93] [94] [95] [96
 
 ]
-Chapter 2.
-(./InfraPy.ind)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1114.
- [21]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1114.
- (./InfraPy.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1114.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1114.
+[97
 
-Package rerunfilecheck Info: File `InfraPy.out' has not changed.
-(rerunfilecheck)             Checksum: 5484FF6AB366AD127135035F06B41582;14101.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1114.
+
+] (./InfraPy.ind [98
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 29--31
+[]\T1/pcr/m/n/10 ak135_p_tr_time() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--33
+[]\T1/pcr/m/n/10 ak135_s_tr_time() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 7012) in paragraph at lines 35--37
+[]\T1/pcr/m/n/10 algorithm \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.EDetectParams
+ []
+
+
+Underfull \hbox (badness 6910) in paragraph at lines 37--38
+[]\T1/pcr/m/n/10 algorithm \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fd_params at-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 38--39
+[]\T1/pcr/m/n/10 algorithm \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fk_params at-
+ []
+
+
+Overfull \hbox (42.64073pt too wide) in paragraph at lines 43--45
+[]\T1/pcr/m/n/10 algorithm \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.ta
+skbase.assoc.AssocInfraPy_LANL
+ []
+
+
+Overfull \hbox (52.35054pt too wide) in paragraph at lines 49--51
+[]\T1/pcr/m/n/10 array_dim() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--57
+[]\T1/pcr/m/n/10 AssocInfraPy_LANL \T1/ptm/m/n/10 (\T1/ptm/m/it/10 class in in-
+
+ []
+
+
+Overfull \hbox (46.20093pt too wide) in paragraph at lines 57--59
+[]\T1/pcr/m/n/10 az_bin_cnt \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (12.5811pt too wide) in paragraph at lines 59--61
+[]\T1/pcr/m/n/10 az_bin_cnt \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.infrasound.TLossModel
+ []
+
+
+Overfull \hbox (52.20093pt too wide) in paragraph at lines 61--63
+[]\T1/pcr/m/n/10 az_bin_wdth \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (18.5811pt too wide) in paragraph at lines 63--65
+[]\T1/pcr/m/n/10 az_bin_wdth \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.infrasound.TLossModel
+ []
+
+
+Overfull \hbox (34.35054pt too wide) in paragraph at lines 65--67
+[]\T1/pcr/m/n/10 az_pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.
+likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--75
+[]\T1/pcr/m/n/10 back_azimuth() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 73--75
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 6910) in paragraph at lines 75--76
+[]\T1/pcr/m/n/10 backazlim \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fd_params at-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 76--77
+[]\T1/pcr/m/n/10 backazmax \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fk_params at-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 77--78
+[]\T1/pcr/m/n/10 backazmin \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fk_params at-
+ []
+
+[99
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 94--95
+[]\T1/pcr/m/n/10 blastwave() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 95--97
+[]\T1/pcr/m/n/10 blastwave_spectrum() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Overfull \hbox (28.20093pt too wide) in paragraph at lines 97--99
+[]\T1/pcr/m/n/10 bnc_max \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.i
+nfrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (52.20093pt too wide) in paragraph at lines 99--101
+[]\T1/pcr/m/n/10 bnd_overlap \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (28.20093pt too wide) in paragraph at lines 101--103
+[]\T1/pcr/m/n/10 build() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.i
+nfrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--107
+[]\T1/pcr/m/n/10 build_distance_matrix() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod
+-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--109
+[]\T1/pcr/m/n/10 build_slowness() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--115
+[]\T1/pcr/m/n/10 calc_conf_ellipse() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule
+ in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--117
+[]\T1/pcr/m/n/10 calc_det_thresh() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--119
+[]\T1/pcr/m/n/10 calc_kappa_etc() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 117--119
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--121
+[]\T1/pcr/m/n/10 canonical_rcel() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--123
+[]\T1/pcr/m/n/10 canonical_tloss() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--131
+[]\T1/pcr/m/n/10 clusterthresh \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--131
+\T1/ptm/m/it/10 frapy.database.schema.ASSOC_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 132--134
+[]\T1/pcr/m/n/10 compute_assoc_pair() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 136--138
+[]\T1/pcr/m/n/10 compute_beam_power() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 140--142
+[]\T1/pcr/m/n/10 compute_delays() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--153
+[]\T1/pcr/m/n/10 data_processing() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (15.63086pt too wide) in paragraph at lines 151--153
+\T1/ptm/m/it/10 frapy.database.taskbase.assoc.AssocInfraPy_LANL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--155
+[]\T1/pcr/m/n/10 data_processing() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--155
+\T1/ptm/m/it/10 frapy.database.taskbase.fdet.FDet method\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--157
+[]\T1/pcr/m/n/10 data_processing() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--157
+\T1/ptm/m/it/10 frapy.database.taskbase.loc.LocInfraPy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--159
+[]\T1/pcr/m/n/10 data_processingASSOC() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (15.63086pt too wide) in paragraph at lines 157--159
+\T1/ptm/m/it/10 frapy.database.taskbase.assoc.AssocInfraPy_LANL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--161
+[]\T1/pcr/m/n/10 data_processingLOC() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--161
+\T1/ptm/m/it/10 frapy.database.taskbase.loc.LocInfraPy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--163
+[]\T1/pcr/m/n/10 data_retrieving() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--163
+\T1/ptm/m/it/10 frapy.database.taskbase.fdet.FDet method\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 163--165
+[]\T1/pcr/m/n/10 data_retrieving() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 163--165
+\T1/ptm/m/it/10 frapy.database.taskbase.loc.LocInfraPy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--167
+[]\T1/pcr/m/n/10 data_retrievingS() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (15.63086pt too wide) in paragraph at lines 165--167
+\T1/ptm/m/it/10 frapy.database.taskbase.assoc.AssocInfraPy_LANL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--169
+[]\T1/pcr/m/n/10 database_connecting() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (15.63086pt too wide) in paragraph at lines 167--169
+\T1/ptm/m/it/10 frapy.database.taskbase.assoc.AssocInfraPy_LANL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--171
+[]\T1/pcr/m/n/10 database_connecting() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--171
+\T1/ptm/m/it/10 frapy.database.taskbase.fdet.FDet method\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--173
+[]\T1/pcr/m/n/10 database_connecting() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--173
+\T1/ptm/m/it/10 frapy.database.taskbase.loc.LocInfraPy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--174
+[]\T1/pcr/m/n/10 db2dets() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+[100]
+Overfull \hbox (25.90088pt too wide) in paragraph at lines 174--176
+[]\T1/pcr/m/n/10 default() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.Infrapy_Encoder
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 176--178
+[]\T1/pcr/m/n/10 default_az_dev_var \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 176--178
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 178--180
+[]\T1/pcr/m/n/10 detect_peaks() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 180--182
+[]\T1/pcr/m/n/10 detect_signals() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 182--184
+[]\T1/pcr/m/n/10 detection_list_to_json() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mo
+d-ule in-
+ []
+
+
+Underfull \hbox (badness 6910) in paragraph at lines 184--185
+[]\T1/pcr/m/n/10 detwinlen \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fd_params at-
+ []
+
+
+Overfull \hbox (40.20093pt too wide) in paragraph at lines 188--190
+[]\T1/pcr/m/n/10 display() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (6.5811pt too wide) in paragraph at lines 190--192
+[]\T1/pcr/m/n/10 display() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.infrasound.TLossModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 193--194
+[]\T1/pcr/m/n/10 distfit() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.ta
+skbase.fdet.FDet
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 195--196
+[]\T1/pcr/m/n/10 dsegmin \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.fd_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 196--198
+[]\T1/pcr/m/n/10 duration \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.ASSOC_params
+ []
+
+
+Overfull \hbox (52.35054pt too wide) in paragraph at lines 205--207
+[]\T1/pcr/m/n/10 elevation() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (16.35054pt too wide) in paragraph at lines 207--209
+[]\T1/pcr/m/n/10 end() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.lik
+elihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 212--213
+[]\T1/pcr/m/n/10 etimeend \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.fd_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 213--214
+[]\T1/pcr/m/n/10 etimeini \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.fd_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 216--218
+[]\T1/pcr/m/n/10 eval() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.in
+frasound.TLossModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 218--220
+[]\T1/pcr/m/n/10 eval_az_dev_mn() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 218--220
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 220--222
+[]\T1/pcr/m/n/10 eval_az_dev_vr() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 220--222
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 222--224
+[]\T1/pcr/m/n/10 eval_rcel_gmm() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 222--224
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 224--226
+[]\T1/pcr/m/n/10 event_detection() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 224--226
+\T1/ptm/m/it/10 frapy.database.taskbase.fdet.FDet method\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 226--228
+[]\T1/pcr/m/n/10 event_detection2() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 226--228
+\T1/ptm/m/it/10 frapy.database.taskbase.fdet.FDet method\T1/ptm/m/n/10 ),
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 228--230
+[]\T1/pcr/m/n/10 event_id() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 232--233
+[]\T1/pcr/m/n/10 eventid \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.loc_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 236--238
+[]\T1/pcr/m/n/10 extract_signal() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--240
+[]\T1/pcr/m/n/10 extract_spectra() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--248
+[]\T1/pcr/m/n/10 fdid \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schema.
+ASSOC_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 251--253
+[]\T1/pcr/m/n/10 fft_array_data() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in
+-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 253--254
+[]\T1/pcr/m/n/10 file2dets() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 254--256
+[]\T1/pcr/m/n/10 fillFromDict() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 254--256
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+[101]
+Underfull \hbox (badness 10000) in paragraph at lines 267--269
+[]\T1/pcr/m/n/10 filtertype \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.s
+chema.noise_params
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 269--271
+[]\T1/pcr/m/n/10 find_azimuth_bin() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule 
+in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--272
+[]\T1/pcr/m/n/10 find_confidence() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 272--273
+[]\T1/pcr/m/n/10 find_confidence() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 273--275
+[]\T1/pcr/m/n/10 find_peaks() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 278--280
+[]\T1/pcr/m/n/10 fkfromOStream() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 284--285
+[]\T1/pcr/m/n/10 freqmax \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.fk_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 285--286
+[]\T1/pcr/m/n/10 freqmin \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.fk_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 286--288
+[]\T1/pcr/m/n/10 frequency_range() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 286--288
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 288--290
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 288--290
+\T1/ptm/m/it/10 frapy.database.schema.ASSOC_params class
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 290--292
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 290--292
+\T1/ptm/m/it/10 frapy.database.schema.ASSOC_results class
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 292--294
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 292--294
+\T1/ptm/m/it/10 frapy.database.schema.EDetectParams class
+ []
+
+
+Underfull \hbox (badness 6510) in paragraph at lines 300--302
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.databas
+e.schema.fk_results
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 302--304
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 302--304
+\T1/ptm/m/it/10 frapy.database.schema.loc_params class
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 306--308
+[]\T1/pcr/m/n/10 from_string() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 306--308
+\T1/ptm/m/it/10 frapy.database.schema.noise_params class
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 315--317
+[]\T1/pcr/m/n/10 generateDict() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 315--317
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
+[]\T1/pcr/m/n/10 geographiclat2radius() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--326
+[]\T1/pcr/m/n/10 get_array_dim() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 324--326
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 326--328
+[]\T1/pcr/m/n/10 get_arraywaveforms() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 328--330
+[]\T1/pcr/m/n/10 get_back_azimuth() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 328--330
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 330--332
+[]\T1/pcr/m/n/10 get_channel() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 332--334
+[]\T1/pcr/m/n/10 get_ele() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 334--336
+[]\T1/pcr/m/n/10 get_end() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--338
+[]\T1/pcr/m/n/10 get_event_id() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 336--338
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 340--342
+[]\T1/pcr/m/n/10 get_freq_range() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 340--342
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 342--344
+[]\T1/pcr/m/n/10 get_header_table() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule 
+in-
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 344--346
+[]\T1/pcr/m/n/10 get_lat() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 346--348
+[]\T1/pcr/m/n/10 get_lon() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 348--350
+[]\T1/pcr/m/n/10 get_mean_locations() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+[102]
+Overfull \hbox (58.35054pt too wide) in paragraph at lines 350--352
+[]\T1/pcr/m/n/10 get_method() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagat
+ion.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 352--354
+[]\T1/pcr/m/n/10 get_name() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 354--356
+[]\T1/pcr/m/n/10 get_note() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 356--358
+[]\T1/pcr/m/n/10 get_or_create_tables() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 358--360
+[]\T1/pcr/m/n/10 get_or_create_tables() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 362--364
+[]\T1/pcr/m/n/10 get_peakF_UTCtime() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 362--364
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 364--366
+[]\T1/pcr/m/n/10 get_peakF_value() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 364--366
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (52.35054pt too wide) in paragraph at lines 370--372
+[]\T1/pcr/m/n/10 get_start() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 373--375
+[]\T1/pcr/m/n/10 get_trace_velocity() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 373--375
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 376--377
+[]\T1/pcr/m/n/10 getdet() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.tas
+kbase.fdet.FDet
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 377--378
+[]\T1/pcr/m/n/10 getXY_array() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--396
+[]\T1/pcr/m/n/10 infrapy.database.taskbase.fdet \T1/ptm/m/n/10 (\T1/ptm/m/it/10
+ mod-ule\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--401
+[]\T1/pcr/m/n/10 infrapy.propagation.infrasound \T1/ptm/m/n/10 (\T1/ptm/m/it/10
+ mod-ule\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 409--410
+[]\T1/pcr/m/n/10 infrapy.utils.get_arraywaveforms \T1/ptm/m/n/10 (\T1/ptm/m/it/
+10 mod-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 410--411
+[]\T1/pcr/m/n/10 infrapy.utils.get_header_table \T1/ptm/m/n/10 (\T1/ptm/m/it/10
+ mod-ule\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 411--412
+[]\T1/pcr/m/n/10 infrapy.utils.get_mean_locations \T1/ptm/m/n/10 (\T1/ptm/m/it/
+10 mod-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 414--415
+[]\T1/pcr/m/n/10 infrapy.utils.obspy_conversion \T1/ptm/m/n/10 (\T1/ptm/m/it/10
+ mod-ule\T1/ptm/m/n/10 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 421--423
+[]\T1/pcr/m/n/10 Infrapy_Encoder \T1/ptm/m/n/10 (\T1/ptm/m/it/10 class in in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--425
+[]\T1/pcr/m/n/10 InfrasoundDetection \T1/ptm/m/n/10 (\T1/ptm/m/it/10 class in i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 430--431
+[]\T1/pcr/m/n/10 joint_pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 431--433
+[]\T1/pcr/m/n/10 joint_pdf_wrapper() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule
+ in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 433--435
+[]\T1/pcr/m/n/10 json_to_detection_list() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mo
+d-ule in-
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 444--446
+[]\T1/pcr/m/n/10 latitude() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+[103]
+Underfull \hbox (badness 10000) in paragraph at lines 446--448
+[]\T1/pcr/m/n/10 latlonorigcovar \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 446--448
+\T1/ptm/m/it/10 frapy.database.schema.loc_results at-tribute\T1/ptm/m/n/10 ),
+ []
+
+
+Overfull \hbox (22.20093pt too wide) in paragraph at lines 455--457
+[]\T1/pcr/m/n/10 load() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.in
+frasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 457--459
+[]\T1/pcr/m/n/10 load() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.in
+frasound.TLossModel
+ []
+
+
+Overfull \hbox (52.35054pt too wide) in paragraph at lines 466--468
+[]\T1/pcr/m/n/10 longitude() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 482--484
+[]\T1/pcr/m/n/10 marginal_spatial_pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 488--489
+[]\T1/pcr/m/n/10 maxlat \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 489--490
+[]\T1/pcr/m/n/10 maxlon \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 493--495
+[]\T1/pcr/m/n/10 meanlocations() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 493--495
+\T1/ptm/m/it/10 frapy.database.taskbase.loc.LocInfraPy
+ []
+
+
+Overfull \hbox (34.35054pt too wide) in paragraph at lines 495--497
+[]\T1/pcr/m/n/10 method() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.
+likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 497--499
+[]\T1/pcr/m/n/10 min_az_dev_var \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 497--499
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (7.69167pt too wide) in paragraph at lines 499--501
+[]\T1/pcr/m/n/10 minarraypop \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.
+schema.ASSOC_params
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 503--504
+[]\T1/pcr/m/n/10 minlat \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 505--506
+[]\T1/pcr/m/n/10 minlon \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 511--512
+[]\T1/pcr/m/n/10 multivariate_normal() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-u
+le in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 517--518
+[]\T1/pcr/m/n/10 name \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schema.
+ASSOC_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 518--519
+[]\T1/pcr/m/n/10 name \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schema.
+EDetectParams at-
+ []
+
+
+Overfull \hbox (22.35054pt too wide) in paragraph at lines 523--525
+[]\T1/pcr/m/n/10 name() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.li
+kelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 528--529
+[]\T1/pcr/m/n/10 negative_binomial() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule
+ in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 532--534
+[]\T1/pcr/m/n/10 noncentral_chisquare() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Overfull \hbox (22.35054pt too wide) in paragraph at lines 536--538
+[]\T1/pcr/m/n/10 note() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.li
+kelihoods.InfrasoundDetection
+ []
+
+[104]
+Overfull \hbox (5.2114pt too wide) in paragraph at lines 547--549
+[]\T1/pcr/m/n/10 overlapwlen \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.
+schema.EDetectParams
+ []
+
+
+Underfull \hbox (badness 5519) in paragraph at lines 556--558
+[]\T1/pcr/m/n/10 par_theta \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.loc_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 559--561
+[]\T1/pcr/m/n/10 passocid \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.ASSOC_params
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 563--565
+[]\T1/pcr/m/n/10 PathGeometryModel \T1/ptm/m/n/10 (\T1/ptm/m/it/10 class in in-
+
+ []
+
+
+Overfull \hbox (16.35054pt too wide) in paragraph at lines 566--568
+[]\T1/pcr/m/n/10 pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.lik
+elihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (3.16034pt too wide) in paragraph at lines 568--570
+[]\T1/pcr/m/n/10 pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.lik
+elihoods.SeismicDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 572--574
+[]\T1/pcr/m/n/10 peakF_UTCtime() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 572--574
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 574--576
+[]\T1/pcr/m/n/10 peakF_value() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 574--576
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 584--585
+[]\T1/pcr/m/n/10 plocid \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 591--592
+[]\T1/pcr/m/n/10 priors \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.loc_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 592--593
+[]\T1/pcr/m/n/10 procPEAKS() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 593--595
+[]\T1/pcr/m/n/10 project_Ab \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 595--597
+[]\T1/pcr/m/n/10 project_ABA \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 597--599
+[]\T1/pcr/m/n/10 project_ABc \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 599--601
+[]\T1/pcr/m/n/10 project_beam() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 602--603
+[]\T1/pcr/m/n/10 prototype() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.utils.ms2
+db.CoreTable prop-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 605--607
+[]\T1/pcr/m/n/10 pure_state_filter() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule
+ in-
+ []
+
+
+Underfull \hbox (badness 5847) in paragraph at lines 610--612
+[]\T1/pcr/m/n/10 qassoc \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.schem
+a.ASSOC_results at-
+ []
+
+
+Overfull \hbox (4.1412pt too wide) in paragraph at lines 612--614
+[]\T1/pcr/m/n/10 qdetcluster \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.
+schema.ASSOC_results
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 622--623
+[]\T1/pcr/m/n/10 random_integers() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 625--627
+[]\T1/pcr/m/n/10 rangemax \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.ASSOC_params
+ []
+
+
+Overfull \hbox (58.20093pt too wide) in paragraph at lines 628--630
+[]\T1/pcr/m/n/10 rcel_vrs_min \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagat
+ion.infrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (28.20093pt too wide) in paragraph at lines 631--633
+[]\T1/pcr/m/n/10 rng_max \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.i
+nfrasound.PathGeometryModel
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 633--635
+[]\T1/pcr/m/n/10 rng_pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+[105]
+Underfull \hbox (badness 10000) in paragraph at lines 639--641
+[]\T1/pcr/m/n/10 run_bislSC_wrapper() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 645--647
+[]\T1/pcr/m/n/10 SeismicDetection \T1/ptm/m/n/10 (\T1/ptm/m/it/10 class in in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 647--649
+[]\T1/pcr/m/n/10 set_array_dim() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 647--649
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 649--651
+[]\T1/pcr/m/n/10 set_back_azimuth() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 649--651
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 651--653
+[]\T1/pcr/m/n/10 set_ele() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 653--655
+[]\T1/pcr/m/n/10 set_end() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 655--657
+[]\T1/pcr/m/n/10 set_event_id() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 655--657
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 657--659
+[]\T1/pcr/m/n/10 set_freq_range() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 657--659
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 659--661
+[]\T1/pcr/m/n/10 set_lat() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (40.35054pt too wide) in paragraph at lines 661--663
+[]\T1/pcr/m/n/10 set_lon() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (58.35054pt too wide) in paragraph at lines 663--665
+[]\T1/pcr/m/n/10 set_method() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagat
+ion.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 665--667
+[]\T1/pcr/m/n/10 set_name() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (46.35054pt too wide) in paragraph at lines 667--669
+[]\T1/pcr/m/n/10 set_note() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagatio
+n.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 669--671
+[]\T1/pcr/m/n/10 set_peakF_UTCtime() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 669--671
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 671--673
+[]\T1/pcr/m/n/10 set_peakF_value() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 671--673
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (52.35054pt too wide) in paragraph at lines 675--677
+[]\T1/pcr/m/n/10 set_start() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagati
+on.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 679--681
+[]\T1/pcr/m/n/10 set_trace_velocity() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 679--681
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Overfull \hbox (15.16034pt too wide) in paragraph at lines 683--685
+[]\T1/pcr/m/n/10 sigma() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.l
+ikelihoods.SeismicDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 686--688
+[]\T1/pcr/m/n/10 sourcenum \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fd_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 688--690
+[]\T1/pcr/m/n/10 sourcenum \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fk_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 692--694
+[]\T1/pcr/m/n/10 src_spec_pdf() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 692--694
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 697--698
+[]\T1/pcr/m/n/10 standard_cauchy() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 698--700
+[]\T1/pcr/m/n/10 standard_exponential() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 701--702
+[]\T1/pcr/m/n/10 standard_normal() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule i
+n-
+ []
+
+
+Overfull \hbox (28.35054pt too wide) in paragraph at lines 703--705
+[]\T1/pcr/m/n/10 start() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation.l
+ikelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 705--707
+[]\T1/pcr/m/n/10 stepslowness \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database
+.schema.fk_params
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 707--709
+[]\T1/pcr/m/n/10 strat_therm_bnd \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 707--709
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 709--711
+[]\T1/pcr/m/n/10 stream2array() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 711--713
+[]\T1/pcr/m/n/10 stream_to_array_data() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 714--716
+[]\T1/pcr/m/n/10 summarize_clusters() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ul
+e in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 716--717
+[]\T1/pcr/m/n/10 svdAV_wv() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 724--725
+[]\T1/pcr/m/n/10 tapering() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 725--726
+[]\T1/pcr/m/n/10 tb_prod \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.fd_params at-
+ []
+
+[106]
+Underfull \hbox (badness 10000) in paragraph at lines 733--734
+[]\T1/pcr/m/n/10 timeend \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.loc_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 738--739
+[]\T1/pcr/m/n/10 timeini \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sche
+ma.loc_results at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 743--745
+[]\T1/pcr/m/n/10 timeorigmean \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database
+.schema.loc_results
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 751--753
+[]\T1/pcr/m/n/10 trace_velocity() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.34067pt too wide) in paragraph at lines 751--753
+\T1/ptm/m/it/10 frapy.propagation.likelihoods.InfrasoundDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 754--755
+[]\T1/pcr/m/n/10 trim_clusters() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+
+ []
+
+
+Overfull \hbox (1.69167pt too wide) in paragraph at lines 755--757
+[]\T1/pcr/m/n/10 trimthresh \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.s
+chema.ASSOC_params
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 757--759
+[]\T1/pcr/m/n/10 trimthreshscalar \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 757--759
+\T1/ptm/m/it/10 frapy.database.schema.ASSOC_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 759--761
+[]\T1/pcr/m/n/10 tropo_strat_bnd \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-
+ []
+
+
+Overfull \hbox (13.19106pt too wide) in paragraph at lines 759--761
+\T1/ptm/m/it/10 frapy.propagation.infrasound.PathGeometryModel
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 763--764
+[]\T1/pcr/m/n/10 trvelmax \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.fk_params at-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 764--765
+[]\T1/pcr/m/n/10 trvelmin \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.fk_params at-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 765--766
+[]\T1/pcr/m/n/10 trvelstep \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.fk_params at-
+ []
+
+
+Overfull \hbox (27.16034pt too wide) in paragraph at lines 766--768
+[]\T1/pcr/m/n/10 trvl_tm() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.propagation
+.likelihoods.SeismicDetection
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 775--777
+[]\T1/pcr/m/n/10 view_distance_matrix() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-
+ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 784--786
+[]\T1/pcr/m/n/10 wlenlong \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sch
+ema.EDetectParams
+ []
+
+
+Underfull \hbox (badness 7012) in paragraph at lines 786--788
+[]\T1/pcr/m/n/10 wlenshort \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database.sc
+hema.EDetectParams
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 791--792
+[]\T1/pcr/m/n/10 xcorr_beam() \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in mod-ule in-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 794--796
+[]\T1/pcr/m/n/10 xcorrvalmean \T1/ptm/m/n/10 (\T1/ptm/m/it/10 in-frapy.database
+.schema.fk_results
+ []
+
+[107])
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 9605.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 9605.
+ (./InfraPy.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 9605.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 9605.
+
+
+
+Package rerunfilecheck Warning: File `InfraPy.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `InfraPy.out':
+(rerunfilecheck)             Before: 61C89B9A2FAC4FA05128BB1A57B1BD70;14210
+(rerunfilecheck)             After:  7B4B04423DB6596478AB46401EDF4E21;14282.
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 9605.
  ) 
 Here is how much of TeX's memory you used:
- 13656 strings out of 492649
- 194268 string characters out of 6129622
- 344253 words of memory out of 5000000
- 17114 multiletter control sequences out of 15000+600000
- 50209 words of font info for 67 fonts, out of 8000000 for 9000
+ 14794 strings out of 492649
+ 232605 string characters out of 6129622
+ 364438 words of memory out of 5000000
+ 17664 multiletter control sequences out of 15000+600000
+ 59382 words of font info for 86 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
- 37i,12n,51p,973b,532s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,26n,51p,1043b,644s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
-exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/tex
-live/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texli
-ve/2018/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/
-texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/local/texlive/2018/texmf-d
-ist/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/local/texlive/2018/texmf-dist/fo
-nts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/
-urw/times/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/
-utmri8a.pfb>
-Output written on InfraPy.pdf (25 pages, 883019 bytes).
+exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/te
+xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex7.pfb></usr/local
+/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/
+texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/te
+xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texl
+ive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texliv
+e/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2
+018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2018
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2018/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2018/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2018/texmf-
+dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/local/texlive/2018/texmf-dist/fon
+ts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1
+/urw/courier/ucrro8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/he
+lvetic/uhvb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/helvetic/
+uhvbo8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/helvetic/uhvr8a
+.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
+/local/texlive/2018/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/tex
+live/2018/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on InfraPy.pdf (111 pages, 1280581 bytes).
 PDF statistics:
- 638 PDF objects out of 1000 (max. 8388607)
- 577 compressed objects within 6 object streams
- 126 named destinations out of 1000 (max. 500000)
- 701 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 2190 PDF objects out of 2487 (max. 8388607)
+ 2014 compressed objects within 21 object streams
+ 688 named destinations out of 1000 (max. 500000)
+ 705 words of extra memory for PDF output out of 10000 (max. 10000000)
 
