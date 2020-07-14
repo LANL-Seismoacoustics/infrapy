@@ -11,6 +11,7 @@ import pickle
 import imp
 import time
 import itertools
+import warnings
 
 import numpy as np
 
@@ -31,6 +32,7 @@ from ..utils import prog_bar
 from ..utils import skew_norm
 
 np.seterr(over='ignore', divide='ignore')
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # ############################ #
 #      General (Canonical)     #
@@ -108,9 +110,9 @@ class PathGeometryModel(object):
 
         if len(np.atleast_1d(rng)) == 1:
             n_az = find_azimuth_bin(az, self.az_bin_cnt)
-            fit_rcel_wts = np.array([f(rng_eval) for f in self.rcel_wts[n_az]])
-            fit_rcel_mns = np.array([f(rng_eval) for f in self.rcel_mns[n_az]])
-            fit_rcel_vrs = np.array([f(rng_eval) for f in self.rcel_vrs[n_az]])
+            fit_rcel_wts = np.array([func(rng_eval) for func in self.rcel_wts[n_az]])
+            fit_rcel_mns = np.array([func(rng_eval) for func in self.rcel_mns[n_az]])
+            fit_rcel_vrs = np.array([func(rng_eval) for func in self.rcel_vrs[n_az]])
             result = np.sum(fit_rcel_wts / fit_rcel_vrs * norm.pdf((rcel - fit_rcel_mns) / fit_rcel_vrs))
         else:
             mn = np.empty((len(rng_eval), 3))
@@ -119,11 +121,11 @@ class PathGeometryModel(object):
 
             az_indices = find_azimuth_bin(az, self.az_bin_cnt)
             for n_az in range(self.az_bin_cnt):
-                mask = [az_indices==n_az]
+                mask = [az_indices == n_az]
                 if np.any(mask):
-                    mn[mask] = np.array([f(rng_eval[mask]) for f in self.rcel_mns[n_az]]).T
-                    vr[mask] = np.array([f(rng_eval[mask]) for f in self.rcel_vrs[n_az]]).T
-                    wt[mask] = np.array([f(rng_eval[mask]) for f in self.rcel_wts[n_az]]).T
+                    mn[mask] = np.array([func(rng_eval[mask]) for func in self.rcel_mns[n_az]]).T
+                    vr[mask] = np.array([func(rng_eval[mask]) for func in self.rcel_vrs[n_az]]).T
+                    wt[mask] = np.array([func(rng_eval[mask]) for func in self.rcel_wts[n_az]]).T
 
             result = np.sum(wt / vr * norm.pdf((np.array([rcel] * 3).T - mn) / vr), axis=1)
         return result
