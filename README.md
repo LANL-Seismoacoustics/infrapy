@@ -15,6 +15,9 @@ Oracle) and serverless (e.g.: SQLite) relational databases.
 Infrapy was built upon previous similar (InfraMonitor) tools and
 developed by the LANL Seismoacoustics (LANL-SA) Team.  
 
+## Documentation
+The complete documentation can be found at https://infrapy.readthedocs.io/en/latest/
+
 ## Operating Systems
 
 Infrapy can currently be installed on machines running newer versions of Linux, Apple OSX, and Windows.
