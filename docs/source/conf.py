@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'Infrapy'
-copyright = '2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, '
-author = 'F.Dannemann Dugick, P.Blom, O. Marcillo, J. Webster'
+copyright = '2020, F.Dannemann Dugick, P.Blom, J.Webster'
+author = 'F.Dannemann Dugick, P.Blom, J. Webster'
 
 # The short X.Y version
 version = ''
@@ -134,7 +134,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'InfraPy.tex', 'InfraPy Documentation',
-     'F.Dannemann Dugick, O.Marcillo, P.Blom, J.Webster, ', 'manual'),
+     'F.Dannemann Dugick, P.Blom, J.Webster ', 'manual'),
 ]
 
 

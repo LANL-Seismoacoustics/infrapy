@@ -86,6 +86,7 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
@@ -175,15 +176,15 @@
 <span id="bisl"></span><h2>BISL<a class="headerlink" href="#module-infrapy.location.bisl" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="infrapy.location.bisl.calc_conf_ellipse">
-<code class="sig-prename descclassname">infrapy.location.bisl.</code><code class="sig-name descname">calc_conf_ellipse</code><span class="sig-paren">(</span><em class="sig-param">means</em>, <em class="sig-param">variances</em>, <em class="sig-param">conf_lvl</em>, <em class="sig-param">pnts=100</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.calc_conf_ellipse" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">infrapy.location.bisl.</code><code class="sig-name descname">calc_conf_ellipse</code><span class="sig-paren">(</span><em class="sig-param">means</em>, <em class="sig-param">st_devs</em>, <em class="sig-param">conf_lvl</em>, <em class="sig-param">pnts=100</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.calc_conf_ellipse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the confidence ellipse around a latitude longitude point</p>
 <p>Computes the points on an ellipse centered at a latitude, longitude point with
-variances (E/W, N/S, and covariance) defiend in kilometers for a given confidence
+standard deviations (E/W, N/S, and covariance) defiend in kilometers for a given confidence
 level.</p>
 <dl class="simple">
 <dt>means<span class="classifier">float</span></dt><dd><p>Latitude and longitude of the center</p>
 </dd>
-<dt>variances<span class="classifier">float</span></dt><dd><p>East/West, North/South, and covariance for the ellipse</p>
+<dt>st_devs<span class="classifier">float</span></dt><dd><p>East/West and North/South standard deviations, and covariance for the ellipse</p>
 </dd>
 <dt>conf_lvl<span class="classifier">float</span></dt><dd><p>Confidence level in percentage (e.g., 95.0 = 95%)</p>
 </dd>
@@ -249,11 +250,11 @@ fraction of the overall integral such that f(x_1) = f(x_2)</p>
 <dt>result<span class="classifier">dictionary</span></dt><dd><dl class="simple">
 <dt>Dictionary containing all localization results:</dt><dd><p>‘lat_mean’: Mean latitude for the marginalized spatial distribution
 ‘lon_mean’ : Mean longitude for the marginalized spatial distribution
-‘EW_var’: Variance of the marginalized spatial distribution in the east/west direction in km
-‘NS_var’: Variance of the marginalized spatial distribution in the north/south direction in km
+‘EW_stdev’: Standard deviation of the marginalized spatial distribution in the east/west direction in km
+‘NS_stdev’: Standard deviation of the marginalized spatial distribution in the north/south direction in km
 ‘covar’: Relative covariance, sigma_{xy}^2 / (sigma_x sigma_y)
 ‘t_mean’: Mean marginalized temporal distribution
-‘t_var’: Variance of the marginalized temporal distribution
+‘t_stdev’: Standard deviation of the marginalized temporal distribution
 ‘t_min’ : 95% confidence bound lower limit for the marginalized temporal distribution
 ‘t_max’ : 95% confidence bound upper limit for the marginalized temporal distribution
 ‘lat_MaP’: Maximum a Posteriori latitude
@@ -327,7 +328,7 @@ for computation of the localization distribution</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, O.Marcillo, J.Webster, 
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster
 
     </p>
   </div>

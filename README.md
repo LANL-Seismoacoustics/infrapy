@@ -15,6 +15,9 @@ Oracle) and serverless (e.g.: SQLite) relational databases.
 Infrapy was built upon previous similar (InfraMonitor) tools and
 developed by the LANL Seismoacoustics (LANL-SA) Team.  
 
+## Documentation
+The complete documentation can be found at https://infrapy.readthedocs.io/en/latest/
+
 ## Operating Systems
 
 Infrapy can currently be installed on machines running newer versions of Linux, Apple OSX, and Windows.
@@ -53,6 +56,10 @@ how to activate and deactivate the new environment:
     To deactivate an active environment, use
 
         >> conda deactivate
+        
+## Tutorials
+
+A series of Jupyter Notebook tutorials are located in /tutorials.  These tutorials can be used to gain familiarity with both Infrapy scripting and command line interfact (CLI).
         
 ## e1 Compression
 
