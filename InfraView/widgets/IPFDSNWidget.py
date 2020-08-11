@@ -58,6 +58,10 @@ class IPFDSNWidget(QWidget):
         # First lets populate the client drop down
         self.cb = QComboBox()
         label_service_name = QLabel(self.tr('Service:'))
+
+        fdsn_dictionary = URL_MAPPINGS
+        fdsn_dictionary.update({'RaspShake':'https://fdsnws.rasberryshakedata.com'})
+
         for key in sorted(URL_MAPPINGS.keys()):
             self.cb.addItem(key)
         self.cb.setCurrentText('IRIS')
@@ -165,7 +169,6 @@ class IPFDSNWidget(QWidget):
             self.stationListWidget.clear()
             self.stationListWidget.addItems(stationList)
 
-            print(self.stationDialog.getStartDate())
             if self.stationDialog.getStartDate() is not None:
                 self.startDate_edit.setDate(self.stationDialog.getStartDate())
 

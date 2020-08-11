@@ -515,7 +515,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     # Key press events...
 
     def keyPressEvent(self, evt):
-        #print("key pressed")
         pass
 
     def myNoiseSpinsChanged(self):

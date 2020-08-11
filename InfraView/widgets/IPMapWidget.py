@@ -389,7 +389,7 @@ class IPMapWidget(QWidget):
             zoom = 0.25
         elif event.button == 'up':
             zoom = -0.25
-        # print("mouse moved = {}".format(self.mouse_moved))
+
         # if the mouse position is unmoving, continue to zoom in on the initial position,
         # if the mouse moved, update the center of the zoom to the new position
         if self.mouse_moved:
@@ -440,7 +440,6 @@ class IPMapWidget(QWidget):
     def area_select_callback(self, eclick, erelease):
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        # print('{},{}    {},{}').format(x1,y1, x2, y2)
 
     def motion_notify_callback(self, event):
         if event.xdata is None or event.inaxes != self.axes:
@@ -469,7 +468,6 @@ class IPMapWidget(QWidget):
             self.axes.set_extent([lo1, lo2, la1, la2], crs=self._transform)
             self.fig.canvas.draw_idle()
         else:
-            # print("moving!!!  event name = {}".format(event.name))
             self.mouse_moved = True
             # if event.button is None:
             self.axes.set_title('Lon = {:+f}, Lat = {:+f}'.format(event.xdata, event.ydata), loc='center', pad=20, fontsize=10)

@@ -110,7 +110,7 @@ class IPBeamformingSettingsWidget(QWidget):
 
         self.tracev_resol_spin = QDoubleSpinBox()
         self.tracev_resol_spin.setMinimum(0.1)
-        self.tracev_resol_spin.setMaximum(20.)
+        self.tracev_resol_spin.setMaximum(500.)
         self.tracev_resol_spin.setValue(5.0)
         self.tracev_resol_spin.setSuffix(' m/s')
 
@@ -130,14 +130,14 @@ class IPBeamformingSettingsWidget(QWidget):
 
         self.tracev_min_spin = QDoubleSpinBox()
         self.tracev_min_spin.setMinimum(1)
-        self.tracev_min_spin.setMaximum(10000.)
+        self.tracev_min_spin.setMaximum(20000.)
         self.tracev_min_spin.setValue(300.0)
         self.tracev_min_spin.setSuffix(' m/s')
         self.tracev_min_spin.editingFinished.connect(self.checkTraceVRange)
         
         self.tracev_max_spin = QDoubleSpinBox()
         self.tracev_max_spin.setMinimum(2)
-        self.tracev_max_spin.setMaximum(10000.)
+        self.tracev_max_spin.setMaximum(20000.)
         self.tracev_max_spin.setValue(750.0)
         self.tracev_max_spin.setSuffix(' m/s')
         self.tracev_max_spin.editingFinished.connect(self.checkTraceVRange)

@@ -500,10 +500,13 @@ class IPBeamformingWidget(QWidget):
         nearest_idx = self.nearest_in_t(mouse_point_x)
 
         # get the xy values of the point nearest to the cursor
-        t_nearest = self._t[nearest_idx]
-        f_nearest = self._f_stats[nearest_idx]
-        ba_nearest = self._back_az[nearest_idx]
-        tv_nearest = self._trace_vel[nearest_idx]
+        try:
+            t_nearest = self._t[nearest_idx]
+            f_nearest = self._f_stats[nearest_idx]
+            ba_nearest = self._back_az[nearest_idx]
+            tv_nearest = self._trace_vel[nearest_idx]
+        except IndexError:
+            pass
 
         self.fstat_marker_label.setText(' [{:.2f}, {:.2f}]'.format(t_nearest, f_nearest))
         self.fstat_marker_label.setPos(t_nearest, f_nearest)
@@ -906,6 +909,11 @@ class IPBeamformingWidget(QWidget):
             elif method == "gls":
                 scaled_slowness = 100 * (1.0 - (slowness[:, -1]) / np.max(slowness[:, -1]))
 
+            # need to auto adjust the size of the dots so they fill up the slowness nicely
+            # the largest value on the plot will be 1/minimum_trace velocity
+            lv = 1.0/self.bottomSettings.tracev_min_spin.value()
+            dot_size = lv/15.
+
             for i in range(slowness.shape[0]):
 
                 if method == "bartlett_covar" or method == "bartlett":
@@ -914,7 +922,7 @@ class IPBeamformingWidget(QWidget):
                 else:
                     brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
 
-                self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': 0.0002})
+                self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': dot_size})
 
             self.spi.clear()
             self.spi.addPoints(self.dots)
@@ -945,13 +953,18 @@ class IPBeamformingWidget(QWidget):
         elif method == "gls":
             scaled_slowness = 100 * (1.0 - (slowness[:, -1]) / np.max(slowness[:, -1]))
 
+        # need to auto adjust the size of the dots so they fill up the slowness nicely
+        # the largest value on the plot will be 1/minimum_trace velocity
+        lv = 1.0/self.bottomSettings.tracev_min_spin.value()
+        dot_size = lv/15.
+
         for i in range(slowness.shape[0]):
             if method == "bartlett_covar" or method == "bartlett":
                 brush = pg.intColor(100 * (slowness[i, -1]), hues=100, values=1)
             else:
                 brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
 
-            self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': 0.0002})
+            self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': dot_size})
 
         self.spi.clear()
         self.spi.addPoints(self.dots)
@@ -959,6 +972,7 @@ class IPBeamformingWidget(QWidget):
         self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
         self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
+        self.slownessPlot.setRange(self.bottomSettings.tracev_min_spin.value())
 
         self.fstat_slowness_marker.setData([self._t[idx]], [self._f_stats[idx]])
         self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
@@ -1109,7 +1123,7 @@ class IPBeamformingWidget(QWidget):
         self.max_projectionCurve.clear()
 
         self.slownessPlot.clear()
-        self.slownessPlot.drawPlot()
+        self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
 
         self.spi.clear()
 
@@ -1328,6 +1342,9 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.resultData['backaz'].append(peaks[0][0])
             self.resultData['tracev'].append(peaks[0][1])
 
+            sig_est, residual = beamforming_new.extract_signal(X, f, np.array([peaks[0][0], peaks[0][1]]), geom)
+            signal_wvfrm = np.fft.irfft(sig_est)/(t[1]-t[0])
+
             if self.method == "bartlett_covar" or self.method == "bartlett" or self.method == "gls":
                 fisher_val = peaks[0][2] / (1.0 - peaks[0][2]) * (M - 1)
                 self.resultData['fstats'].append(fisher_val)
@@ -1345,6 +1362,7 @@ class BeamformingWorkerObject(QtCore.QObject):
             # signal projection plot to update
             self.signal_projectionUpdated.emit(projection, avg_beam_power)
 
+            # signal slowness plot to update
             self.signal_slownessUpdated.emit(np.c_[slowness, avg_beam_power])
 
 

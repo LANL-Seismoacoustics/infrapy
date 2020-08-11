@@ -132,7 +132,6 @@ class IPSaveAllDialog(QDialog):
         for idx, trace in enumerate(self.__streams):
             stats = trace.stats
             fileFormat = stats['_format']
-            print(fileFormat)
 
             basename = trace.id
             if basename[0] == '.':

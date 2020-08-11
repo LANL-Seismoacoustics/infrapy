@@ -50,7 +50,10 @@ class IPStationBrowser(QWidget):
         # First lets populate the client drop down with all available services
         self.service_cb = QComboBox()
         # self.service_cb.addItem("choose...")
-        for key in sorted(URL_MAPPINGS.keys()):
+        fdsn_dictionary = URL_MAPPINGS
+        fdsn_dictionary.update({'RaspShake':'https://fdsnws.rasberryshakedata.com'})
+
+        for key in sorted(fdsn_dictionary.keys()):
             self.service_cb.addItem(key)
             self.service_cb.setCurrentText('IRIS')
         if service is not None:
@@ -258,7 +261,7 @@ class IPStationBrowser(QWidget):
         elif self.endDate_edit.date() < start_date:
             self.endDate_edit.setDate(start_date)
 
-    def __populateStationInfo(self):
+    def populateStationInfo(self):
 
         service = self.service_cb.currentText()
 
@@ -386,7 +389,7 @@ class IPStationBrowser(QWidget):
         self.stationListWidget.addItems(msg)
         QApplication.processEvents()
         QtGui.QGuiApplication.processEvents()
-        self.__populateStationInfo()
+        self.populateStationInfo()
         return
 
     def onActivated_reset(self):

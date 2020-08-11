@@ -94,11 +94,11 @@ class IPWaveformWidget(QWidget):
     def get_project(self):
         return self._parent.getProject()
 
-    def errorPopup(self, message):
+    def errorPopup(self, message, title="Oops..."):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
+        msgBox.setWindowTitle(title)
         msgBox.exec_()
 
 
@@ -251,7 +251,7 @@ class IPWaveformWidget(QWidget):
                     self.errorPopup(str(e))
 
             else:
-                print(filtType + ' filter not implemented yet')
+                self.errorPopup(filtType + ' filter not implemented yet')
                 return
             filtered_stream += filtered_trace
 

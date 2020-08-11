@@ -225,9 +225,8 @@ class IPStationView(QWidget):
             # There is an open project, so make the default save location correspond to what the project wants
             previousDirectory = str(self.__parent.get_project().get_stationsPath())
 
-        # print('previousDirectory = {}'.format(str(previousDirectory)))
         self.__savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
-        # print('savefile = {}'.format(self.__savefile))
+
         if self.__savefile[0]:
             self.__parent._inv.write(self.__savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.__savefile[0])

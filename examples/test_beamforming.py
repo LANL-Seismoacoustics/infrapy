@@ -160,7 +160,7 @@ if __name__ == '__main__':
     plt.subplot(M + 1, 1, M + 1)
     plt.xlim([t[t_mask][0], t[t_mask][-1]])
     plt.plot(t[t_mask], signal_wvfrm[:len(t[t_mask])], 'b-')
-    plt.pause(30.0)
+    plt.pause(230.0)
 
     plt.close()
     p.close()

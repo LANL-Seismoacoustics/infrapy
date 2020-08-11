@@ -96,7 +96,6 @@ class IPStationMatchDialog(QDialog):
             QApplication.instance().processEvents()
 
             s = traceID.split('.')
-            # print('length of s = {}'.format(len(s)))
             network = s[0]
             station = s[1]
             # if s[2] == '':
