@@ -70,7 +70,7 @@ def plot_dets(det_list,display=True,save_fig=None):
 
     beams = [0] * det_cnt
     for n, det in enumerate(det_list):
-        proj = latlon.sphericalfwd([det._InfrasoundDetection__lat, det._InfrasoundDetection__lon], 30, det._InfrasoundDetection__back_az)[0][0]
+        proj = latlon.sphericalfwd([det._InfrasoundDetection__lat, det._InfrasoundDetection__lon], 50, det._InfrasoundDetection__back_az)[0][0]
         #beams[n], = m1.drawgreatcircle(det._InfrasoundDetection__lon, det._InfrasoundDetection__lat, proj[1], proj[0], linewidth=0.5, color='Blue')
         plt.plot((det._InfrasoundDetection__lon, proj[1]),(det._InfrasoundDetection__lat, proj[0]), linewidth=0.5, color='Blue',transform=pc_proj)
         #fig1.lines.append(line)
@@ -90,7 +90,7 @@ def plot_dets(det_list,display=True,save_fig=None):
     if display == True:
         plt.close('all')
 
-def plot_loc(det_list,result,pdf,confidence,display=True,save_fig=None,grnd_trth=None):
+def plot_loc(det_list,result,pdf,confidence,display=True,save_fig=None,grnd_trth=None, include_arrays=False):
 
 
     det_cnt = len(det_list)
@@ -101,15 +101,21 @@ def plot_loc(det_list,result,pdf,confidence,display=True,save_fig=None,grnd_trth
     #ax.add_feature(cfeature.LAND)
     ax.add_feature(cfeature.COASTLINE)
     ax.add_feature(cfeature.LAKES)
-    ax.add_feature(cfeature.STATES)
+    # ax.add_feature(cfeature.STATES)
+    ax.add_feature(cfeature.BORDERS)
 
     array_lats, array_lons = [0] * len(det_list), [0] * len(det_list)
     for n in range(len(det_list)):
         array_lats[n], array_lons[n] = det_list[n]._InfrasoundDetection__lat, det_list[n]._InfrasoundDetection__lon
 
 
-    fig_bnd_lat_min, fig_bnd_lat_max = min(array_lats) - 1.0, max(array_lats) + 1.0
-    fig_bnd_lon_min, fig_bnd_lon_max = min(array_lons) - 2.0, max(array_lons) + 2.0
+    if include_arrays:
+        fig_bnd_lat_min, fig_bnd_lat_max = min(array_lats) - 1.0, max(array_lats) + 1.0
+        fig_bnd_lon_min, fig_bnd_lon_max = min(array_lons) - 2.0, max(array_lons) + 2.0
+    else:
+        fig_bnd_lat_min, fig_bnd_lat_max = result['lat_mean'] - 7.5 * result['NS_stdev'] / 111.0, result['lat_mean'] + 7.5 * result['NS_stdev'] / 111.0
+        fig_bnd_lon_min, fig_bnd_lon_max = result['lon_mean'] - 7.5 * result['EW_stdev'] / 111.0, result['lon_mean'] + 7.5 * result['EW_stdev'] / 111.0
+
 
     ax.set_extent([fig_bnd_lon_min, fig_bnd_lon_max, fig_bnd_lat_min, fig_bnd_lat_max],crs=pc_proj)
     scale_bar.scale_bar(ax, (0.05, 0.05), 250)

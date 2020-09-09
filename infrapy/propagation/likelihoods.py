@@ -575,13 +575,6 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
     from IPython import embed
 
     if 3**infr_cnt > resol:
-        
-        if path_geo_model:
-            print("Computing numerical integral with PGM")
-        else:
-            print("Computing numerical integral without PGM")
-
-
         def temp(la, lo):
             infr_rngs = np.array([sph_proj.inv(det.longitude, det.latitude, lo, la)[2] / 1000.0 for det in infr_det_list])
             infr_t1 = max(np.array([det.peakF_UTCtime - np.timedelta64(int(infr_rngs[n] / 0.2 * 1e3), 'ms') for n, det in enumerate(infr_det_list)]))
