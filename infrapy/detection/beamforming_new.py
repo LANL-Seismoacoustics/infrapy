@@ -627,7 +627,7 @@ def pure_state_filter(S):
         for j in range(M):
             coh[i][j] = S[i][j] / np.sqrt(abs(S[i][i]) * abs(S[j][j]))
 
-    return (M * np.trace(np.matmul(coh, coh)) - np.trace(coh)**2) / ((M - 1) * np.trace(coh)**2)
+    return np.sqrt(np.real((M * np.trace(np.matmul(coh, coh)) - np.trace(coh)**2) / ((M - 1) * np.trace(coh)**2)))
 
 
 def find_peaks(beam_power, slowness_vals1, slowness_vals2, signal_cnt=1, freq_weights=None):
@@ -842,19 +842,27 @@ def extract_signal(X, f, slowness, dxdy):
 #        Identify        #
 #       Detections       #
 # ###################### #
-def calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt):
+def calc_det_p_val(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=None):
+    fstat_min = np.min(fstat_vals)
+    fstat_max = np.max(fstat_vals)
+
+    # compute reference threshold if not provided
+    if fstat_ref_peak:
+        fstat_peak = fstat_ref_peak
+    else:
+        def temp_fstat(f):
+            return -stats.f(TB_prod, TB_prod * (channel_cnt - 1)).pdf(f)
+        fstat_peak = minimize_scalar(temp_fstat, bracket=(fstat_min, fstat_max)).x
+        
+    # compute 
     kde = stats.gaussian_kde(fstat_vals)
     def temp_kde(f):
-        return -kde.pdf(f)
+        return -kde.pdf(f)[0]
+    kde_peak = minimize_scalar(temp_kde, bracket=(fstat_min, fstat_max), options={'maxiter':250}).x
 
-    def temp_fstat(f):
-        return -stats.f(TB_prod, TB_prod * (channel_cnt - 1)).pdf(f)
+    return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_p_val) * (kde_peak / fstat_peak)
 
-    c_scalar = minimize_scalar(temp_kde).x / minimize_scalar(temp_fstat).x
-
-    return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_thresh) * c_scalar[0]
-
-def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thresh=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None):
+def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -863,30 +871,32 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
 
         Parameters
         ----------
-        times : 1darray
+        times: 1darray
             Times of beamforming results as numpy datetime64's
-        beam_results : 2darray
+        beam_results: 2darray
             Beamforming results consisting of back azimuth, trace velocity, and
             f-value at each time step. This is a 2D array with dimensions (len(times), 3), 
             where the first column has back azimuth values, the second has trace velocity 
             values, and the third has f-statistic values
-        win_len : float
+        win_len: float
             Window length to define the adaptive fstat threshold
-        TB_prod : int
+        TB_prod: int
             Time-bandwidth product needed to compute the Fisher statistic
-        channel_cnt : int
-            Number of channels on the array; needed to compute the Fisher statistic
-        det_thresh : float
-            Threshold for declaring a detection
-        min_seq : int
+        channel_cnt: int
+            Number of channels on the array needed to compute the Fisher statistic
+        det_p_val: float
+            Threshold p-value for declaring a detection
+        min_seq: int
             Threshold for the number of sequential above-threshold values to declare
             a detection
-        back_az_lim : float
+        back_az_lim: float
             Threshold below which the maximum separation of back azimuths must be
             in order to declare a detection
-        fixed_thresh : float
+        fixed_thresh: float
             A fixed detection threshold for fstat values (overrides adaptive 
                 threshold calculation)
+        return_thresh: boolean
+            Flag to output the adaptive detection threshold computed across times
 
         Returns:
         ----------
@@ -894,26 +904,41 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
             List of identified detections including detection time, relative start
             and end times of the detection, back azimuth, trace velocity, and f-stat.
         """
+    
+    print("Detecting signals in beamforming results...")
 
     back_az_vals = beam_results[:, 0]
     trc_vel_vals = beam_results[:, 1]
     fstat_vals = beam_results[:, 2]
 
     det_mask = np.zeros_like(fstat_vals, dtype=bool)
+    thresh_vals = np.empty_like(fstat_vals)
+
+    # define the reference f-stat threshold
+    def temp_fstat(f):
+        return -stats.f(TB_prod, TB_prod * (channel_cnt - 1)).pdf(f)
+    fstat_ref_peak = minimize_scalar(temp_fstat, bracket=(min(fstat_vals), max(fstat_vals))).x
 
     if fixed_thresh:
         det_mask = (fstat_vals > fixed_thresh)
     else:
-        # check first full window for detections using KDE of all f-values
-        thresh = calc_det_thresh(fstat_vals, det_thresh, TB_prod, channel_cnt)
-        init_win_mask = (times - times[0]).astype('m8[s]').astype(float) < win_len
-        det_mask[init_win_mask] = (fstat_vals[init_win_mask] > thresh)
-
         for n, tn in enumerate(times):
-            if (tn - times[0]).astype('m8[s]').astype(float) > win_len:
-                fstat_vals_win = fstat_vals[np.logical_and(tn - np.timedelta64(int(win_len), 's') <= times, times < tn)]
-                thresh = calc_det_thresh(fstat_vals_win, det_thresh, TB_prod, channel_cnt)
-                det_mask[n] = (fstat_vals[n] > thresh)
+            # center window at tn and adjust to edges (times[0] and times[-1])
+            t1 = tn - np.timedelta64(int(win_len / 2.0), 's')
+            t2 = tn + np.timedelta64(int(win_len / 2.0), 's')
+
+            t1 = max(t1, times[0])
+            t2 = max(t2, times[0] + np.timedelta64(int(win_len), 's'))
+
+            t1 = min(t1, times[-1] - np.timedelta64(int(win_len), 's'))
+            t2 = min(t2, times[-1])
+            
+            # compute detection threshold from the masked f-stat values
+            win_mask = np.logical_and(t1 <= times, times <= t2)
+            thresh = calc_det_p_val(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
+
+            thresh_vals[n] = thresh
+            det_mask[n] = fstat_vals[n] >= thresh
 
     # Check for detections shorter than the minimum sequence 
     #   length and with too large of back azimuth deviations
@@ -921,13 +946,17 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
     while n < (len(det_mask) - min_seq):
         if np.all(det_mask[n:n + min_seq]):
             det_len = min_seq
-            while np.all(det_mask[n:n + det_len]) and n + det_len < len(det_mask):
+            while np.all(det_mask[n:n + (det_len + 1)]) and n + (det_len + 1) < len(det_mask):
                 det_len += 1
 
-            back_az_min = np.argmin(back_az_vals[n:n + det_len])
-            back_az_max = np.argmax(back_az_vals[n:n + det_len])
+            back_az_min = np.min(back_az_vals[n:n + det_len])
+            back_az_max = np.max(back_az_vals[n:n + det_len])
 
-            if abs(back_az_max - back_az_min) < back_az_lim or abs(back_az_max - back_az_min) - 360.0 < back_az_lim:
+            back_az_diff = abs(back_az_max - back_az_min)
+            if back_az_diff > 180.0:
+                back_az_diff = abs(back_az_diff - 360.0)
+
+            if back_az_diff < back_az_lim:
                 pk_index = np.argmax(fstat_vals[n:n + det_len]) 
 
                 try:
@@ -951,4 +980,7 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_thres
         else:
             n += 1
 
-    return dets
+    if return_thresh:
+        return dets, thresh_vals
+    else:
+        return dets
