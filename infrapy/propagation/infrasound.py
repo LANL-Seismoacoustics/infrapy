@@ -710,11 +710,13 @@ class TLossModel(object):
     
     def load(self, model_file):
         fit_params = pickle.load(open(model_file, "rb"), encoding='latin1')
-        self.az_bin_cnt = len(fit_params[2])
         
         self.rng_vals = fit_params[0]
         self.tloss_vals = fit_params[1]
         
+        self.az_bin_cnt = len(fit_params[2])
+        self.pdf_vals = [0] * self.az_bin_cnt
+        self.pdf_fits = [0] * self.az_bin_cnt
         for az_index in range(self.az_bin_cnt):
             self.pdf_vals[az_index] = fit_params[2][az_index]
             self.pdf_fits[az_index] = RectBivariateSpline(self.rng_vals, self.tloss_vals, self.pdf_vals[az_index])

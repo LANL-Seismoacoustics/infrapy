@@ -66,7 +66,10 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
     for m, tr in enumerate(stream):
         t_ref = (np.datetime64(tr.stats.starttime) - t0).astype('m8[ms]').astype(float) * 1.0e-3
         temp = interp1d(t_ref + tr.times(), signal.detrend(tr.data), kind='linear')
-        x[m] = temp(t)
+        try:
+            x[m] = temp(t) * tr.stats.calib
+        except:
+            x[m] = temp(t)
 
     # if start/end times are given, apply mask
     if t_start and t_end:
@@ -842,7 +845,7 @@ def extract_signal(X, f, slowness, dxdy):
 #        Identify        #
 #       Detections       #
 # ###################### #
-def calc_det_p_val(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=None):
+def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=None):
     fstat_min = np.min(fstat_vals)
     fstat_max = np.max(fstat_vals)
 
@@ -935,7 +938,7 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val
             
             # compute detection threshold from the masked f-stat values
             win_mask = np.logical_and(t1 <= times, times <= t2)
-            thresh = calc_det_p_val(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
+            thresh = calc_det_thresh(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
 
             thresh_vals[n] = thresh
             det_mask[n] = fstat_vals[n] >= thresh

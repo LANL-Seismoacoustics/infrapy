@@ -1060,7 +1060,7 @@ class IPBeamformingWidget(QWidget):
                                                   det_window_length, 
                                                   tb_prod, 
                                                   channel_count, 
-                                                  det_thresh=det_threshold, 
+                                                  det_p_val=det_threshold, 
                                                   min_seq=self.detector_settings.min_peak_width.value(), 
                                                   back_az_lim=self.detector_settings.back_az_limit.value(),
                                                   fixed_thresh=fixed_threshold)
