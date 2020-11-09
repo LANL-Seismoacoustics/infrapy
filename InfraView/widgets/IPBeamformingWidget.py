@@ -666,6 +666,7 @@ class IPBeamformingWidget(QWidget):
 
         self._parent.settings.endGroup()
 
+    @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
@@ -849,6 +850,8 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_runFinished.connect(self.runFinished)
         self.bfWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
         self.bfWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
+        self.bfWorker.signal_error_popup.connect(self.errorPopup)
+        self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
 
         # show the time range
         self.waveformPlot.addItem(self.timeRangeLRI)
@@ -1014,15 +1017,18 @@ class IPBeamformingWidget(QWidget):
         self.run_step += 1
 
     @pyqtSlot()
+    def reset_run_buttons(self):
+        self.runAct.setEnabled(True)
+        self.clearAct.setEnabled(True)
+        # self.stopAct.setEnabled(False)
+
+    @pyqtSlot()
     def runFinished(self):
         if len(self._f_stats) < 1:
             # we haven't finished a single step, so bail out
             return
 
-        # self.startButton.setEnabled(True)
-        self.runAct.setEnabled(True)
-        # self.clearButton.setEnabled(True)
-        self.clearAct.setEnabled(True)
+        self.reset_run_buttons()
 
         # add a detection at the place were fstat was a maximum
         center = self._parent.waveformWidget.stationViewer.get_current_center()
@@ -1151,6 +1157,8 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_timeWindowChanged = pyqtSignal(tuple)
     signal_threshold_calc_is_running = pyqtSignal(bool)
     signal_threshold_calculated = pyqtSignal(float)
+    signal_error_popup = pyqtSignal(str, str)
+    signal_reset_beamformer = pyqtSignal()
 
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
@@ -1191,13 +1199,6 @@ class BeamformingWorkerObject(QtCore.QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
     @staticmethod
     def window_beamforming_map_wrapper(args):
@@ -1247,7 +1248,8 @@ class BeamformingWorkerObject(QtCore.QObject):
                         location_count += 1
 
         if location_count != len(self.streams):
-            self.errorPopup("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \\Aborting")
+            self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
+            self.signal_reset_beamformer.emit() # currently this will just reset the buttons
             return
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
