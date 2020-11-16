@@ -124,8 +124,8 @@ class IPStationView(QWidget):
                                    "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
                                    "<Available Dates:</b> {start_date} - {end_date}<br/>"
                                    "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                                   "<b>Latitude:</b> {lat:.2f}<br/>"
-                                   "<b>Longitude:</b> {lng:.2f}<br/>"
+                                   "<b>Latitude:</b> {lat:.6f}<br/>"
+                                   "<b>Longitude:</b> {lng:.6f}<br/>"
                                    "<b>Elevation:</b> {elevation:.1f} m<br/>")
                             ret = ret.format(
                                 network_code=network.code,

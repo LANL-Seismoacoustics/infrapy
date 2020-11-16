@@ -506,7 +506,8 @@ class IPBeamformingWidget(QWidget):
             ba_nearest = self._back_az[nearest_idx]
             tv_nearest = self._trace_vel[nearest_idx]
         except IndexError:
-            pass
+            return
+
 
         self.fstat_marker_label.setText(' [{:.2f}, {:.2f}]'.format(t_nearest, f_nearest))
         self.fstat_marker_label.setPos(t_nearest, f_nearest)
