@@ -109,6 +109,4 @@ Questions and problems that might not rise to the level of an Issue can be direc
   
 jwebster@lanl.gov (Installation and GUI questions)
 
-fransiska@lanl.gov (Documentation, Tutorials, and Scripting questions)
-
 pblom@lanl.gov (Algorithms and general science questions)
