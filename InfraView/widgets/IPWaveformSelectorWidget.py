@@ -50,6 +50,10 @@ class IPWaveformSelectorWidget(QWidget):
         # before we clear everything, lets first record the current elements in the name dictionary
         # so we can keep track of what is currently visible/not visible.  That way we can preserve 
         # their settings
+
+        if new_stream is None:
+            return  # nothing to do
+
         previous_name_list = self.name_list.copy()
         previous_value_list = self.value_list.copy()
  
@@ -57,11 +61,8 @@ class IPWaveformSelectorWidget(QWidget):
         self.name_list.clear()
         self.value_list.clear()
         self.clear_form()
-        
-        # pull in the current list of loaded waveforms
-        sts = new_stream
 
-        for trace in sts:
+        for trace in new_stream:
             # All new traces are automatically set to display
             val = True # default value for a checkbox is True
             if trace.id in previous_name_list:

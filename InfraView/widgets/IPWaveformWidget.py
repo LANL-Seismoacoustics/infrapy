@@ -185,8 +185,25 @@ class IPWaveformWidget(QWidget):
 
     @pyqtSlot(Inventory)
     def update_inventory(self, new_inventory):
-        self._inv = new_inventory
+        if self._inv is None:
+            self._inv = new_inventory
+        else:
+            self._inv += new_inventory
         self.stationViewer.setInventory(self._inv)
+
+    def remove_from_inventory(self, net, sta, loc, cha):
+        #print("removing! {}.{}.{}.{}".format(net,sta,loc,cha))
+        #new_inventory = self._inv.remove(network=net, station=sta, location=loc, channel=cha)
+        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
+        #print("updating!")
+        self.update_inventory(new_inventory)
+        #print("removed!")
+
+    def debug_trace(self):  # for debugging, you have to call pyqtRemoveInputHook before set_trace()
+        from PyQt5.QtCore import pyqtRemoveInputHook
+        from pdb import set_trace
+        pyqtRemoveInputHook()
+        set_trace()
 
     @pyqtSlot(dict)
     def update_filtered_data(self, filter_settings):

@@ -17,9 +17,9 @@ from obspy.core.stream import Stream
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSettings, QSize, QPoint, QDir
-from PyQt5.QtWidgets import (QAction, QFileDialog, QTabWidget, QGridLayout, QVBoxLayout,
-                             QHBoxLayout, QInputDialog, QLabel, QTableWidgetItem, QMessageBox, QWidget,
-                             QApplication, QDialog, QDoubleSpinBox)
+from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLayout, 
+                             QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QTableWidgetItem, QMessageBox, QWidget,
+                             QApplication, QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
 
 # Infrapy includes
 
@@ -110,6 +110,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.connectSignalsAndSlots()
 
         self.setCentralWidget(self.main_widget)
+
+        self.fill_sta_info_dialog = IPFillStationInfoDialog()
+        self.redundant_trace_dialog = IPRedundantTraceDialog()
 
     def debug_trace(self):  # for debugging, you have to call pyqtRemoveInputHook before set_trace()
         from PyQt5.QtCore import pyqtRemoveInputHook
@@ -231,25 +234,59 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         ifiles = QFileDialog.getOpenFileNames(self, 'Open File...', previous_directory)
 
+        new_inventory = None
+        new_stream = None
+
         if len(ifiles[0]) > 0:
 
             for ifile in ifiles[0]:
+                current_trace_names = []
+                if self.waveformWidget._sts is not None:
+                    for trace in self.waveformWidget._sts:
+                        current_trace_names.append(self.getTraceName(trace))
+
                 ipath = os.path.dirname(ifile)
                 if self._project is None:
                     self.settings.setValue("last_open_directory", ipath)
                 else:
                     self._project.set_dataPath(ipath)
                 try:
-                    if self.waveformWidget._sts is not None:
-                        self.waveformWidget._sts += obsRead(ifile)
+                    new_stream = obsRead(ifile)
+                    # do our best to generate new inventory from the new stream
+                    for trace in new_stream:
+                        trace_name = self.getTraceName(trace)
+                        if trace_name in current_trace_names:
+                            # redundant trace!
+                            netid, staid, locid, chaid = self.parseTraceName(trace_name)
+                            self.redundant_trace_dialog.exec_(trace_name)
+                            
+                            if  self.redundant_trace_dialog.get_result():
+                                # if accepted, they want to use the new trace so first remove the old one
+                                print(self.waveformWidget._inv)
+                                self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
+                                print(self.waveformWidget._inv)
+                            else:
+                                # if rejected, they want to keep the old trace, and ignore this one
+                                #so remove the trace from new_stream, and continue to the next trace
+                                new_stream.remove(trace)
+                                continue
+
+                        if new_inventory is None:
+                            new_inventory = self.trace_to_inventory(trace)
+                        else:
+                            new_inventory += self.trace_to_inventory(trace)
+                        
+                        # for now we will remove dc offset when loading the file.  Maybe should be an option?
+                        trace.data = trace.data - np.mean(trace.data)
+                    
+                    if self.waveformWidget._sts is not None:   
+                        self.waveformWidget._sts += new_stream
                     else:
-                        self.waveformWidget._sts = obsRead(ifile)
+                        self.waveformWidget._sts = new_stream
+
                 except Exception:
                     self.setStatus("File Read Error", 5000)
                     continue
-
-                for trace in self.waveformWidget._sts:
-                    trace.data = trace.data - np.mean(trace.data)
 
                 self.waveformWidget._sts.merge(fill_value=0)
         else:
@@ -260,25 +297,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         # if not populate the trace stats viewer and plot the traces
         if self.waveformWidget._sts is not None:
             self.beamformingWidget.setStreams(self.waveformWidget._sts)
-
-            new_inventory = None
-            for trace in self.waveformWidget._sts:
-                if trace.stats['_format'] == 'SAC':
-                    if new_inventory is None:
-                        new_inventory = self.sac_trace_to_inventory(trace)
-                    else:
-                        new_inventory += self.sac_trace_to_inventory(trace)
-                elif trace.stats['_format'] == 'MSEED':
-                    # miniseed files have no metadata, so we need to deal with
-                    # the inventory seperately
-
-                    # TODO
-                    # First, there's a chance that the inventory data has been
-                    # loaded already, so lets check the current inventory, and if it
-                    # has been, leave it alone.  We do need to remove inventory that does
-                    pass
-
+                
             self.sig_stream_changed.emit(self.waveformWidget._sts)
+
             if new_inventory is not None:
                 self.sig_inventory_changed.emit(new_inventory)
 
@@ -291,6 +312,15 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     def filemenu_import(self):
         if self.fdsnDialog.exec_():
             self.mainTabs.setCurrentIndex(0)
+
+    def getTraceName(self, trace):
+        traceName = trace.stats['network'] + '.' + trace.stats['station'] + \
+            '.' + trace.stats['location'] + '.' + trace.stats['channel']
+        return traceName
+
+    def parseTraceName(self, trace_name):
+        bits = trace_name.split('.')
+        return bits[0], bits[1], bits[2], bits[3]
 
     def filemenu_saveAllWaveforms(self):
         if self.waveformWidget._sts is None:
@@ -347,72 +377,96 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.clearWaveformPlot()
         self.waveformWidget.clearWaveforms()
 
-    def sac_trace_to_inventory(self, trace):
-        # if sac files are opened, it's useful to extract inventory from their streams so that we can populate the stations tabs and the location widget
+    def trace_to_inventory(self, trace):
+        # if sac files are opened, it's useful to extract inventory from their streams so that we can populate the 
+        # stations tabs and the location widget
         new_inventory = None
 
-        # The next bit is cribbed from the obspy webpage on building a stationxml site from scratch
+        # The next bit is modified from the obspy webpage on building a stationxml site from scratch
         # https://docs.obspy.org/tutorial/code_snippets/stationxml_file_from_scratch.html
         #
         # We'll first create all the various objects. These strongly follow the
         # hierarchy of StationXML files.
+        # initialize the lat/lon/ele 
+        _lat = 0.0
+        _lon = 0.0
+        _ele = -1.0
+
+        _network = trace.stats['network'] 
+        _station = trace.stats['station']
+        _channel = trace.stats['channel']
+        _location = trace.stats['location']
+
+        # if the trace is from a sac file, the sac header might have some inventory information
+        if trace.stats['_format'] == 'SAC':
+            print('sac file!!')
+            if 'stla' in trace.stats['sac']:
+                _lat = trace.stats['sac']['stla']
+
+            if 'stlo' in trace.stats['sac']:
+                _lon = trace.stats['sac']['stlo']
+        
+            if 'stel' in trace.stats['sac']:
+                _ele = trace.stats['sac']['stel']
+            else:
+                _ele = 0.333
+
+        if _lat == 0.0 or _lon == 0.0 or _ele < 0:
+            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, _lat, _lon, _ele):
+                
+                edited_values = self.fill_sta_info_dialog.get_values()
+                
+                _lat = edited_values['lat']
+                _lon = edited_values['lon']
+                _ele = edited_values['ele']
+
+                _network = edited_values['net'] 
+                _station = edited_values['sta']
+                _location = edited_values['loc']
+                _channel = edited_values['cha']
+
+                # (re)populate sac headers where possible
+                if trace.stats['_format'] == 'SAC':
+                    trace.stats['sac']['stla'] = _lat
+                    trace.stats['sac']['stlo'] = _lon
+                    trace.stats['sac']['stel'] = _ele
+                    trace.stats['sac']['knetwk'] = _network
+                    trace.stats['sac']['kstnm'] = _station
+                # (re)populate trace stats where possible
+                trace.stats['network'] = _network
+                trace.stats['station'] = _station
+                trace.stats['location'] = _location
+                trace.stats['channel'] = _channel
+                    
         new_inventory = Inventory(
             # We'll add networks later.
             networks=[],
             # The source should be the id whoever create the file.
             source="InfraView")
-
-        # Attempt to retrieve it from the sac header, if not found, set it to '---'
-        _network = trace.stats['network']
-
-        if _network == '':
-            _network = '###'
-
+        
         net = Network(
             # This is the network code according to the SEED standard.
             code=_network,
             # A list of stations. We'll add one later.
             stations=[],
-            # Description isn't something that's in the SAC header, so lets set it to the network cod
+            # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
             description=_network,
             # Start-and end dates are optional.
 
             # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
             start_date=UTCDateTime(1900, 1, 1))
 
-        _station = trace.stats['station']
-        if _station == '':
-            _station = '###'
-
-        if 'stla' in trace.stats['sac']:
-            _lat = trace.stats['sac']['stla']
-        else:
-            self.errorPopup("SAC header doesn't contain latitude information")
-            _lat = 10.0
-        if 'stlo' in trace.stats['sac']:
-            _lon = trace.stats['sac']['stlo']
-        else:
-            self.errorPopup("SAC header doesn't contain longitude information")
-            _lon = 10.0
-        if 'stel' in trace.stats['sac']:
-            _ele = trace.stats['sac']['stel']
-        else:
-            _ele = -999.9
-
         sta = Station(
             # This is the station code according to the SEED standard.
-
             code=_station,
             latitude=_lat,
             longitude=_lon,
             elevation=_ele,
-            # Creation_date is not saved in the sac header
+            # Creation_date is not saved in the trace stats or sac header
             creation_date=UTCDateTime(1900, 1, 1),
-            # Site name is not in the sac header, so set it to the site code
+            # Site name is not in the trace stats or sac header, so set it to the site code
             site=Site(name=_station))
 
-        _channel = trace.stats['channel']
-        _location = trace.stats['location']
         # This is the channel code according to the SEED standard.
         cha = Channel(code=_channel,
                       # This is the location code according to the SEED standard.
@@ -465,3 +519,187 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     # Obligatory about
     def about(self):
         QtWidgets.QMessageBox.about(self, "About", self.progname + "   " + self.progversion + "\n" + "Copyright 2018\nLos Alamos National Laboratory")
+
+
+class CapsValidator(QtGui.QValidator):
+    # since most of the fields will require capitalized values only, here is a validator for the
+    # lineEdits
+    def validate(self, string, pos):
+        return QtGui.QValidator.Acceptable, string.upper(), pos
+
+class IPRedundantTraceDialog(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.buildUI()
+        
+    def exec_(self, trace_name):
+        intro_text = "I appears there is already a trace loaded with the name " + trace_name +". Would you like to keep the one that is currently in memory, or replace it with this one?"
+        self.intro_label.setText(intro_text)
+
+        return super().exec_()
+
+    def buildUI(self):
+        self.setWindowTitle("Redundant Trace")
+        self.intro_label = QLabel("")
+        self.intro_label.setWordWrap(True)
+
+        # OK and Cancel buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.button(QDialogButtonBox.Ok).setText("Use New One")
+        buttons.button(QDialogButtonBox.Cancel).setText("Keep Old One")
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        vbox_layout = QVBoxLayout()
+        vbox_layout.addWidget(self.intro_label)
+        vbox_layout.addWidget(buttons)
+
+        self.setLayout(vbox_layout)
+
+    def accept(self):
+        self.result = True
+        super().accept()
+
+    def reject(self):
+        self.result = False
+        super().reject()
+
+    def get_result(self):
+        return self.result
+
+
+class IPFillStationInfoDialog(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.buildUI()
+        
+
+    def exec_(self, net, sta, loc, cha, lat, lon, ele):
+
+        self.lat_spin.setValue(lat)
+        self.lon_spin.setValue(lon)
+        self.ele_spin.setValue(ele)
+
+        self.net_edit.setText(net)
+        self.sta_edit.setText(sta)
+        self.loc_edit.setText(loc)
+        self.cha_edit.setText(cha)
+        
+        self.update_fullname_label()
+
+        return super().exec_()
+
+    def buildUI(self):
+        self.setWindowTitle('Trace metadata')
+        self.setMinimumWidth(300)
+        self.setMaximumWidth(400)
+
+        intro_text = """Some of the inventory information in this trace's stats appears to be absent or incorrect. This could cause problems later. 
+        You can edit the information here.  If you have a stationxml file, you can skip this form and load your stationxml file from the Station tab later."""
+        self.intro_label = QLabel(intro_text)
+        self.intro_label.setWordWrap(True)
+
+        self.lat_spin = QDoubleSpinBox()
+        self.lat_spin.setRange(-90.1, 90.0)  # the -90.1 is used as the "unset" value
+        self.lat_spin.setDecimals(8)
+        self.lat_spin.setMaximumWidth(120)
+        self.lat_spin.setSingleStep(0.1)
+
+        self.lon_spin = QDoubleSpinBox()
+        self.lon_spin.setRange(-180.1, 180.0)
+        self.lon_spin.setDecimals(8)
+        self.lon_spin.setMaximumWidth(120)
+        self.lon_spin.setSingleStep(0.1)
+
+        self.ele_spin = QDoubleSpinBox()
+        self.ele_spin.setRange(-20000,20000)
+        self.ele_spin.setMaximumWidth(100)
+        self.ele_spin.setDecimals(2)
+
+        self.full_name = QLabel('')
+
+        caps_validator = CapsValidator(self)
+
+        # Network selector
+        self.net_edit = QLineEdit()
+        self.net_edit.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')
+        self.net_edit.setMaximumWidth(60)
+        self.net_edit.setValidator(caps_validator)
+
+        self.sta_edit = QLineEdit()
+        self.sta_edit.setMaximumWidth(60)
+        self.sta_edit.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')
+        self.sta_edit.setValidator(caps_validator)
+
+        self.loc_edit = QLineEdit()
+        self.loc_edit.setMaximumWidth(60)
+        self.loc_edit.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')
+        self.loc_edit.setValidator(caps_validator)
+
+        self.cha_edit = QLineEdit()
+        self.cha_edit.setMaximumWidth(60)
+        self.cha_edit.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')
+        self.cha_edit.setValidator(caps_validator)
+        
+        # OK and Cancel buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.button(QDialogButtonBox.Ok).setText("Set Values")
+        buttons.button(QDialogButtonBox.Cancel).setText("Skip")
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        form_layout_col1 = QFormLayout()
+        form_layout_col1.addRow("", self.full_name)
+        form_layout_col1.addRow("Net: ", self.net_edit)
+        form_layout_col1.addRow("Sta: ", self.sta_edit)
+        form_layout_col1.addRow("Loc: ", self.loc_edit)
+        form_layout_col1.addRow("Cha: ", self.cha_edit)
+
+        form_layout_col2 = QFormLayout()
+        form_layout_col2.addRow("Lat: ", self.lat_spin)
+        form_layout_col2.addRow("Lon: ", self.lon_spin)
+        form_layout_col2.addRow("Ele: ", self.ele_spin)
+
+        hbox = QHBoxLayout()
+        hbox.addLayout(form_layout_col1)
+        hbox.addLayout(form_layout_col2)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.intro_label)
+        vbox.addLayout(hbox)
+        vbox.addWidget(buttons)
+
+        self.setLayout(vbox)
+
+        self.connectSignalsAndSlots()
+
+    def connectSignalsAndSlots(self):
+        self.net_edit.textChanged.connect(self.update_fullname_label)
+        self.sta_edit.textChanged.connect(self.update_fullname_label)
+        self.loc_edit.textChanged.connect(self.update_fullname_label)
+        self.cha_edit.textChanged.connect(self.update_fullname_label)
+
+    def get_values(self):
+        values = {"net": self.net_edit.text(), 
+                  "sta": self.sta_edit.text(),
+                  "loc": self.loc_edit.text(),
+                  "cha": self.cha_edit.text(),
+                  "lat": self.lat_spin.value(),
+                  "lon": self.lon_spin.value(),
+                  "ele": self.ele_spin.value()}
+        return values
+
+    @pyqtSlot()
+    def update_fullname_label(self):
+        self.full_name.setText(self.net_edit.text() + '.' + 
+                               self.sta_edit.text() + '.' + 
+                               self.loc_edit.text() + '.' + 
+                               self.cha_edit.text())
+
+

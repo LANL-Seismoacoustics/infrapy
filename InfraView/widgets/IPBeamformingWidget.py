@@ -687,7 +687,11 @@ class IPBeamformingWidget(QWidget):
 
     def runBeamforming(self):
         if self._streams is None:
-            self.errorPopup('No data Loaded')
+            self.errorPopup('You should have at least 3 streams loaded to run beamfinder')
+            return
+
+        if len(self._streams) < 3:
+            self.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
         if self._parent.waveformWidget.get_inventory() is None:
@@ -1074,11 +1078,11 @@ class IPBeamformingWidget(QWidget):
 
             
             for w in w_array:
-                self.errorPopup(str(w.message), "Warning...")
+                self.errorPopup(str(w.message), "Warning")
         
 
         if len(dets) == 0:
-            self.errorPopup("No Detections Found")
+            self.errorPopup("No Detections Found", "Results")
             return
 
         self.detectionWidget.new_detections(dets,

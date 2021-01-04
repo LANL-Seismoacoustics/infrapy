@@ -120,13 +120,13 @@ class IPStationView(QWidget):
                             ret = ("<b>Network:</b> {network_code}<br/>"
                                    "<b>Station:</b> {station_name}<br/>"
                                    "<b>Station Code:</b> {station_code}<br/>"
-                                   "<b>Location Code:</b> {location_code}</br>"
+                                   "<b>Location Code:</b> {location_code}<br/>"
                                    "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
-                                   "<Available Dates:</b> {start_date} - {end_date}<br/>"
+                                   "<b>Available Dates:</b> {start_date} - {end_date}<br/>"
                                    "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                                   "<b>Latitude:</b> {lat:.6f}<br/>"
-                                   "<b>Longitude:</b> {lng:.6f}<br/>"
-                                   "<b>Elevation:</b> {elevation:.1f} m<br/>")
+                                   "<b>Latitude:</b> {lat:.8f}<br/>"
+                                   "<b>Longitude:</b> {lng:.8f}<br/>"
+                                   "<b>Elevation:</b> {elevation:.2f} m<br/>")
                             ret = ret.format(
                                 network_code=network.code,
                                 station_name=contents["stations"][0],
@@ -156,9 +156,9 @@ class IPStationView(QWidget):
                                "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
                                "<Available Dates:</b> {start_date} - {end_date}<br/>"
                                "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                               "<b>Latitude:</b> {lat:.2f}<br/>"
-                               "<b>Longitude:</b> {lng:.2f}<br/>"
-                               "<b>Elevation:</b> {elevation:.1f} m<br/>")
+                               "<b>Latitude:</b> {lat:.8f}<br/>"
+                               "<b>Longitude:</b> {lng:.8f}<br/>"
+                               "<b>Elevation:</b> {elevation:.2f} m<br/>")
                         ret = ret.format(
                             network_code=network.code,
                             station_name=contents["stations"][0],
