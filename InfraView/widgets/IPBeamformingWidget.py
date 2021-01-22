@@ -900,48 +900,16 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(np.ndarray)
     def updateSlowness(self, slowness):
-        # draw the slowness plot
-        # first make a new scatterplotitem to hold the points
-
-        view_update = False
-        if view_update:
-            self.dots = []
-            method = self.bottomSettings.getMethod()
-
-            max_slowness = np.max(slowness[:, -1])
-            min_slowness = np.min(slowness[:, -1])
-
-        
-            if method == "music" or method == "capon":
-                scaled_slowness = 100 * (1.0 - (slowness[:, -1] - min_slowness) / (max_slowness - min_slowness))
-            elif method == "gls":
-                scaled_slowness = 100 * (1.0 - (slowness[:, -1]) / np.max(slowness[:, -1]))
-
-            # need to auto adjust the size of the dots so they fill up the slowness nicely
-            # the largest value on the plot will be 1/minimum_trace velocity
-            lv = 1.0/self.bottomSettings.tracev_min_spin.value()
-            dot_size = lv/15.
-
-            for i in range(slowness.shape[0]):
-
-                if method == "bartlett_covar" or method == "bartlett":
-                    brush = pg.intColor(100 * (slowness[i, -1]), hues=100, values=1)
-
-                else:
-                    brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
-
-                self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': dot_size})
-
-            self.spi.clear()
-            self.spi.addPoints(self.dots)
-
-        # self.slownessPlot.addItem(maxLine)
+        # adds slowness to the slowness_collection
         save_slowness = True
         if save_slowness:
             self._slowness_collection.append(slowness[:])
             slowness = []
 
+
     def plot_slowness_at_idx(self, idx):
+        pg.setConfigOptions(antialias=True)
+
         self.dots = []
 
         slowness = self._slowness_collection[idx]
@@ -973,7 +941,7 @@ class IPBeamformingWidget(QWidget):
                 brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
 
             self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': dot_size})
-
+        
         self.spi.clear()
         self.spi.addPoints(self.dots)
 
@@ -989,6 +957,8 @@ class IPBeamformingWidget(QWidget):
         self.fstatPlot.addItem(self.fstat_slowness_marker)
         self.backAzPlot.addItem(self.backAz_slowness_marker)
         self.traceVPlot.addItem(self.traceV_slowness_marker)
+
+        pg.setConfigOptions(antialias=False)
 
     @pyqtSlot(np.ndarray, np.ndarray)
     def updateProjection(self, projection, avg_beam_power):

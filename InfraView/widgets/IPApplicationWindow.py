@@ -399,7 +399,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # if the trace is from a sac file, the sac header might have some inventory information
         if trace.stats['_format'] == 'SAC':
-            print('sac file!!')
+
             if 'stla' in trace.stats['sac']:
                 _lat = trace.stats['sac']['stla']
 
