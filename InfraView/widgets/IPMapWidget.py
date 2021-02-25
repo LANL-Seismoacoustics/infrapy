@@ -7,6 +7,7 @@ import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+import urllib
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -132,7 +133,7 @@ class IPMapWidget(QWidget):
         self.lakes = self.axes.add_feature(cfeature.LAKES.with_scale(self._resolution))
         self.rivers = self.axes.add_feature(cfeature.RIVERS.with_scale(self._resolution))
         self.borders = self.axes.add_feature(cfeature.BORDERS.with_scale(self._resolution), linewidth=0.5)
-        self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(self._resolution))
+        #self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(self._resolution))
 
         if extent is not None:
             self.axes.set_extent(extent, crs=self._transform)
@@ -145,9 +146,11 @@ class IPMapWidget(QWidget):
         self.lakes.set_visible(self.map_settings_widget.lakes_checkbox.isChecked())
         self.rivers.set_visible(self.map_settings_widget.rivers_checkbox.isChecked())
         self.borders.set_visible(self.map_settings_widget.borders_checkbox.isChecked())
-        self.coast.set_visible(self.map_settings_widget.coast_checkbox.isChecked())
-
-        self.fig.canvas.draw()  # update matlabplot
+        #self.coast.set_visible(self.map_settings_widget.coast_checkbox.isChecked())
+        try:
+            self.fig.canvas.draw()  # update matlabplot
+        except urllib.error.URLError:
+            print('problem with download...')
 
     @pyqtSlot(str)
     def update_resolution(self, new_resolution):
