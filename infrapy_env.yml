@@ -34,6 +34,7 @@ dependencies:
   - pip
 
   - pip:
-    - pisces==0.3.2
+    - git+ssh://git@github.com/LANL-Seismoacoustics/pisces.git@old_sqlalchemy#egg=pisces
+    #- pisces==0.3.2
     - -e .
 

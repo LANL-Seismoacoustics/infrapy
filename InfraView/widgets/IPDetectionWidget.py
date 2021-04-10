@@ -334,7 +334,11 @@ class IPDetectionWidget(QWidget):
 
         with open(self._openfile, 'r') as infile:
             self._parent.get_settings().setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
-            newdata = json.load(infile)
+            try:
+                newdata = json.load(infile)
+            except json.decoder.JSONDecodeError:
+                self.errorPopup("Error loading file. Perhaps this isn't a json file?")
+                return
 
             # this is a bit of a hack to make sure opened files have the correct data headers
             for entry in newdata:

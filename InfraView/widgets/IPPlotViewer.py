@@ -141,6 +141,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                     filtered_sts,
                     current_filter_display_settings):
 
+        pg.setConfigOptions(antialias=False)
+
         self.plot_list.clear()
         self.plot_lines.clear()
         self.filtered_plot_lines.clear()

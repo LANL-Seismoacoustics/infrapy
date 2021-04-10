@@ -10,6 +10,8 @@ waveform data, the parameters for the analysis, and results of both levels of
 analysis. Our implementation can interact seamlessly with traditional (e.g.:
 Oracle) and serverless (e.g.: SQLite) relational databases.
 
+## Citation
+[![DOI](https://zenodo.org/badge/245276537.svg)](https://zenodo.org/badge/latestdoi/245276537)
 
 ## Authorship
 Infrapy was built upon previous similar (InfraMonitor) tools and
