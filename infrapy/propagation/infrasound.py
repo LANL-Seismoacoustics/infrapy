@@ -17,7 +17,6 @@ import numpy as np
 
 from sklearn import mixture
 
-from scipy.integrate import quad
 from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
 from scipy.optimize import curve_fit
 from scipy.stats import gaussian_kde
