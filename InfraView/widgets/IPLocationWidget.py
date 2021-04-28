@@ -992,9 +992,14 @@ class IPDendrogramWidget(QWidget):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         self.axes.set_title('Associations')
+        self.axes.title.set_size(10)
+
+        self.axes.tick_params(axis='both', labelsize=8)
 
         self.axes.set_xlabel('Detection Number')
         self.axes.set_ylabel('Distance')
+        self.axes.xaxis.label.set_size(8)
+        self.axes.yaxis.label.set_size(8)
 
         self.canvas = FigureCanvas(self.fig)
 
@@ -1005,7 +1010,7 @@ class IPDendrogramWidget(QWidget):
 
     def set_data(self, links, threshold):
         self.axes.clear()
-        self.axes.set_title('Associations')
+        self.axes.set_title('Associations', fontsize=10)
 
         # The link color palette needs to match the color palette in the distance matrix widget!!!
         set_link_color_palette(['#006ba6', '#ce1126', '#428a17', '#ffcc33', '#008080', 'm', '#ff4570', '#ff9000', 'b', 'g', 'c'])
@@ -1026,6 +1031,8 @@ class IPDendrogramWidget(QWidget):
 
         self.axes.set_xlabel('Detection Number')
         self.axes.set_ylabel('Distance')
+        self.axes.xaxis.label.set_size(8)
+        self.axes.yaxis.label.set_size(8)
 
         self.fig.canvas.draw()  # update matlabplot
         self.repaint()          # update widget

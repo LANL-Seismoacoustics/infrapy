@@ -1,20 +1,20 @@
-name: infrapy_env
+name: infrapy_env_new
 
 channels:
   - conda-forge
   - defaults
 
 dependencies:
-  - matplotlib-base=3.2.2
+  - matplotlib-base
   - cartopy
   - numpy
-  - python=3.6
+  - python=3.8
   - scipy
   - numba
   - obspy
-  - pyqt=5.9.2
+  - pyqt
     # I pin pyqtgraph to 0.10 because 0.11 has an bad error when trying to add a legend to a plot
-  - pyqtgraph=0.10
+  - pyqtgraph
   - pathlib
   - pandas
     # I pin cx_oracle to 7.2.3 because there are no binaries (at the time of this writing) on windows for 7.3
@@ -34,7 +34,7 @@ dependencies:
   - pip
 
   - pip:
-    - git+ssh://git@github.com/LANL-Seismoacoustics/pisces.git@old_sqlalchemy#egg=pisces
+    - git+https://github.com/LANL-Seismoacoustics/pisces.git@old_sqlalchemy#egg=pisces
     #- pisces==0.3.2
     - -e .
 

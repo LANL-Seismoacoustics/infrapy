@@ -49,7 +49,7 @@ class IPBeamformingWidget(QWidget):
 
     _hlines = []  # list to hold the horizontal crosshair lines
     _vlines = []  # list to hold the vertical crosshair lines
-    _position_labels = []  # list to hold the labels that show the position of the crosshairs
+    position_labels = []  # list to hold the labels that show the position of the crosshairs
     _value_labels = []  # list to hold the labels that show the y-value of the crosshairs
 
     _plot_list = []     # list to hold references to the four main plots
@@ -179,7 +179,7 @@ class IPBeamformingWidget(QWidget):
         self._plot_list.append(self.traceVPlot)
         self._plot_list.append(self.backAzPlot)
 
-        self.addCrosshairs()
+        #self.addCrosshairs()
 
         # --------------------------------------------
         # this is where I create the linear region item that specifies the current portion of waveform being evaluated
@@ -285,6 +285,8 @@ class IPBeamformingWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
+        self.addCrosshairs()
+
         self.connectSignalsAndSlots()
 
         # Create a thread for the beamforming to run in
@@ -302,20 +304,6 @@ class IPBeamformingWidget(QWidget):
         toolButton_start = QToolButton()
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
-
-        # if platform.system() != "Darwin":
-        #     toolButton_start.setStyleSheet("QToolButton:!hover {background-color: #BDFFAB; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #526F4A} QToolButton:hover {background-color: #D6FFC5; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #526F4A}")
-        #     toolButton_stop.setStyleSheet( "QToolButton:!hover {background-color: #FF7C7C; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #793B3B} QToolButton:hover {background-color: #FFAFAF; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #793B3B}")
-        #     toolButton_clear.setStyleSheet("QToolButton:!hover {background-color: #FFF9D6; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #787565} QToolButton:hover {background-color: #FEFFF6; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #787565}")
-        # else:
-        #     self.toolbar.setStyleSheet("QToolButton:hover { background-color: lightgray; }")
-        #     font = toolButton_start.font()
-        #     font.setPointSize(14)
-        #     toolButton_start.setFont(font)
-        #     toolButton_start.setStyleSheet("QToolButton:!hover {color: green}")
-        #     toolButton_stop.setFont(font)
-        #     toolButton_stop.setStyleSheet("QToolButton:!hover {color: red}")
-        #     toolButton_clear.setFont(font)
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -339,18 +327,19 @@ class IPBeamformingWidget(QWidget):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
         # UTC time in the top right corner of the plots
         for idx, my_plot in enumerate(self._plot_list):
-            self._vlines.append(pg.InfiniteLine(angle=90, movable=False, pen='k'))
-            self._hlines.append(pg.InfiniteLine(angle=0, movable=False, pen='k'))
-            self._position_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
-            self._value_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
+            if idx==0:
+                self._vlines.append(pg.InfiniteLine(angle=90, movable=False, pen='k'))
+                self._hlines.append(pg.InfiniteLine(angle=0, movable=False, pen='k'))
+                self.position_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
+                self._value_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
 
-            self._vlines[idx].setZValue(10)
-            self._hlines[idx].setZValue(11)
+                self._vlines[idx].setZValue(10)
+                self._hlines[idx].setZValue(11)
 
-            my_plot.addItem(self._vlines[idx], ignoreBounds=True)
-            my_plot.addItem(self._hlines[idx], ignoreBounds=True)
-            my_plot.addItem(self._position_labels[idx], ignoreBounds=True)
-            my_plot.addItem(self._value_labels[idx], ignoreBounds=True)
+                my_plot.addItem(self._vlines[idx], ignoreBounds=True)
+                my_plot.addItem(self._hlines[idx], ignoreBounds=True)
+                my_plot.addItem(self.position_labels[idx], ignoreBounds=True)
+                my_plot.addItem(self._value_labels[idx], ignoreBounds=True)
 
     def connectSignalsAndSlots(self):
         # keep as many signal and slot connections as possible together in one place
@@ -525,30 +514,31 @@ class IPBeamformingWidget(QWidget):
 
         for idx, my_plot in enumerate(self._plot_list):
 
-            # mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
-
-            # self._vlines[idx].setPos(mouse_point_x)
-            # self._hlines[idx].setPos(mouse_point_y)
-            self._hlines[idx].setVisible(False)
-            self._vlines[idx].setVisible(False)
+            mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
 
             if my_plot.sceneBoundingRect().contains(evt):
                 mouse_in_plot = True
+
+                if idx == 0:
+                    self.position_labels[idx].setVisible(True)
+                    self._value_labels[idx].setVisible(True)
+                    self.position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()
                 # _, sy = vb.viewPixelSize()  # this is to help position the valueLabels below the positionLabels
 
-                # self._position_labels[idx].setVisible(True)
-                # self._position_labels[idx].setPos(myRange[0][1], myRange[1][1])
-                # self._position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
+                # self.position_labels[idx].setVisible(True)
+                # self.position_labels[idx].setPos(myRange[0][1], myRange[1][1])
+                # self.position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # self._value_labels[idx].setVisible(True)
-                # self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self._position_labels[idx].boundingRect().height())
+                # self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self.position_labels[idx].boundingRect().height())
                 # self._value_labels[idx].setText("{}".format(round(mouse_point_y, 4)))
-            else:
-                self._position_labels[idx].setVisible(False)
-                self._value_labels[idx].setVisible(False)
+
+            #else:
+            #    self.position_labels[idx].setVisible(False)
+            #    self._value_labels[idx].setVisible(False)
 
         if not mouse_in_plot:
             # clear markers
@@ -708,11 +698,12 @@ class IPBeamformingWidget(QWidget):
 
         # clear out previous run
         self.clearResultPlots()
-
         self.fstatPlot.addItem(self.fstat_marker)
         self.fstatPlot.addItem(self.fstat_marker_label, ignoreBounds=True)
+
         self.traceVPlot.addItem(self.traceV_marker)
         self.traceVPlot.addItem(self.traceV_marker_label, ignoreBounds=True)
+
         self.backAzPlot.addItem(self.backAz_marker)
         self.backAzPlot.addItem(self.backAz_marker_label, ignoreBounds=True)
 
@@ -793,7 +784,6 @@ class IPBeamformingWidget(QWidget):
 
         # self.trace_curve.sigPointsClicked.connect(self.pointsClicked)
         self.traceVPlot.addItem(self.trace_curve)
-
         self.backaz_curve = pg.ScatterPlotItem(x=self._t,
                                                y=self._back_az,
                                                pen=None,
@@ -1055,6 +1045,7 @@ class IPBeamformingWidget(QWidget):
             self.errorPopup("No Detections Found", "Results")
             return
 
+        print('new_detections')
         self.detectionWidget.new_detections(dets,
                                             center[0],
                                             center[1],
@@ -1087,6 +1078,7 @@ class IPBeamformingWidget(QWidget):
         self.timeRangeLRI.setRegion(t_region)
 
         self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+        
 
     def clearResultPlots(self):
         self.fstatPlot.clear()
@@ -1105,13 +1097,12 @@ class IPBeamformingWidget(QWidget):
 
         self.slownessPlot.clear()
         self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
-
         self.spi.clear()
 
         self._t.clear()
 
         # clearing removes the crosshairs, so lets put them back
-        self.addCrosshairs()
+        #self.addCrosshairs()
 
         self.slowness_time_label.setText('t = ')
         self.slowness_backAz_label.setText('Back Azimuth (deg) = ')

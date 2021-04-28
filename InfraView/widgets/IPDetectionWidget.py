@@ -113,7 +113,7 @@ class IPDetectionWidget(QWidget):
         """ SLOT:
 
         Data comes in as either a list of IPPickItems or dataframes, but for the tableview, we need a pandas dataframe
-        so first convert the list to a menu list, then to a dataframe (maybe there's a more elegant way to do this?)
+        so first convert the list to a menu list, then to a dataframe (there must be a more elegant way to do this?)
         """
 
         if isinstance(data, list):
@@ -180,7 +180,7 @@ class IPDetectionWidget(QWidget):
                 if not duplicate:
                     # append the new detection
                     self._detections.append(new_detection)
-                    
+            
             self.signal_detections_changed.emit(self._detections)
             return True
         else:

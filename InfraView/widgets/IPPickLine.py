@@ -22,8 +22,8 @@ class IPPickLine(pg.InfiniteLine):
 
     _note = ''
     _Name = ''
-    _start_end_bars = None
-    _start_end = None
+    start_end_bars = None
+    start_end = None
 
     def __init__(self, pickItem, starting_pos=None):
         super().__init__(angle=90, movable=True, pen='r', label='')
@@ -39,8 +39,8 @@ class IPPickLine(pg.InfiniteLine):
             self.setPos(starting_pos)
 
         if pickItem.start is not None and pickItem.end is not None:
-            self._start_end = [pickItem.start, pickItem.end]
-            self.addStartEndBars(self._start_end)
+            self.start_end = [pickItem.start, pickItem.end]
+            self.addStartEndBars(self.start_end)
         self.setZValue(20)
 
         self.label = InfLineLabel(self, text=self._Name, movable=True, color=(0, 0, 0))
@@ -57,7 +57,7 @@ class IPPickLine(pg.InfiniteLine):
         action_addStartEndBars = None
         action_removeStartEndBars = None
 
-        if self._start_end_bars is None:
+        if self.start_end_bars is None:
             action_addStartEndBars = menu.addAction("Add Start/End Bars")
         else:
             action_removeStartEndBars = menu.addAction("Remove Start/End Bars")
@@ -83,8 +83,8 @@ class IPPickLine(pg.InfiniteLine):
             evt.accept()
             self.showMenu(evt.screenPos())
         elif evt.button() == Qt.LeftButton:
-            if self._start_end_bars is not None:
-                startEndRange = self._start_end_bars.getRegion()
+            if self.start_end_bars is not None:
+                startEndRange = self.start_end_bars.getRegion()
                 self.start_end = [startEndRange[0] - self.pos().x(), startEndRange[1] - self.pos().x()]
             super().mousePressEvent(evt)
 
@@ -99,8 +99,8 @@ class IPPickLine(pg.InfiniteLine):
                 # the super() sigPositionChangeFinished doesn't include the position, so we make our own
                 self.sigPickLineMoved.emit(pos)
 
-            if self._start_end_bars is not None:
-                self._start_end_bars.setRegion((pos + self._start_end[0], pos + self._start_end[1]))
+            if self.start_end_bars is not None:
+                self.start_end_bars.setRegion((pos + self.start_end[0], pos + self.start_end[1]))
 
     def setColor(self, color):
         self.setPen(QPen(color))
@@ -116,23 +116,23 @@ class IPPickLine(pg.InfiniteLine):
     def addStartEndBars(self, start_end=None):
         if start_end is None:
             start_end = [-10, 10]
-        self._start_end = start_end
-        self._start_end_bars = IPStartEndRegionItem(self,
+        self.start_end = start_end
+        self.start_end_bars = IPStartEndRegionItem(self,
                                                     values=[self.getXPos() + start_end[0],
                                                             self.getXPos() + start_end[1]])
-        self._start_end_bars.sigRegionChanged.connect(self.startEndRegionChanged)
+        self.start_end_bars.sigRegionChanged.connect(self.startEndRegionChanged)
 
     def removeStartEndBars(self):
-        self._start_end_bars = None
+        self.start_end_bars = None
         self.start_end = None
         self.sigRemoveStartEndBars.emit(self)
 
     def startEndBars(self):
-        return self._start_end_bars
+        return self.start_end_bars
 
     @pyqtSlot(object)
     def startEndRegionChanged(self, startEndRegion):
-        startEndRange = self._start_end_bars.getRegion()
+        startEndRange = self.start_end_bars.getRegion()
         self._start_end = [startEndRange[0] - self.getXPos(), startEndRange[1] - self.getXPos()]
         self.sigStartEndBarsChanged.emit(self, self._start_end)
 
@@ -141,8 +141,8 @@ class IPStartEndRegionItem(LinearRegionItem):
 
     mirror = False
 
-    def __init__(self, pickline, values=[0, 1], orientation=None, brush=None, movable=True, bounds=None):
-        super().__init__(values, orientation, brush, movable, bounds)
+    def __init__(self, pickline, values=[0, 1], orientation='vertical', brush=None, hoverBrush=None, hoverPen=None, pen=(120,80,80), movable=True):
+        super().__init__(values, orientation, brush, hoverBrush, hoverPen, pen, movable)
         self.swapMode = 'block'
         self.pickline = pickline    # reference to the pickline that 'owns' this lri
         self.setZValue(self.pickline.zValue() - 1)
