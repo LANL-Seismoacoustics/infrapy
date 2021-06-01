@@ -598,6 +598,7 @@ class IPDistanceMatrixWidget(QWidget):
 
     def set_data(self, dist_data, labels=None):
         self.s1.clear()
+        self.dm_plotitem.clear()
 
         self.current_group = None   # on changing the distance matrix, this fixes bug where clicking on a group wouldn't do anything if it had been previously highlighted
 

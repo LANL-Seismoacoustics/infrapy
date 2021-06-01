@@ -20,7 +20,7 @@ from InfraView.widgets import IPStationMatchDialog
 class IPStationView(QWidget):
 
     # class to ease the process of displaying the obspy inventory list
-    __savefile = None
+    savefile = None
 
     inventory_changed = pyqtSignal(obspy.core.inventory.inventory.Inventory)
     inventory_cleared = pyqtSignal()
@@ -99,7 +99,7 @@ class IPStationView(QWidget):
             self.clear()
             return
 
-        self.inventory_changed.emit(_inventory)
+        print('in ipstationview {}'.format(_inventory))
 
         tab_names = []
 
@@ -175,6 +175,8 @@ class IPStationView(QWidget):
 
                         newStationEdit.setHtml(ret)
                         self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code)
+
+        self.inventory_changed.emit(_inventory)
         return
 
     def getStationCount(self):
@@ -205,11 +207,11 @@ class IPStationView(QWidget):
             return
         # if there is no current filename, prompt for one...
         # TODO: if there is an open project, default to that
-        if self.__savefile is None:
+        if self.savefile is None:
             self.saveStationsAs()
         else:
-            inventory.write(self.__savefile[0], format='stationxml', validate=True)
-            path = os.path.dirname(self.__savefile[0])
+            inventory.write(self.savefile[0], format='stationxml', validate=True)
+            path = os.path.dirname(self.savefile[0])
             self.__parent.settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
@@ -225,11 +227,11 @@ class IPStationView(QWidget):
             # There is an open project, so make the default save location correspond to what the project wants
             previousDirectory = str(self.__parent.get_project().get_stationsPath())
 
-        self.__savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
+        self.savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
 
-        if self.__savefile[0]:
-            self.__parent._inv.write(self.__savefile[0], format='stationxml', validate=True)
-            path = os.path.dirname(self.__savefile[0])
+        if self.savefile[0]:
+            self.__parent._inv.write(self.savefile[0], format='stationxml', validate=True)
+            path = os.path.dirname(self.savefile[0])
             self.__parent.settings.setValue("last_stationfile_directory", path)
 
     def loadStations(self):
@@ -257,7 +259,6 @@ class IPStationView(QWidget):
 
             self.setInventory(self.__parent._inv)
 
-            self.inventory_changed.emit(self.__parent._inv)
 
     def get_current_center(self):
         # this method will calculate the center of the current inventory and will return a [lat,lon]

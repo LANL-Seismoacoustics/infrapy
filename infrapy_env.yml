@@ -16,7 +16,7 @@ dependencies:
   - pyqtgraph=0.12
   - pathlib
   - pandas
-  - cx_Oracle
+  - cx_oracle
   - scikit-learn
   - ipython
   - joblib
@@ -32,7 +32,7 @@ dependencies:
   - pip
 
   - pip:
-    - git+https://github.com/LANL-Seismoacoustics/pisces.git@old_sqlalchemy#egg=pisces
+    - git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
     #- pisces==0.3.2
     - -e .
 

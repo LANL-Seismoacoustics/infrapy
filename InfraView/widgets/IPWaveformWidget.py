@@ -112,13 +112,7 @@ class IPWaveformWidget(QWidget):
         else:
             self._sts += newTraces
 
-        if newInventory is None:
-            return
-
-        if self._inv is None:
-            self._inv = newInventory
-        else:
-            self._inv += newInventory
+        self.update_inventory(newInventory)
 
         for trace in self._sts:
             trace.data = trace.data - np.mean(trace.data)
@@ -130,13 +124,11 @@ class IPWaveformWidget(QWidget):
 
             #TODO...is there a better way of doing this?
             self._parent.beamformingWidget.setStreams(self._sts)
-
+            print("in waveformwidget.appendTraces")
             self.stationViewer.setInventory(self._inv)
             self.statsViewer.setStats(self._sts)
-            # self.locationWidget.update_station_markers(self._inv)
 
             self.update_streams(self._sts)
-            self.update_inventory(self._inv)
 
             self._parent.setStatus("Ready", 5000)
         else:
@@ -147,9 +139,23 @@ class IPWaveformWidget(QWidget):
         # same as append, just clear out the old traces and inventory first
         self._sts = None
         self._inv = None
+        print("in waveformwidget.replaceTraces")
         self.stationViewer.setInventory(self._inv)
 
         self.appendTraces(newTraces, newInventory)
+
+    @pyqtSlot(Inventory)
+    def update_inventory(self, new_inventory):
+        if self._inv is None:
+            self._inv = new_inventory
+        else:
+            self._inv += new_inventory
+        print("in waveformwidget.update_inventory")
+        self.stationViewer.setInventory(self._inv)
+
+    def remove_from_inventory(self, net, sta, loc, cha):
+        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
+        self.update_inventory(new_inventory)
 
     def get_streams(self):
         return self._sts
@@ -182,22 +188,6 @@ class IPWaveformWidget(QWidget):
                                     self.filterSettingsWidget.get_filter_display_settings())
 
         self.statsViewer.setStats(new_stream)
-
-    @pyqtSlot(Inventory)
-    def update_inventory(self, new_inventory):
-        if self._inv is None:
-            self._inv = new_inventory
-        else:
-            self._inv += new_inventory
-        self.stationViewer.setInventory(self._inv)
-
-    def remove_from_inventory(self, net, sta, loc, cha):
-        #print("removing! {}.{}.{}.{}".format(net,sta,loc,cha))
-        #new_inventory = self._inv.remove(network=net, station=sta, location=loc, channel=cha)
-        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
-        #print("updating!")
-        self.update_inventory(new_inventory)
-        #print("removed!")
 
     def debug_trace(self):  # for debugging, you have to call pyqtRemoveInputHook before set_trace()
         from PyQt5.QtCore import pyqtRemoveInputHook

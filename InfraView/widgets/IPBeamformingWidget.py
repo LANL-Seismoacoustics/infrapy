@@ -62,7 +62,7 @@ class IPBeamformingWidget(QWidget):
     _back_az = []
     _f_stats = []
 
-    _waveform_data_item = None
+    waveform_data_item = None
 
     _mp_pool = None
 
@@ -454,16 +454,20 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(pg.PlotDataItem, tuple)
     def setWaveform(self, plotLine, region):
-        if self._waveform_data_item is not None:
-            self._waveform_data_item.clear()
+        initial = False
+        if self.waveform_data_item is not None:
+            self.waveform_data_item.clear()
         else:
-            self._waveform_data_item = pg.PlotDataItem()
+            self.waveform_data_item = pg.PlotDataItem()
+            initial = True
 
         # need to make a copy of the currently active plot and give it to the beamformingwidget for display
-        self._waveform_data_item.setData(plotLine.xData, plotLine.yData)
-        self._waveform_data_item.setPen(pg.mkPen(color=(100, 100, 100), width=1))
+        self.waveform_data_item.setData(plotLine.xData, plotLine.yData)
+        self.waveform_data_item.setPen(pg.mkPen(color=(100, 100, 100), width=1))
         self.waveformPlot.enableAutoRange(axis=ViewBox.YAxis)
-        self.waveformPlot.addItem(self._waveform_data_item)
+        if initial:
+            # only need to add the item if it wasn't already added
+            self.waveformPlot.addItem(self.waveform_data_item)
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
 
     @pyqtSlot(tuple)
@@ -849,7 +853,8 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
 
         # show the time range
-        self.waveformPlot.addItem(self.timeRangeLRI)
+        if self.timeRangeLRI not in self.waveformPlot.items:
+            self.waveformPlot.addItem(self.timeRangeLRI)
         self.timeRangeLRI.setRegion((self.bottomSettings.getSignalRange()[0], self.bottomSettings.getSignalRange()[0] + self.bottomSettings.getWinLength()))
 
         # disable some buttons
@@ -1069,7 +1074,6 @@ class IPBeamformingWidget(QWidget):
         # make the projection plot show the data at the time of fstat max
         if self._max_projection_data is not None:
             self.projectionCurve.setData(self._max_projection_data)
-            self.projectionPlot.addItem(self.projectionCurve)
 
         # move the waveform time region to reflect the location of the f_max
         t_range = self.timeRangeLRI.getRegion()
@@ -1109,6 +1113,7 @@ class IPBeamformingWidget(QWidget):
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = ')
 
     def clearWaveformPlot(self):
+        self.waveform_data_item = None
         self.waveformPlot.clear()
         self.waveformPlot.setYRange(0, 1, padding=0)
         self.clearResultPlots()     # it doesn't make sense to have results and no waveform
