@@ -493,6 +493,7 @@ class IPMapSettingsWidget(QWidget):
         self.resolution_cb = QComboBox()
         self.resolution_cb.addItem('50m')
         self.resolution_cb.addItem('110m')
+        self.resolution_cb.setCurrentIndex(1)
 
         hboxlayout = QHBoxLayout()
         hboxlayout.addWidget(self.borders_checkbox)
