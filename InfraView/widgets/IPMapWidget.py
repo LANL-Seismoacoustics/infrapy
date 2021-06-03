@@ -45,7 +45,7 @@ class IPMapWidget(QWidget):
         super().__init__()
         self._parent = parent
 
-        self._resolution = '50m'
+        self._resolution = '110m'
 
         self.buildUI()
 
