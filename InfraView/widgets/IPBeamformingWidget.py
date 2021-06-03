@@ -669,6 +669,12 @@ class IPBeamformingWidget(QWidget):
                                     method='manual',
                                     fr=self.bottomSettings.getFreqRange())
 
+                # move the waveform time region to reflect the location of the f_max
+                t_range = self.timeRangeLRI.getRegion()
+                t_half_width = (t_range[1] - t_range[0]) / 2.
+                t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+                self.timeRangeLRI.setRegion(t_region)
+                
                 self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
                 
