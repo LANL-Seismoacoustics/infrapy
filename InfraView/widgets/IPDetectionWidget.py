@@ -179,6 +179,7 @@ class IPDetectionWidget(QWidget):
 
                 if not duplicate:
                     # append the new detection
+                    print('appending new detection {}'.format(new_detection))
                     self._detections.append(new_detection)
             
             self.signal_detections_changed.emit(self._detections)

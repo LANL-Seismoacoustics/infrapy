@@ -268,9 +268,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                             
                             if  self.redundant_trace_dialog.get_result():
                                 # if accepted, they want to use the new trace so first remove the old one
-                                print(self.waveformWidget._inv)
                                 self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
-                                print(self.waveformWidget._inv)
                             else:
                                 # if rejected, they want to keep the old trace, and ignore this one
                                 #so remove the trace from new_stream, and continue to the next trace

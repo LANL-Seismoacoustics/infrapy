@@ -53,16 +53,17 @@ class IPWaveformWidget(QWidget):
         self.plotViewer = IPPlotViewer.IPPlotViewer(self, self.filterSettingsWidget)
         
         self.lh_splitter = QSplitter(Qt.Vertical)
+        self.lh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.lh_splitter.addWidget(self.plotViewer)
         self.lh_splitter.addWidget(self.info_tabs)
 
         self.rh_splitter = QSplitter(Qt.Vertical)
-        self.rh_splitter.setStyleSheet("QSplitter::handle{ background-color: #444444}")
-        self.rh_splitter.setHandleWidth(2)
+        self.rh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.rh_splitter.addWidget(self.spectraWidget)
         self.rh_splitter.addWidget(self.filterSettingsWidget)
 
         self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.main_splitter.addWidget(self.lh_splitter)
         self.main_splitter.addWidget(self.rh_splitter)
 
@@ -121,10 +122,8 @@ class IPWaveformWidget(QWidget):
         # it's possible, if the open failed, that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
         if self._sts is not None:
-
             #TODO...is there a better way of doing this?
             self._parent.beamformingWidget.setStreams(self._sts)
-            print("in waveformwidget.appendTraces")
             self.stationViewer.setInventory(self._inv)
             self.statsViewer.setStats(self._sts)
 

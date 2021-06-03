@@ -473,6 +473,9 @@ class IPBeamformingWidget(QWidget):
     @pyqtSlot(tuple)
     def updateWaveformRange(self, new_range):
         self.waveformPlot.setXRange(new_range[0], new_range[1], padding=0)
+        # we want to set the title of the plot to reflect the current start time of the view
+        start_time = self.get_earliest_start_time() + new_range[0]
+        self.waveformPlot.setTitle(str(start_time))
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -571,9 +574,8 @@ class IPBeamformingWidget(QWidget):
             # if control click on the plot, then draw a Linear Region Item on
             # the plot
             if evt.button() == QtCore.Qt.LeftButton:
-                #self.mouseClick_ControlLeft(evt)
-                pass
-
+                self.mouseClick_ControlLeft(evt)
+            
         elif modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
             # Cntrl+Shift+Click
             pass
@@ -583,6 +585,8 @@ class IPBeamformingWidget(QWidget):
             if evt.button() == QtCore.Qt.LeftButton:
                 # This is the primary way of adding a pick to a plot
                 self.mouseClick_Left(evt)
+            elif evt.button() ==QtCore.Qt.RightButton:
+                self.mouseClick_right(evt)
 
     def mouseClick_Left(self, evt):
         # Go ahead and grab the position of the mouse click and also generate a
@@ -618,6 +622,55 @@ class IPBeamformingWidget(QWidget):
                 t_half_width = (t_range[1] - t_range[0]) / 2.
                 t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
                 self.timeRangeLRI.setRegion(t_region)
+
+    def mouseClick_ControlLeft(self, evt):
+        # TODO: a lot of this is redundant with mouseClick_left, can they be combined in any way?
+
+        # Go ahead and grab the position of the mouse click and also generate a
+        # QPoint out of it for some uses
+        p = QCursor.pos()  # this is the global coordinate of the mouse
+        scenePos = evt.scenePos()
+
+        for my_plot in self._plot_list:
+            # screenGeometry is the global rectangle of the viewbox
+            if my_plot.vb.screenGeometry().contains(p):
+                # get the index of the point nearest to the click
+                mouse_point_x = (my_plot.vb.mapSceneToView(scenePos)).x()
+                nearest_idx = self.nearest_in_t(mouse_point_x)
+
+                # plot the slowness plot for that index
+                self.plot_slowness_at_idx(nearest_idx)
+
+                t_nearest = self._t[nearest_idx]
+                f_nearest = self._f_stats[nearest_idx]
+                ba_nearest = self._back_az[nearest_idx]
+                tv_nearest = self._trace_vel[nearest_idx]
+
+                self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+                self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+                self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+
+                center = self._parent.waveformWidget.stationViewer.get_current_center()
+                # since we are manually adding a detection, the start and end need to be estimated...
+                # lets make them +/- 5% of the window width
+                window_range = self.fstatPlot.getViewBox().viewRange()
+                window_width = window_range[0][1] - window_range[0][0]
+                det_start = -window_width/20.0
+                det_end = window_width/20.0
+
+                det_time = self.get_earliest_start_time() + t_nearest
+                dets = [[det_time, det_start, det_end, ba_nearest, tv_nearest, f_nearest]]
+                self.detectionWidget.new_detections(dets,
+                                    center[0],
+                                    center[1],
+                                    elev=center[2],
+                                    event='',
+                                    element_cnt=len(self._streams),
+                                    method='manual',
+                                    fr=self.bottomSettings.getFreqRange())
+
+                self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+
                 
 
     def nearest_in_t(self, value):
@@ -872,10 +925,11 @@ class IPBeamformingWidget(QWidget):
         self.signal_startBeamforming.emit()
 
     def pointsClicked(self, pdi, points_clicked):
-        print('type(pdi) = {}'.format(type(pdi)))
-        print('type(points_clicked) = {}'.format(type(points_clicked)))
-        for idx, point in enumerate(points_clicked):
-            print('{}: x={}, y={}'.format(idx, point.x(), point.y()))
+        # print('type(pdi) = {}'.format(type(pdi)))
+        # print('type(points_clicked) = {}'.format(type(points_clicked)))
+        # for idx, point in enumerate(points_clicked):
+        #     print('{}: x={}, y={}'.format(idx, point.x(), point.y()))
+        pass
 
     def updateCurves(self):
 
@@ -914,7 +968,8 @@ class IPBeamformingWidget(QWidget):
         min_slowness = np.min(slowness[:, -1])
 
         self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
-        self.slownessPlot.addItem(self.max_line)
+        if self.max_line not in self.slownessPlot.items:
+            self.slownessPlot.addItem(self.max_line)
 
         method = self.bottomSettings.getMethod()
         if method == "music" or method == "capon":
@@ -949,9 +1004,12 @@ class IPBeamformingWidget(QWidget):
         self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
         self.traceV_slowness_marker.setData([self._t[idx]], [self._trace_vel[idx]])
 
-        self.fstatPlot.addItem(self.fstat_slowness_marker)
-        self.backAzPlot.addItem(self.backAz_slowness_marker)
-        self.traceVPlot.addItem(self.traceV_slowness_marker)
+        if self.fstat_slowness_marker not in self.fstatPlot.items:
+            self.fstatPlot.addItem(self.fstat_slowness_marker)
+        if self.backAz_slowness_marker not in self.backAzPlot.items:
+            self.backAzPlot.addItem(self.backAz_slowness_marker)
+        if self.traceV_slowness_marker not in self.traceVPlot.items:
+            self.traceVPlot.addItem(self.traceV_slowness_marker)
 
         pg.setConfigOptions(antialias=False)
 
@@ -1050,7 +1108,6 @@ class IPBeamformingWidget(QWidget):
             self.errorPopup("No Detections Found", "Results")
             return
 
-        print('new_detections')
         self.detectionWidget.new_detections(dets,
                                             center[0],
                                             center[1],
@@ -1064,9 +1121,6 @@ class IPBeamformingWidget(QWidget):
         f_max = max(self._f_stats)
         f_max_idx = self._f_stats.index(f_max)
         f_max_time = self._t[f_max_idx]
-
-        _back_az_at_max = self._back_az[f_max_idx]
-        _trace_vel_at_max = self._trace_vel[f_max_idx]
 
         # make the slowness plot show the data at the time of fstat max
         self.plot_slowness_at_idx(f_max_idx)
