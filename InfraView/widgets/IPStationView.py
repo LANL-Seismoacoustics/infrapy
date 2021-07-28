@@ -99,8 +99,6 @@ class IPStationView(QWidget):
             self.clear()
             return
 
-        print('in ipstationview {}'.format(_inventory))
-
         tab_names = []
 
         self.station_TabWidget.clear()
