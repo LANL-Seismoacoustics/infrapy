@@ -138,7 +138,6 @@ class IPWaveformWidget(QWidget):
         # same as append, just clear out the old traces and inventory first
         self._sts = None
         self._inv = None
-        print("in waveformwidget.replaceTraces")
         self.stationViewer.setInventory(self._inv)
 
         self.appendTraces(newTraces, newInventory)
@@ -149,7 +148,6 @@ class IPWaveformWidget(QWidget):
             self._inv = new_inventory
         else:
             self._inv += new_inventory
-        print("in waveformwidget.update_inventory")
         self.stationViewer.setInventory(self._inv)
 
     def remove_from_inventory(self, net, sta, loc, cha):

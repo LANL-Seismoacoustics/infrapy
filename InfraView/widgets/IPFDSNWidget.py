@@ -333,7 +333,6 @@ class IPFDSNWidget(QWidget):
         # Now get the corresponding stations
         try:
             self.inventory = client.get_stations(network=network, station=station)
-            print('in ipfdsnwidget...{}'.format(self.inventory))
         except:
             # self.parent.setStatus('')
             msg = QMessageBox()
