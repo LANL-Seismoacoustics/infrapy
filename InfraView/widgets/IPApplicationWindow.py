@@ -293,6 +293,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                     continue
 
                 self.waveformWidget._sts.merge(fill_value=0)
+
+                print(self.waveformWidget._sts[0].stats)
         else:
             # No files were chosen to open
             return

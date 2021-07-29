@@ -367,16 +367,18 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 b = trace.stats.get('sac').get('b')
 
             if self.earliest_start_time is None:
-                self.earliest_start_time = trace.stats.starttime + b
+                self.earliest_start_time = trace.stats.starttime
             else:
-                if UTCDateTime(trace.stats.starttime) + b < UTCDateTime(self.earliest_start_time):
-                    self.earliest_start_time = trace.stats.starttime + b
+                if UTCDateTime(trace.stats.starttime) < UTCDateTime(self.earliest_start_time):
+                    self.earliest_start_time = trace.stats.starttime
 
             if self.latest_end_time is None:
                 self.latest_end_time = trace.stats.endtime
             else:
-                if UTCDateTime(self.latest_end_time) < UTCDateTime(trace.stats.endtime) + b:
-                    self.latest_end_time = trace.stats.endtime + b
+                if UTCDateTime(self.latest_end_time) < UTCDateTime(trace.stats.endtime):
+                    self.latest_end_time = trace.stats.endtime
+
+            print("start time = {}".format(self.earliest_start_time))
 
         # Now find the offset start for each trace
         offsets = []
@@ -387,7 +389,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 b = trace.stats.get('sac').get('b')
                 
             offsets.append(UTCDateTime(trace.stats.starttime) -
-                           UTCDateTime(self.earliest_start_time) + b)
+                           UTCDateTime(self.earliest_start_time))
 
         self.t.clear()
         for idx, trace in enumerate(sts):

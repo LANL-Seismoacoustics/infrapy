@@ -14,13 +14,13 @@ from InfraView.widgets.IPPlotWidget import IPPlotWidget
 
 class IPPSDWidget(QWidget):
 
-    __windows = ['hann', 'hamming', 'boxcar', 'bartlett', 'blackman']
+    windows = ['hann', 'hamming', 'boxcar', 'bartlett', 'blackman']
 
-    __noiseCurve = None
-    __signalCurve = None
+    noiseCurve = None
+    signalCurve = None
 
-    __currentSignalData = None
-    __currentNoiseData = None
+    currentSignalData = None
+    currentNoiseData = None
 
     blue_pen = pg.mkPen(color=(176, 224, 230), width=2)
     red_pen = pg.mkPen(color=(200,100,100), width=2)
@@ -28,7 +28,7 @@ class IPPSDWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
 
-        self.__parent = parent
+        self.parent = parent
         self.buildUI()
         self.show()
 
@@ -46,12 +46,12 @@ class IPPSDWidget(QWidget):
         self.psdPlot.setLabel('left', 'Power Spectral Density')
         self.psdPlot.setTitle("...")
         
-        self.psdPlot.setLogMode(x=True, y=True)
+        self.psdPlot.setLogMode(x=False, y=False)
 
         initdata = np.array([1])
 
-        self.__noiseCurve = self.psdPlot.plot(x=initdata, y=initdata, pen=self.red_pen, name="Noise")
-        self.__signalCurve = self.psdPlot.plot(x=initdata, y=initdata, pen=self.blue_pen, name="Signal")
+        self.noiseCurve = self.psdPlot.plot(x=initdata, y=initdata, pen=self.red_pen, name="Noise")
+        self.signalCurve = self.psdPlot.plot(x=initdata, y=initdata, pen=self.blue_pen, name="Signal")
 
         self.plotLayoutWidget.addItem(self.psdPlot, 0, 0)
 
@@ -84,7 +84,7 @@ class IPPSDWidget(QWidget):
         label_window = QLabel(self.tr('Window: '))
         label_window.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.window_cb = QComboBox()
-        for window in self.__windows:
+        for window in self.windows:
             self.window_cb.addItem(window)
 
         label_f1 = QLabel('f1')
@@ -153,7 +153,7 @@ class IPPSDWidget(QWidget):
 
         # update the beamformingwidget's settings
         # TODO RECONNECT
-        # self.psdPlot.getFreqRegion().sigRegionChanged.connect(self.__parent.beamformingWidget.bottomSettings.setFreqValues)
+        # self.psdPlot.getFreqRegion().sigRegionChanged.connect(self.parent.beamformingWidget.bottomSettings.setFreqValues)
 
     def updateFFtT(self):
         self.fft_T_Spin.setValue(self.fft_N_Spin.value() / self.fs_Spin.value())
@@ -172,20 +172,20 @@ class IPPSDWidget(QWidget):
     def updateNoisePSD(self, data=None):
         # if new data is passed, use that, otherwise use what we have
         if data is not None:
-            self.__currentNoiseData = data.copy()
+            self.currentNoiseData = data.copy()
 
-        if self.__currentNoiseData is not None:
-            f, pxx = self.calculate_psd(self.__currentNoiseData)
-            self.__noiseCurve.setData(f, pxx, pen=self.red_pen)
+        if self.currentNoiseData is not None:
+            f, pxx = self.calculate_psd(self.currentNoiseData)
+            self.noiseCurve.setData(f, pxx, pen=self.red_pen)
 
     def updateSignalPSD(self, data=None):
         # if new data s passed, use that, otherwise use what we have
         if data is not None:
-            self.__currentSignalData = data.copy()
+            self.currentSignalData = data.copy()
 
-        if self.__currentSignalData is not None:
-            f, pxx = self.calculate_psd(self.__currentSignalData)
-            self.__signalCurve.setData(f, pxx, pen=self.blue_pen)
+        if self.currentSignalData is not None:
+            f, pxx = self.calculate_psd(self.currentSignalData)
+            self.signalCurve.setData(f, pxx, pen=self.blue_pen)
 
     def calculate_psd(self, data):
         if data is not None:
@@ -224,14 +224,14 @@ class IPPSDWidget(QWidget):
 
     def setFilterFromPSD(self):
 
-        filterSettings = self.__parent.filterSettingsWidget.get_filter_settings()
-        filter_display_settings = self.__parent.filterSettingsWidget.get_filter_display_settings()
+        filterSettings = self.parent.filterSettingsWidget.get_filter_settings()
+        filter_display_settings = self.parent.filterSettingsWidget.get_filter_display_settings()
         filterSettings['type'] = 'Band Pass'
         filterSettings['F_low'] = self.f2_Spin.value()
         filterSettings['F_high'] = self.f1_Spin.value()
-        self.__parent.filterSettingsWidget.set_filter_settings(filterSettings)
+        self.parent.filterSettingsWidget.set_filter_settings(filterSettings)
 
     def clearPlot(self):
-        self.__noiseCurve.setData([1], [1])
-        self.__signalCurve.setData([1], [1])
+        self.noiseCurve.setData([1], [1])
+        self.signalCurve.setData([1], [1])
         self.set_title('...')
