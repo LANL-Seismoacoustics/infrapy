@@ -2,7 +2,7 @@ from os import fstat
 import warnings
 from PyQt5.QtWidgets import (QCheckBox, QDialog, QFileDialog, QLabel, QFormLayout, QHBoxLayout, 
                              QVBoxLayout, QPushButton, QDialogButtonBox, QLineEdit, QMessageBox,
-                             QWidget)
+                             QWidget, QSizePolicy)
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
 
@@ -27,7 +27,7 @@ class IPSaveBeamformingResultsDialog(QDialog):
         form_layout.setLabelAlignment(Qt.AlignCenter)
         
         file_label = QLabel("Filename: ")
-        file_label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        file_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         form_layout.addRow(file_label, self.filepath_line)
 
         self.export_waveform_checkbox = QCheckBox()
@@ -35,7 +35,7 @@ class IPSaveBeamformingResultsDialog(QDialog):
         self.waveform_line = IPFileBrowseLine(self, self.path)
         self.waveform_line.setEnabled(False)
         wave_label = QLabel("Waveform filename:")
-        wave_label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        wave_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         form_layout.addRow(wave_label, self.waveform_line)
         
 

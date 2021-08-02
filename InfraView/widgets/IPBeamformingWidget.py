@@ -1174,6 +1174,7 @@ class IPBeamformingWidget(QWidget):
                 writer.writerow(["Datetime", "Fstat", "TraveV", "BackAz"])
                 for idx, t in enumerate(self._t):
                     writer.writerow([earliest_start_time + t, self._f_stats[idx], self._trace_vel[idx], self._back_az[idx]])
+                    
             if self.save_results_dialog.wavefileIsChecked():
                 # here we want to save the dqta that is in the visible portion of the waveform chart at the top of the beamfinder window
                 wavefilename = self.save_results_dialog.getWaveFilename()
@@ -1279,7 +1280,6 @@ class BeamformingWorkerObject(QtCore.QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
-        self.signal_reset_beamformer.emit()
 
     @staticmethod
     def window_beamforming_map_wrapper(args):
@@ -1324,16 +1324,14 @@ class BeamformingWorkerObject(QtCore.QObject):
             for network in self._inv.networks:
                 for station in network.stations:
                     station_id = network.code + '.' + station.code
-                    print('*********')
-                    print(station_id, stream_station_id)
                     if station_id == stream_station_id:
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 
-        #if location_count != len(self.streams):
-        #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
-        #    self.signal_reset_beamformer.emit() # currently this will just reset the buttons
-        #    return
+        if location_count != len(self.streams):
+            self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
+            self.signal_reset_beamformer.emit() # currently this will just reset the buttons
+            return
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape

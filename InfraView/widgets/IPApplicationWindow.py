@@ -427,8 +427,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 lat = 35.84925165
                 lon = -106.2705516
 
-
-        print('lat = {}, lon = {}'.format(lat, lon))
         if lat == 0.0 or lon == 0.0 or ele < 0:
             if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, lat, lon, ele):
                 
