@@ -13,7 +13,9 @@ from pyqtgraph import ViewBox
 
 import platform
 import warnings
+import csv
 import numpy as np
+from pathlib import Path
 from scipy import signal
 from operator import itemgetter
 
@@ -28,6 +30,7 @@ from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
 from InfraView.widgets import IPLine
+from InfraView.widgets import IPSaveBeamformingResultsDialog
 
 # import infrapy modules here
 from infrapy.detection import beamforming_new
@@ -80,7 +83,7 @@ class IPBeamformingWidget(QWidget):
         self._mp_pool = pool
 
         self.buildUI()
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
 
     def make_crosshair(self):
         crosshair = QPainterPath()
@@ -294,6 +297,7 @@ class IPBeamformingWidget(QWidget):
 
         #Temporary
         self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
+        self.save_results_dialog = IPSaveBeamformingResultsDialog.IPSaveBeamformingResultsDialog(self)
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
@@ -304,6 +308,7 @@ class IPBeamformingWidget(QWidget):
         toolButton_start = QToolButton()
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
+        toolButton_export = QToolButton()
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -319,9 +324,17 @@ class IPBeamformingWidget(QWidget):
         toolButton_clear.setToolButtonStyle(Qt.ToolButtonTextOnly)
         toolButton_clear.setDefaultAction(self.clearAct)
 
+        self.exportAct = QAction(QIcon.fromTheme("document-save-as"), 'Export Results', self)
+        self.exportAct.triggered.connect(self.exportResults)
+        toolButton_export.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolButton_export.setDefaultAction(self.exportAct)
+
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(toolButton_export)
+
 
     def addCrosshairs(self):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
@@ -474,8 +487,8 @@ class IPBeamformingWidget(QWidget):
     def updateWaveformRange(self, new_range):
         self.waveformPlot.setXRange(new_range[0], new_range[1], padding=0)
         # we want to set the title of the plot to reflect the current start time of the view
-        start_time = self.get_earliest_start_time() + new_range[0]
-        self.waveformPlot.setTitle(str(start_time))
+        self.start_time = self.get_earliest_start_time() + new_range[0]
+        self.waveformPlot.setTitle(str(self.start_time))
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -690,10 +703,7 @@ class IPBeamformingWidget(QWidget):
     def getProject(self):
         return self._parent.getProject()
 
-    def get_settings(self):
-        return self._parent.settings
-
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
         self._parent.settings.beginGroup('BeamFormingWidget')
         self._parent.settings.setValue("windowSize", self.size())
         self._parent.settings.setValue("windowPos", self.pos())
@@ -702,7 +712,7 @@ class IPBeamformingWidget(QWidget):
         self._parent.settings.setValue("splitterBottomSettings", self.splitterBottom.saveState())
         self._parent.settings.endGroup()
 
-    def restoreSettings(self):
+    def restoreWindowGeometrySettings(self):
         # Restore settings
         self._parent.settings.beginGroup('BeamFormingWidget')
 
@@ -1142,6 +1152,45 @@ class IPBeamformingWidget(QWidget):
         self.timeRangeLRI.setRegion(t_region)
 
         self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+
+    def exportResults(self):
+        if len(self._t) == 0:
+            self.errorPopup("There is no data to export", "Warning")
+            return  # nothing to do
+
+        project = self.getProject()
+        if project is not None:
+            results_path = project.get_beamformResultsPath()
+        else:
+            results_path = Path.home()
+
+        earliest_start_time = self.get_earliest_start_time()
+                
+
+        if self.save_results_dialog.exec_(results_path):
+            filename = self.save_results_dialog.getFilename()
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(["Datetime", "Fstat", "TraveV", "BackAz"])
+                for idx, t in enumerate(self._t):
+                    writer.writerow([earliest_start_time + t, self._f_stats[idx], self._trace_vel[idx], self._back_az[idx]])
+            if self.save_results_dialog.wavefileIsChecked():
+                # here we want to save the dqta that is in the visible portion of the waveform chart at the top of the beamfinder window
+                wavefilename = self.save_results_dialog.getWaveFilename()
+                with open(wavefilename, 'w', newline='') as wavecvsfile:
+                    writer = csv.writer(wavecvsfile, delimiter=',')
+                    writer.writerow(["Datetime", "Waveform"])
+                    
+                    plot_range = self.waveformPlot.viewRange()
+                    plot_xrange = plot_range[0]
+                    xdata, ydata = self.waveform_data_item.getData()
+                    
+                    for idx, x in enumerate(xdata):
+                        if  plot_xrange[0] <= x <= plot_xrange[1]:
+                            writer.writerow([earliest_start_time + x, ydata[idx]])
+        else:
+            pass
+            
         
 
     def clearResultPlots(self):

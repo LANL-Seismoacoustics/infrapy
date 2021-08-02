@@ -1,6 +1,6 @@
 import sys
 
-from pathlib import Path
+from pathlib import Path, PurePath 
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import Qt, QObject, QSettings, QDir
@@ -11,17 +11,17 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel, QLineEd
 
 class IPProject:
 
-    __basePath = None           # base path projects are saved in
-    __projectPath = None        # path of actual project
-    __dataPath = None           # where locally stored data (can) be saved
-    __detectionsPath = None           # where picks will be saved
-    __pickExportsPath = None    # where exported picks will be saved
-    __customFilterPath = None   # where custom filters will be saved
-    __homePath = None           # user's home directory
-    __stationsPath = None       # where station xml files will be saved
+    basePath = None                 # base path projects are saved in
+    projectPath = None              # path of actual project
+    dataPath = None                 # where locally stored data (can) be saved
+    beamformingResutsPath = None    # path to csv files holding fstat, ba, and tracev data
+    detectionsPath = None           # where picks will be saved
+    customFilterPath = None         # where custom filters will be saved
+    homePath = None                 # user's home directory
+    stationsPath = None             # where station xml files will be saved
 
-    __projectName = None
-    __projectFileName = None
+    projectName = None
+    projectFileName = None
 
     def __init__(self):
         self.__globalSettings = QSettings('LANL', 'InfraView')
@@ -30,33 +30,36 @@ class IPProject:
     def makeNewProject(self):
         newDialog = IPNewProjectDialog(self)
         if newDialog.exec_():
-            self.__basePath, self.__projectName = newDialog.getBasePathAndProjectName()
-            self.__projectPath = Path(str(self.__basePath) + '/' + self.__projectName)
-            self.__dataPath = Path(str(self.__projectPath) + '/data')
-            self.__detectionsPath = Path(str(self.__projectPath) + '/detections')
-            self.__stationsPath = Path(str(self.__projectPath) + '/stations')
-            self.__customFilterPath = Path(str(self.__projectPath) + '/customFilters')
+            self.basePath, self.projectName = newDialog.getBasePathAndProjectName()
+            self.projectPath = Path(str(self.basePath) + '/' + self.projectName)
+            self.dataPath = Path(str(self.projectPath) + '/data')
+            self.detectionsPath = Path(str(self.projectPath) + '/detections')
+            self.stationsPath = Path(str(self.projectPath) + '/stations')
+            self.customFilterPath = Path(str(self.projectPath) + '/customFilters')
+            self.beamformingResutsPath = Path(str(self.projectPath) + '/beamformingResults')
 
             # Create the project directories
-            self.__projectPath.mkdir(parents=True, exist_ok=True)
-            self.__dataPath.mkdir(parents=True, exist_ok=True)
-            self.__detectionsPath.mkdir(parents=True, exist_ok=True)
-            self.__stationsPath.mkdir(parents=True, exist_ok=True)
-            self.__customFilterPath.mkdir(parents=True, exist_ok=True)
+            self.projectPath.mkdir(parents=True, exist_ok=True)
+            self.dataPath.mkdir(parents=True, exist_ok=True)
+            self.detectionsPath.mkdir(parents=True, exist_ok=True)
+            self.stationsPath.mkdir(parents=True, exist_ok=True)
+            self.customFilterPath.mkdir(parents=True, exist_ok=True)
+            self.beamformingResutsPath.mkdir(parents=True, exist_ok=True)
 
             # Create a settings object/file for the new project and populate it with the directories
-            self.__projectFileName = self.__projectName + '.ipprj'
-            self.projectSettings = QSettings(str(self.__projectPath) + '/' + self.__projectFileName, QSettings.IniFormat)
+            self.projectFileName = self.projectName + '.ipprj'
+            self.projectSettings = QSettings(str(self.projectPath) + '/' + self.projectFileName, QSettings.IniFormat)
             self.projectSettings.beginGroup('Main')
-            self.projectSettings.setValue('projectName', str(self.__projectName))
+            self.projectSettings.setValue('projectName', str(self.projectName))
             self.projectSettings.endGroup()
             self.projectSettings.beginGroup('PathNames')
-            self.projectSettings.setValue('basePathName', str(self.__basePath))
-            self.projectSettings.setValue('projectPathName', str(self.__projectPath))
-            self.projectSettings.setValue('dataPathName', str(self.__dataPath))
-            self.projectSettings.setValue('detectionsPathName', str(self.__detectionsPath))
-            self.projectSettings.setValue('stationsPathName', str(self.__stationsPath))
-            self.projectSettings.setValue('customFilterPathName', str(self.__customFilterPath))
+            self.projectSettings.setValue('basePathName', str(self.basePath))
+            self.projectSettings.setValue('projectPathName', str(self.projectPath))
+            self.projectSettings.setValue('dataPathName', str(self.dataPath))
+            self.projectSettings.setValue('detectionsPathName', str(self.detectionsPath))
+            self.projectSettings.setValue('stationsPathName', str(self.stationsPath))
+            self.projectSettings.setValue('customFilterPathName', str(self.customFilterPath))
+            self.projectSettings.setValue('beamformingResultsPath', str(self.beamformingResutsPath))
 
             self.projectSettings.endGroup()
 
@@ -67,77 +70,86 @@ class IPProject:
             return False
 
     def loadProject(self):
-        mydirectory = self.__globalSettings.value('last_baseProject_directory', self.__homePath)
+        mydirectory = self.__globalSettings.value('last_baseProject_directory', self.homePath)
         ipprjPathname, _ = QFileDialog.getOpenFileName(
             caption='Open InfraView Project', directory=mydirectory, filter='InfraView Project Files (*.ipprj)')
         if ipprjPathname:
             self.projectSettings = QSettings(ipprjPathname, QSettings.IniFormat)
             self.projectSettings.beginGroup('Main')
-            self.__projectName = self.projectSettings.value('projectName')
-            self.__projectFileName = self.__projectName + '.ipprj'
+            self.projectName = self.projectSettings.value('projectName')
+            self.projectFileName = self.projectName + '.ipprj'
             self.projectSettings.endGroup()
             self.projectSettings.beginGroup('PathNames')
-            self.__basePath = Path(self.projectSettings.value('basePathName'))
-            self.__projectPath = Path(self.projectSettings.value('projectPathName'))
-            self.__dataPath = Path(self.projectSettings.value('dataPathName'))
-            self.__detectionsPath = Path(self.projectSettings.value('detectionsPathName'))
-            self.__stationsPath = Path(self.projectSettings.value('stationsPathName'))
-            self.__customFilterPath = Path(self.projectSettings.value('customFilterPathName'))
+            self.basePath = Path(self.projectSettings.value('basePathName'))
+            self.projectPath = Path(self.projectSettings.value('projectPathName'))
+            self.dataPath = Path(self.projectSettings.value('dataPathName'))
+            self.detectionsPath = Path(self.projectSettings.value('detectionsPathName'))
+            self.stationsPath = Path(self.projectSettings.value('stationsPathName'))
+            self.customFilterPath = Path(self.projectSettings.value('customFilterPathName'))
+            # when opening old projects, newer settings might not be present
+            if self.projectSettings.value('beamformingResultsPath') is None:
+                self.beamformingResutsPath = Path(str(self.projectPath) + '/beamformingResults')
+            else:
+                self.beamformingResutsPath = Path(self.projectSettings.value('beamformingResultsPath'))
+
             self.projectSettings.endGroup()
             return True
         else:
             return False
 
     def get_basePath(self):
-        return self.__basePath
+        return self.basePath
 
     def get_projectPath(self):
-        return self.__projectPath
+        return self.projectPath
 
     def get_dataPath(self):
-        return self.__dataPath
+        return self.dataPath
 
     def set_dataPath(self, path):
-        self.__dataPath = path
+        self.dataPath = path
 
     def get_detectionsPath(self):
-        return self.__detectionsPath
+        return self.detectionsPath
 
     def get_stationsPath(self):
-        return self.__stationsPath
+        return self.stationsPath
 
     def get_customFilterPath(self):
-        return self.__customFilterPath
+        return self.customFilterPath
 
     def get_projectName(self):
-        return self.__projectName
+        return self.projectName
 
     def get_projectFileName(self):
-        return self.__projectFileName
+        return self.projectFileName
 
-    def clear():
-        __basePath = None           # base path projects are saved in
-        __projectPath = None        # path of actual project
-        __dataPath = None           # where locally stored data (can) be saved
-        __detectionsPath = None     # where picks will be saved
-        __stationsPath = None       # where exported picks will be saved
-        __customFilterPath = None   # where custom filters will be saved
-        __homePath = None           # user's home directory
+    def get_beamformResultsPath(self):
+        return self.beamformingResutsPath
 
-        __projectName = None
-        __projectFileName = None
+    def clear(self):
+        self.basePath = None                # base path projects are saved in
+        self.projectPath = None             # path of actual project
+        self.dataPath = None                # where locally stored data (can) be saved
+        self.detectionsPath = None          # where picks will be saved
+        self.stationsPath = None            # where exported picks will be saved
+        self.customFilterPath = None        # where custom filters will be saved
+        self.homePath = None                # user's home directory
+        self.projectName = None
+        self.projectFileName = None
+        self.beamformingResutsPath = None   # beamforming results directory
 
 
 class IPNewProjectDialog(QDialog):
 
-    __basePath = None
-    __projectName = None
+    basePath = None
+    projectName = None
 
     def __init__(self, parent):
         super().__init__()
 
-        __homePath = Path.home()
-        self.__basePath = Path(__homePath, 'IPProjects')
+        homePath = Path.home()
+        self.basePath = Path(homePath, 'IPProjects')
 
         self.buildUI()
 
@@ -148,7 +160,7 @@ class IPNewProjectDialog(QDialog):
         self.lineEdit_projectName.textChanged.connect(self.updateProjectPath)
 
         label_basePath = QLabel(self.tr('Base Directory: '))
-        self.lineEdit_basePath = QLineEdit(str(self.__basePath))
+        self.lineEdit_basePath = QLineEdit(str(self.basePath))
         self.lineEdit_basePath.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.lineEdit_basePath.setMinimumWidth(400)
         self.lineEdit_basePath.textChanged.connect(self.updateProjectPath)
@@ -156,7 +168,7 @@ class IPNewProjectDialog(QDialog):
         button_basePathEdit.clicked.connect(self.directoryDialog)
 
         self.label_projectDirectory = QLabel('Project Directory: ')
-        self.label_projectDirectory_value = QLabel(str(self.__basePath) + '/' + self.lineEdit_projectName.text())
+        self.label_projectDirectory_value = QLabel(str(self.basePath) + '/' + self.lineEdit_projectName.text())
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         buttons.accepted.connect(self.accept)
@@ -180,17 +192,17 @@ class IPNewProjectDialog(QDialog):
         self.setLayout(mainLayout)
 
     def updateProjectPath(self):
-        self.__basePath = self.lineEdit_basePath.text()
-        self.__projectName = self.lineEdit_projectName.text()
+        self.basePath = self.lineEdit_basePath.text()
+        self.projectName = self.lineEdit_projectName.text()
         self.label_projectDirectory_value.setText(self.lineEdit_basePath.text() + '/' + self.lineEdit_projectName.text())
 
     def directoryDialog(self):
         newBasePathName = QFileDialog.getExistingDirectory(
-            self, "Choose a Directory", str(self.__basePath), QFileDialog.ShowDirsOnly)
+            self, "Choose a Directory", str(self.basePath), QFileDialog.ShowDirsOnly)
         if newBasePathName != '':
             # self.settings.setValue("last_projectbase_directory", newBasePathName)
             self.lineEdit_basePath.setText(newBasePathName)
-            self.__basePath = Path(newBasePathName)
+            self.basePath = Path(newBasePathName)
 
     def getBasePathAndProjectName(self):
-        return self.__basePath, self.__projectName
+        return self.basePath, self.projectName

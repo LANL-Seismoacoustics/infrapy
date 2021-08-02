@@ -378,8 +378,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 if UTCDateTime(self.latest_end_time) < UTCDateTime(trace.stats.endtime):
                     self.latest_end_time = trace.stats.endtime
 
-            print("start time = {}".format(self.earliest_start_time))
-
         # Now find the offset start for each trace
         offsets = []
         for trace in sts:

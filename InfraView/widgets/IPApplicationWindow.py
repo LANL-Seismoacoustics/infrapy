@@ -82,7 +82,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
 
         self.buildUI()
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
 
     def buildUI(self):
 
@@ -112,7 +112,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.fdsnDialog = IPFDSNDialog.IPFDSNDialog(self)
         self.saveAllDialog = IPSaveAllDialog.IPSaveAllDialog(self)
 
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
         self.connectSignalsAndSlots()
 
         self.setCentralWidget(self.main_widget)
@@ -293,8 +293,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                     continue
 
                 self.waveformWidget._sts.merge(fill_value=0)
-
-                print(self.waveformWidget._sts[0].stats)
         else:
             # No files were chosen to open
             return
@@ -494,33 +492,33 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     # ------------------------------------------------------------------------------
     # Settings methods
 
-    def restoreSettings(self):
-        # Restore settings
-
+    def restoreWindowGeometrySettings(self):
+        # Restore the widgets geometry settings
         self.settings.beginGroup('MainWindow')
         self.resize(self.settings.value("windowSize", QSize(1000, 900)))
         self.move(self.settings.value("windowPos", QPoint(200, 200)))
         self.settings.endGroup()
 
-        self.beamformingWidget.restoreSettings()
-        self.locationWidget.restoreSettings()
-        self.waveformWidget.restoreSettings()
+        self.beamformingWidget.restoreWindowGeometrySettings()
+        self.locationWidget.restoreWindowGeometrySettings()
+        self.waveformWidget.restoreWindowGeometrySettings()
 
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
+        # save the widgets geometry settings
         self.settings.beginGroup('MainWindow')
         self.settings.setValue("windowSize", self.size())
         self.settings.setValue("windowPos", self.pos())
         self.settings.endGroup()
 
-        self.beamformingWidget.saveSettings()
-        self.locationWidget.saveSettings()
-        self.waveformWidget.saveSettings()
+        self.beamformingWidget.saveWindowGeometrySettings()
+        self.locationWidget.saveWindowGeometrySettings()
+        self.waveformWidget.saveWindowGeometrySettings()
 
     # -------------------------------------------------------
     # Clean up
 
     def closeEvent(self, ce):
-        self.saveSettings()
+        self.saveWindowGeometrySettings()
 
     # Obligatory about
     def about(self):
@@ -532,6 +530,7 @@ class CapsValidator(QtGui.QValidator):
     # lineEdits
     def validate(self, string, pos):
         return QtGui.QValidator.Acceptable, string.upper(), pos
+
 
 class IPRedundantTraceDialog(QDialog):
 

@@ -261,7 +261,7 @@ class IPWaveformWidget(QWidget):
 
         return filtered_stream
 
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
         self._parent.settings.beginGroup('WaveformWidget')
         self._parent.settings.setValue("main_splitterSettings", self.main_splitter.saveState())
         self._parent.settings.setValue("rh_splitterSettings", self.rh_splitter.saveState())
@@ -269,7 +269,7 @@ class IPWaveformWidget(QWidget):
         self._parent.settings.setValue("plotviewer_splitterSettings", self.plotViewer.saveState())
         self._parent.settings.endGroup()
 
-    def restoreSettings(self):
+    def restoreWindowGeometrySettings(self):
         # Restore settings
         self._parent.settings.beginGroup('WaveformWidget')
 

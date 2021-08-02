@@ -372,7 +372,7 @@ class IPLocationWidget(QWidget):
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
         self._parent.settings.beginGroup('LocationWidget')
         self._parent.settings.setValue("windowSize", self.size())
         self._parent.settings.setValue("windowPos", self.pos())
@@ -382,7 +382,7 @@ class IPLocationWidget(QWidget):
         self._parent.settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
         self._parent.settings.endGroup()
 
-    def restoreSettings(self):
+    def restoreWindowGeometrySettings(self):
         # Restore settings
         self._parent.settings.beginGroup('LocationWidget')
 
