@@ -119,6 +119,6 @@ class IPFileBrowseLine(QWidget):
         self.directory = directory
 
     def run_filedialog(self):
-        fname = self.my_file_dialog.getSaveFileName(self, self.directory, filter="CSV (*.csv)")
+        fname = self.my_file_dialog.getSaveFileName(self, str(self.directory), filter="CSV (*.csv)")
         self.text_edit.setText(fname[0])
 
