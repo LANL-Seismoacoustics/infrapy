@@ -32,6 +32,7 @@ class IPBeamformingSettingsWidget(QWidget):
         self.fmin_spin.setMaximumWidth(60)
         self.fmin_spin.setSuffix(' Hz')
         self.fmin_spin.setMinimum(0.0)
+        self.fmin_spin.setMaximum(10000)
         self.fmin_spin.setValue(0.5)    # if changed here, make sure you change in the IPPSDWidget
         self.fmin_spin.setReadOnly(True)
         self.fmin_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -40,6 +41,7 @@ class IPBeamformingSettingsWidget(QWidget):
         self.fmax_spin.setMaximumWidth(60)
         self.fmax_spin.setSuffix(' Hz')
         self.fmax_spin.setMinimum(0.0)
+        self.fmax_spin.setMaximum(10000)
         self.fmax_spin.setValue(5.0)    # if changed here, make sure you change in the IPPSDWidget
         self.fmax_spin.setReadOnly(True)
         self.fmax_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)

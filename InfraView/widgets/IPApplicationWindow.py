@@ -392,9 +392,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         # We'll first create all the various objects. These strongly follow the
         # hierarchy of StationXML files.
         # initialize the lat/lon/ele 
-        _lat = 0.0
-        _lon = 0.0
-        _ele = -1.0
+        lat = 0.0
+        lon = 0.0
+        ele = -1.0
 
         _network = trace.stats['network'] 
         _station = trace.stats['station']
@@ -405,24 +405,38 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         if trace.stats['_format'] == 'SAC':
 
             if 'stla' in trace.stats['sac']:
-                _lat = trace.stats['sac']['stla']
+                lat = trace.stats['sac']['stla']
 
             if 'stlo' in trace.stats['sac']:
-                _lon = trace.stats['sac']['stlo']
+                lon = trace.stats['sac']['stlo']
         
             if 'stel' in trace.stats['sac']:
-                _ele = trace.stats['sac']['stel']
+                ele = trace.stats['sac']['stel']
             else:
-                _ele = 0.333
+                ele = 0.333
 
-        if _lat == 0.0 or _lon == 0.0 or _ele < 0:
-            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, _lat, _lon, _ele):
+        if _network == 'LARSA' and _station == '121':
+            print("WOOHOOO")
+            if _channel == 'ai0':
+                lat = 35.8492497
+                lon = -106.2705465
+            elif _channel == 'ai1':
+                lat = 35.84924682
+                lon = -106.2705505
+            elif _channel == 'ai2':
+                lat = 35.84925165
+                lon = -106.2705516
+
+
+        print('lat = {}, lon = {}'.format(lat, lon))
+        if lat == 0.0 or lon == 0.0 or ele < 0:
+            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, lat, lon, ele):
                 
                 edited_values = self.fill_sta_info_dialog.get_values()
                 
-                _lat = edited_values['lat']
-                _lon = edited_values['lon']
-                _ele = edited_values['ele']
+                lat = edited_values['lat']
+                lon = edited_values['lon']
+                ele = edited_values['ele']
 
                 _network = edited_values['net'] 
                 _station = edited_values['sta']
@@ -431,9 +445,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
                 # (re)populate sac headers where possible
                 if trace.stats['_format'] == 'SAC':
-                    trace.stats['sac']['stla'] = _lat
-                    trace.stats['sac']['stlo'] = _lon
-                    trace.stats['sac']['stel'] = _ele
+                    trace.stats['sac']['stla'] = lat
+                    trace.stats['sac']['stlo'] = lon
+                    trace.stats['sac']['stel'] = ele
                     trace.stats['sac']['knetwk'] = _network
                     trace.stats['sac']['kstnm'] = _station
                 # (re)populate trace stats where possible
@@ -463,9 +477,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         sta = Station(
             # This is the station code according to the SEED standard.
             code=_station,
-            latitude=_lat,
-            longitude=_lon,
-            elevation=_ele,
+            latitude=lat,
+            longitude=lon,
+            elevation=ele,
             # Creation_date is not saved in the trace stats or sac header
             creation_date=UTCDateTime(1900, 1, 1),
             # Site name is not in the trace stats or sac header, so set it to the site code
@@ -476,9 +490,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                       # This is the location code according to the SEED standard.
                       location_code=_location,
                       # Note that these coordinates can differ from the station coordinates.
-                      latitude=_lat,
-                      longitude=_lon,
-                      elevation=_ele,
+                      latitude=lat,
+                      longitude=lon,
+                      elevation=ele,
                       depth=0.0)
 
         # Now tie it all together.
