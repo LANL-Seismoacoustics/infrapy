@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 import platform
-import os
+import os, sys
 import pdb
 
 import numpy as np
@@ -265,7 +265,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                             # redundant trace!
                             netid, staid, locid, chaid = self.parseTraceName(trace_name)
                             self.redundant_trace_dialog.exec_(trace_name)
-                            
+
                             if  self.redundant_trace_dialog.get_result():
                                 # if accepted, they want to use the new trace so first remove the old one
                                 self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
@@ -279,7 +279,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                             new_inventory = self.trace_to_inventory(trace)
                         else:
                             new_inventory += self.trace_to_inventory(trace)
-                        
+
                         # for now we will remove dc offset when loading the file.  Maybe should be an option?
                         trace.data = trace.data - np.mean(trace.data)
                     
@@ -289,7 +289,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                         self.waveformWidget._sts = new_stream
 
                 except Exception:
-                    self.setStatus("File Read Error", 5000)
+                    print("Unexpected error: ", sys.exc_info()[0])
+                    self.setStatus("Unexpected error: ", 5000)
                     continue
 
                 self.waveformWidget._sts.merge(fill_value=0)
@@ -401,6 +402,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         _channel = trace.stats['channel']
         _location = trace.stats['location']
 
+        print(trace.stats)
         # if the trace is from a sac file, the sac header might have some inventory information
         if trace.stats['_format'] == 'SAC':
 
@@ -453,54 +455,61 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 trace.stats['station'] = _station
                 trace.stats['location'] = _location
                 trace.stats['channel'] = _channel
-                    
-        new_inventory = Inventory(
-            # We'll add networks later.
-            networks=[],
-            # The source should be the id whoever create the file.
-            source="InfraView")
-        
-        net = Network(
-            # This is the network code according to the SEED standard.
-            code=_network,
-            # A list of stations. We'll add one later.
-            stations=[],
-            # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
-            description=_network,
-            # Start-and end dates are optional.
+        try:            
+            new_inventory = Inventory(
+                # We'll add networks later.
+                networks=[],
+                # The source should be the id whoever create the file.
+                source="InfraView")
+            
+            net = Network(
+                # This is the network code according to the SEED standard.
+                code=_network,
+                # A list of stations. We'll add one later.
+                stations=[],
+                # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
+                description=_network,
+                # Start-and end dates are optional.
 
-            # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
-            start_date=UTCDateTime(1900, 1, 1))
+                # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
+                start_date=UTCDateTime(1900, 1, 1))
 
-        sta = Station(
-            # This is the station code according to the SEED standard.
-            code=_station,
-            latitude=lat,
-            longitude=lon,
-            elevation=ele,
-            # Creation_date is not saved in the trace stats or sac header
-            creation_date=UTCDateTime(1900, 1, 1),
-            # Site name is not in the trace stats or sac header, so set it to the site code
-            site=Site(name=_station))
+            sta = Station(
+                # This is the station code according to the SEED standard.
+                code=_station,
+                latitude=lat,
+                longitude=lon,
+                elevation=ele,
+                # Creation_date is not saved in the trace stats or sac header
+                creation_date=UTCDateTime(1900, 1, 1),
+                # Site name is not in the trace stats or sac header, so set it to the site code
+                site=Site(name=_station))
 
-        # This is the channel code according to the SEED standard.
-        cha = Channel(code=_channel,
-                      # This is the location code according to the SEED standard.
-                      location_code=_location,
-                      # Note that these coordinates can differ from the station coordinates.
-                      latitude=lat,
-                      longitude=lon,
-                      elevation=ele,
-                      depth=0.0)
+            # This is the channel code according to the SEED standard.
+            cha = Channel(code=_channel,
+                        # This is the location code according to the SEED standard.
+                        location_code=_location,
+                        # Note that these coordinates can differ from the station coordinates.
+                        latitude=lat,
+                        longitude=lon,
+                        elevation=ele,
+                        depth=0.0)
 
-        # Now tie it all together.
-        # cha.response = response
-        sta.channels.append(cha)
-        net.stations.append(sta)
-        new_inventory.networks.append(net)
+            # Now tie it all together.
+            # cha.response = response
+            sta.channels.append(cha)
+            net.stations.append(sta)
+            new_inventory.networks.append(net)
 
-        return new_inventory
+            return new_inventory
 
+        except ValueError:
+            bad_values = "Possible bad values are:\n"
+            if lon < -180 or lon > 180:
+                bad_values = bad_values+"lon = "+str(lon)+"\n"
+            if lat < -90 or lat > 90:
+                bad_values = bad_values+"lat = "+str(lat)
+            self.errorPopup("There seems to be a value error in "+_network+"."+_station+"."+_channel+"\n"+bad_values)
     # ------------------------------------------------------------------------------
     # Settings methods
 

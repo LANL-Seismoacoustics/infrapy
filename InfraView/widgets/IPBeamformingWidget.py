@@ -1328,10 +1328,10 @@ class BeamformingWorkerObject(QtCore.QObject):
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 
-        if location_count != len(self.streams):
-            self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
-            self.signal_reset_beamformer.emit() # currently this will just reset the buttons
-            return
+        #if location_count != len(self.streams):
+        #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
+        #    self.signal_reset_beamformer.emit() # currently this will just reset the buttons
+        #    return
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
