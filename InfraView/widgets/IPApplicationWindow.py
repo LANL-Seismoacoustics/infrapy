@@ -402,7 +402,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         _channel = trace.stats['channel']
         _location = trace.stats['location']
 
-        print(trace.stats)
         # if the trace is from a sac file, the sac header might have some inventory information
         if trace.stats['_format'] == 'SAC':
 
