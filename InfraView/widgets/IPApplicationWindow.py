@@ -402,7 +402,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         _channel = trace.stats['channel']
         _location = trace.stats['location']
 
-        print(trace.stats)
         # if the trace is from a sac file, the sac header might have some inventory information
         if trace.stats['_format'] == 'SAC':
 
@@ -504,12 +503,12 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             return new_inventory
 
         except ValueError:
-            bad_values = "Possible bad values are:\n"
+            bad_values = ""
             if lon < -180 or lon > 180:
-                bad_values = bad_values+"lon = "+str(lon)+"\n"
+                bad_values = bad_values + "\tlon = " + str(lon) + "\n"
             if lat < -90 or lat > 90:
-                bad_values = bad_values+"lat = "+str(lat)
-            self.errorPopup("There seems to be a value error in "+_network+"."+_station+"."+_channel+"\n"+bad_values)
+                bad_values = bad_values + "\tlat = " + str(lat)
+            self.errorPopup("There seems to be a value error in "+ _network + "." + _station + "." + _channel + "\nPossible bad value(s) are:\n" + bad_values)
     # ------------------------------------------------------------------------------
     # Settings methods
 
