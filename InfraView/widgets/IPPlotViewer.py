@@ -32,12 +32,16 @@ class IPPlotViewer(QSplitter):
 
         self.pl_widget = IPPlotLayoutWidget(self)
         self.waveform_selector = IPWaveformSelectorWidget.IPWaveformSelectorWidget(self)
+        self.title = QLabel("")
         waveform_selector_scrollarea = QScrollArea()
         waveform_selector_scrollarea.setWidget(self.waveform_selector)
         self.lr_settings_widget = IPLinearRegionSettingsWidget(self)
         
         rhs_widget = QWidget()
         rhs_layout = QVBoxLayout()
+
+        rhs_layout.addWidget(self.title)
+        rhs_layout.setAlignment(self.title, Qt.AlignHCenter)
         rhs_layout.addWidget(self.pl_widget)
         rhs_layout.addWidget(self.lr_settings_widget)
         rhs_widget.setLayout(rhs_layout)
@@ -56,6 +60,7 @@ class IPPlotViewer(QSplitter):
         self.pl_widget.filtered_plot_lines.clear()
         self.pl_widget.clear()
         self.waveform_selector.clear_form()
+        self.title.setText("")
 
     @pyqtSlot(Stream, Stream)
     def update(self, sts, filtered_sts):
@@ -161,7 +166,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.getAllTraceTimeSeries(sts)
 
         # title will always be at 0,0 if it exists
-        self.addLabel(self.earliest_start_time, 0, 0)
+        self._parent.title.setText(self.earliest_start_time.isoformat())
 
         for idx, trace in enumerate(sts):
 
@@ -293,7 +298,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             if idx == self.active_plot:
                 plot.setBackgroundColor(255, 255, 255)
             else:
-                plot.setBackgroundColor(200, 200, 200)
+                plot.setBackgroundColor(230, 230, 230)
             # add the checked plots in the waveformselector to the layout
             if values[idx]:
                 self.nextRow()
@@ -501,7 +506,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                                                   self.plot_list[0].getSignalRegion().getRegion())
 
             else:
-                my_plot.setBackgroundColor(200, 200, 200)
+                my_plot.setBackgroundColor(230, 230, 230)
 
             # cluge because setting background color covers axis for some reason
             my_plot.getAxis("top").setZValue(0)

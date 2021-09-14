@@ -48,12 +48,12 @@ class IPBeamformingWidget(QWidget):
     signal_startBeamforming = pyqtSignal()
     signal_stopBeamforming = pyqtSignal()
 
-    _streams = None
+    streams = None
 
-    _hlines = []  # list to hold the horizontal crosshair lines
-    _vlines = []  # list to hold the vertical crosshair lines
-    position_labels = []  # list to hold the labels that show the position of the crosshairs
-    _value_labels = []  # list to hold the labels that show the y-value of the crosshairs
+    hline = None  # the horizontal crosshair line in the waveform window
+    vline = None  # the vertical crosshair line in the waveform window
+    position_label = None  # list to hold the labels that show the position of the crosshairs
+    value_label = None  # list to hold the labels that show the y-value of the crosshairs
 
     _plot_list = []     # list to hold references to the four main plots
 
@@ -182,7 +182,7 @@ class IPBeamformingWidget(QWidget):
         self._plot_list.append(self.traceVPlot)
         self._plot_list.append(self.backAzPlot)
 
-        #self.addCrosshairs()
+        self.addCrosshairs()
 
         # --------------------------------------------
         # this is where I create the linear region item that specifies the current portion of waveform being evaluated
@@ -339,20 +339,19 @@ class IPBeamformingWidget(QWidget):
     def addCrosshairs(self):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
         # UTC time in the top right corner of the plots
-        for idx, my_plot in enumerate(self._plot_list):
-            if idx==0:
-                self._vlines.append(pg.InfiniteLine(angle=90, movable=False, pen='k'))
-                self._hlines.append(pg.InfiniteLine(angle=0, movable=False, pen='k'))
-                self.position_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
-                self._value_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
+        
+        self.vline = pg.InfiniteLine(angle=90, movable=False, pen='k')
+        self.hline = pg.InfiniteLine(angle=0, movable=False, pen='k')
+        self.position_label = pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0))
+        self.value_label = pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0))
 
-                self._vlines[idx].setZValue(10)
-                self._hlines[idx].setZValue(11)
+        self.vline.setZValue(10)
+        self.hline.setZValue(11)
 
-                my_plot.addItem(self._vlines[idx], ignoreBounds=True)
-                my_plot.addItem(self._hlines[idx], ignoreBounds=True)
-                my_plot.addItem(self.position_labels[idx], ignoreBounds=True)
-                my_plot.addItem(self._value_labels[idx], ignoreBounds=True)
+        self.waveformPlot.addItem(self.vline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.hline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.position_label, ignoreBounds=True)
+        self.waveformPlot.addItem(self.value_label, ignoreBounds=True)
 
     def connectSignalsAndSlots(self):
         # keep as many signal and slot connections as possible together in one place
@@ -362,7 +361,7 @@ class IPBeamformingWidget(QWidget):
 
     def setStreams(self, streams):
         # keep a local reference for the streams that will be analyzied
-        self._streams = streams
+        self.streams = streams
 
     def get_earliest_start_time(self):
         return self._parent.waveformWidget.plotViewer.pl_widget.earliest_start_time
@@ -530,19 +529,27 @@ class IPBeamformingWidget(QWidget):
         self.backAz_marker.setData([t_nearest], [ba_nearest])
         self.traceV_marker.setData([t_nearest], [tv_nearest])
 
-        mouse_in_plot = False   # mouse_in_plot will be used to decide if the mouse is currently hovering over a plot
+        mouse_point_x = (self.waveformPlot.vb.mapSceneToView(evt)).x()
+        mouse_point_y = (self.waveformPlot.vb.mapSceneToView(evt)).y()
 
-        for idx, my_plot in enumerate(self._plot_list):
+        myRange = self.waveformPlot.viewRange()
+        self.position_label.setPos(myRange[0][1], myRange[1][1])
+        
+        self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_x))
+        self.vline.setPos(mouse_point_x)
+        self.hline.setPos(mouse_point_y)
 
-            mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
+        #for idx, my_plot in enumerate(self._plot_list):
 
-            if my_plot.sceneBoundingRect().contains(evt):
-                mouse_in_plot = True
+        #    mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
 
-                if idx == 0:
-                    self.position_labels[idx].setVisible(True)
-                    self._value_labels[idx].setVisible(True)
-                    self.position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
+        #    if my_plot.sceneBoundingRect().contains(evt):
+        #        mouse_in_plot = True
+
+        #        if idx == 0:
+        #            self.position_label.setVisible(True)
+        #            self.value_label.setVisible(True)
+       #             self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()
@@ -560,15 +567,15 @@ class IPBeamformingWidget(QWidget):
             #    self.position_labels[idx].setVisible(False)
             #    self._value_labels[idx].setVisible(False)
 
-        if not mouse_in_plot:
+        #if not mouse_in_plot:
             # clear markers
-            self.fstat_marker.setData([], [])
-            self.backAz_marker.setData([], [])
-            self.traceV_marker.setData([], [])
+        #    self.fstat_marker.setData([], [])
+        #    self.backAz_marker.setData([], [])
+        #    self.traceV_marker.setData([], [])
 
-            self.fstat_marker_label.setText('')
-            self.backAz_marker_label.setText('')
-            self.traceV_marker_label.setText('')
+        #    self.fstat_marker_label.setText('')
+        #    self.backAz_marker_label.setText('')
+        #    self.traceV_marker_label.setText('')
 
     def myMouseClicked(self, evt):
 
@@ -678,7 +685,7 @@ class IPBeamformingWidget(QWidget):
                                     center[1],
                                     elev=center[2],
                                     event='',
-                                    element_cnt=len(self._streams),
+                                    element_cnt=len(self.streams),
                                     method='manual',
                                     fr=self.bottomSettings.getFreqRange())
 
@@ -749,11 +756,11 @@ class IPBeamformingWidget(QWidget):
             self.fstatPlot.removeItem(self.threshold_calculating_label)
 
     def runBeamforming(self):
-        if self._streams is None:
+        if self.streams is None:
             self.errorPopup('You should have at least 3 streams loaded to run beamfinder')
             return
 
-        if len(self._streams) < 3:
+        if len(self.streams) < 3:
             self.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
@@ -761,7 +768,7 @@ class IPBeamformingWidget(QWidget):
             self.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
             return
 
-        if self._parent.waveformWidget.stationViewer.getStationCount() != self._streams.count():
+        if self._parent.waveformWidget.stationViewer.getStationCount() != self.streams.count():
             self.errorPopup('The number of stations is not equal to the number of waveforms. Each waveform must have a matching station with Lat./Lon. information in it.')
             return
 
@@ -887,7 +894,7 @@ class IPBeamformingWidget(QWidget):
             self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             return
 
-        self.bfWorker = BeamformingWorkerObject(self._streams,
+        self.bfWorker = BeamformingWorkerObject(self.streams,
                                                 self.resultData,
                                                 self.bottomSettings.getNoiseRange(),
                                                 self.bottomSettings.getSignalRange(),
@@ -1089,7 +1096,7 @@ class IPBeamformingWidget(QWidget):
             num_times.append(np.datetime64(self.get_earliest_start_time() + t))
         num_times = np.asarray(num_times)
 
-        channel_count = len(self._streams)
+        channel_count = len(self.streams)
         det_window_length = 300
         det_threshold = 0.99
         tb_prod = 400
@@ -1129,7 +1136,7 @@ class IPBeamformingWidget(QWidget):
                                             center[1],
                                             elev=center[2],
                                             event='',
-                                            element_cnt=len(self._streams),
+                                            element_cnt=len(self.streams),
                                             method=self.bottomSettings.getMethod(),
                                             fr=self.bottomSettings.getFreqRange())
         

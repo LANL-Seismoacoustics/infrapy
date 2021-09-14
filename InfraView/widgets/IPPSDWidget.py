@@ -22,8 +22,8 @@ class IPPSDWidget(QWidget):
     currentSignalData = None
     currentNoiseData = None
 
-    blue_pen = pg.mkPen(color=(176, 224, 230), width=2)
-    red_pen = pg.mkPen(color=(200,100,100), width=2)
+    blue_pen = pg.mkPen(color=(80, 159, 250), width=1)
+    red_pen = pg.mkPen(color=(255,71,71), width=1)
 
     def __init__(self, parent):
         super().__init__()
@@ -46,7 +46,7 @@ class IPPSDWidget(QWidget):
         self.psdPlot.setLabel('left', 'Power Spectral Density')
         self.psdPlot.setTitle("...")
         
-        self.psdPlot.setLogMode(x=False, y=False)
+        self.psdPlot.setLogMode(x=True, y=True)
 
         initdata = np.array([1])
 
