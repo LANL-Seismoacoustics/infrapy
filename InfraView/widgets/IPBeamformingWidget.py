@@ -348,10 +348,10 @@ class IPBeamformingWidget(QWidget):
         self.vline.setZValue(10)
         self.hline.setZValue(11)
 
-        self._plot_list[0].addItem(self.vline, ignoreBounds=True)
-        self._plot_list[0].addItem(self.hline, ignoreBounds=True)
-        self._plot_list[0].addItem(self.position_label, ignoreBounds=True)
-        self._plot_list[0].addItem(self.value_label, ignoreBounds=True)
+        self.waveformPlot.addItem(self.vline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.hline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.position_label, ignoreBounds=True)
+        self.waveformPlot.addItem(self.value_label, ignoreBounds=True)
 
     def connectSignalsAndSlots(self):
         # keep as many signal and slot connections as possible together in one place
@@ -529,19 +529,27 @@ class IPBeamformingWidget(QWidget):
         self.backAz_marker.setData([t_nearest], [ba_nearest])
         self.traceV_marker.setData([t_nearest], [tv_nearest])
 
-        mouse_in_plot = False   # mouse_in_plot will be used to decide if the mouse is currently hovering over a plot
+        mouse_point_x = (self.waveformPlot.vb.mapSceneToView(evt)).x()
+        mouse_point_y = (self.waveformPlot.vb.mapSceneToView(evt)).y()
 
-        for idx, my_plot in enumerate(self._plot_list):
+        myRange = self.waveformPlot.viewRange()
+        self.position_label.setPos(myRange[0][1], myRange[1][1])
+        
+        self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_x))
+        self.vline.setPos(mouse_point_x)
+        self.hline.setPos(mouse_point_y)
 
-            mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
+        #for idx, my_plot in enumerate(self._plot_list):
 
-            if my_plot.sceneBoundingRect().contains(evt):
-                mouse_in_plot = True
+        #    mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
 
-                if idx == 0:
-                    self.position_label.setVisible(True)
-                    self.value_label.setVisible(True)
-                    self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
+        #    if my_plot.sceneBoundingRect().contains(evt):
+        #        mouse_in_plot = True
+
+        #        if idx == 0:
+        #            self.position_label.setVisible(True)
+        #            self.value_label.setVisible(True)
+       #             self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()
@@ -559,15 +567,15 @@ class IPBeamformingWidget(QWidget):
             #    self.position_labels[idx].setVisible(False)
             #    self._value_labels[idx].setVisible(False)
 
-        if not mouse_in_plot:
+        #if not mouse_in_plot:
             # clear markers
-            self.fstat_marker.setData([], [])
-            self.backAz_marker.setData([], [])
-            self.traceV_marker.setData([], [])
+        #    self.fstat_marker.setData([], [])
+        #    self.backAz_marker.setData([], [])
+        #    self.traceV_marker.setData([], [])
 
-            self.fstat_marker_label.setText('')
-            self.backAz_marker_label.setText('')
-            self.traceV_marker_label.setText('')
+        #    self.fstat_marker_label.setText('')
+        #    self.backAz_marker_label.setText('')
+        #    self.traceV_marker_label.setText('')
 
     def myMouseClicked(self, evt):
 

@@ -166,7 +166,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.getAllTraceTimeSeries(sts)
 
         # title will always be at 0,0 if it exists
-        print(type(self.earliest_start_time))
         self._parent.title.setText(self.earliest_start_time.isoformat())
 
         for idx, trace in enumerate(sts):
