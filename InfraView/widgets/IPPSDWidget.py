@@ -23,13 +23,14 @@ class IPPSDWidget(QWidget):
     currentNoiseData = None
 
     blue_pen = pg.mkPen(color=(80, 159, 250), width=1)
-    red_pen = pg.mkPen(color=(255,71,71), width=1)
+    red_pen = pg.mkPen(color=(255, 71, 71), width=1)
 
     def __init__(self, parent):
         super().__init__()
 
         self.parent = parent
         self.buildUI()
+        # self.updateFrequencyIndicators()
         self.show()
 
     def buildUI(self):
@@ -43,10 +44,10 @@ class IPPSDWidget(QWidget):
         self.psdPlot.getAxis('bottom').setRange(.1, 10)
         
         self.psdPlot.setLabel('bottom', 'f (Hz)')
-        self.psdPlot.setLabel('left', 'Power Spectral Density')
+        self.psdPlot.setLabel('left', 'Power Spectral Density (dB)')
         self.psdPlot.setTitle("...")
         
-        self.psdPlot.setLogMode(x=True, y=True)
+        self.psdPlot.setLogMode(x=True, y=False)
 
         initdata = np.array([1])
 
@@ -141,7 +142,6 @@ class IPPSDWidget(QWidget):
 
     def connectSignalsAndSlots(self):
         self.fft_N_Spin.valueChanged.connect(self.updatePSDs)
-        self.fft_N_Spin.valueChanged.connect(self.updatePSDs)
         self.fft_N_Spin.valueChanged.connect(self.updateFFtT)
         self.fft_T_Spin.valueChanged.connect(self.updateFFtN)
 
@@ -176,7 +176,7 @@ class IPPSDWidget(QWidget):
 
         if self.currentNoiseData is not None:
             f, pxx = self.calculate_psd(self.currentNoiseData)
-            self.noiseCurve.setData(f, pxx, pen=self.red_pen)
+            self.noiseCurve.setData(f, 10*np.log10(pxx), pen=self.red_pen)
 
     def updateSignalPSD(self, data=None):
         # if new data s passed, use that, otherwise use what we have
@@ -185,7 +185,7 @@ class IPPSDWidget(QWidget):
 
         if self.currentSignalData is not None:
             f, pxx = self.calculate_psd(self.currentSignalData)
-            self.signalCurve.setData(f, pxx, pen=self.blue_pen)
+            self.signalCurve.setData(f, 10*np.log10(pxx), pen=self.blue_pen)
 
     def calculate_psd(self, data):
         if data is not None:
@@ -215,12 +215,9 @@ class IPPSDWidget(QWidget):
         r = region.getRegion()
         self.f1_Spin.setValue(10**r[0])
         self.f2_Spin.setValue(10**r[1])
-        # for some reason, setValue doesn't trigger a valueChanged signal, so we'll do it manually
-        self.f1_Spin.valueChanged.emit(10**r[0])
-        self.f2_Spin.valueChanged.emit(10**r[1])
 
     def updateLinearFrequencyIndicators(self):
-        self.psdPlot.getFreqRegion().setRegion((np.log10(self.f1_Spin.value()), np.log10(self.f2_Spin.value())))
+        self.psdPlot.getFreqRegion().setRegion([np.log10(self.f1_Spin.value()), np.log10(self.f2_Spin.value())])
 
     def setFilterFromPSD(self):
 
