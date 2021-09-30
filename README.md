@@ -99,9 +99,12 @@ Instructions found there will guide you in its installation.
 ## Infraview
 
 We supply a GUI application to help with quick data, beamforming, and location analysis. Once installation is complete, you can activate the infrapy_env and run the GUI with the commands:
-    
+
     >> conda activate infrapy_env
     >> infraview
+
+![Infraview Waveform Screenshot](https://raw.githubusercontent.com/LANL-Seismoacoustics/infrapy/master/infrapy/resources/PNG/Screenshot_waveforms.png)
+
 
 ## Errors/issues
 
