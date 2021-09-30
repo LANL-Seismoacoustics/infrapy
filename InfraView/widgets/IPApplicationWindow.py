@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 import platform
-import os
+import os, sys
 import pdb
 from pathlib import Path, PurePath
 
@@ -44,8 +44,14 @@ from InfraView.widgets import IPWaveformWidget
 import pathos.multiprocessing as mp
 from multiprocessing import cpu_count
 
+# for tracking down warnings...
+import warnings
+
+
 
 class IPApplicationWindow(QtWidgets.QMainWindow):
+
+    warnings.filterwarnings('error', message='Item already added to PlotItem, ignoring')
 
     sig_stream_changed = pyqtSignal(Stream)
     sig_inventory_changed = pyqtSignal(Inventory)
@@ -77,7 +83,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
 
         self.buildUI()
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
 
     def buildUI(self):
 
@@ -107,7 +113,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.fdsnDialog = IPFDSNDialog.IPFDSNDialog(self)
         self.saveAllDialog = IPSaveAllDialog.IPSaveAllDialog(self)
 
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
         self.connectSignalsAndSlots()
 
         self.setCentralWidget(self.main_widget)
@@ -261,12 +267,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                             # redundant trace!
                             netid, staid, locid, chaid = self.parseTraceName(trace_name)
                             self.redundant_trace_dialog.exec_(trace_name)
-                            
+
                             if  self.redundant_trace_dialog.get_result():
                                 # if accepted, they want to use the new trace so first remove the old one
-                                print(self.waveformWidget._inv)
                                 self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
-                                print(self.waveformWidget._inv)
                             else:
                                 # if rejected, they want to keep the old trace, and ignore this one
                                 #so remove the trace from new_stream, and continue to the next trace
@@ -277,7 +281,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                             new_inventory = self.trace_to_inventory(trace)
                         else:
                             new_inventory += self.trace_to_inventory(trace)
-                        
+
                         # for now we will remove dc offset when loading the file.  Maybe should be an option?
                         trace.data = trace.data - np.mean(trace.data)
                     
@@ -287,7 +291,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                         self.waveformWidget._sts = new_stream
 
                 except Exception:
-                    self.setStatus("File Read Error", 5000)
+                    print("Unexpected error: ", sys.exc_info()[0])
+                    self.setStatus("Unexpected error: ", 5000)
                     continue
 
                 self.waveformWidget._sts.merge(fill_value=0)
@@ -390,9 +395,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         # We'll first create all the various objects. These strongly follow the
         # hierarchy of StationXML files.
         # initialize the lat/lon/ele 
-        _lat = 0.0
-        _lon = 0.0
-        _ele = -1.0
+        lat = 0.0
+        lon = 0.0
+        ele = -1.0
 
         _network = trace.stats['network'] 
         _station = trace.stats['station']
@@ -403,24 +408,36 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         if trace.stats['_format'] == 'SAC':
 
             if 'stla' in trace.stats['sac']:
-                _lat = trace.stats['sac']['stla']
+                lat = trace.stats['sac']['stla']
 
             if 'stlo' in trace.stats['sac']:
-                _lon = trace.stats['sac']['stlo']
+                lon = trace.stats['sac']['stlo']
         
             if 'stel' in trace.stats['sac']:
-                _ele = trace.stats['sac']['stel']
+                ele = trace.stats['sac']['stel']
             else:
-                _ele = 0.333
+                ele = 0.333
 
-        if _lat == 0.0 or _lon == 0.0 or _ele < 0:
-            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, _lat, _lon, _ele):
+        if _network == 'LARSA' and _station == '121':
+            print("WOOHOOO")
+            if _channel == 'ai0':
+                lat = 35.8492497
+                lon = -106.2705465
+            elif _channel == 'ai1':
+                lat = 35.84924682
+                lon = -106.2705505
+            elif _channel == 'ai2':
+                lat = 35.84925165
+                lon = -106.2705516
+
+        if lat == 0.0 or lon == 0.0 or ele < 0:
+            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, lat, lon, ele):
                 
                 edited_values = self.fill_sta_info_dialog.get_values()
                 
-                _lat = edited_values['lat']
-                _lon = edited_values['lon']
-                _ele = edited_values['ele']
+                lat = edited_values['lat']
+                lon = edited_values['lon']
+                ele = edited_values['ele']
 
                 _network = edited_values['net'] 
                 _station = edited_values['sta']
@@ -429,9 +446,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
                 # (re)populate sac headers where possible
                 if trace.stats['_format'] == 'SAC':
-                    trace.stats['sac']['stla'] = _lat
-                    trace.stats['sac']['stlo'] = _lon
-                    trace.stats['sac']['stel'] = _ele
+                    trace.stats['sac']['stla'] = lat
+                    trace.stats['sac']['stlo'] = lon
+                    trace.stats['sac']['stel'] = ele
                     trace.stats['sac']['knetwk'] = _network
                     trace.stats['sac']['kstnm'] = _station
                 # (re)populate trace stats where possible
@@ -439,84 +456,91 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 trace.stats['station'] = _station
                 trace.stats['location'] = _location
                 trace.stats['channel'] = _channel
-                    
-        new_inventory = Inventory(
-            # We'll add networks later.
-            networks=[],
-            # The source should be the id whoever create the file.
-            source="InfraView")
-        
-        net = Network(
-            # This is the network code according to the SEED standard.
-            code=_network,
-            # A list of stations. We'll add one later.
-            stations=[],
-            # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
-            description=_network,
-            # Start-and end dates are optional.
+        try:            
+            new_inventory = Inventory(
+                # We'll add networks later.
+                networks=[],
+                # The source should be the id whoever create the file.
+                source="InfraView")
+            
+            net = Network(
+                # This is the network code according to the SEED standard.
+                code=_network,
+                # A list of stations. We'll add one later.
+                stations=[],
+                # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
+                description=_network,
+                # Start-and end dates are optional.
 
-            # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
-            start_date=UTCDateTime(1900, 1, 1))
+                # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
+                start_date=UTCDateTime(1900, 1, 1))
 
-        sta = Station(
-            # This is the station code according to the SEED standard.
-            code=_station,
-            latitude=_lat,
-            longitude=_lon,
-            elevation=_ele,
-            # Creation_date is not saved in the trace stats or sac header
-            creation_date=UTCDateTime(1900, 1, 1),
-            # Site name is not in the trace stats or sac header, so set it to the site code
-            site=Site(name=_station))
+            sta = Station(
+                # This is the station code according to the SEED standard.
+                code=_station,
+                latitude=lat,
+                longitude=lon,
+                elevation=ele,
+                # Creation_date is not saved in the trace stats or sac header
+                creation_date=UTCDateTime(1900, 1, 1),
+                # Site name is not in the trace stats or sac header, so set it to the site code
+                site=Site(name=_station))
 
-        # This is the channel code according to the SEED standard.
-        cha = Channel(code=_channel,
-                      # This is the location code according to the SEED standard.
-                      location_code=_location,
-                      # Note that these coordinates can differ from the station coordinates.
-                      latitude=_lat,
-                      longitude=_lon,
-                      elevation=_ele,
-                      depth=0.0)
+            # This is the channel code according to the SEED standard.
+            cha = Channel(code=_channel,
+                        # This is the location code according to the SEED standard.
+                        location_code=_location,
+                        # Note that these coordinates can differ from the station coordinates.
+                        latitude=lat,
+                        longitude=lon,
+                        elevation=ele,
+                        depth=0.0)
 
-        # Now tie it all together.
-        # cha.response = response
-        sta.channels.append(cha)
-        net.stations.append(sta)
-        new_inventory.networks.append(net)
+            # Now tie it all together.
+            # cha.response = response
+            sta.channels.append(cha)
+            net.stations.append(sta)
+            new_inventory.networks.append(net)
 
-        return new_inventory
+            return new_inventory
 
+        except ValueError:
+            bad_values = ""
+            if lon < -180 or lon > 180:
+                bad_values = bad_values + "\tlon = " + str(lon) + "\n"
+            if lat < -90 or lat > 90:
+                bad_values = bad_values + "\tlat = " + str(lat)
+            self.errorPopup("There seems to be a value error in "+ _network + "." + _station + "." + _channel + "\nPossible bad value(s) are:\n" + bad_values)
     # ------------------------------------------------------------------------------
     # Settings methods
 
-    def restoreSettings(self):
-        # Restore settings
-
+    def restoreWindowGeometrySettings(self):
+        # Restore the widgets geometry settings
         self.settings.beginGroup('MainWindow')
         self.resize(self.settings.value("windowSize", QSize(1000, 900)))
         self.move(self.settings.value("windowPos", QPoint(200, 200)))
         self.settings.endGroup()
 
-        self.beamformingWidget.restoreSettings()
-        self.locationWidget.restoreSettings()
-        self.waveformWidget.restoreSettings()
+        self.beamformingWidget.restoreWindowGeometrySettings()
+        self.locationWidget.restoreWindowGeometrySettings()
+        self.waveformWidget.restoreWindowGeometrySettings()
 
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
+        # save the widgets geometry settings
         self.settings.beginGroup('MainWindow')
         self.settings.setValue("windowSize", self.size())
         self.settings.setValue("windowPos", self.pos())
         self.settings.endGroup()
 
-        self.beamformingWidget.saveSettings()
-        self.locationWidget.saveSettings()
-        self.waveformWidget.saveSettings()
+        self.beamformingWidget.saveWindowGeometrySettings()
+        self.locationWidget.saveWindowGeometrySettings()
+        self.waveformWidget.saveWindowGeometrySettings()
 
     # -------------------------------------------------------
     # Clean up
 
     def closeEvent(self, ce):
-        self.saveSettings()
+        self.saveWindowGeometrySettings()
 
     # Obligatory about
     def about(self):
@@ -552,6 +576,7 @@ class CapsValidator(QtGui.QValidator):
     # lineEdits
     def validate(self, string, pos):
         return QtGui.QValidator.Acceptable, string.upper(), pos
+
 
 class IPRedundantTraceDialog(QDialog):
 

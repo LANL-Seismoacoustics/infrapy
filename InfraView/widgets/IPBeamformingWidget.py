@@ -13,7 +13,9 @@ from pyqtgraph import ViewBox
 
 import platform
 import warnings
+import csv
 import numpy as np
+from pathlib import Path
 from scipy import signal
 from operator import itemgetter
 
@@ -28,6 +30,7 @@ from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
 from InfraView.widgets import IPLine
+from InfraView.widgets import IPSaveBeamformingResultsDialog
 
 # import infrapy modules here
 from infrapy.detection import beamforming_new
@@ -45,12 +48,12 @@ class IPBeamformingWidget(QWidget):
     signal_startBeamforming = pyqtSignal()
     signal_stopBeamforming = pyqtSignal()
 
-    _streams = None
+    streams = None
 
-    _hlines = []  # list to hold the horizontal crosshair lines
-    _vlines = []  # list to hold the vertical crosshair lines
-    _position_labels = []  # list to hold the labels that show the position of the crosshairs
-    _value_labels = []  # list to hold the labels that show the y-value of the crosshairs
+    hline = None  # the horizontal crosshair line in the waveform window
+    vline = None  # the vertical crosshair line in the waveform window
+    position_label = None  # list to hold the labels that show the position of the crosshairs
+    value_label = None  # list to hold the labels that show the y-value of the crosshairs
 
     _plot_list = []     # list to hold references to the four main plots
 
@@ -62,7 +65,7 @@ class IPBeamformingWidget(QWidget):
     _back_az = []
     _f_stats = []
 
-    _waveform_data_item = None
+    waveform_data_item = None
 
     _mp_pool = None
 
@@ -80,7 +83,7 @@ class IPBeamformingWidget(QWidget):
         self._mp_pool = pool
 
         self.buildUI()
-        self.restoreSettings()
+        self.restoreWindowGeometrySettings()
 
     def make_crosshair(self):
         crosshair = QPainterPath()
@@ -153,7 +156,7 @@ class IPBeamformingWidget(QWidget):
         la.setTicks([[(tic, str(tic)) for tic in ba_ticks]])
         self.backAzPlot.disableAutoRange(ViewBox.XAxis)
         self.backAzPlot.setLabel('left', 'Back Azimuth (deg)')
-        self.backAz_marker = pg.PlotDataItem([],[], symbol='+', symbolSize='25')
+        self.backAz_marker = pg.PlotDataItem([], [], symbol='+', symbolSize='25')
         self.backAzPlot.addItem(self.backAz_marker)
         self.backAz_marker_label = pg.TextItem('', color=(150,150,150), anchor=(0,1))
         self.backAz_marker_label.setZValue(15)
@@ -285,6 +288,8 @@ class IPBeamformingWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
+        self.addCrosshairs()
+
         self.connectSignalsAndSlots()
 
         # Create a thread for the beamforming to run in
@@ -292,6 +297,7 @@ class IPBeamformingWidget(QWidget):
 
         #Temporary
         self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
+        self.save_results_dialog = IPSaveBeamformingResultsDialog.IPSaveBeamformingResultsDialog(self)
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
@@ -302,20 +308,7 @@ class IPBeamformingWidget(QWidget):
         toolButton_start = QToolButton()
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
-
-        # if platform.system() != "Darwin":
-        #     toolButton_start.setStyleSheet("QToolButton:!hover {background-color: #BDFFAB; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #526F4A} QToolButton:hover {background-color: #D6FFC5; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #526F4A}")
-        #     toolButton_stop.setStyleSheet( "QToolButton:!hover {background-color: #FF7C7C; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #793B3B} QToolButton:hover {background-color: #FFAFAF; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #793B3B}")
-        #     toolButton_clear.setStyleSheet("QToolButton:!hover {background-color: #FFF9D6; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #787565} QToolButton:hover {background-color: #FEFFF6; margin-left:3px; margin-right:3px; padding-left:2px; padding-right:2px; border:1px solid #787565}")
-        # else:
-        #     self.toolbar.setStyleSheet("QToolButton:hover { background-color: lightgray; }")
-        #     font = toolButton_start.font()
-        #     font.setPointSize(14)
-        #     toolButton_start.setFont(font)
-        #     toolButton_start.setStyleSheet("QToolButton:!hover {color: green}")
-        #     toolButton_stop.setFont(font)
-        #     toolButton_stop.setStyleSheet("QToolButton:!hover {color: red}")
-        #     toolButton_clear.setFont(font)
+        toolButton_export = QToolButton()
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -331,26 +324,34 @@ class IPBeamformingWidget(QWidget):
         toolButton_clear.setToolButtonStyle(Qt.ToolButtonTextOnly)
         toolButton_clear.setDefaultAction(self.clearAct)
 
+        self.exportAct = QAction(QIcon.fromTheme("document-save-as"), 'Export Results', self)
+        self.exportAct.triggered.connect(self.exportResults)
+        toolButton_export.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolButton_export.setDefaultAction(self.exportAct)
+
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(toolButton_export)
+
 
     def addCrosshairs(self):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
         # UTC time in the top right corner of the plots
-        for idx, my_plot in enumerate(self._plot_list):
-            self._vlines.append(pg.InfiniteLine(angle=90, movable=False, pen='k'))
-            self._hlines.append(pg.InfiniteLine(angle=0, movable=False, pen='k'))
-            self._position_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
-            self._value_labels.append(pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0)))
+        
+        self.vline = pg.InfiniteLine(angle=90, movable=False, pen='k')
+        self.hline = pg.InfiniteLine(angle=0, movable=False, pen='k')
+        self.position_label = pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0))
+        self.value_label = pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0))
 
-            self._vlines[idx].setZValue(10)
-            self._hlines[idx].setZValue(11)
+        self.vline.setZValue(10)
+        self.hline.setZValue(11)
 
-            my_plot.addItem(self._vlines[idx], ignoreBounds=True)
-            my_plot.addItem(self._hlines[idx], ignoreBounds=True)
-            my_plot.addItem(self._position_labels[idx], ignoreBounds=True)
-            my_plot.addItem(self._value_labels[idx], ignoreBounds=True)
+        self.waveformPlot.addItem(self.vline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.hline, ignoreBounds=True)
+        self.waveformPlot.addItem(self.position_label, ignoreBounds=True)
+        self.waveformPlot.addItem(self.value_label, ignoreBounds=True)
 
     def connectSignalsAndSlots(self):
         # keep as many signal and slot connections as possible together in one place
@@ -360,7 +361,7 @@ class IPBeamformingWidget(QWidget):
 
     def setStreams(self, streams):
         # keep a local reference for the streams that will be analyzied
-        self._streams = streams
+        self.streams = streams
 
     def get_earliest_start_time(self):
         return self._parent.waveformWidget.plotViewer.pl_widget.earliest_start_time
@@ -465,21 +466,28 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(pg.PlotDataItem, tuple)
     def setWaveform(self, plotLine, region):
-        if self._waveform_data_item is not None:
-            self._waveform_data_item.clear()
+        initial = False
+        if self.waveform_data_item is not None:
+            self.waveform_data_item.clear()
         else:
-            self._waveform_data_item = pg.PlotDataItem()
+            self.waveform_data_item = pg.PlotDataItem()
+            initial = True
 
         # need to make a copy of the currently active plot and give it to the beamformingwidget for display
-        self._waveform_data_item.setData(plotLine.xData, plotLine.yData)
-        self._waveform_data_item.setPen(pg.mkPen(color=(100, 100, 100), width=1))
+        self.waveform_data_item.setData(plotLine.xData, plotLine.yData)
+        self.waveform_data_item.setPen(pg.mkPen(color=(100, 100, 100), width=1))
         self.waveformPlot.enableAutoRange(axis=ViewBox.YAxis)
-        self.waveformPlot.addItem(self._waveform_data_item)
+        if initial:
+            # only need to add the item if it wasn't already added
+            self.waveformPlot.addItem(self.waveform_data_item)
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
 
     @pyqtSlot(tuple)
     def updateWaveformRange(self, new_range):
         self.waveformPlot.setXRange(new_range[0], new_range[1], padding=0)
+        # we want to set the title of the plot to reflect the current start time of the view
+        self.start_time = self.get_earliest_start_time() + new_range[0]
+        self.waveformPlot.setTitle(str(self.start_time))
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -521,44 +529,53 @@ class IPBeamformingWidget(QWidget):
         self.backAz_marker.setData([t_nearest], [ba_nearest])
         self.traceV_marker.setData([t_nearest], [tv_nearest])
 
-        mouse_in_plot = False   # mouse_in_plot will be used to decide if the mouse is currently hovering over a plot
+        mouse_point_x = (self.waveformPlot.vb.mapSceneToView(evt)).x()
+        mouse_point_y = (self.waveformPlot.vb.mapSceneToView(evt)).y()
 
-        for idx, my_plot in enumerate(self._plot_list):
+        myRange = self.waveformPlot.viewRange()
+        self.position_label.setPos(myRange[0][1], myRange[1][1])
+        
+        self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_x))
+        self.vline.setPos(mouse_point_x)
+        self.hline.setPos(mouse_point_y)
 
-            # mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
+        #for idx, my_plot in enumerate(self._plot_list):
 
-            # self._vlines[idx].setPos(mouse_point_x)
-            # self._hlines[idx].setPos(mouse_point_y)
-            self._hlines[idx].setVisible(False)
-            self._vlines[idx].setVisible(False)
+        #    mouse_point_y = (my_plot.vb.mapSceneToView(evt)).y()
 
-            if my_plot.sceneBoundingRect().contains(evt):
-                mouse_in_plot = True
+        #    if my_plot.sceneBoundingRect().contains(evt):
+        #        mouse_in_plot = True
+
+        #        if idx == 0:
+        #            self.position_label.setVisible(True)
+        #            self.value_label.setVisible(True)
+       #             self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()
                 # _, sy = vb.viewPixelSize()  # this is to help position the valueLabels below the positionLabels
 
-                # self._position_labels[idx].setVisible(True)
-                # self._position_labels[idx].setPos(myRange[0][1], myRange[1][1])
-                # self._position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
+                # self.position_labels[idx].setVisible(True)
+                # self.position_labels[idx].setPos(myRange[0][1], myRange[1][1])
+                # self.position_labels[idx].setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # self._value_labels[idx].setVisible(True)
-                # self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self._position_labels[idx].boundingRect().height())
+                # self._value_labels[idx].setPos(myRange[0][1], myRange[1][1] - sy * self.position_labels[idx].boundingRect().height())
                 # self._value_labels[idx].setText("{}".format(round(mouse_point_y, 4)))
-            else:
-                self._position_labels[idx].setVisible(False)
-                self._value_labels[idx].setVisible(False)
 
-        if not mouse_in_plot:
+            #else:
+            #    self.position_labels[idx].setVisible(False)
+            #    self._value_labels[idx].setVisible(False)
+
+        #if not mouse_in_plot:
             # clear markers
-            self.fstat_marker.setData([], [])
-            self.backAz_marker.setData([], [])
-            self.traceV_marker.setData([], [])
+        #    self.fstat_marker.setData([], [])
+        #    self.backAz_marker.setData([], [])
+        #    self.traceV_marker.setData([], [])
 
-            self.fstat_marker_label.setText('')
-            self.backAz_marker_label.setText('')
-            self.traceV_marker_label.setText('')
+        #    self.fstat_marker_label.setText('')
+        #    self.backAz_marker_label.setText('')
+        #    self.traceV_marker_label.setText('')
 
     def myMouseClicked(self, evt):
 
@@ -577,9 +594,8 @@ class IPBeamformingWidget(QWidget):
             # if control click on the plot, then draw a Linear Region Item on
             # the plot
             if evt.button() == QtCore.Qt.LeftButton:
-                #self.mouseClick_ControlLeft(evt)
-                pass
-
+                self.mouseClick_ControlLeft(evt)
+            
         elif modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
             # Cntrl+Shift+Click
             pass
@@ -589,6 +605,8 @@ class IPBeamformingWidget(QWidget):
             if evt.button() == QtCore.Qt.LeftButton:
                 # This is the primary way of adding a pick to a plot
                 self.mouseClick_Left(evt)
+            elif evt.button() ==QtCore.Qt.RightButton:
+                self.mouseClick_right(evt)
 
     def mouseClick_Left(self, evt):
         # Go ahead and grab the position of the mouse click and also generate a
@@ -624,6 +642,61 @@ class IPBeamformingWidget(QWidget):
                 t_half_width = (t_range[1] - t_range[0]) / 2.
                 t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
                 self.timeRangeLRI.setRegion(t_region)
+
+    def mouseClick_ControlLeft(self, evt):
+        # TODO: a lot of this is redundant with mouseClick_left, can they be combined in any way?
+
+        # Go ahead and grab the position of the mouse click and also generate a
+        # QPoint out of it for some uses
+        p = QCursor.pos()  # this is the global coordinate of the mouse
+        scenePos = evt.scenePos()
+
+        for my_plot in self._plot_list:
+            # screenGeometry is the global rectangle of the viewbox
+            if my_plot.vb.screenGeometry().contains(p):
+                # get the index of the point nearest to the click
+                mouse_point_x = (my_plot.vb.mapSceneToView(scenePos)).x()
+                nearest_idx = self.nearest_in_t(mouse_point_x)
+
+                # plot the slowness plot for that index
+                self.plot_slowness_at_idx(nearest_idx)
+
+                t_nearest = self._t[nearest_idx]
+                f_nearest = self._f_stats[nearest_idx]
+                ba_nearest = self._back_az[nearest_idx]
+                tv_nearest = self._trace_vel[nearest_idx]
+
+                self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+                self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+                self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+
+                center = self._parent.waveformWidget.stationViewer.get_current_center()
+                # since we are manually adding a detection, the start and end need to be estimated...
+                # lets make them +/- 5% of the window width
+                window_range = self.fstatPlot.getViewBox().viewRange()
+                window_width = window_range[0][1] - window_range[0][0]
+                det_start = -window_width/20.0
+                det_end = window_width/20.0
+
+                det_time = self.get_earliest_start_time() + t_nearest
+                dets = [[det_time, det_start, det_end, ba_nearest, tv_nearest, f_nearest]]
+                self.detectionWidget.new_detections(dets,
+                                    center[0],
+                                    center[1],
+                                    elev=center[2],
+                                    event='',
+                                    element_cnt=len(self.streams),
+                                    method='manual',
+                                    fr=self.bottomSettings.getFreqRange())
+
+                # move the waveform time region to reflect the location of the f_max
+                t_range = self.timeRangeLRI.getRegion()
+                t_half_width = (t_range[1] - t_range[0]) / 2.
+                t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+                self.timeRangeLRI.setRegion(t_region)
+                
+                self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+
                 
 
     def nearest_in_t(self, value):
@@ -637,10 +710,7 @@ class IPBeamformingWidget(QWidget):
     def getProject(self):
         return self._parent.getProject()
 
-    def get_settings(self):
-        return self._parent.settings
-
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
         self._parent.settings.beginGroup('BeamFormingWidget')
         self._parent.settings.setValue("windowSize", self.size())
         self._parent.settings.setValue("windowPos", self.pos())
@@ -649,7 +719,7 @@ class IPBeamformingWidget(QWidget):
         self._parent.settings.setValue("splitterBottomSettings", self.splitterBottom.saveState())
         self._parent.settings.endGroup()
 
-    def restoreSettings(self):
+    def restoreWindowGeometrySettings(self):
         # Restore settings
         self._parent.settings.beginGroup('BeamFormingWidget')
 
@@ -686,11 +756,11 @@ class IPBeamformingWidget(QWidget):
             self.fstatPlot.removeItem(self.threshold_calculating_label)
 
     def runBeamforming(self):
-        if self._streams is None:
+        if self.streams is None:
             self.errorPopup('You should have at least 3 streams loaded to run beamfinder')
             return
 
-        if len(self._streams) < 3:
+        if len(self.streams) < 3:
             self.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
@@ -698,7 +768,7 @@ class IPBeamformingWidget(QWidget):
             self.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
             return
 
-        if self._parent.waveformWidget.stationViewer.getStationCount() != self._streams.count():
+        if self._parent.waveformWidget.stationViewer.getStationCount() != self.streams.count():
             self.errorPopup('The number of stations is not equal to the number of waveforms. Each waveform must have a matching station with Lat./Lon. information in it.')
             return
 
@@ -708,11 +778,12 @@ class IPBeamformingWidget(QWidget):
 
         # clear out previous run
         self.clearResultPlots()
-
         self.fstatPlot.addItem(self.fstat_marker)
         self.fstatPlot.addItem(self.fstat_marker_label, ignoreBounds=True)
+
         self.traceVPlot.addItem(self.traceV_marker)
         self.traceVPlot.addItem(self.traceV_marker_label, ignoreBounds=True)
+
         self.backAzPlot.addItem(self.backAz_marker)
         self.backAzPlot.addItem(self.backAz_marker_label, ignoreBounds=True)
 
@@ -793,7 +864,6 @@ class IPBeamformingWidget(QWidget):
 
         # self.trace_curve.sigPointsClicked.connect(self.pointsClicked)
         self.traceVPlot.addItem(self.trace_curve)
-
         self.backaz_curve = pg.ScatterPlotItem(x=self._t,
                                                y=self._back_az,
                                                pen=None,
@@ -824,7 +894,7 @@ class IPBeamformingWidget(QWidget):
             self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             return
 
-        self.bfWorker = BeamformingWorkerObject(self._streams,
+        self.bfWorker = BeamformingWorkerObject(self.streams,
                                                 self.resultData,
                                                 self.bottomSettings.getNoiseRange(),
                                                 self.bottomSettings.getSignalRange(),
@@ -859,7 +929,8 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
 
         # show the time range
-        self.waveformPlot.addItem(self.timeRangeLRI)
+        if self.timeRangeLRI not in self.waveformPlot.items:
+            self.waveformPlot.addItem(self.timeRangeLRI)
         self.timeRangeLRI.setRegion((self.bottomSettings.getSignalRange()[0], self.bottomSettings.getSignalRange()[0] + self.bottomSettings.getWinLength()))
 
         # disable some buttons
@@ -877,10 +948,11 @@ class IPBeamformingWidget(QWidget):
         self.signal_startBeamforming.emit()
 
     def pointsClicked(self, pdi, points_clicked):
-        print('type(pdi) = {}'.format(type(pdi)))
-        print('type(points_clicked) = {}'.format(type(points_clicked)))
-        for idx, point in enumerate(points_clicked):
-            print('{}: x={}, y={}'.format(idx, point.x(), point.y()))
+        # print('type(pdi) = {}'.format(type(pdi)))
+        # print('type(points_clicked) = {}'.format(type(points_clicked)))
+        # for idx, point in enumerate(points_clicked):
+        #     print('{}: x={}, y={}'.format(idx, point.x(), point.y()))
+        pass
 
     def updateCurves(self):
 
@@ -919,7 +991,8 @@ class IPBeamformingWidget(QWidget):
         min_slowness = np.min(slowness[:, -1])
 
         self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
-        self.slownessPlot.addItem(self.max_line)
+        if self.max_line not in self.slownessPlot.items:
+            self.slownessPlot.addItem(self.max_line)
 
         method = self.bottomSettings.getMethod()
         if method == "music" or method == "capon":
@@ -954,9 +1027,12 @@ class IPBeamformingWidget(QWidget):
         self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
         self.traceV_slowness_marker.setData([self._t[idx]], [self._trace_vel[idx]])
 
-        self.fstatPlot.addItem(self.fstat_slowness_marker)
-        self.backAzPlot.addItem(self.backAz_slowness_marker)
-        self.traceVPlot.addItem(self.traceV_slowness_marker)
+        if self.fstat_slowness_marker not in self.fstatPlot.items:
+            self.fstatPlot.addItem(self.fstat_slowness_marker)
+        if self.backAz_slowness_marker not in self.backAzPlot.items:
+            self.backAzPlot.addItem(self.backAz_slowness_marker)
+        if self.traceV_slowness_marker not in self.traceVPlot.items:
+            self.traceVPlot.addItem(self.traceV_slowness_marker)
 
         pg.setConfigOptions(antialias=False)
 
@@ -1020,7 +1096,7 @@ class IPBeamformingWidget(QWidget):
             num_times.append(np.datetime64(self.get_earliest_start_time() + t))
         num_times = np.asarray(num_times)
 
-        channel_count = len(self._streams)
+        channel_count = len(self.streams)
         det_window_length = 300
         det_threshold = 0.99
         tb_prod = 400
@@ -1060,7 +1136,7 @@ class IPBeamformingWidget(QWidget):
                                             center[1],
                                             elev=center[2],
                                             event='',
-                                            element_cnt=len(self._streams),
+                                            element_cnt=len(self.streams),
                                             method=self.bottomSettings.getMethod(),
                                             fr=self.bottomSettings.getFreqRange())
         
@@ -1069,16 +1145,12 @@ class IPBeamformingWidget(QWidget):
         f_max_idx = self._f_stats.index(f_max)
         f_max_time = self._t[f_max_idx]
 
-        _back_az_at_max = self._back_az[f_max_idx]
-        _trace_vel_at_max = self._trace_vel[f_max_idx]
-
         # make the slowness plot show the data at the time of fstat max
         self.plot_slowness_at_idx(f_max_idx)
 
         # make the projection plot show the data at the time of fstat max
         if self._max_projection_data is not None:
             self.projectionCurve.setData(self._max_projection_data)
-            self.projectionPlot.addItem(self.projectionCurve)
 
         # move the waveform time region to reflect the location of the f_max
         t_range = self.timeRangeLRI.getRegion()
@@ -1087,6 +1159,47 @@ class IPBeamformingWidget(QWidget):
         self.timeRangeLRI.setRegion(t_region)
 
         self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+
+    def exportResults(self):
+        if len(self._t) == 0:
+            self.errorPopup("There is no data to export", "Warning")
+            return  # nothing to do
+
+        project = self.getProject()
+        if project is not None:
+            results_path = project.get_beamformResultsPath()
+        else:
+            results_path = Path.home()
+
+        earliest_start_time = self.get_earliest_start_time()
+                
+
+        if self.save_results_dialog.exec_(results_path):
+            filename = self.save_results_dialog.getFilename()
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(["Datetime", "Fstat", "TraveV", "BackAz"])
+                for idx, t in enumerate(self._t):
+                    writer.writerow([earliest_start_time + t, self._f_stats[idx], self._trace_vel[idx], self._back_az[idx]])
+                    
+            if self.save_results_dialog.wavefileIsChecked():
+                # here we want to save the dqta that is in the visible portion of the waveform chart at the top of the beamfinder window
+                wavefilename = self.save_results_dialog.getWaveFilename()
+                with open(wavefilename, 'w', newline='') as wavecvsfile:
+                    writer = csv.writer(wavecvsfile, delimiter=',')
+                    writer.writerow(["Datetime", "Waveform"])
+                    
+                    plot_range = self.waveformPlot.viewRange()
+                    plot_xrange = plot_range[0]
+                    xdata, ydata = self.waveform_data_item.getData()
+                    
+                    for idx, x in enumerate(xdata):
+                        if  plot_xrange[0] <= x <= plot_xrange[1]:
+                            writer.writerow([earliest_start_time + x, ydata[idx]])
+        else:
+            pass
+            
+        
 
     def clearResultPlots(self):
         self.fstatPlot.clear()
@@ -1105,19 +1218,19 @@ class IPBeamformingWidget(QWidget):
 
         self.slownessPlot.clear()
         self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
-
         self.spi.clear()
 
         self._t.clear()
 
         # clearing removes the crosshairs, so lets put them back
-        self.addCrosshairs()
+        #self.addCrosshairs()
 
         self.slowness_time_label.setText('t = ')
         self.slowness_backAz_label.setText('Back Azimuth (deg) = ')
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = ')
 
     def clearWaveformPlot(self):
+        self.waveform_data_item = None
         self.waveformPlot.clear()
         self.waveformPlot.setYRange(0, 1, padding=0)
         self.clearResultPlots()     # it doesn't make sense to have results and no waveform
@@ -1222,10 +1335,10 @@ class BeamformingWorkerObject(QtCore.QObject):
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 
-        if location_count != len(self.streams):
-            self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
-            self.signal_reset_beamformer.emit() # currently this will just reset the buttons
-            return
+        #if location_count != len(self.streams):
+        #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
+        #    self.signal_reset_beamformer.emit() # currently this will just reset the buttons
+        #    return
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
@@ -1342,9 +1455,7 @@ class BeamformingWorkerObject(QtCore.QObject):
             # signal slowness plot to update
             self.signal_slownessUpdated.emit(np.c_[slowness, avg_beam_power])
 
-
-
-# the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
+    # the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
     # as a result we must make this a static method and pass all variables through the call instead of using the
     # standard "self.x" way.
 

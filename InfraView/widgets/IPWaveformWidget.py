@@ -51,18 +51,19 @@ class IPWaveformWidget(QWidget):
         self.spectraWidget = IPPSDWidget.IPPSDWidget(self)
 
         self.plotViewer = IPPlotViewer.IPPlotViewer(self, self.filterSettingsWidget)
-        
+
         self.lh_splitter = QSplitter(Qt.Vertical)
+        self.lh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.lh_splitter.addWidget(self.plotViewer)
         self.lh_splitter.addWidget(self.info_tabs)
 
         self.rh_splitter = QSplitter(Qt.Vertical)
-        self.rh_splitter.setStyleSheet("QSplitter::handle{ background-color: #444444}")
-        self.rh_splitter.setHandleWidth(2)
+        self.rh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.rh_splitter.addWidget(self.spectraWidget)
         self.rh_splitter.addWidget(self.filterSettingsWidget)
 
         self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
         self.main_splitter.addWidget(self.lh_splitter)
         self.main_splitter.addWidget(self.rh_splitter)
 
@@ -72,9 +73,6 @@ class IPWaveformWidget(QWidget):
         self.setLayout(main_layout)
 
         self.connect_signals_and_slots()
-
-        
-
 
     def connect_signals_and_slots(self):
         self.filterSettingsWidget.sig_filter_changed.connect(self.update_filtered_data)
@@ -112,13 +110,7 @@ class IPWaveformWidget(QWidget):
         else:
             self._sts += newTraces
 
-        if newInventory is None:
-            return
-
-        if self._inv is None:
-            self._inv = newInventory
-        else:
-            self._inv += newInventory
+        self.update_inventory(newInventory)
 
         for trace in self._sts:
             trace.data = trace.data - np.mean(trace.data)
@@ -127,16 +119,12 @@ class IPWaveformWidget(QWidget):
         # it's possible, if the open failed, that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
         if self._sts is not None:
-
-            #TODO...is there a better way of doing this?
+            # TODO...is there a better way of doing this?
             self._parent.beamformingWidget.setStreams(self._sts)
-
             self.stationViewer.setInventory(self._inv)
             self.statsViewer.setStats(self._sts)
-            # self.locationWidget.update_station_markers(self._inv)
 
             self.update_streams(self._sts)
-            self.update_inventory(self._inv)
 
             self._parent.setStatus("Ready", 5000)
         else:
@@ -150,6 +138,18 @@ class IPWaveformWidget(QWidget):
         self.stationViewer.setInventory(self._inv)
 
         self.appendTraces(newTraces, newInventory)
+
+    @pyqtSlot(Inventory)
+    def update_inventory(self, new_inventory):
+        if self._inv is None:
+            self._inv = new_inventory
+        else:
+            self._inv += new_inventory
+        self.stationViewer.setInventory(self._inv)
+
+    def remove_from_inventory(self, net, sta, loc, cha):
+        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
+        self.update_inventory(new_inventory)
 
     def get_streams(self):
         return self._sts
@@ -182,22 +182,6 @@ class IPWaveformWidget(QWidget):
                                     self.filterSettingsWidget.get_filter_display_settings())
 
         self.statsViewer.setStats(new_stream)
-
-    @pyqtSlot(Inventory)
-    def update_inventory(self, new_inventory):
-        if self._inv is None:
-            self._inv = new_inventory
-        else:
-            self._inv += new_inventory
-        self.stationViewer.setInventory(self._inv)
-
-    def remove_from_inventory(self, net, sta, loc, cha):
-        #print("removing! {}.{}.{}.{}".format(net,sta,loc,cha))
-        #new_inventory = self._inv.remove(network=net, station=sta, location=loc, channel=cha)
-        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
-        #print("updating!")
-        self.update_inventory(new_inventory)
-        #print("removed!")
 
     def debug_trace(self):  # for debugging, you have to call pyqtRemoveInputHook before set_trace()
         from PyQt5.QtCore import pyqtRemoveInputHook
@@ -274,7 +258,7 @@ class IPWaveformWidget(QWidget):
 
         return filtered_stream
 
-    def saveSettings(self):
+    def saveWindowGeometrySettings(self):
         self._parent.settings.beginGroup('WaveformWidget')
         self._parent.settings.setValue("main_splitterSettings", self.main_splitter.saveState())
         self._parent.settings.setValue("rh_splitterSettings", self.rh_splitter.saveState())
@@ -282,7 +266,7 @@ class IPWaveformWidget(QWidget):
         self._parent.settings.setValue("plotviewer_splitterSettings", self.plotViewer.saveState())
         self._parent.settings.endGroup()
 
-    def restoreSettings(self):
+    def restoreWindowGeometrySettings(self):
         # Restore settings
         self._parent.settings.beginGroup('WaveformWidget')
 

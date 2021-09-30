@@ -58,13 +58,7 @@ class IPPlotWidget(pg.PlotItem):
     def __init__(self, mode='plain', y_label_format=None, pickable=False):
         '''
         mode can currently be 'Waveform' or 'PSD' or 'Plain'
-
-        label_format can be 'scientific' or nonscientific
         '''
-        # if y_label_format == 'nonscientific':
-        #     super().__init__(axisItems={'left': NonScientific(orientation='left')}, viewbox=IPCustomViewBox())
-        # else:
-        #     super().__init__(viewBox=IPCustomViewBox())
 
         if y_label_format == 'nonscientific':
             super().__init__(axisItems={'left': NonScientific(orientation='left')})
@@ -177,7 +171,7 @@ class IPLinearRegionItem_Noise(LinearRegionItem):
     def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
         super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(200, 100, 100, 50))
+        brush = QtGui.QBrush(QtGui.QColor(255, 71, 71, 50))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
@@ -204,7 +198,7 @@ class IPLinearRegionItem_Signal(LinearRegionItem):
     def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
         super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(176, 224, 230, 100))
+        brush = QtGui.QBrush(QtGui.QColor(80, 159, 250, 100))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
@@ -231,7 +225,7 @@ class IPFreqLinearRegionItem(LinearRegionItem):
     def __init__(self, values=[np.log10(0.5), np.log10(5)], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
         super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 50))
+        brush = QtGui.QBrush(QtGui.QColor(200, 200, 200, 50))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):

@@ -34,8 +34,8 @@ class IPFDSNWidget(QWidget):
     sigTracesReplaced = pyqtSignal(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     sigTracesAppended = pyqtSignal(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
 
-    _st = None
-    _inv = None
+    stream = None
+    inventory = None
 
     def __init__(self, parent=None):
         super().__init__()
@@ -251,13 +251,13 @@ class IPFDSNWidget(QWidget):
 
     def onClicked_replace(self):
         self.downloadWaveforms()
-        if self._st is not None and self._inv is not None:
-            self.sigTracesReplaced.emit(self._st, self._inv)
+        if self.stream is not None and self.inventory is not None:
+            self.sigTracesReplaced.emit(self.stream, self.inventory)
 
     def onClicked_append(self):
         self.downloadWaveforms()
-        if self._st is not None and self._inv is not None:
-            self.sigTracesAppended.emit(self._st, self._inv)
+        if self.stream is not None and self.inventory is not None:
+            self.sigTracesAppended.emit(self.stream, self.inventory)
 
     # get waveform button was clicked
     def downloadWaveforms(self):
@@ -310,7 +310,7 @@ class IPFDSNWidget(QWidget):
 
         # self.parent.setStatus('downloading Waveforms...')
         try:
-            self._st = client.get_waveforms(network, station, location, channel, startTime, endTime)
+            self.stream = client.get_waveforms(network, station, location, channel, startTime, endTime)
 
         except Exception:
             # self.parent.setStatus('')
@@ -323,16 +323,16 @@ class IPFDSNWidget(QWidget):
             msg.exec_()
             return
 
-        for trace in self._st:
+        for trace in self.stream:
             trace.data = trace.data - np.mean(trace.data)
-        self._st.merge(fill_value=0)
+        self.stream.merge(fill_value=0)
 
         # self.parent.setStatus('downloading Inventory...')
         # self.parent.consoleBox.append( 'Downloaded waveforms from '+service )
 
         # Now get the corresponding stations
         try:
-            self._inv = client.get_stations(network=network, station=station)
+            self.inventory = client.get_stations(network=network, station=station)
         except:
             # self.parent.setStatus('')
             msg = QMessageBox()
@@ -348,17 +348,17 @@ class IPFDSNWidget(QWidget):
         # self.parent.setStatus('Finished...', 3000)
 
     def getStreams(self):
-        return self._st
+        return self.stream
 
     def getInventory(self):
-        return self._inv
+        return self.inventory
 
     def getService(self):
         return self.cb.currentText()
 
     def clearWaveforms(self):
-        self._st = None
-        self._inv = None
+        self.stream = None
+        self.inventory = None
 
     def clear(self):
 

@@ -113,7 +113,7 @@ class IPDetectionWidget(QWidget):
         """ SLOT:
 
         Data comes in as either a list of IPPickItems or dataframes, but for the tableview, we need a pandas dataframe
-        so first convert the list to a menu list, then to a dataframe (maybe there's a more elegant way to do this?)
+        so first convert the list to a menu list, then to a dataframe (there must be a more elegant way to do this?)
         """
 
         if isinstance(data, list):
@@ -180,7 +180,7 @@ class IPDetectionWidget(QWidget):
                 if not duplicate:
                     # append the new detection
                     self._detections.append(new_detection)
-                    
+            
             self.signal_detections_changed.emit(self._detections)
             return True
         else:
@@ -276,7 +276,7 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self._parent.get_settings().setValue("last_detectionfile_directory", path)
+                self._parent.settings.setValue("last_detectionfile_directory", path)
                 fileText = 'savefile: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty display
@@ -309,7 +309,7 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self._parent.get_settings().setValue("last_detectionfile_directory", path)
+                self._parent.settings.setValue("last_detectionfile_directory", path)
                 fileText = 'file: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty displayß
@@ -322,7 +322,7 @@ class IPDetectionWidget(QWidget):
         if self._parent.getProject() is None:
             # force a new filename...
             default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-            previous_directory = self._parent.get_settings().value("last_detectionfile_directory", default_data_dir)
+            previous_directory = self._parent.settings.value("last_detectionfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
             previous_directory = str(self._parent.getProject().get_detectionsPath())
@@ -333,7 +333,7 @@ class IPDetectionWidget(QWidget):
             return
 
         with open(self._openfile, 'r') as infile:
-            self._parent.get_settings().setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
+            self._parent.settings.setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
             try:
                 newdata = json.load(infile)
             except json.decoder.JSONDecodeError:

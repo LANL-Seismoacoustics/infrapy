@@ -20,7 +20,7 @@ from InfraView.widgets import IPStationMatchDialog
 class IPStationView(QWidget):
 
     # class to ease the process of displaying the obspy inventory list
-    __savefile = None
+    savefile = None
 
     inventory_changed = pyqtSignal(obspy.core.inventory.inventory.Inventory)
     inventory_cleared = pyqtSignal()
@@ -40,7 +40,7 @@ class IPStationView(QWidget):
         self.buildIcons()
 
         self.station_TabWidget = QTabWidget()
-        self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.clearButton = QPushButton(' Clear Stations')
         self.clearButton.setIcon(self.clearIcon)
@@ -99,8 +99,6 @@ class IPStationView(QWidget):
             self.clear()
             return
 
-        self.inventory_changed.emit(_inventory)
-
         tab_names = []
 
         self.station_TabWidget.clear()
@@ -111,7 +109,7 @@ class IPStationView(QWidget):
                 names = []
                 if len(station.channels) > 0:
                     for channel in station.channels:
-                        name = network.code + '.' + station.code + '.' + channel.location_code
+                        name = network.code + '.' + station.code + '.' + channel.location_code + '.' + channel.code
 
                         if name not in tab_names:
                             # Ok, need at least one, so lets assemble the interesting station info for display
@@ -145,36 +143,38 @@ class IPStationView(QWidget):
                             self.station_TabWidget.addTab(newStationEdit, name)
                 else:
                     name = network.code + '.' + station.code
+                    for channel in station.channels:
+                        if name not in tab_names:
+                            # Ok, need at least one, so lets assemble the interesting station info for display
+                            newStationEdit = QTextEdit()
+                            contents = station.get_contents()
+                            ret = ("<b>Network Code:</b> {network_code} <br/>"
+                                "<b>Station Code:</b> {station_code} <br/>"
+                                "<b>Location Code:</b> {location_code} </br>"
+                                "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
+                                "<Available Dates:</b> {start_date} - {end_date}<br/>"
+                                "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
+                                "<b>Latitude:</b> {lat:.8f}<br/>"
+                                "<b>Longitude:</b> {lng:.8f}<br/>"
+                                "<b>Elevation:</b> {elevation:.2f} m<br/>")
+                            ret = ret.format(
+                                network_code=network.code,
+                                station_name=contents["stations"][0],
+                                station_code=station.code,
+                                location_code='',
+                                selected=station.selected_number_of_channels,
+                                total=station.total_number_of_channels,
+                                start_date=str(station.start_date),
+                                end_date=str(station.end_date) if station.end_date else "",
+                                restricted=station.restricted_status,
+                                lat=station.latitude, lng=station.longitude, elevation=station.elevation,
+                                alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
+                                historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
 
-                    if name not in tab_names:
-                        # Ok, need at least one, so lets assemble the interesting station info for display
-                        newStationEdit = QTextEdit()
-                        contents = station.get_contents()
-                        ret = ("<b>Network Code:</b> {network_code} <br/>"
-                               "<b>Station Code:</b> {station_code} <br/>"
-                               "<b>Location Code:</b> {location_code} </br>"
-                               "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
-                               "<Available Dates:</b> {start_date} - {end_date}<br/>"
-                               "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                               "<b>Latitude:</b> {lat:.8f}<br/>"
-                               "<b>Longitude:</b> {lng:.8f}<br/>"
-                               "<b>Elevation:</b> {elevation:.2f} m<br/>")
-                        ret = ret.format(
-                            network_code=network.code,
-                            station_name=contents["stations"][0],
-                            station_code=station.code,
-                            location_code='',
-                            selected=station.selected_number_of_channels,
-                            total=station.total_number_of_channels,
-                            start_date=str(station.start_date),
-                            end_date=str(station.end_date) if station.end_date else "",
-                            restricted=station.restricted_status,
-                            lat=station.latitude, lng=station.longitude, elevation=station.elevation,
-                            alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
-                            historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
+                            newStationEdit.setHtml(ret)
+                            self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code + '..' + channel.code)
 
-                        newStationEdit.setHtml(ret)
-                        self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code)
+        self.inventory_changed.emit(_inventory)
         return
 
     def getStationCount(self):
@@ -205,11 +205,11 @@ class IPStationView(QWidget):
             return
         # if there is no current filename, prompt for one...
         # TODO: if there is an open project, default to that
-        if self.__savefile is None:
+        if self.savefile is None:
             self.saveStationsAs()
         else:
-            inventory.write(self.__savefile[0], format='stationxml', validate=True)
-            path = os.path.dirname(self.__savefile[0])
+            inventory.write(self.savefile[0], format='stationxml', validate=True)
+            path = os.path.dirname(self.savefile[0])
             self.__parent.settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
@@ -225,11 +225,11 @@ class IPStationView(QWidget):
             # There is an open project, so make the default save location correspond to what the project wants
             previousDirectory = str(self.__parent.get_project().get_stationsPath())
 
-        self.__savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
+        self.savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
 
-        if self.__savefile[0]:
-            self.__parent._inv.write(self.__savefile[0], format='stationxml', validate=True)
-            path = os.path.dirname(self.__savefile[0])
+        if self.savefile[0]:
+            self.__parent._inv.write(self.savefile[0], format='stationxml', validate=True)
+            path = os.path.dirname(self.savefile[0])
             self.__parent.settings.setValue("last_stationfile_directory", path)
 
     def loadStations(self):
@@ -257,7 +257,6 @@ class IPStationView(QWidget):
 
             self.setInventory(self.__parent._inv)
 
-            self.inventory_changed.emit(self.__parent._inv)
 
     def get_current_center(self):
         # this method will calculate the center of the current inventory and will return a [lat,lon]

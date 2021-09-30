@@ -53,7 +53,6 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
             M x 2 matrix of slowness vectors
 
         """
-
     # define common time samples
     t0 = max(np.datetime64(tr.stats.starttime) + np.timedelta64(int(tr.times()[0] * 1e3), 'ms') for tr in stream)
     t1 = min(np.datetime64(tr.stats.endtime) + np.timedelta64(int(tr.times()[0] * 1e3), 'ms') for tr in stream)
@@ -86,7 +85,7 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
         # Or using 'Coordinate' from stats
         # ...
     else:
-        for m in range(1, len(stream)):
+        for m in range(0, len(stream)):
             temp = wgs84_proj.inv(latlon[m][1], latlon[m][0], latlon[0][1], latlon[0][0])
             dxdy[m] = np.array((temp[2] * np.sin(np.radians(temp[0])), temp[2] * np.cos(np.radians(temp[0]))))
 
