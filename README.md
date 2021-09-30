@@ -59,6 +59,17 @@ how to activate and deactivate the new environment:
 
         >> conda deactivate
         
+## Updating
+Infrapy is in continued development.  Features are added, bugs are fixed, and documentation is improved fairly continuously. It's good practice to pull the latest updates on a regular basis.  To do this in a terminal, simply navigate into the infrapy directory and run:
+    
+    >> git pull
+
+Occasionally, this will cause errors due to some package dependancies changing.  If that happens, try updating your conda environment via:
+
+    >> conda env update --name infrapy_env --file infrapy_env.yml --prune
+    
+For your convenience, the above commands are included in a bash script in the infrapy root directory called update_infrapy.sh which will execute the pull and the conda update in that order.
+        
 ## Tutorials
 
 A series of Jupyter Notebook tutorials are located in /tutorials.  These tutorials can be used to gain familiarity with both Infrapy scripting and command line interfact (CLI).
@@ -71,12 +82,6 @@ The current version of Pisces no longer installs the e1 compression module by de
     >> pip install e1
     
 At this time, the e1 module is not supported on Windows.  Let us know if you really need this, and we can work towards getting that fixed.
-        
-## Updating
-
-Infrapy is in continued development.  Features are added, bugs are fixed, and documentation is improved fairly continuously. It's good practice to pull the latest updates on a regular basis.  To do this in a terminal, simply navigate into the infrapy directory and run:
-
-    >> git pull
  
 ## Testing
 
