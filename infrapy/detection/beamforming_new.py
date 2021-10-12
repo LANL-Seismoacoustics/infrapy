@@ -21,6 +21,8 @@ from scipy.optimize import minimize_scalar, root
 
 from pyproj import Geod
 
+from ..utils import prog_bar
+
 wgs84_proj = Geod(ellps='sphere')
 
 # ####################### #
@@ -864,7 +866,106 @@ def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=
 
     return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_p_val) * (kde_peak / fstat_peak)
 
-def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
+
+# ###################### #
+#    Combined Methods    #
+#         For CLI        #
+# ###################### #
+def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays, back_az_vals, trc_vel_vals, prog_n):
+    X, S, f = fft_array_data(x, t, window, sub_window_len=sub_window_length)
+    beam_power = run(X, S, f, geom, delays, freq_band, method=method, normalize_beam=True)
+    prog_bar.increment(prog_n)
+    return find_peaks(beam_power, back_az_vals, trc_vel_vals)
+
+
+def beam_window_wrapper(args):
+    return beam_window(*args)
+
+
+def run_fk(stream, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, pl):
+    """Run the beamforming (fk) analysis on a stream with various parameter specifications
+
+        Convert a stream to an array data set on a consistent set of time samples
+        and then run beamforming for the data and return the analysis window times 
+        with peak f-stat and direction of arrival (DOA) information (back azimuth
+        and trace velocity)
+
+        Note: following Laslo's work, the frequency domain Fisher ratio can be computed as:
+            F[nf] = abs(sig_est)**2 / np.mean(np.abs(residual), axis=1)**2 * (X.shape[1] - 1)
+
+        Parameters
+        ----------
+        stream: obspy.core.Stream
+            Obspy stream containing array data
+        freq_band: 1darray
+            Iterable with minimum and maximum frequencies for analysis
+        window_length: float
+            Analysis window length in seconds
+        sub_window_length: float
+            Analysis sub-window length used in computing the covariance matrix for analysis of persistent signals
+        window_step: float
+            Time step between adjacent analysis windows
+        method: string
+            Beamforming method (options are "bartlett", "capon", "GLS", "bartlett_covar", and "music")
+        back_az_vals: 1darray
+            List of back azimuth values in the slowness grid
+        trc_vel_vals: 1darray
+            List of trace velocity values in the slowness grid
+        pl: multiprocessing.Pool
+            Multiprocessing pool for simulatenous analysis of windows
+        cpu_cnt: integer
+            Number of CPUs to utilize in the multiprocessing pool
+
+
+        Returns:
+        ----------
+        sig_estimate : 1darray
+            Extracted frequency domain signal along the beam
+        residual : 2darray
+            Residual across the array once beamed signal is extracted
+        """
+
+    print('\n' + "Running fk analysis..." + '\n\t' + "Progress: ", end = '')
+
+    x, t, t0, geom = stream_to_array_data(stream)
+    M, N = x.shape
+
+    # define slownes and delays from array geomry
+    slowness = build_slowness(back_az_vals, trc_vel_vals)
+    delays = compute_delays(geom, slowness)
+
+    prog_bar_len, win_cnt = 50, int((t[-1] - t[0]) / window_step) - 1
+    prog_bar.prep(prog_bar_len)
+
+    beam_times = []
+    if pl:
+        args = []
+        for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
+            if window_start + window_length > t[-1]:
+                break
+
+            beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
+            args = args + [[x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, prog_bar.set_step(win_n, win_cnt, prog_bar_len)]]
+        beam_peaks = np.array(pl.map(beam_window_wrapper, args)).reshape(len(beam_times), 3)
+    else:
+        beam_peaks = []
+        for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
+            if window_start + window_length > t[-1]:
+                break
+            
+            peaks = beam_window(x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, prog_bar.set_step(win_n, win_cnt, prog_bar_len))
+            beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
+            beam_peaks = beam_peaks + [[peaks[0][0], peaks[0][1], peaks[0][2]]]
+        beam_peaks = np.array(beam_peaks)
+
+    prog_bar.close()
+    beam_times = np.array(beam_times)[:, 0]
+    beam_peaks[:, 2] = beam_peaks[:, 2] / (1.0 - beam_peaks[:, 2]) * (M - 1)
+
+    return beam_times, beam_peaks
+
+
+def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -875,7 +976,7 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val
         ----------
         times: 1darray
             Times of beamforming results as numpy datetime64's
-        beam_results: 2darray
+        beam_peaks: 2darray
             Beamforming results consisting of back azimuth, trace velocity, and
             f-value at each time step. This is a 2D array with dimensions (len(times), 3), 
             where the first column has back azimuth values, the second has trace velocity 
@@ -906,12 +1007,10 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val
             List of identified detections including detection time, relative start
             and end times of the detection, back azimuth, trace velocity, and f-stat.
         """
-    
-    print("Detecting signals in beamforming results...")
 
-    back_az_vals = beam_results[:, 0]
-    trc_vel_vals = beam_results[:, 1]
-    fstat_vals = beam_results[:, 2]
+    back_az_vals = beam_peaks[:, 0]
+    trc_vel_vals = beam_peaks[:, 1]
+    fstat_vals = beam_peaks[:, 2]
 
     det_mask = np.zeros_like(fstat_vals, dtype=bool)
     thresh_vals = np.empty_like(fstat_vals)
@@ -986,3 +1085,8 @@ def detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val
         return dets, thresh_vals
     else:
         return dets
+
+
+def detect_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
+    return run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq, back_az_lim, fixed_thresh, return_thresh)
+

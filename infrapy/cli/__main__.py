@@ -6,17 +6,24 @@ import imp
 import click
 
 import configparser as cnfg
+import numpy as np
 
 from obspy.core import read as obspy_read
 
+from multiprocessing import Pool
+
+
+from ..detection import beamforming_new as fkd
+from ..association import hjl
+from ..location import bisl
 
 # Set up default configuation
 default_config = cnfg.ConfigParser()
 default_config.read(imp.find_module('infrapy')[1] + '/resources/default.config')
 
-def set_param(user_config, section, param, cli, format='float'):   
-    if cli:
-        return cli
+def set_param(user_config, section, param, cli_val, format='float'):   
+    if cli_val is not None:
+        return cli_val
     elif user_config is not None:
         try:
             if user_config[section][param] == "None":
@@ -31,19 +38,25 @@ def set_param(user_config, section, param, cli, format='float'):
                 else:
                     return user_config[section][param]
         except:
-            if default_config[section][param] == "None":
-                return None
-            else:
-                if format == 'float':
-                    return float(default_config[section][param])
-                elif format == 'int':
-                    return int(default_config[section][param])
-                elif format == 'bool':
-                    return default_config[section].getboolean(param)
+            try:
+                if default_config[section][param] == "None":
+                    return None
                 else:
-                    return user_config[section][param]
+                    if format == 'float':
+                        return float(default_config[section][param])
+                    elif format == 'int':
+                        return int(default_config[section][param])
+                    elif format == 'bool':
+                        return default_config[section].getboolean(param)
+                    else:
+                        return user_config[section][param]
+            except:
+                return None
     else:
-        return default_config[section][param]
+        try:
+            return default_config[section][param]
+        except:
+            return None
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
@@ -56,10 +69,23 @@ def main(args=None):
     pass
 
 
-
 @main.command('run_fk', short_help="Run beamforming methods on waveform data")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--db-url", help="Database URL for waveform data files", default=None)
+@click.option("--db-site", help="Database site table for waveform data files", default=None)
+@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
+@click.option("--db-origin", help="Database origin table for waveform data files", default=None)
+
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+
+@click.option("--local-fk-out", help="Local beamforming (fk) data files", default=None)
 @click.option("--freq-min", help="Minimum frequency (default: " + default_config['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + default_config['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--back-az-min", help="Minimum back azimuth (default: " + default_config['FK']['back_az_min'] + " [deg])", default=None, type=float)
@@ -69,8 +95,8 @@ def main(args=None):
 @click.option("--trace-vel-max", help="Maximum trace velocity (default: " + default_config['FK']['trace_vel_max'] + " [m/s])", default=None, type=float)
 @click.option("--trace-vel-step", help="Trace velocity resolution (default: " + default_config['FK']['trace_vel_step'] + " [m/s])", default=None, type=float)
 @click.option("--method", help="Beamforming method (default: " + default_config['FK']['method'] + ")", default=None)
-@click.option("--signal_start", help="Analysis window start (default: 0 [s])", default=None, type=float)
-@click.option("--signal_end", help="Analysis window end (default: end of data [s])", default=None, type=float)
+@click.option("--signal_start", help="Start of analysis window (rel. starttime [s])", default=None, type=float)
+@click.option("--signal_end", help="End of analysis window (rel. starttime [s])", default=None, type=float)
 @click.option("--noise_start", help="Start of noise sample (see GLS algorithm notes)", default=None, type=float)
 @click.option("--noise_end", help="End of noise sample (see GLS algorithm notes)", default=None, type=float)
 @click.option("--window_len", help="Analysis window length (default: " + default_config['FK']['window_len'] + " [s])", default=None, type=float)
@@ -78,10 +104,11 @@ def main(args=None):
 @click.option("--window_step", help="Step between analysis windows (default: " + default_config['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--multithread", help="Use multithreading (default: " + default_config['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_fk(config_file, local_wvfrms, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, \
-    method, signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
+def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
+    local_fk_out, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
+    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
     '''
-    Run the fk beamforming methods
+    Run fk beamforming methods
 
     More detailed description...
     '''
@@ -102,18 +129,56 @@ def run_fk(config_file, local_wvfrms, freq_min, freq_max, back_az_min, back_az_m
     else:
         user_config = None
 
-    # Data IO parameters
-    click.echo('\n' + "Data summary:")
-    click.echo("  NOT SET UP YET...")
+    # Database and data IO parameters   
+    db_url = set_param(user_config, 'database', 'url', db_url, 'string')
+    db_site = set_param(user_config, 'database', 'site', db_site, 'string')
+    db_wfdisc = set_param(user_config, 'database', 'wfdisc', db_wfdisc, 'string')
+    db_origin = set_param(user_config, 'database', 'origin', db_origin, 'string')
 
-    # use local ingestion for initial testing
-
+    # Waveform IO parameters
     local_wvfrms = set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    print("local_wvfrms:", local_wvfrms)
+    fdsn = set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')
+   
+    network = set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
+    station = set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
+    location = set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
+    channel = set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    starttime = set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
+    endtime = set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
-    st = obspy_read(local_wvfrms)
-    print(st[0].stats)
+    # Result IO
+    local_fk_out = set_param(user_config, 'DETECTION IO', 'local_fk_out', local_fk_out, 'string')
 
+
+    click.echo('\n' + "Data parameters:")
+    if local_wvfrms is not None:
+        click.echo("  local_wvfrms: " + str(local_wvfrms))
+    elif fdsn is not None:
+        click.echo("  fdsn: " + str(fdsn))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    elif db_url is not None:
+        click.echo("  db_url: " + str(db_url))
+        click.echo("  db_site: " + str(db_site))
+        click.echo("  db_wfdisc: " + str(db_wfdisc))
+        click.echo("  db_origin: " + str(db_origin))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    else:
+        click.echo("Invalid data parameters.  Config file requires 1 of:")
+        click.echo("  local_wvfrms")
+        click.echo("  fdsn")
+        click.echo("  db_url (and other database info)")
+        
+    click.echo("  local_fk_out: " + str(local_fk_out))
 
     # Algorithm parameters
     freq_min = set_param(user_config, 'FK', 'freq_min', freq_min, 'float')
@@ -135,7 +200,7 @@ def run_fk(config_file, local_wvfrms, freq_min, freq_max, back_az_min, back_az_m
     multithread = set_param(user_config, 'FK', 'multithread', multithread, 'bool')
     cpu_cnt = set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
 
-    click.echo('\n' + "Parameter summary:")
+    click.echo('\n' + "Algorithm parameters:")
     click.echo("  freq_min: " + str(freq_min))
     click.echo("  freq_max: " + str(freq_max))
     click.echo("  back_az_min: " + str(back_az_min))
@@ -144,6 +209,7 @@ def run_fk(config_file, local_wvfrms, freq_min, freq_max, back_az_min, back_az_m
     click.echo("  trace_vel_min: " + str(trace_vel_min))
     click.echo("  trace_vel_max: " + str(trace_vel_max))
     click.echo("  trace_vel_step: " + str(trace_vel_step))
+    click.echo("  method: " + str(method))
     click.echo("  signal_start: " + str(signal_start))
     click.echo("  signal_end: " + str(signal_end))
     if method == "GLS":
@@ -153,23 +219,96 @@ def run_fk(config_file, local_wvfrms, freq_min, freq_max, back_az_min, back_az_m
     click.echo("  sub_window_len: " + str(sub_window_len))
     click.echo("  window_step: " + str(window_step))
     click.echo("  multithread: " + str(multithread))
-    if multithread:
+    if multithread or cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
+        pl = Pool(cpu_cnt)
+    else:
+        pl = None
 
-    print('\n' + "Run fk...")
+    # Check data option and populate obspy Stream
+    # Note: this might become a separate function that returns stream and latlon info
+    if local_wvfrms is not None:
+        print('\n' + "Loading local data files...")
+        stream = obspy_read(local_wvfrms)
+    elif fdsn is not None:
+        print('\n' + "FDSN methods not set up yet...")
+
+        # client = Client(service)
+        # stream = client.get_waveforms(network, station, location, channel, startTime, endTime)
+        # inventory = client.get_stations(network=network, station=station)
+        
+        return 0
+    elif db_url is not None:
+        print('\n' + "Database methods not set up yet...")
+        return 0
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.station + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    # Define DOA values
+    back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
+    trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
+
+    # Trim streams if necessary
+    # if signal_start is not None:
+    #  stream.trim()  
+
+    # run fk analysis
+    beam_times, beam_peaks = fkd.run_fk(stream, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
 
     print('\n' + "Write results to specified output..." + '\n')
+    if local_fk_out is not None:
+        np.save(local_fk_out + ".fk_times", beam_times)
+        np.save(local_fk_out + ".fk_peaks", beam_peaks)
+
+        # need to add a [...].fk_meta.txt output that summarizes run parameters
+        file_out = open(local_fk_out + ".fk_meta.txt", 'w')
+        print("InfraPy Beamforming (fk) Analysis", file=file_out)
+        print("---------------------------------" + '\n', file=file_out)
+
+        print('\n' + "Data summary:", file=file_out)
+        for tr in stream:
+            print(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.station + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime), file=file_out)
+
+        print('\n' + "Algorithm parameters:", file=file_out)
+        print("  freq_min: " + str(freq_min), file=file_out)
+        print("  freq_max: " + str(freq_max), file=file_out)
+        print("  back_az_min: " + str(back_az_min), file=file_out)
+        print("  back_az_max: " + str(back_az_max), file=file_out)
+        print("  back_az_step: " + str(back_az_step), file=file_out)
+        print("  trace_vel_min: " + str(trace_vel_min), file=file_out)
+        print("  trace_vel_max: " + str(trace_vel_max), file=file_out)
+        print("  trace_vel_step: " + str(trace_vel_step), file=file_out)
+        print("  method: " + str(method), file=file_out)
+        print("  signal_start: " + str(signal_start), file=file_out)
+        print("  signal_end: " + str(signal_end), file=file_out)
+        if method == "GLS":
+            print("  noise_start: " + str(noise_start), file=file_out)
+            print("  noise_end: " + str(noise_end), file=file_out)
+        print("  window_len: " + str(window_len), file=file_out)
+        print("  sub_window_len: " + str(sub_window_len), file=file_out)
+        print("  window_step: " + str(window_step), file=file_out)
+        print("  multithread: " + str(multithread), file=file_out)
+        if multithread:
+            print("  cpu_cnt: " + str(cpu_cnt), file=file_out)
+        file_out.close()
+
+    pl.close()
+    pl.terminate()
 
 
 @main.command('run_fd', short_help="Identify detections from beamforming results")
 @click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-fk", help="Local beamforming (fk) data files", default=None)
+@click.option("--local-dets", help="Local detection data files", default=None)
 @click.option("--window_len", help="Adaptive window length (default: " + default_config['FD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + default_config['FD']['p_value'] + ")", default=None, type=float)
 @click.option("--min-duration", help="Minimum detection duration (default: " + default_config['FD']['min_duration'] + " [s])", default=None, type=float)
 @click.option("--back-az-width", help="Maximum azimuth scatter (default: " + default_config['FD']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + default_config['FD']['return_thresh'] + ")", default=None, type=bool)
-def run_fd(config_file, window_len, p_value, min_duration, back_az_width, fixed_thresh, return_thresh):
+def run_fd(config_file, local_fk, local_dets, window_len, p_value, min_duration, back_az_width, fixed_thresh, return_thresh):
     '''
     Identify detections
 
@@ -193,9 +332,13 @@ def run_fd(config_file, window_len, p_value, min_duration, back_az_width, fixed_
         user_config = None
 
     # Data IO parameters
-    click.echo('\n' + "Data summary:")
-    click.echo("  NOT SET UP YET...")
+    # use local ingestion for initial testing
+    local_fk = set_param(user_config, 'DETECTION IO', 'local_fk', local_fk, 'string')
+    local_dets = set_param(user_config, 'DETECTION IO', 'local_dets', local_dets, 'string')
 
+    click.echo('\n' + "Data parameters:")
+    click.echo("  local_fk: " + local_fk)
+    click.echo("  local_dets: " + local_dets)
 
     # Algorithm parameters
     window_len = set_param(user_config, 'FD', 'window_len', window_len, 'float')
@@ -205,7 +348,7 @@ def run_fd(config_file, window_len, p_value, min_duration, back_az_width, fixed_
     fixed_thresh = set_param(user_config, 'FD', 'fixed_thresh', fixed_thresh, 'float')
     return_thresh = set_param(user_config, 'FD', 'return_thresh', return_thresh, 'bool')
 
-    click.echo('\n' + "Parameter summary:")
+    click.echo('\n' + "Algorithm arameters:")
     click.echo("  window_len: " + str(window_len))
     click.echo("  p_value: " + str(p_value))
     click.echo("  min_duration: " + str(min_duration))
@@ -215,7 +358,26 @@ def run_fd(config_file, window_len, p_value, min_duration, back_az_width, fixed_
 
     print('\n' + "Run fd...")
 
-    print('\n' + "Write results to specified output..." + '\n')
+    if local_fk is not None:
+        beam_times = np.load(local_fk + ".fk_times.npy")
+        beam_peaks = np.load(local_fk + ".fk_peaks.npy")
+        beam_meta = open(local_fk + ".fk_meta.txt")
+
+
+    else:
+        print("Non-local data not yet set up...")
+        return 0
+
+    TB_prod = (5.0 - 0.5) * 10.0
+    channel_cnt = 4
+    min_seq = int(max(2, min_duration / window_len))
+
+    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, window_len, TB_prod, channel_cnt, p_value, min_seq, back_az_width, fixed_thresh, True)
+
+    for det in dets:
+        print(det)
+
+
 
 
 

@@ -54,7 +54,9 @@ setup(name = "infrapy",
 
       package_dir={'infrapy.propagation' : 'infrapy/propagation'},
       package_data={'infrapy.propagation' : ['compass.png',
-                                             'ak135_1st_arrivals.dat']},
+                                             'ak135_1st_arrivals.dat'],
+                    'infrapy.resources' :['default.config']},
+
       install_requires = ['numpy',
                           'scipy',
                           'obspy',
