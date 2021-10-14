@@ -9,6 +9,7 @@ from multiprocessing import Pool
 from obspy.core import read as obspy_read
 
 from ..utils import config
+from ..utils import data_io
 from ..detection import beamforming_new as fkd
 
 @click.command('run_fk', short_help="Run beamforming methods on waveform data")
@@ -166,23 +167,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     else:
         pl = None
 
-
     # Check data option and populate obspy Stream
-    # Note: this might become a separate function that returns stream and latlon info
-    if local_wvfrms is not None:
-        print('\n' + "Loading local data files...")
-        stream = obspy_read(local_wvfrms)
-    elif fdsn is not None:
-        print('\n' + "FDSN methods not set up yet...")
-
-        # client = Client(service)
-        # stream = client.get_waveforms(network, station, location, channel, startTime, endTime)
-        # inventory = client.get_stations(network=network, station=station)
-
-        return 0
-    elif db_url is not None:
-        print('\n' + "Database methods not set up yet...")
-        return 0
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime)
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
@@ -191,10 +177,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     # Define DOA values
     back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
     trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
-
-    # Trim streams if necessary
-    # if signal_start is not None:
-    #  stream.trim()  
 
     # run fk analysis
     beam_times, beam_peaks = fkd.run_fk(stream, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import imp 
 
 import configparser as cnfg
@@ -43,3 +44,4 @@ def set_param(user_config, section, param, cli_val, format='float'):
             return defaults[section][param]
         except:
             return None
+
