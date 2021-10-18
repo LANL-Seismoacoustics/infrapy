@@ -179,7 +179,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
 
     # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
+    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
 
     print('\n' + "Write results to specified output..." + '\n')
     if local_fk_out is not None:

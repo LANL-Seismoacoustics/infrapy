@@ -882,7 +882,7 @@ def beam_window_wrapper(args):
     return beam_window(*args)
 
 
-def run_fk(stream, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, pl):
+def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, pl):
     """Run the beamforming (fk) analysis on a stream with various parameter specifications
 
         Convert a stream to an array data set on a consistent set of time samples
@@ -927,7 +927,7 @@ def run_fk(stream, freq_band, window_length, sub_window_length, window_step, met
 
     print('\n' + "Running fk analysis..." + '\n\t' + "Progress: ", end = '')
 
-    x, t, t0, geom = stream_to_array_data(stream)
+    x, t, t0, geom = stream_to_array_data(stream, latlon=latlon)
     M, N = x.shape
 
     # define slownes and delays from array geomry
