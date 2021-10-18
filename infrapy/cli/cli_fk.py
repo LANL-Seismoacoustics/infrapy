@@ -21,6 +21,7 @@ from ..detection import beamforming_new as fkd
 @click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
 @click.option("--db-origin", help="Database origin table for waveform data files", default=None)
 
+@click.option("--local_latlon", help="Array location information for local waveforms", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
