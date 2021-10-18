@@ -4,7 +4,7 @@
 import sqlalchemy as sa
 import pisces as ps
 
-
+dialect_list = ['oracle', 'postgresql', 'mysql', 'mssql', 'sqlite']
 
 
 def db_connect(dialect, hostname, db_name, port=None, username="", password="", driver=""):

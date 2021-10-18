@@ -1,4 +1,8 @@
-from PyQt5.QtWidgets import (QWidget, QFormLayout, QLineEdit, QPushButton, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QComboBox, QFormLayout, QLineEdit, QPushButton, QSpinBox, QVBoxLayout)
+from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtCore import QRegExp
+from infrapy.utils import database
+
 
 
 class IPDatabaseConnectWidget(QWidget):
@@ -8,23 +12,67 @@ class IPDatabaseConnectWidget(QWidget):
         self.buildUI()
 
     def buildUI(self):
-        form_layout = QFormLayout()
-        url_edit = QLineEdit()
-        
-        username_edit = QLineEdit()
-        password_edit = QLineEdit()
-        password_edit.setEchoMode(QLineEdit.Password)
+        self.form_layout = QFormLayout()
 
-        form_layout.addRow("Database URL: ", url_edit)
-        form_layout.addRow("Username: ", username_edit)
-        form_layout.addRow("Password: ", password_edit)
+        self.load_config_button = QPushButton("Load Configuration File")
+        self.load_config_button.setMaximumWidth(200)
 
-        connect_button = QPushButton("Connect")
-        
+        self.save_current_button = QPushButton("Save Current")
+        self.save_current_button.setMaximumWidth(200)
+        self.save_current_button.setEnabled(False)
+
+        self.url_edit = QLineEdit()
+        self.url_edit.setMaximumWidth(600)
+
+        self.username_edit = QLineEdit()
+        self.username_edit.setMaximumWidth(300)
+
+        self.password_edit = QLineEdit()
+        self.password_edit.setMaximumWidth(300)
+        self.password_edit.setEchoMode(QLineEdit.Password)
+
+        self.dialect_combo = QComboBox()
+        self.dialect_combo.setMaximumWidth(100)
+        self.dialect_combo.addItems(database.dialect_list)
+
+        self.driver_edit = QLineEdit()
+        self.driver_edit.setMaximumWidth(100)
+
+        self.database_name = QLineEdit()
+        self.database_name.setMaximumWidth(300)
+
+        self.connect_button = QPushButton("Connect")
+        self.connect_button.setMaximumWidth(200)
+
+        # I want to send an empty string if the portnum is not used, so I'm going to use a lineedit instead of a spinbox
+        self.portnum_edit = QLineEdit()
+        rxv = QRegExpValidator(QRegExp("\\d*"))
+        self.portnum_edit.setValidator(rxv)
+        self.portnum_edit.setMaximumWidth(100)
+
+        self.form_layout.addWidget(self.load_config_button)
+        self.form_layout.addWidget(self.save_current_button)
+        self.form_layout.addRow("Database URL: ", self.url_edit)
+        self.form_layout.addRow("Username: ", self.username_edit)
+        self.form_layout.addRow("Password: ", self.password_edit)
+        self.form_layout.addRow("Dialect: ", self.dialect_combo)
+        self.form_layout.addRow("Driver: ", self.driver_edit)
+        self.form_layout.addRow("Database Name: ", self.database_name)
+        self.form_layout.addRow("Port Number: ", self.portnum_edit)
+        self.form_layout.addWidget(self.connect_button)
+
         main_layout = QVBoxLayout()
-        main_layout.addLayout(form_layout)
-        main_layout.addWidget(connect_button)
+        main_layout.addLayout(self.form_layout)
         self.setLayout(main_layout)
+
+        self.connect_signals_and_slots()
+
+    def connect_signals_and_slots(self):
+        self.url_edit.textEdited.connect(self.wake_up_save_button)
+        self.username_edit.textEdited.connect(self.wake_up_save_button)
+
+    def wake_up_save_button(self):
+        self.save_current_button.setEnabled(True)
 
     def connect_to_database(self):
         pass
