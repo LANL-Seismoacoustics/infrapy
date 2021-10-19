@@ -6,6 +6,22 @@ import pisces as ps
 
 dialect_list = ['oracle', 'postgresql', 'mysql', 'mssql', 'sqlite']
 
+def db_connect_url(url):
+    """
+    connect to a database to do database things...
+
+    Parameters
+    ----------
+    url: str
+        Properly formed string containing the connection url for the database
+    
+    Returns
+    -------
+    session : bound SQLAlchemy session instance
+    """
+    print(url)
+    session = ps.db_connect(url)
+    return session
 
 def db_connect(dialect, hostname, db_name, port=None, username="", password="", driver=""):
     """
@@ -33,14 +49,11 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
     session : bound SQLAlchemy session instance
 
     """
-    
-    # in case someone passed the port as an integer, first convert it to a string
-    str_port = str(port)
 
     if driver:
         driver = '+' + driver
     
-    connect_str = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + str_port + "/" + db_name
+    connect_str = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
 
     session = ps.db_connect(connect_str)
 
