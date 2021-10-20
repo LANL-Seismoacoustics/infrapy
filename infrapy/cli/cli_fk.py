@@ -48,7 +48,7 @@ from ..detection import beamforming_new as fkd
 @click.option("--window_step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--multithread", help="Use multithreading (default: " + config.defaults['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
+def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_out, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
     '''
@@ -79,14 +79,18 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     db_wfdisc = config.set_param(user_config, 'database', 'wfdisc', db_wfdisc, 'string')
     db_origin = config.set_param(user_config, 'database', 'origin', db_origin, 'string')
 
-    # Waveform IO parameters
+    # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')
-   
+    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+
+    # FDSN waveform IO parameters
+    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
     network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
     station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
     location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
     channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+
+    # Trimming times
     starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
@@ -96,6 +100,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
         click.echo("  local_wvfrms: " + str(local_wvfrms))
+        click.echo("  local_latlon: " + str(local_latlon))
     elif fdsn is not None:
         click.echo("  fdsn: " + str(fdsn))
         click.echo("  network: " + str(network))
@@ -169,7 +174,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         pl = None
 
     # Check data option and populate obspy Stream
-    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime)
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime, local_latlon)
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
@@ -219,5 +224,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
             print("  cpu_cnt: " + str(cpu_cnt), file=file_out)
         file_out.close()
 
-    pl.close()
-    pl.terminate()
+    if multithread or cpu_cnt is not None:
+        pl.close()
+        pl.terminate()
