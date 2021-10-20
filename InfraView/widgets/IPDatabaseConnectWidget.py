@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import (QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QMessageBox, 
+                             QPushButton, QSpinBox, QVBoxLayout)
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QRegExp
+from PyQt5.QtCore import QRegExp, pyqtSignal, pyqtSlot
 from infrapy.utils import database
 
 import urllib.parse
@@ -48,7 +49,7 @@ class IPDatabaseConnectWidget(QWidget):
         self.portnum_edit.setValidator(rxv)
         self.portnum_edit.setMaximumWidth(100)
 
-        self.url_label = QLabel("Ilikecake")
+        self.url_label = QLabel("")
 
         self.connect_button = QPushButton("Connect")
         self.connect_button.setMaximumWidth(200)
@@ -104,7 +105,6 @@ class IPDatabaseConnectWidget(QWidget):
 
         self.url_label.setText(dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name)
 
-
     def wake_up_save_button(self):
         self.save_current_button.setEnabled(True)
 
@@ -121,5 +121,30 @@ class IPDatabaseConnectWidget(QWidget):
         db_name = self.database_name.text()
 
         url = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
-        session = database.db_connect_url(url)
-        print(session)
+
+        try:
+            self.session = database.db_connect_url(url)
+        except ModuleNotFoundError as err:
+            self.errorPopup("Missing module... Infrapy doesn't automatically install database modules and drivers into the infrapy_env environment, so that will to be done manually\n\n {}".format(err))
+
+        if self.test_connection():
+            print("good connection")
+        else:
+            print("bad connection")
+
+    def test_connection(self):
+        try:
+            my_engine = self.session.get_bind()
+            conn = my_engine.connect()
+            conn.close()
+            return True
+        except:
+            return False
+
+    @pyqtSlot(str, str)
+    def errorPopup(self, message, title="Oops..."):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()
