@@ -585,6 +585,8 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
             List of detections (see infrapy.propagation.likelihoods)
         threshold : float
             Threshold value defining linkage cutoff
+        dist_max: float
+            Maximum value allowed in distance matrix
         bm_width : float
             Width of the projected beam [degrees]
         rng_max : float
@@ -621,11 +623,11 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
             dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool))
             np.save(file_id + "-dm", dists)
         dists[dists > dist_max] = dist_max
-        links, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
+        _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
     else :
         dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool))
         dists[dists > dist_max] = dist_max
-        links, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
+        _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
 
     # Trim clusters with poor shape
     if trimming_thresh:
@@ -650,3 +652,63 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
                 _, labels, _ = cluster(dists_new, threshold * trim_thresh_scalar, linkage_method=linkage_method, show_result=show_result, trim_indices=trim_indices)
 
     return labels, sorted_dists
+
+
+def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0, 
+    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, pool=None):
+    """
+    
+    
+    """
+
+    duration = (endtime - starttime) / 60.0
+    max_prop_time = int((rng_max / 0.22) / 60.0)
+    analysis_window = int(max_prop_time * 0.5)
+
+    #####################################
+    ##     Run clustering analysis     ##
+    #####################################
+    events, event_qls = [], []
+    for dt in range(0, duration, analysis_window):
+        window_start = starttime + np.timedelta64(dt, 'm')
+        window_end = starttime + np.timedelta64(dt + int(analysis_window + max_prop_time), 'm')
+        print('\n' + "Computing associations for:", window_start, " - ", window_end)
+
+        temp = [(n, det) for n, det in enumerate(det_list) if np.logical_and(window_start <= det.peakF_UTCtime, det.peakF_UTCtime <= window_end)]
+        key = [pair[0] for pair in temp]
+        new_list = [pair[1] for pair in temp]
+
+        labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, 
+            linkage_method=linkage_method, trimming_thresh=trimming_thresh, pool=pool)
+        clusters, qualities = summarize_clusters(labels, dists, population_min=cluster_det_population)
+
+        for n in range(len(clusters)):
+            events += [[key[n] for n in clusters[n]]]
+            event_qls += [10.0**(-qualities[n])]
+
+    ############################################
+    ##   Clean up clusters by merging those   ##
+    ##  with common detections and enforcing  ##
+    ##      minimum array count condition     ##
+    ############################################
+    event_cnt = len(events)
+    for n1 in range(event_cnt):
+        for n2 in range(n1 + 1, event_cnt):
+            if len(events[n1]) > 0 and len(events[n2]) > 0:
+                set1, set2 = set(events[n1]), set(events[n2])
+                rel_overlap = len(set1.intersection(set2)) / min(len(set1), len(set2))
+
+                if rel_overlap > 0.5:
+                    events[n1], events[n2] = list(set1.union(set2)), []
+                    event_qls[n1], event_qls[n2] = max(event_qls[n1], event_qls[n2]), -1.0
+
+    for n, ev_ids in enumerate(events):
+        if len(ev_ids) > 0:
+            locs = np.array([[det_list[j].latitude, det_list[j].longitude] for j in ev_ids])
+            unique_cnt = max(len(np.unique(locs[:, 0])), len(np.unique(locs[:, 1])))
+            if unique_cnt < cluster_array_population:
+                events[n] = []
+                event_qls[n] = -1.0
+
+    events = [ei for ei in events if len(ei) > 0]
+    event_qls = [eqi for eqi in event_qls if eqi > 0]
