@@ -62,31 +62,33 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
 
 def set_det_list(local_det_info, merge=True):
 
-    if len(os.path.dirname(local_det_info)) > 0:
-        file_path = os.path.dirname + "/"
+    if "*" not in local_det_info:
+        det_list = lklhds.json_to_detection_list(local_det_info)
     else:
-        file_path = ""
+        if len(os.path.dirname(local_det_info)) > 0:
+            file_path = os.path.dirname(local_det_info) + "/"
+        else:
+            file_path = ""
 
-    file_list = []
-    dir_files = os.listdir(os.path.dirname(local_det_info))
-    for file in dir_files:
-        if fnmatch.fnmatch(file, os.path.basename(local_det_info)):
-            file_list += [file]
+        file_list = []
+        dir_files = os.listdir(os.path.dirname(local_det_info))
+        for file in dir_files:
+            if fnmatch.fnmatch(file, os.path.basename(local_det_info)):
+                file_list += [file]
 
-    if len(file_list) == 0:
-        msg = "Detection file(s) specified not found"
-        warnings.warn(msg)
-        det_list = None 
-    elif len(file_list) == 1:
-        det_list = lklhds.json_to_detection_list(file_path + local_det_info)
-    else:
-        det_list = []
-        for file in file_list:
-            if merge:
-                det_list = det_list + lklhds.json_to_detection_list(file_path + file)
-            else:
-                det_list = det_list + [lklhds.json_to_detection_list(file_path + file)]
-
+        if len(file_list) == 0:
+            msg = "Detection file(s) specified not found"
+            warnings.warn(msg)
+            det_list = None 
+        elif len(file_list) == 1:
+            det_list = [lklhds.json_to_detection_list(file_path + local_det_info)]
+        else:
+            det_list = []
+            for file in file_list:
+                if merge:
+                    det_list = det_list + lklhds.json_to_detection_list(file_path + file)
+                else:
+                    det_list = det_list + [lklhds.json_to_detection_list(file_path + file)]
 
     return det_list
 

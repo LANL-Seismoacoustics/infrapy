@@ -47,12 +47,11 @@ def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pg
     click.echo('\n' + "Data summary:")
     click.echo("  local_dets_in: " + str(local_dets_in))
 
-
     # Algorithm parameters
     back_az_width = config.set_param(user_config, 'LOC', 'back_az_width', back_az_width, 'float')
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
     resolution = config.set_param(user_config, 'LOC', 'resolution', resolution, 'int')
-    pgm_model = config.set_param(user_config, 'LOC', 'pgm_model', pgm_model, 'int')
+    pgm_model = config.set_param(user_config, 'LOC', 'pgm_model', pgm_model, 'str')
 
     click.echo('\n' + "Parameter summary:")
     click.echo("  back_az_width: " + str(back_az_width))
@@ -61,8 +60,17 @@ def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pg
     click.echo("  pgm_model: " + str(pgm_model))
 
     events = data_io.set_det_list(local_dets_in, merge=False)
-    for det_list in events:
-        result = bisl.run(det_list, path_geo_model=pgm_model, resol=resolution, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max / 4.0)
+    if type(events[0]) is list:
+        # run location for multiple lists
+        for det_list in events:
+            result = bisl.run(det_list, path_geo_model=pgm_model, resol=resolution, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
+
+            # Determine output format for BISL results
+            print('\n' + "BISL Summary:")
+            print(bisl.summarize(result))
+    else:
+        # run a single localization analysis
+        result = bisl.run(events, path_geo_model=pgm_model, resol=resolution, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
 
         # Determine output format for BISL results
         print('\n' + "BISL Summary:")

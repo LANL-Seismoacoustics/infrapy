@@ -2,6 +2,8 @@
 import sys
 
 import click
+import warnings
+
 import configparser as cnfg
 import numpy as np
 
@@ -25,7 +27,7 @@ from ..association import hjl
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['ASSOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['ASSOC']['resolution'] + ")", default=None, type=int)
 @click.option("--distance-matrix-max", help="Distance matrix maximum (default: " + config.defaults['ASSOC']['distance_matrix_max'] + ")", default=None, type=float)
-@click.option("--cluster-linkage", help="Linkage method for clustering (default: " + config.defaults['ASSOC']['cluster_linkage'] + " )", default=None)
+@click.option("--cluster-linkage", help="Linkage method for clustering (default: " + config.defaults['ASSOC']['cluster_linkage'] + ")", default=None)
 @click.option("--cluster-threshold", help="Cluster linkage threshold (default: " + config.defaults['ASSOC']['cluster_threshold'] + ")", default=None, type=float)
 @click.option("--trimming-threshold", help="Mishapen cluster threshold (default: " + config.defaults['ASSOC']['trimming_threshold'] + ")", default=None, type=float)
 @click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
@@ -69,6 +71,11 @@ def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, 
     click.echo("  local_events_out: " + str(local_events_out))
     click.echo("  starttime: " + str(starttime))
     click.echo("  endtime: " + str(endtime))
+
+    if local_dets_in is None or local_events_out is None:
+        msg = "Association analysis requires detection input (--local-det-in) and output path (--local-events-out)"
+        warnings.warn(msg)
+        return 0
 
     # Algorithm parameters
     back_az_width = config.set_param(user_config, 'ASSOC', 'back_az_width', back_az_width, 'float')
