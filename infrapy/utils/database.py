@@ -6,6 +6,7 @@ import pisces as ps
 
 dialect_list = ['oracle', 'postgresql', 'mysql', 'mssql', 'sqlite']
 
+
 def db_connect_url(url):
     """
     connect to a database to do database things...
@@ -19,9 +20,9 @@ def db_connect_url(url):
     -------
     session : bound SQLAlchemy session instance
     """
-    print(url)
     session = ps.db_connect(url)
     return session
+
 
 def db_connect(dialect, hostname, db_name, port=None, username="", password="", driver=""):
     """
@@ -57,5 +58,16 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
 
     session = ps.db_connect(connect_str)
 
-    print(connect_str)
     return session
+
+
+def check_connection(session):
+    """
+    Simple function to check that there is a valid connection by calling engine.connect() to see if it returns true
+    """
+    engine = session.get_bind()
+    try:
+        engine.connect()
+        return True
+    except Exception as e:
+        return False
