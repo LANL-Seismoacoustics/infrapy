@@ -12,7 +12,7 @@ from InfraView.widgets.IPApplicationWindow import *
 
 def main():
     progname = "InfraView"
-    progversion = "0.3.3"
+    progversion = "0.3.4"
 
     here = os.path.abspath(__file__)
     here = os.path.dirname(here)

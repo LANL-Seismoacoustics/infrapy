@@ -1,4 +1,4 @@
-name: infrapy_env_new
+name: infrapy_env
 
 channels:
   - conda-forge
