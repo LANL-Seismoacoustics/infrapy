@@ -35,17 +35,7 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
     dialect: str
         Type of database.   (examples: oracle, mysql)
     hostname : str
-        The url of the database. (example: mydb.home.org)
-    db_name: str
-        Name of your database
-    port: int or string
-        Port number of your database
-    username: str
-        login name for your database connection.  For self authenticated sites, leave this as an empty string
-    password: str
-        used in conjunction with username.  For self authenticated sites, leave this as an empty string
-    driver: str
-        driver api used for connection/  (example: pymysql)
+        The url of the database. (example: mydb.home.org)local branch
 
     Returns
     -------

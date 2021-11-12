@@ -2,6 +2,7 @@ import pyqtgraph as pg
 import platform
 import os, sys
 import pdb
+from pathlib import Path, PurePath
 
 import numpy as np
 import copy
@@ -15,9 +16,9 @@ from obspy.core.stream import Stream
 
 # PyQt5 includes
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSettings, QSize, QPoint, QDir
-from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLayout, 
+from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLayout,
                              QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QTableWidgetItem, QMessageBox, QWidget,
                              QApplication, QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
 
@@ -122,6 +123,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.fill_sta_info_dialog = IPFillStationInfoDialog()
         self.redundant_trace_dialog = IPRedundantTraceDialog()
+        self.aboutDialog = IPAboutDialog(self.progname, self.progversion)
 
     def debug_trace(self):  # for debugging, you have to call pyqtRemoveInputHook before set_trace()
         from PyQt5.QtCore import pyqtRemoveInputHook
@@ -545,7 +547,31 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     # Obligatory about
     def about(self):
-        QtWidgets.QMessageBox.about(self, "About", self.progname + "   " + self.progversion + "\n" + "Copyright 2018\nLos Alamos National Laboratory")
+        self.aboutDialog.exec_()
+        #QtWidgets.QMessageBox.about(self, "About", self.progname + "   " + self.progversion + "\n" + "Copyright 2018\nLos Alamos National Laboratory")
+
+class IPAboutDialog(QDialog):
+    def __init__(self, progname, progversion):
+        super().__init__()
+        self.buildUI(progname, progversion)
+
+    def buildUI(self, name, version):
+        self.setWindowTitle("Infraview - About")
+        
+        info_label = QLabel(name + '\nVersion: ' + version + '\nCopyright 2018 Los Alamos National Laboratory\n')
+        label_font = info_label.font()
+        label_font.setPixelSize(14)
+        info_label.setFont(label_font)
+
+        image_path = Path(Path(__file__).parent.parent.parent, 'infrapy', 'resources', 'PNG', 'LANL_Logo_Ultramarine.png')
+        logo_pixmap = QPixmap(str(image_path))
+        logo_label = QLabel(self)
+        logo_label.setPixmap(logo_pixmap)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(info_label)
+        layout.addWidget(logo_label)
+        self.setLayout(layout)
 
 
 class CapsValidator(QtGui.QValidator):
