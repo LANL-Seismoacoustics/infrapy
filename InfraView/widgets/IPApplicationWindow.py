@@ -38,7 +38,7 @@ from InfraView.widgets import IPLocationWidget
 from InfraView.widgets import IPSaveAllDialog
 from InfraView.widgets import IPSimpleLegend
 from InfraView.widgets import IPWaveformWidget
-from InfraView.widgets import IPDatabaseConnectWidget
+from InfraView.widgets import IPDatabaseWidget
 
 # multiprocessing modules
 import pathos.multiprocessing as mp
@@ -100,7 +100,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget = IPBeamformingWidget.IPBeamformingWidget(self, self.mp_pool)
         self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.waveformWidget = IPWaveformWidget.IPWaveformWidget(self, self.mp_pool)
-        self.databaseWidget = IPDatabaseConnectWidget.IPDatabaseConnectWidget(self)
+        self.databaseWidget = IPDatabaseWidget.IPDatabaseWidget(self)
 
         # add the main widgets to the application tabs
         self.mainTabs = QTabWidget()

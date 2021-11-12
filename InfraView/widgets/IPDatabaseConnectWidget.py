@@ -1,23 +1,26 @@
 import urllib.parse
 import configparser
 
-from PyQt5.QtWidgets import (QWidget, QComboBox, QFileDialog, QFormLayout, QLabel, QLineEdit, QMessageBox, 
-                             QPushButton, QSpinBox, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QComboBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, 
+                             QPushButton, QVBoxLayout)
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QRegExp, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer
 from infrapy.utils import database
 
 
-
-
-class IPDatabaseConnectWidget(QWidget):
+class IPDatabaseConnectWidget(QFrame):
     def __init__(self, parent):
         super().__init__()
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.parent = parent  # reference to the IPBeamformingWidget to which this belongs
+        self.session = None
         self.buildUI()
 
     def buildUI(self):
         self.form_layout = QFormLayout()
+
+        self.title_label = QLabel("\tDatabase Connection")
+        self.title_label.setStyleSheet("QLabel {font-weight: bold; color: white; background-color: black}")
 
         self.load_config_button = QPushButton("Load Config File...")
         self.load_config_button.setMaximumWidth(200)
@@ -38,7 +41,7 @@ class IPDatabaseConnectWidget(QWidget):
 
         self.dialect_combo = QComboBox()
         self.dialect_combo.setMaximumWidth(100)
-        self.dialect_combo.addItems(database.dialect_list)
+        self.dialect_combo.addItems(database.DIALECT_LIST)
 
         self.driver_edit = QLineEdit()
         self.driver_edit.setMaximumWidth(100)
@@ -54,8 +57,14 @@ class IPDatabaseConnectWidget(QWidget):
 
         self.url_label = QLabel("")
 
-        self.connect_button = QPushButton("Connect")
-        self.connect_button.setMaximumWidth(200)
+        self.create_session_button = QPushButton("Create Session")
+        self.create_session_button.setMaximumWidth(200)
+
+        self.close_session_button = QPushButton("Close Session")
+        self.close_session_button.setMaximumWidth(200)
+
+        self.test_connection_button = QPushButton("Test Connection")
+        self.test_connection_label = QLabel("")
 
         self.form_layout.addWidget(self.load_config_button)
         self.form_layout.addWidget(self.save_current_button)
@@ -67,10 +76,19 @@ class IPDatabaseConnectWidget(QWidget):
         self.form_layout.addRow("Database Name: ", self.database_name)
         self.form_layout.addRow("Port Number: ", self.portnum_edit)
         self.form_layout.addRow("URL: ", self.url_label)
-        self.form_layout.addWidget(self.connect_button)
+
+        horiz_layout_1 = QHBoxLayout()
+        horiz_layout_1.addStretch()
+        horiz_layout_1.addWidget(self.create_session_button)
+        horiz_layout_1.addWidget(self.close_session_button)
+        horiz_layout_1.addWidget(self.test_connection_button)
+        horiz_layout_1.addWidget(self.test_connection_label)
+        horiz_layout_1.addStretch()
 
         main_layout = QVBoxLayout()
+        main_layout.addWidget(self.title_label)
         main_layout.addLayout(self.form_layout)
+        main_layout.addLayout(horiz_layout_1)
         self.setLayout(main_layout)
 
         self.config_file_dialog = QFileDialog()
@@ -91,9 +109,13 @@ class IPDatabaseConnectWidget(QWidget):
 
         self.load_config_button.pressed.connect(self.load_config_file)
         self.save_current_button.pressed.connect(self.save_current_config)
-        self.connect_button.pressed.connect(self.connect_to_database)
+        self.create_session_button.pressed.connect(self.create_session)
+        self.close_session_button.pressed.connect(self.close_session)
+
+        self.test_connection_button.pressed.connect(self.check_connection)
 
     def update_url(self):
+        self.url_label.setStyleSheet("QLabel {color:black}")
         dialect = self.dialect_combo.currentText()
         driver = self.driver_edit.text()
         if driver:
@@ -107,10 +129,14 @@ class IPDatabaseConnectWidget(QWidget):
 
         self.url_label.setText(dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name)
 
-        #if the url changes... so has some of the information.  This might need to be saved, so activate the save_current button
+        # if the url changes... so has some of the information.  This might need to be saved, so activate the save_current button
         self.save_current_button.setEnabled(True)
 
-    def connect_to_database(self):
+    def create_session(self):
+        # first, if there is already an active session, close it...
+        self.close_session()
+
+        # now proceed as usual
         dialect = self.dialect_combo.currentText()
         driver = self.driver_edit.text()
         if driver:
@@ -126,13 +152,35 @@ class IPDatabaseConnectWidget(QWidget):
 
         try:
             self.session = database.db_connect_url(url)
-        except Exception as e:
-            self.errorPopup("Error connecting to url: {}\n{}".format(url, e))
-        
-        if database.check_connection(self.session):
             self.url_label.setStyleSheet("QLabel {color: green}")
-        else:
+        except Exception as e:
             self.url_label.setStyleSheet("QLabel {color: red}")
+            self.errorPopup("Error connecting to url:\n{}\n{}".format(url, e))
+    
+    def close_session(self):
+        if self.session is not None:
+            self.session.close()
+            self.url_label.setStyleSheet("QLabel {color: black}")
+            self.session = None
+
+    def check_connection(self):
+        if self.session is not None:
+            if database.check_connection(self.session):
+                self.test_connection_label.setStyleSheet("QLabel {color: green}")
+                self.test_connection_label.setText("Connection is good")
+                QTimer.singleShot(3000, self.reset_connection_colors)
+            else:
+                self.test_connection_label.setStyleSheet("QLabel {color: red}")
+                self.test_connection_label.setText("Bad Connection")
+                QTimer.singleShot(3000, self.reset_connection_colors)
+        else:
+            self.test_connection_label.setText("No active session")
+            QTimer.singleShot(3000, self.reset_connection_colors)
+
+    @pyqtSlot()
+    def reset_connection_colors(self):
+        self.test_connection_label.setStyleSheet("QLabel {color: black}")
+        self.test_connection_label.setText("")
 
     def load_config_file(self):
         if self.config_file_dialog.exec_():
@@ -150,7 +198,6 @@ class IPDatabaseConnectWidget(QWidget):
                 self.save_current_button.setEnabled(False)
             except Exception as e:
                 self.errorPopup("Error reading config file \n{}".format(e))
-
 
     def save_current_config(self):
         save_filename = QFileDialog.getSaveFileName(self, "Save db configuration", "/home/jwebster/IPProjects", "(*.ini)")[0]

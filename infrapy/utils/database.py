@@ -1,11 +1,13 @@
-# put database related functions here
-# generic db functions ONLY.  No LANL specific code at all
+"""
+  put database related functions here
+  generic db functions ONLY.  No LANL specific code at all
+"""
 
-import sqlalchemy as sa
 import pisces as ps
+import pisces.schema.kbcore as kb
+import pandas as pd
 
-dialect_list = ['oracle', 'postgresql', 'mysql', 'mssql', 'sqlite']
-
+DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
 
 def db_connect_url(url):
     """
@@ -15,7 +17,7 @@ def db_connect_url(url):
     ----------
     url: str
         Properly formed string containing the connection url for the database
-    
+
     Returns
     -------
     session : bound SQLAlchemy session instance
@@ -43,7 +45,7 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
     password: str
         used in conjunction with username.  For self authenticated sites, leave this as an empty string
     driver: str
-        driver api used for connection/  (example: pymysql) 
+        driver api used for connection/  (example: pymysql)
 
     Returns
     -------
@@ -53,7 +55,7 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
 
     if driver:
         driver = '+' + driver
-    
+
     connect_str = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
 
     session = ps.db_connect(connect_str)
@@ -63,11 +65,34 @@ def db_connect(dialect, hostname, db_name, port=None, username="", password="", 
 
 def check_connection(session):
     """
-    Simple function to check that there is a valid connection by calling engine.connect() to see if it returns true
+    Simple function to check that there is a valid connection by 
+    calling engine.connect() to see if it returns true
     """
     engine = session.get_bind()
     try:
         engine.connect()
         return True
-    except Exception as e:
+    except:
         return False
+
+
+class Site(kb.Site):
+    __tablename__ = 'global.site'
+
+
+class Wfdisc(kb.Wfdisc):
+    __tablename__ = 'global.wfdisk_raw'
+
+
+def query_db(session, start_time, end_time, net="*", sta="*", loc="*", cha="*"):
+
+    if session is None:
+        return None
+
+    stations = session.query(Wfdisc).filter(Wfdisc.sta == sta)\
+                                    .filter(Wfdisc.time < end_time.timestamp)\
+                                    .filter(Wfdisc.endtime > start_time.timestamp)\
+                                    .filter(Wfdisc.chan.like(cha))
+
+    df = pd.read_sql(stations.statement, session.bind)
+    return df
