@@ -85,9 +85,13 @@ class IPDatabaseConnectWidget(QFrame):
         horiz_layout_1.addWidget(self.test_connection_label)
         horiz_layout_1.addStretch()
 
+        horiz_layout_2 = QHBoxLayout()
+        horiz_layout_2.addLayout(self.form_layout)
+        horiz_layout_2.addStretch()
+
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.title_label)
-        main_layout.addLayout(self.form_layout)
+        main_layout.addLayout(horiz_layout_2)
         main_layout.addLayout(horiz_layout_1)
         self.setLayout(main_layout)
 
