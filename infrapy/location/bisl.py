@@ -288,7 +288,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
                 'MaP_val' : Maximum a Posteriori value
         """
 
-    print('\n' + "Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
+    print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
     # Determine region of interest and define the polar <--> latlon grid definition
     if custom_region:
         center = custom_region[0]

@@ -109,4 +109,7 @@ def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, 
                                     bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=(range_max / 4.0), 
                                     resol=resolution, linkage_method=cluster_linkage, trimming_thresh=trimming_threshold, 
                                     cluster_det_population=event_population_min, cluster_array_population=event_station_min, pool=pl)
-    data_io.write_events(events, event_qls, det_list, local_events_out)
+    data_io.write_events(events, event_qls, det_list, local_events_out)    
+    if pl is not None:
+        pl.terminate()
+        pl.close()

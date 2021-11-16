@@ -6,7 +6,6 @@ import configparser as cnfg
 import numpy as np
 
 from multiprocessing import Pool
-from obspy.core import read as obspy_read
 
 from ..utils import config
 from ..utils import data_io
@@ -256,7 +255,7 @@ def run_fd(config_file, local_fk_in, local_fd_out, window_len, p_value, min_dura
     fixed_thresh = config.set_param(user_config, 'FD', 'fixed_thresh', fixed_thresh, 'float')
     return_thresh = config.set_param(user_config, 'FD', 'return_thresh', return_thresh, 'bool')
 
-    click.echo('\n' + "Algorithm arameters:")
+    click.echo('\n' + "Algorithm parameters:")
     click.echo("  window_len: " + str(window_len))
     click.echo("  p_value: " + str(p_value))
     click.echo("  min_duration: " + str(min_duration))
@@ -264,7 +263,7 @@ def run_fd(config_file, local_fk_in, local_fd_out, window_len, p_value, min_dura
     click.echo("  fixed_thresh: " + str(fixed_thresh))
     click.echo("  return_thresh: " + str(return_thresh))
 
-    print('\n' + "Run fd...")
+    print('\n' + "Running fd...")
 
     if local_fk_in is not None:
         beam_times = np.load(local_fk_in + ".fk_times.npy")
@@ -298,7 +297,8 @@ def run_fd(config_file, local_fk_in, local_fd_out, window_len, p_value, min_dura
 
     det_list = []
     for det_info in dets:
-        det_list = det_list + [data_io.define_deteection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
+        det_list = det_list + [data_io._define_deteection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
+    print("Writing detections to " + local_fd_out + ".dets.json")
     lklhds.detection_list_to_json(local_fd_out + ".dets.json", det_list)
 
     if return_thresh:
@@ -539,14 +539,14 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
 
     det_list = []
     for det_info in dets:
-        det_list = det_list + [data_io.define_deteection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
+        det_list = det_list + [data_io._define_deteection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
 
     lklhds.detection_list_to_json(local_fd_out + ".dets.json", det_list)
 
     if return_thresh:
         np.save(local_fd_out + ".thresholds", thresh_vals)
 
-    if multithread or cpu_cnt is not None:
+    if multithread is False or cpu_cnt is not None:
         pl.close()
         pl.terminate()
 

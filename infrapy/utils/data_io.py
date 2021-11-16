@@ -71,7 +71,11 @@ def set_det_list(local_det_info, merge=True):
             file_path = ""
 
         file_list = []
-        dir_files = os.listdir(os.path.dirname(local_det_info))
+        if "/" in local_det_info:
+            dir_files = os.listdir(os.path.dirname(local_det_info))
+        else:
+            dir_files = os.listdir(".")
+            
         for file in dir_files:
             if fnmatch.fnmatch(file, os.path.basename(local_det_info)):
                 file_list += [file]
@@ -157,7 +161,7 @@ def _define_deteection(det_info, array_loc, channel_cnt, freq_band, note=None):
     return temp
 
 def write_events(events, event_qls, det_list, local_events_out):
-    print("Writing identified events into " + local_events_out)
+    print("Writing " + str(len(events)) + " identified events into files: " + local_events_out + "-ev#.json")
     for ev_n, ev in enumerate(events):
         temp = []
         for det_id in ev:
