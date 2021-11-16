@@ -288,6 +288,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
                 'MaP_val' : Maximum a Posteriori value
         """
 
+    print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
     # Determine region of interest and define the polar <--> latlon grid definition
     if custom_region:
         center = custom_region[0]
@@ -296,6 +297,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
         center, radius = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max)
     resol = int(resol)
 
+    print('\t' + "Identifying integration region...")
     rngs = np.linspace(0.0, radius, resol)
     angles = np.linspace(angle[0], angle[1]-1, resol)
     #angles = np.linspace(-180.0, 179.0, resol)
@@ -306,10 +308,12 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     proj_lons, proj_lats = sph_proj.fwd(np.array([center[1]] * resol**2), np.array([center[0]] * resol**2), prof_azs, proj_rngs * 1e3)[:2]
 
     # Project the marginal spacial posterior in the region of interest for analysis
+    print('\t' + "Computing marginalized spatial PDF...")
     pdf = lklhds.marginal_spatial_pdf(proj_lats, proj_lons, det_list, path_geo_model=path_geo_model)
     spatial_pdf = np.vstack((proj_lons, proj_lats, pdf))
 
     # compute 2d normal approximation
+    print('\t' + "Computing confidence ellipse parameters...")
     pdf_temp = pdf.reshape(resol, resol).T
 
     norm = simps(np.array([simps(pdf_temp[nr, :] * rngs[nr], angles) for nr in range(resol)]), rngs)
@@ -326,6 +330,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
 
     # Temporal analysis
     # Use region edge to determine limits of possible source times with celerities between 0.2 and 0.4 km/s
+    print('\t' + "Computing marginalized origin time PDF...")
     time_lims = [det_list[0].peakF_UTCtime - np.timedelta64(int(rng_max / 0.2 * 1e3), 'ms'), det_list[0].peakF_UTCtime - np.timedelta64(int(0.01 / 0.4 * 1e3), 'ms')]
 
     conf_x, conf_y = calc_conf_ellipse([x_mean, y_mean], [x_stdev, y_stdev, covar], 99.0)
@@ -354,7 +359,6 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     # Analyze the resulting pdf to identify mean, variance, and exact 95% and 99% confidence bounds
     time_bnds_90 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.90)
     time_bnds_95 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.95)
-    time_bnds_99 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.99)
 
     temporal_pdf = [t_vals, time_marg_pdf / norm]
 
@@ -397,7 +401,7 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
 			  'spatial_pdf' : spatial_pdf,
 			  'temporal_pdf' : temporal_pdf}
 
-    return result,spatial_pdf
+    return result
 
 def summarize(result, confidence_level=95):
     """Outputs results of BISL analysis
@@ -418,25 +422,26 @@ def summarize(result, confidence_level=95):
                'Source location analysis:\n'
                '\tLatitude (mean and standard deviation): {slatmean} +/- {nsvar} km. \n'
                '\tLongitude (mean and standard deviation): {slonmean} +/- {ewvar} km.\n'
-               '\tCovariance: ' + str(round(result['covar'],3)) + '\n'
-               '\tArea of {s_confidence}% confidence ellipse: {conf} square kilometers\n'
+               '\tCovariance: {covar}.\n'
+               '\tArea of {s_confidence} confidence ellipse: {conf} square kilometers\n'
 
                'Source time analysis:\n'
                '\tMean and standard deviation: {stmean} +/- {stvar} second\n'
                '\tExact 95% confidence bounds: [{ex95confmin}, {ex95confmax}]\n'
                )
     summary = summary.format(
-        slat = round(result['lat_MaP'],3),
-        slon = round(result['lon_MaP'],3),
+        slat = np.round(result['lat_MaP'], 3),
+        slon = np.round(result['lon_MaP'], 3),
         stime = result['t_MaP'],
-        slatmean = round(result['lat_mean'],3),
-        nsvar = round(result['NS_stdev'], 3),
-        slonmean = round(result['lon_mean'], 3),
-        ewvar = round(result['EW_stdev'], 3),
+        slatmean = np.round(result['lat_mean'], 3),
+        nsvar = np.round(result['NS_stdev'], 3),
+        slonmean = np.round(result['lon_mean'], 3),
+        ewvar = np.round(result['EW_stdev'], 3),
         s_confidence = str(confidence_level),
-        conf = round(np.pi * result['NS_stdev'] * result['EW_stdev'] * chi2(2).ppf(confidence_level/100), 3),
+        covar = np.round(result['covar'], 3),
+        conf = np.round(np.pi * result['NS_stdev'] * result['EW_stdev'] * chi2(2).ppf(confidence_level/100), 3),
         stmean = result['t_mean'],
-        stvar = round(result['t_stdev'],3),
+        stvar = np.round(result['t_stdev'],3),
         ex95confmin = result['t_min'],
         ex95confmax = result['t_max']
         )

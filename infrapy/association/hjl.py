@@ -21,12 +21,16 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
+from datetime import datetime
+
 from pyproj import Geod
 
 from scipy.cluster import hierarchy
 from scipy.integrate import quad, nquad
 from scipy.interpolate import interp2d
 from scipy.spatial.distance import squareform
+
+from obspy import UTCDateTime
 
 from ..propagation import likelihoods as lklhds
 from ..propagation import infrasound as infrsnd
@@ -313,14 +317,12 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             Distance matrix describing joint-likelihood separations for all pairs
 
         """
-    print('-' * 75)
-    print('Building distance matrix for association analysis...')
-
-    print('\tComputing joint-likelihoods...\t', end=' ')
+    print('\tComputing joint-likelihoods...')
     det_cnt = len(det_list)
     n_tot, n_ref = det_cnt * (det_cnt - 1) / 2, 0
 
     if progress:
+        print('\t\tProgress: \t', end='')
         prog_bar.prep(50)
     if pool:
         args, result, ids = [], [], []
@@ -573,7 +575,7 @@ def summarize_clusters(labels, distance_matrix, population_min=3, show_result=Fa
 
     return clusters, qualities
 
-def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, pool=None):
+def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, prg_bar=False, pool=None):
     """Run the Hierarchical Joint-Likelihood (HJL) association analysis
 
         Runs the clustering analysis on a list of detecctions and returns the
@@ -585,6 +587,8 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
             List of detections (see infrapy.propagation.likelihoods)
         threshold : float
             Threshold value defining linkage cutoff
+        dist_max: float
+            Maximum value allowed in distance matrix
         bm_width : float
             Width of the projected beam [degrees]
         rng_max : float
@@ -618,17 +622,20 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
         if os.path.isfile(file_id + "-dm.npy"):
             dists = np.load(file_id + "-dm.npy")
         else:
-            dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool))
+            dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool, progress=prg_bar))
             np.save(file_id + "-dm", dists)
         dists[dists > dist_max] = dist_max
-        links, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
+        print('\t' + "Clustering detections into events...")
+        _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
     else :
-        dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool))
+        dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool, progress=prg_bar))
         dists[dists > dist_max] = dist_max
-        links, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
+        print('\t' + "Clustering detections into events...")
+        _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
 
     # Trim clusters with poor shape
     if trimming_thresh:
+        print('\t' + "Trimming poor linkages and repeating clustering analysis...")
         dists_new = dists.copy()
         trim_indices = []
         while True:
@@ -637,7 +644,6 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
                 break
             else :
                 trim_indices = trim_indices + new_indicies
-            print(trim_indices)
 
             # Re-run clustering on trimmed matrix
             for indices in trim_indices:
@@ -650,3 +656,74 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
                 _, labels, _ = cluster(dists_new, threshold * trim_thresh_scalar, linkage_method=linkage_method, show_result=show_result, trim_indices=trim_indices)
 
     return labels, sorted_dists
+
+
+def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0, 
+    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, pool=None):
+    """
+    
+    
+    """
+
+
+    # Compute maximum propagation time and analysis window length [minutes]
+    max_prop_time = int(rng_max / 0.22)
+    analysis_window = int(max_prop_time * 0.5)
+
+    # check if start and end times are defined and otherwise select from earliest and latest detections
+    if starttime is None or endtime is None:
+        starttime = np.min(np.array([det.peakF_UTCtime for det in det_list]))
+        endtime = np.max(np.array([det.peakF_UTCtime for det in det_list]))
+
+        starttime = UTCDateTime(starttime.astype(datetime)) - max_prop_time
+        endtime = UTCDateTime(endtime.astype(datetime))
+    else:
+        starttime = UTCDateTime(starttime)
+        endtime = UTCDateTime(endtime)
+    duration = int(endtime - starttime)
+
+    # run clustering analysis
+    events, event_qls = [], []
+    for dt in range(0, duration, analysis_window):
+        window_start = starttime +  dt # np.timedelta64(dt, 'm')
+        window_end = starttime + (dt + analysis_window + max_prop_time) # np.timedelta64(dt + int(analysis_window + max_prop_time), 'm')
+        print('\n' + "Running event identification for:", window_start, "-", window_end)
+
+        temp = [(n, det) for n, det in enumerate(det_list) if np.logical_and(window_start <= UTCDateTime(det.peakF_UTCtime.astype(datetime)), UTCDateTime(det.peakF_UTCtime.astype(datetime)) <= window_end)]
+        key = [pair[0] for pair in temp]
+        new_list = [pair[1] for pair in temp]
+
+        if len(temp) >= cluster_det_population:
+            labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, 
+                linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, pool=pool)
+            clusters, qualities = summarize_clusters(labels, dists, population_min=cluster_det_population)
+
+            for n in range(len(clusters)):
+                events += [[key[n] for n in clusters[n]]]
+                event_qls += [10.0**(-qualities[n])]
+
+    # clean up clusters
+    print('\n' + "Cleaning up and merging clusters...")
+    event_cnt = len(events)
+    for n1 in range(event_cnt):
+        for n2 in range(n1 + 1, event_cnt):
+            if len(events[n1]) > 0 and len(events[n2]) > 0:
+                set1, set2 = set(events[n1]), set(events[n2])
+                rel_overlap = len(set1.intersection(set2)) / min(len(set1), len(set2))
+
+                if rel_overlap > 0.5:
+                    events[n1], events[n2] = list(set1.union(set2)), []
+                    event_qls[n1], event_qls[n2] = max(event_qls[n1], event_qls[n2]), -1.0
+
+    for n, ev_ids in enumerate(events):
+        if len(ev_ids) > 0:
+            locs = np.array([[det_list[j].latitude, det_list[j].longitude] for j in ev_ids])
+            unique_cnt = max(len(np.unique(locs[:, 0])), len(np.unique(locs[:, 1])))
+            if unique_cnt < cluster_array_population:
+                events[n] = []
+                event_qls[n] = -1.0
+
+    events = [ei for ei in events if len(ei) > 0]
+    event_qls = [eqi for eqi in event_qls if eqi > 0]
+
+    return events, event_qls
