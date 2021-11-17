@@ -14,7 +14,7 @@ from ..utils import data_io
 @click.command('run_loc', short_help="Estimate source locations and times for events")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-dets-in", help="Detection path and pattern", default=None)
-@click.option("--back_az_width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
+@click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
 @click.option("--pgm-model", help="Path geometry model (PGM) file (default: None)", default=None)
