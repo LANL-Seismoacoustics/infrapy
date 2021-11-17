@@ -17,13 +17,16 @@ from ..utils import data_io
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
-@click.option("--pgm-model", help="Path geometry model (PGM) file (default: None)", default=None)
-def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pgm_model):
+@click.option("--pgm-file", help="Path geometry model (PGM) file (default: None)", default=None)
+def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pgm_file):
     '''
-    Estimate source locations and times for events
+    Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
-
-    More detailed description...
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy run_loc --local-dets-in 'data/detection_set2.json'
+    \tinfrapy run_loc --local-dets-in 'data/detection_set2.json' --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
+    \tinfrapy run_loc --config-file config/loc_example.config
     '''
 
     click.echo("")
@@ -52,18 +55,18 @@ def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pg
     back_az_width = config.set_param(user_config, 'LOC', 'back_az_width', back_az_width, 'float')
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
     resolution = config.set_param(user_config, 'LOC', 'resolution', resolution, 'int')
-    pgm_model = config.set_param(user_config, 'LOC', 'pgm_model', pgm_model, 'str')
+    pgm_file = config.set_param(user_config, 'LOC', 'pgm_file', pgm_file, 'str')
 
     click.echo('\n' + "Parameter summary:")
     click.echo("  back_az_width: " + str(back_az_width))
     click.echo("  range_max: " + str(range_max))
     click.echo("  resolution: " + str(resolution))
-    click.echo("  pgm_model: " + str(pgm_model))
+    click.echo("  pgm_file: " + str(pgm_file))
 
-    if pgm_model is not None:
+    if pgm_file is not None:
         click.echo("")
         pgm = infrasound.PathGeometryModel()
-        pgm.load(pgm_model)
+        pgm.load(pgm_file)
     else:
         pgm = None
 

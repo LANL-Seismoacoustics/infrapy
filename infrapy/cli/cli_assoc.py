@@ -37,9 +37,12 @@ from ..association import hjl
 def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
                 cluster_threshold, trimming_threshold, event_population_min, event_station_min, multithread, cpu_cnt):
     '''
-    Associate detections
+    Run association analysis to identify events in a detection set
 
-    More detailed description...
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy run_assoc --local-dets-in 'data/detection_set1.json' --local-events-out assoc_out
+    \tinfrapy run_assoc --config-file config/assoc_example.config
     '''
 
     click.echo("")

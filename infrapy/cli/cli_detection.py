@@ -41,8 +41,8 @@ from ..propagation import likelihoods as lklhds
 @click.option("--trace-vel-max", help="Maximum trace velocity (default: " + config.defaults['FK']['trace_vel_max'] + " [m/s])", default=None, type=float)
 @click.option("--trace-vel-step", help="Trace velocity resolution (default: " + config.defaults['FK']['trace_vel_step'] + " [m/s])", default=None, type=float)
 @click.option("--method", help="Beamforming method (default: " + config.defaults['FK']['method'] + ")", default=None)
-@click.option("--signal-start", help="Start of analysis window (rel. starttime [s])", default=None, type=float)
-@click.option("--signal-end", help="End of analysis window (rel. starttime [s])", default=None, type=float)
+@click.option("--signal-start", help="Start of signal window (rel. starttime [s])", default=None, type=float)
+@click.option("--signal-end", help="End of signal window (rel. starttime [s])", default=None, type=float)
 @click.option("--noise-start", help="Start of noise sample (see GLS algorithm notes)", default=None, type=float)
 @click.option("--noise-end", help="End of noise sample (see GLS algorithm notes)", default=None, type=float)
 @click.option("--window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
@@ -54,9 +54,14 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     local_fk_out, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
     '''
-    Run fk beamforming methods
+    Run beamforming (fk) analysis
 
-    More detailed description...
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy run_fk --local-wvfrms 'data/YJ.BRP*' --cpu-cnt 8
+    \tinfrapy run_rk --config-file config/fk_example2.config --cpu-cnt 8
+
+
     '''
 
     click.echo("")
@@ -201,8 +206,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step)
  
     if multithread or cpu_cnt is not None:
-        pl.close()
         pl.terminate()
+        pl.close()
 
 
 @click.command('run_fd', short_help="Identify detections from beamforming results")
@@ -217,9 +222,13 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 def run_fd(config_file, local_fk_in, local_fd_out, window_len, p_value, min_duration, back_az_width, fixed_thresh, return_thresh):
     '''
-    Identify detections
+    Run fd analysis to identify detections in beamforming results
 
-    More detailed description...
+    \b
+    Example usage (run from infrapy/examples directory after running fk examples):
+    \tinfrapy run_fd --local-fk-in YJ.BRP4_18.00.00-18.19.59 --local-fd-out auto
+    \tinfrapy run_fd --config-file config/fd_example1.config
+    
     '''
 
     click.echo("")
@@ -355,9 +364,12 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, multithread, cpu_cnt, fd_window_len, p_value, min_duration, 
     back_az_width, fixed_thresh, return_thresh):
     '''
-    Run fk and fd methods
-
-    More detailed description...
+    Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
+    
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy run_fkd --local-wvfrms 'data/YJ.BRP*' --local-fd-out auto
+    \tinfrapy run_fkd --config-file config/fd_example1.config
     '''
     
 
@@ -545,9 +557,9 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     if return_thresh:
         np.save(local_fd_out + ".thresholds", thresh_vals)
 
-    if multithread is False or cpu_cnt is not None:
-        pl.close()
+    if pl is not None:
         pl.terminate()
+        pl.close()
 
 
 
