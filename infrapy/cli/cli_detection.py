@@ -59,7 +59,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy run_fk --local-wvfrms 'data/YJ.BRP*' --cpu-cnt 8
-    \tinfrapy run_rk --config-file config/fk_example2.config --cpu-cnt 8
+    \tinfrapy run_fk --config-file config/fk_example2.config --cpu-cnt 8
 
 
     '''
