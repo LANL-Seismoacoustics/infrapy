@@ -10,7 +10,6 @@ import numpy as np
 
 from infrapy.cli import cli_visualization
 
-
 from . import cli_detection
 from . import cli_assoc
 from . import cli_loc
@@ -32,6 +31,8 @@ main.add_command(cli_loc.run_loc)
 
 main.add_command(cli_visualization.plot_fk)
 main.add_command(cli_visualization.plot_fd)
+main.add_command(cli_visualization.plot_dets)
+main.add_command(cli_visualization.plot_origin_time)
 
 if __name__ == '__main__':
     main()

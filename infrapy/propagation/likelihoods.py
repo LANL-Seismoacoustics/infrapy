@@ -752,8 +752,10 @@ class Infrapy_Encoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, str):
+            return str(obj)
         else:
-            return super(MyEncoder, self).default(obj)
+            return str(obj)
 
 
 def detection_list_to_json(filename, detections):

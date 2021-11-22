@@ -3,6 +3,7 @@
 import os 
 import warnings 
 import fnmatch
+import json
 
 import numpy as np
 
@@ -170,5 +171,14 @@ def write_events(events, event_qls, det_list, local_events_out):
         lklhds.detection_list_to_json(local_events_out + "-ev" + str(ev_n) + ".json", temp)
 
 
+def write_locs(bisl_results, local_bisl_out):
+    print("Writing localization results into " + local_bisl_out)
+    
+    with open(local_bisl_out, 'w') as of:
+        json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
 
 
+def read_locs(local_bisl_in):
+    print("Reading localization results from " + local_bisl_in)
+
+    return json.load(open(local_bisl_in))

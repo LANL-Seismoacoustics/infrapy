@@ -10,10 +10,13 @@ import numpy as np
 
 from multiprocessing import Pool
 
+from infrapy.location import visualization
+
 from ..utils import config
 from ..utils import data_io
 
 from ..detection import visualization as det_vis
+from ..location import visualization as loc_vis
 
 
 @click.command('plot_fk', short_help="Visualize beamforming (fk) results")
@@ -118,6 +121,10 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         click.echo("  endtime: " + str(endtime))
         
     click.echo("  local_fk_out: " + str(local_fk_out))
+
+    click.echo('\n' + "Visualization parameters:")
+    click.echo("  freq_min: " + str(freq_min))
+    click.echo("  freq_max: " + str(freq_max))
     if figure_out:
         click.echo("  figure_out: " + figure_out)
 
@@ -251,6 +258,10 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         
     click.echo("  local_fk_out: " + str(local_fk_out))
     click.echo("  local_fd_out: " + str(local_fd_out))
+
+    click.echo('\n' + "Visualization parameters:")
+    click.echo("  freq_min: " + str(freq_min))
+    click.echo("  freq_max: " + str(freq_max))
     if figure_out:
         click.echo("  figure_out: " + figure_out)
 
@@ -270,6 +281,8 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
         # Read in detection list
         det_list = data_io.set_det_list(local_fk_out + ".dets.json", merge=True)
+        if len(det_list) == 0:
+            click.echo("Note: no detections found in analysis.")
 
         det_vis.plot_fk1(stream, latlon, times, peaks, detections=det_list, title=local_fk_out, output_path=figure_out)
     else:
@@ -279,6 +292,8 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
             # Read in detection list
             det_list = data_io.set_det_list(local_fd_out, merge=True)
+            if len(det_list) == 0:
+                click.echo("Note: no detections found in analysis.")
 
             det_vis.plot_fk2(times, peaks, detections=det_list, output_path=figure_out)
         else:
@@ -287,6 +302,94 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
 
 
+@click.command('plot_dets', short_help="Plot detections on a map")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--local-dets-in", help="Detection path and pattern", default=None)
+@click.option("--figure-out", help="Destination for figure", default=None)
+def plot_dets(config_file, range_max, local_dets_in, figure_out):
+    '''
+    Visualize detections on a map
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy plot_dets --local-dets-in 'data/detection_set1.json' --figure-out detection_set1.png
+
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##          Detection List         ##")
+    click.echo("##             Mapping             ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")    
+
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    local_dets_in = config.set_param(user_config, 'DETECTION IO', 'local_dets_in', local_dets_in, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  local_dets_in: " + str(local_dets_in))
+
+    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+
+    click.echo('\n' + "Visualization parameters:")
+    click.echo("  range_max: " + str(range_max))
+
+
+    click.echo('\n' + "Reading in detection list...")
+    det_list = data_io.set_det_list(local_dets_in, merge=False)
+
+    click.echo("Drawing map with detection back azimuth projections...")
+    loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
 
 
 
+@click.command('plot_origin_time', short_help="Plot detections on a map")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-bisl-out", help="Localization results", default=None)
+@click.option("--figure-out", help="Destination for figure", default=None)
+def plot_origin_time(config_file, local_bisl_out, figure_out):
+    '''
+    Visualize detections on a map
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy infrapy plot_origin_time --local-bisl-out temp.json 
+
+    '''
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##        Origin Time Plot         ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    local_bisl_out = config.set_param(user_config, 'DETECTION IO', 'local_bisl_out', local_bisl_out, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  local_dets_in: " + str(local_bisl_out))
+
+    click.echo('\n' + "Reading in BISL results...")
+    bisl_results = data_io.read_locs(local_bisl_out)
+
+    click.echo("Plotting origin time distribution...")
+    loc_vis.plot_origin_time(bisl_results, output_path=figure_out)
