@@ -1,0 +1,28 @@
+InfraPy Beamforming (fk) Analysis
+---------------------------------
+
+Data summary:
+  YJ.BRP1..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+  YJ.BRP2..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+  YJ.BRP3..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+  YJ.BRP4..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+
+  channel_cnt: 4
+  latitude: 39.4727
+  longitude: -110.741
+
+Algorithm parameters:
+  freq_min: 0.5
+  freq_max: 5.0
+  back_az_min: -180.0
+  back_az_max: 180.0
+  back_az_step: 2.0
+  trace_vel_min: 300.0
+  trace_vel_max: 600.0
+  trace_vel_step: 2.5
+  method: bartlett
+  signal_start: None
+  signal_end: None
+  window_len: 10.0
+  sub_window_len: None
+  window_step: 5.0

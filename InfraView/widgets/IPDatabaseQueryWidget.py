@@ -8,18 +8,20 @@ import pandas as pd
 # from tabulate import tabulate
 
 from infrapy.utils import database
-
+from InfraView.widgets import IPFDSNWidget
 
 class IPDatabaseQueryWidget(QFrame):
 
     def __init__(self, parent):
         super().__init__()
-        self.setFrameStyle(QFrame.Box|QFrame.Plain)
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.parent = parent  # reference to the IPBeamformingWidget to which this belongs
         self.session = None
         self.buildUI()
 
     def buildUI(self):
+
+        validator = IPFDSNWidget.IPValidator()
 
         title_label = QLabel("\tDatabase Query")
         title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
@@ -27,21 +29,22 @@ class IPDatabaseQueryWidget(QFrame):
         self.net_edit = QLineEdit()
         self.net_edit.setMaximumWidth(150)
         self.net_edit.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')
+        self.net_edit.setValidator(validator)
+
         self.sta_edit = QLineEdit()
         self.sta_edit.setMaximumWidth(150)
         self.sta_edit.setToolTip('Wildcards OK \nOne or more SEED station codes. \nMultiple codes are comma-separated (e.g. "ANMO,PFO")')
+        self.sta_edit.setValidator(validator)
+
         self.loc_edit = QLineEdit()
         self.loc_edit.setMaximumWidth(150)
         self.loc_edit.setToolTip('One or more SEED location identifiers. \nMultiple identifiers are comma-separated (e.g. "00,01"). \nAs a special case “--“ (two dashes) will be translated to a string of two space characters to match blank location IDs.')
+        self.loc_edit.setValidator(validator)
+
         self.cha_edit = QLineEdit()
         self.cha_edit.setMaximumWidth(150)
         self.cha_edit.setToolTip('Wildcards OK \nOne or more SEED channel codes. \nMultiple codes are comma-separated (e.g. "BHZ,HHZ")')
-
-        form_layout1 = QFormLayout()
-        form_layout1.addRow("Net: ", self.net_edit)
-        form_layout1.addRow("Sta: ", self.sta_edit)
-        form_layout1.addRow("Loc: ", self.loc_edit)
-        form_layout1.addRow("Cha: ", self.cha_edit)
+        self.cha_edit.setValidator(validator)
 
         self.start_date_edit = QDateEdit()
         self.start_date_edit.setMaximumWidth(150)
@@ -56,20 +59,21 @@ class IPDatabaseQueryWidget(QFrame):
         self.duration_edit = QSpinBox()
         self.duration_edit.setMinimum(1)
         self.duration_edit.setMaximum(999999)
+        self.duration_edit.setMaximumWidth(150)
         self.duration_edit.setValue(600)
 
-        form_layout2 = QFormLayout()
-        form_layout2.addRow("Start date: ", self.start_date_edit)
-        form_layout2.addRow("Start time(UTC): ", self.start_time_edit)
-        form_layout2.addRow("Duration (s): ", self.duration_edit)
-
-        horiz_layout = QHBoxLayout()
-        horiz_layout.addLayout(form_layout1)
-        horiz_layout.addLayout(form_layout2)
-        horiz_layout.addStretch()
+        form_layout1 = QFormLayout()
+        form_layout1.addRow("Net: ", self.net_edit)
+        form_layout1.addRow("Sta: ", self.sta_edit)
+        form_layout1.addRow("Loc: ", self.loc_edit)
+        form_layout1.addRow("Cha: ", self.cha_edit)
+        form_layout1.addRow("Start date: ", self.start_date_edit)
+        form_layout1.addRow("Start time(UTC): ", self.start_time_edit)
+        form_layout1.addRow("Duration (s): ", self.duration_edit)
 
         self.query_button = QPushButton("Query Database")
 
+        # this bit centers the query button...
         horiz_layout_2 = QHBoxLayout()
         horiz_layout_2.addStretch()
         horiz_layout_2.addWidget(self.query_button)
@@ -77,7 +81,8 @@ class IPDatabaseQueryWidget(QFrame):
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(title_label)
-        main_layout.addLayout(horiz_layout)
+        main_layout.addLayout(form_layout1)
+        main_layout.addStretch()
         main_layout.addLayout(horiz_layout_2)
         self.setLayout(main_layout)
 
@@ -124,8 +129,9 @@ class IPDatabaseQueryWidget(QFrame):
         else:
             cha = self.cha_edit.text()
 
-        df = database.query_db(session, start_time, end_time, net="*", sta="*", loc="*", cha="*")
-        print(df)
+        df = database.query_db(session, start_time, end_time, sta=sta, loc=loc, cha=cha)
+        self.parent.ipdatabase_query_results_table.setData(df)
+
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
         msg_box = QMessageBox()

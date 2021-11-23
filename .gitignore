@@ -1,3 +1,4 @@
+.gitignore
 *.pyc
 *.o
 *.a
@@ -12,3 +13,4 @@ Copy*
 */.ipynb_checkpoints/
 *.swp
 infrapy-data/
+tutorials/DBConnect.ipynb

@@ -69,20 +69,19 @@ def check_connection(session):
 class Site(kb.Site):
     __tablename__ = 'global.site'
 
-
 class Wfdisc(kb.Wfdisc):
-    __tablename__ = 'global.wfdisk_raw'
+    __tablename__ = 'global.wfdisc_raw'
 
-
-def query_db(session, start_time, end_time, net="*", sta="*", loc="*", cha="*"):
+def query_db(session, start_time, end_time, sta="*", loc="*", cha="*"):
 
     if session is None:
         return None
 
-    stations = session.query(Wfdisc).filter(Wfdisc.sta == sta)\
+    my_query = session.query(Wfdisc).filter(Wfdisc.sta == sta)\
                                     .filter(Wfdisc.time < end_time.timestamp)\
                                     .filter(Wfdisc.endtime > start_time.timestamp)\
                                     .filter(Wfdisc.chan.like(cha))
 
-    df = pd.read_sql(stations.statement, session.bind)
+    df = pd.read_sql(my_query.statement, session.bind)
+    
     return df

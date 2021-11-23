@@ -92,6 +92,7 @@ class IPDatabaseConnectWidget(QFrame):
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.title_label)
         main_layout.addLayout(horiz_layout_2)
+        main_layout.addStretch()
         main_layout.addLayout(horiz_layout_1)
         self.setLayout(main_layout)
 
@@ -194,6 +195,7 @@ class IPDatabaseConnectWidget(QFrame):
                 config.read(config_filename)
                 self.hostname_edit.setText(config['DATABASE']['hostname'])
                 self.username_edit.setText(config['DATABASE']['username'])
+                self.password_edit.setText("")
                 self.database_name.setText(config['DATABASE']['database_name'])
                 self.portnum_edit.setText(config['DATABASE']['port'])
                 self.driver_edit.setText(config['DATABASE']['driver'])
