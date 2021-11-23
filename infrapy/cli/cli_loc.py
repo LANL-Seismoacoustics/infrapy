@@ -4,6 +4,7 @@ import sys
 import click
 import configparser as cnfg
 import numpy as np
+from scipy.sparse import data
 
 from ..location import bisl
 from ..propagation import infrasound
@@ -14,18 +15,19 @@ from ..utils import data_io
 @click.command('run_loc', short_help="Estimate source locations and times for events")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-dets-in", help="Detection path and pattern", default=None)
+@click.option("--local-bisl-out", help="Localization results path", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
 @click.option("--pgm-file", help="Path geometry model (PGM) file (default: None)", default=None)
-def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pgm_file):
+def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max, resolution, pgm_file):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_loc --local-dets-in 'data/detection_set2.json'
-    \tinfrapy run_loc --local-dets-in 'data/detection_set2.json' --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
+    \tinfrapy run_loc --local-dets-in data/detection_set2.json --local-bisl-out data/location2.json
+    \tinfrapy run_loc --local-dets-in data/detection_set2.json --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
     \tinfrapy run_loc --config-file config/loc_example.config
     '''
 
@@ -88,4 +90,6 @@ def run_loc(config_file, local_dets_in, back_az_width, range_max, resolution, pg
         # Determine output format for BISL results
         click.echo('\n' + "BISL Summary:")
         click.echo(bisl.summarize(result))
+
+    data_io.write_locs(result, local_bisl_out)
 

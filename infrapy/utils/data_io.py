@@ -3,6 +3,7 @@
 import os 
 import warnings 
 import fnmatch
+import json
 
 import numpy as np
 
@@ -25,7 +26,7 @@ def wvfrms_from_db(db_url, network, station, location, channel, starttime, endti
 def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location=None, channel=None, starttime=None, endtime=None, local_latlon=None):
     # check that only one option is selected and issue warning if multiple data sources are specified
     if np.sum(np.array([val is not None for val in [local_opt, fdsn_opt, db_opt]])) > 1:
-        msg = "Multiple data sources specified. Unexpected behavior is possible." + '\n' + "Priority order is [local > FDSN > DB]"
+        msg = '\n' + "Multiple data sources specified. Unexpected behavior is possible." + '\n' + "Priority order is [local > FDSN > DB]"
         warnings.warn(msg)
 
     # Check data option and populate obspy Stream
@@ -55,7 +56,8 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
         stream, latlon = wvfrms_from_db(db_opt, network, station, location, channel, starttime, endtime)
 
     else:
-        print("No data source specified.")
+        msg = "Warning: No waveform data source specified."
+        warnings.warn(msg)
         stream, latlon = None, None
 
     return stream, latlon
@@ -81,7 +83,7 @@ def set_det_list(local_det_info, merge=True):
                 file_list += [file]
 
         if len(file_list) == 0:
-            msg = "Detection file(s) specified not found"
+            msg = '\n' + "Detection file(s) specified not found"
             warnings.warn(msg)
             det_list = None 
         elif len(file_list) == 1:
@@ -169,5 +171,14 @@ def write_events(events, event_qls, det_list, local_events_out):
         lklhds.detection_list_to_json(local_events_out + "-ev" + str(ev_n) + ".json", temp)
 
 
+def write_locs(bisl_results, local_bisl_out):
+    print("Writing localization results into " + local_bisl_out)
+    
+    with open(local_bisl_out, 'w') as of:
+        json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
 
 
+def read_locs(local_bisl_in):
+    print("Reading localization results from " + local_bisl_in)
+
+    return json.load(open(local_bisl_in))
