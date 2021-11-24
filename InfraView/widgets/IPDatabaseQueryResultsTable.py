@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QTableView
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt, QAbstractTableModel
+
+import pandas as pd
 
 
 class IPPandasModel(QAbstractTableModel):
@@ -27,16 +29,41 @@ class IPPandasModel(QAbstractTableModel):
             return self.dataframe.columns[col]
 
 
-class IPDatabaseQueryResultsTable(QTableView):
+class IPDatabaseQueryResultsTable(QWidget):
     """
-    Table to view (hopefully) generic results from a sql query
+    Table widget to view results from an sql query
     """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self.buildUI()
+
+    def buildUI(self):
+        self.tableView = QTableView(self)
+
+        self.clear_button = QPushButton("Clear Table")
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.clear_button)
+        button_layout.addStretch()
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(button_layout)
+        main_layout.addWidget(self.tableView)
+        self.setLayout(main_layout)
+
+    def connect_signals_and_slots(self):
+        self.clear_button.clicked.connect(self.clearTable)
 
     def setData(self, data):
+        '''This takes a pandas dataframe, and converts it for display in our tableView'''
         model = IPPandasModel(data)
-        self.setModel(model)
+        self.tableView.setModel(model)
+
+    def clearTable(self):
+        # What we're going to do here is create an empty pandas dataframe, then send it to setData
+        self.setData(pd.DataFrame())
+
+
 
     
