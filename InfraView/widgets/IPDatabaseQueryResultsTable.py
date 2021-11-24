@@ -52,18 +52,20 @@ class IPDatabaseQueryResultsTable(QWidget):
         main_layout.addWidget(self.tableView)
         self.setLayout(main_layout)
 
+        self.connect_signals_and_slots()
+
     def connect_signals_and_slots(self):
         self.clear_button.clicked.connect(self.clearTable)
 
     def setData(self, data):
         '''This takes a pandas dataframe, and converts it for display in our tableView'''
-        model = IPPandasModel(data)
-        self.tableView.setModel(model)
+        self.model = IPPandasModel(data)
+        self.tableView.setModel(self.model)
+        self.tableView.reset()
 
     def clearTable(self):
-        # What we're going to do here is create an empty pandas dataframe, then send it to setData
-        self.setData(pd.DataFrame())
-
+        # maybe do some additional clean-up here?
+        self.model.deleteLater()
 
 
     
