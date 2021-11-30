@@ -19,8 +19,8 @@ from ..association import hjl
 
 @click.command('run_assoc', short_help="Associate detections into events")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-dets-in", help="Detection path and pattern", default=None)
-@click.option("--local-events-out", help="Path for event info output", default=None)
+@click.option("--local-detect-label", help="Detection path and pattern", default=None)
+@click.option("--local-event-label", help="Path for event info output", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['ASSOC']['back_az_width'] + " [deg])", default=None, type=float)
@@ -34,14 +34,14 @@ from ..association import hjl
 @click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
 @click.option("--multithread", help="Use multithreading (default: " + config.defaults['ASSOC']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
+def run_assoc(config_file, local_detect_label, local_event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
                 cluster_threshold, trimming_threshold, event_population_min, event_station_min, multithread, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_assoc --local-dets-in 'data/detection_set1.json' --local-events-out assoc_out
+    \tinfrapy run_assoc --local-detect-label 'data/detection_set1.json' --local-event-label assoc_out
     \tinfrapy run_assoc --config-file config/assoc_example.config
     '''
 
@@ -63,20 +63,20 @@ def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, 
 
 
     # Data IO parameters
-    local_dets_in = config.set_param(user_config, 'DETECTION IO', 'local_dets_in', local_dets_in, 'string')
-    local_events_out = config.set_param(user_config, 'DETECTION IO', 'local_events_out', local_events_out, 'string')
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
     starttime = config.set_param(user_config, 'DETECTION IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'DETECTION IO', 'endtime', endtime, 'string')
 
     # Data IO parameters
     click.echo('\n' + "Data summary:")
-    click.echo("  local_dets_in: " + str(local_dets_in))
-    click.echo("  local_events_out: " + str(local_events_out))
+    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  local_event_label: " + str(local_event_label))
     click.echo("  starttime: " + str(starttime))
     click.echo("  endtime: " + str(endtime))
 
-    if local_dets_in is None or local_events_out is None:
-        msg = "Association analysis requires detection input (--local-det-in) and output path (--local-events-out)"
+    if local_detect_label is None or local_event_label is None:
+        msg = "Association analysis requires detection input (--local-det-in) and output path (--local-event-label)"
         warnings.warn(msg)
         return 0
 
@@ -107,12 +107,12 @@ def run_assoc(config_file, local_dets_in, local_events_out, starttime, endtime, 
     else:
         pl = None
 
-    det_list = data_io.set_det_list(local_dets_in, merge=True)
+    det_list = data_io.set_det_list(local_detect_label, merge=True)
     events, event_qls = hjl.id_events(det_list, cluster_threshold, starttime=starttime, endtime=endtime, dist_max=distance_matrix_max, 
                                     bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=(range_max / 4.0), 
                                     resol=resolution, linkage_method=cluster_linkage, trimming_thresh=trimming_threshold, 
                                     cluster_det_population=event_population_min, cluster_array_population=event_station_min, pool=pl)
-    data_io.write_events(events, event_qls, det_list, local_events_out)    
+    data_io.write_events(events, event_qls, det_list, local_event_label)    
     if pl is not None:
         pl.terminate()
         pl.close()

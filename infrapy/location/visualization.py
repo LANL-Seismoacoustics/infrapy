@@ -5,6 +5,7 @@
 # Philip Blom (pblom@lanl.gov)
 
 
+from infrapy.utils import latlon
 import numpy as np
 
 from pyproj import Geod, transform
@@ -22,22 +23,50 @@ import cartopy.crs as crs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
-from infrapy.utils import data_io
+from ..utils import data_io
+from . import bisl
 
 sph_proj = Geod(ellps='sphere')
 
-
 marker_size = 1.0
 map_proj = crs.PlateCarree()
-resol = '100m'  # use data at this scale (not working at the moment)
+
+back_az_color = "DarkRed"
+conf_color = "r"
+pdf_cm = cm.hot_r
+
+def _setup_map(fig, latlon_bnds):
+    lat_min, lat_max = latlon_bnds[0]
+    lon_min, lon_max = latlon_bnds[1]
+
+    ax = fig.add_subplot(1, 1, 1, projection=map_proj)
+    ax.set_xlim(lon_min, lon_max)
+    ax.set_ylim(lat_min, lat_max)
+
+    gl = ax.gridlines(crs=map_proj, draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl.top_labels = False
+    gl.right_labels = False
+
+    lat_tick, lon_tick = max(1, int((lat_max - lat_min) / 4)), max(1, int((lon_max - lon_min) / 4))
+    gl.xlocator = mticker.FixedLocator(np.arange(lon_min - np.ceil(lon_tick / 2), lon_max + lon_tick, lon_tick))
+    gl.ylocator = mticker.FixedLocator(np.arange(lat_min - np.ceil(lat_tick / 2), lat_max + lat_tick, lat_tick))
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+
+    # Add features (coast lines, borders)
+    ax.add_feature(cfeature.BORDERS, linewidth=1.0)
+    ax.add_feature(cfeature.STATES, linewidth=1.0)
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.75)
+    ax.add_feature(cfeature.LAKES, linewidth=0.5)
+    ax.add_feature(cfeature.RIVERS, linewidth=0.5)
+
+    return ax
 
 def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, show_fig=True):
     '''
     Visualize detections on a Cartopy map
 
     '''   
-
-
 
     array_lats = np.array([det.latitude for det in det_list])
     array_lons = np.array([det.longitude for det in det_list])
@@ -54,31 +83,12 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
     lon_min, lon_max = np.floor(lon_min), np.ceil(lon_max)
 
     fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection=map_proj)
+    ax = _setup_map(fig,[[lat_min, lat_max], [lon_min, lon_max]])
 
-    ax.set_xlim(lon_min, lon_max)
-    ax.set_ylim(lat_min, lat_max)
-
-    gl = ax.gridlines(crs=map_proj, draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-    gl.top_labels = False
-    gl.right_labels = False
-
-    lat_tick, lon_tick = int((lat_max - lat_min) / 4), int((lon_max - lon_min) / 4)
-    gl.xlocator = mticker.FixedLocator(np.arange(lon_min - np.ceil(lon_tick / 2), lon_max + lon_tick, lon_tick))
-    gl.ylocator = mticker.FixedLocator(np.arange(lat_min - np.ceil(lat_tick / 2), lat_max + lat_tick, lat_tick))
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
-
-    # Add features (coast lines, borders)
-    ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
-    ax.add_feature(cfeature.STATES, linewidth=0.5)
-    ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-    
     ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
-
     for det in det_list:
         gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
-        ax.plot(list(gc_path.lons), list(gc_path.lats), '-b', linewidth=1.5, transform=map_proj)
+        ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
 
     if title:
         plt.title(title)
@@ -96,15 +106,16 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
     
     '''   
 
-    bisl_results = data_io.read_locs(bisl_result)
-    spatial_pdf = np.array(bisl_results['spatial_pdf'])
-    origin_times = np.array([np.datetime64(tn) for tn in bisl_results['temporal_pdf'][0]])
-    origin_time_pdf = np.array(bisl_results['temporal_pdf'][1])
+    array_lats = np.array([det.latitude for det in det_list])
+    array_lons = np.array([det.longitude for det in det_list])
 
-    if not zoom:
-        array_lats = np.array([det.latitude for det in det_list])
-        array_lons = np.array([det.longitude for det in det_list])
+    conf_x, conf_y = bisl.calc_conf_ellipse([0.0, 0.0],[bisl_result['EW_stdev'], bisl_result['NS_stdev'], bisl_result['covar']], 90)
+    conf_latlon = sph_proj.fwd(np.array([bisl_result['lon_mean']] * len(conf_x)), np.array([bisl_result['lat_mean']] * len(conf_x)), np.degrees(np.arctan2(conf_x, conf_y)), np.sqrt(conf_x**2 + conf_y**2) * 1e3)
 
+    if zoom:
+        lat_min, lat_max = min(conf_latlon[1]), max(conf_latlon[1])
+        lon_min, lon_max = min(conf_latlon[0]), max(conf_latlon[0])
+    else:
         lat_min, lat_max = min(array_lats), max(array_lats)
         lon_min, lon_max = min(array_lons), max(array_lons)
 
@@ -112,25 +123,22 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
             gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
             lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
             lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
-    else:
-        lat_min, lat_max = 30.0, 40.0
-        lon_min, lon_max = -100.0, 100.0
+
+    lat_min, lat_max = np.floor(lat_min), np.ceil(lat_max)
+    lon_min, lon_max = np.floor(lon_min), np.ceil(lon_max)
 
     fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection=map_proj)
+    ax = _setup_map(fig, [[lat_min, lat_max], [lon_min, lon_max]])
+    
+    spatial_pdf = np.array(bisl_result['spatial_pdf'])
+    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=2.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
-    ax.set_xlim(lon_min, lon_max)
-    ax.set_ylim(lat_min, lat_max)
-
-    gl = ax.gridlines(crs=map_proj, draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-    gl.top_labels = False
-    gl.right_labels = False
-
-    lat_tick, lon_tick = int((lat_max - lat_min) / 4), int((lon_max - lon_min) / 4)
-    gl.xlocator = mticker.FixedLocator(np.arange(lon_min - np.ceil(lon_tick / 2), lon_max + lon_tick, lon_tick))
-    gl.ylocator = mticker.FixedLocator(np.arange(lat_min - np.ceil(lat_tick / 2), lat_max + lat_tick, lat_tick))
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
+    if not zoom:
+        ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
+        for det in det_list:
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
+            ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
 
     if title:
         plt.set_title(title)
@@ -154,8 +162,9 @@ def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True):
     mask = np.logical_and(np.datetime64(bisl_results['t_min']) <= origin_times,
                             origin_times <= np.datetime64(bisl_results['t_max']))
 
+    plt.figure()
     plt.plot(origin_times, origin_time_pdf, '-k')
-    plt.fill_between(origin_times[mask], 0.0, origin_time_pdf[mask], color='b', alpha=0.5)
+    plt.fill_between(origin_times[mask], 0.0, origin_time_pdf[mask], color=conf_color, alpha=0.5)
     plt.xlabel("Origin Time")
     plt.ylabel("Probability")
 

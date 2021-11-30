@@ -14,20 +14,20 @@ from ..utils import data_io
 
 @click.command('run_loc', short_help="Estimate source locations and times for events")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-dets-in", help="Detection path and pattern", default=None)
-@click.option("--local-bisl-out", help="Localization results path", default=None)
+@click.option("--local-event-label", help="Detection path and pattern", default=None)
+@click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
 @click.option("--pgm-file", help="Path geometry model (PGM) file (default: None)", default=None)
-def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max, resolution, pgm_file):
+def run_loc(config_file, local_event_label, local_loc_label, back_az_width, range_max, resolution, pgm_file):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_loc --local-dets-in data/detection_set2.json --local-bisl-out data/location2.json
-    \tinfrapy run_loc --local-dets-in data/detection_set2.json --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
+    \tinfrapy run_loc --local-event-label data/detection_set2.json --local-loc-label data/location2
+    \tinfrapy run_loc --local-event-label data/detection_set2.json --local-loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
     \tinfrapy run_loc --config-file config/loc_example.config
     '''
 
@@ -48,10 +48,12 @@ def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max
         user_config = None
 
     # Data IO parameters
-    local_dets_in = config.set_param(user_config, 'DETECTION IO', 'local_dets_in', local_dets_in, 'string')
+    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_dets_in: " + str(local_dets_in))
+    click.echo("  local_event_label: " + str(local_event_label))
+    click.echo("  local_loc_label: " + str(local_loc_label))
 
     # Algorithm parameters
     back_az_width = config.set_param(user_config, 'LOC', 'back_az_width', back_az_width, 'float')
@@ -72,7 +74,7 @@ def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max
     else:
         pgm = None
 
-    events = data_io.set_det_list(local_dets_in, merge=False)
+    events = data_io.set_det_list(local_event_label, merge=False)
     if type(events[0]) is list:
         # run location for multiple lists
         for j, det_list in enumerate(events):
@@ -82,6 +84,8 @@ def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max
             # Determine output format for BISL results
             click.echo('\n' + "BISL Summary:")
             click.echo(bisl.summarize(result))
+            data_io.write_locs(result, local_loc_label + "loc-" + str(j + 1) + ".json")
+
     else:
         # run a single localization analysis
         click.echo("")
@@ -91,5 +95,5 @@ def run_loc(config_file, local_dets_in, local_bisl_out, back_az_width, range_max
         click.echo('\n' + "BISL Summary:")
         click.echo(bisl.summarize(result))
 
-    data_io.write_locs(result, local_bisl_out)
+        data_io.write_locs(result, local_loc_label + ".loc.json")
 

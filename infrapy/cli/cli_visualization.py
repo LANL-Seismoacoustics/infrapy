@@ -36,10 +36,10 @@ from ..location import visualization as loc_vis
 @click.option("--endtime", help="End time of analysis window", default=None)
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
-@click.option("--local-fk-out", help="Local beamforming (fk) data files", default=None)
+@click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, 
-    channel, starttime, endtime, freq_min, freq_max, local_fk_out, figure_out):
+    channel, starttime, endtime, freq_min, freq_max, local_fk_label, figure_out):
     '''
     Visualize beamforming (fk) results
 
@@ -93,7 +93,7 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     freq_max = config.set_param(user_config, 'FK', 'freq_max', freq_max, 'float')
 
     # Result IO
-    local_fk_out = config.set_param(user_config, 'DETECTION IO', 'local_fk_out', local_fk_out, 'string')
+    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     figure_out = config.set_param(user_config, 'VISUALIZATION', 'figure_out', figure_out, 'string')
 
     click.echo('\n' + "Data parameters:")
@@ -120,7 +120,7 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
         
-    click.echo("  local_fk_out: " + str(local_fk_out))
+    click.echo("  local_fk_label: " + str(local_fk_label))
 
     click.echo('\n' + "Visualization parameters:")
     click.echo("  freq_min: " + str(freq_min))
@@ -135,21 +135,21 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     if stream is not None:
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
-        if local_fk_out is None or local_fk_out == "auto":
-            local_fk_out = stream[-1].stats.network + "." + stream[-1].stats.station
-            local_fk_out = local_fk_out + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
-            local_fk_out = local_fk_out + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
-        times = np.load(local_fk_out + ".fk_times.npy")
-        peaks = np.load(local_fk_out + ".fk_peaks.npy")
+        if local_fk_label is None or local_fk_label == "auto":
+            local_fk_label = stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
+            local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
+        times = np.load(local_fk_label + ".fk_times.npy")
+        peaks = np.load(local_fk_label + ".fk_peaks.npy")
 
-        det_vis.plot_fk1(stream, latlon, times, peaks, title=local_fk_out, output_path=figure_out)
+        det_vis.plot_fk1(stream, latlon, times, peaks, title=local_fk_label, output_path=figure_out)
     else:
-        if os.path.isfile(local_fk_out + ".fk_times.npy"):
-            times = np.load(local_fk_out + ".fk_times.npy")
-            peaks = np.load(local_fk_out + ".fk_peaks.npy")
+        if os.path.isfile(local_fk_label + ".fk_times.npy"):
+            times = np.load(local_fk_label + ".fk_times.npy")
+            peaks = np.load(local_fk_label + ".fk_peaks.npy")
             det_vis.plot_fk2(times, peaks, output_path=figure_out)
         else:
-            msg = "Beamforming (fk) results not found.  No file: " + local_fk_out + ".fk_times.npy"
+            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_times.npy"
             warnings.warn(msg)
 
 
@@ -170,11 +170,11 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 @click.option("--endtime", help="End time of analysis window", default=None)
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
-@click.option("--local-fk-out", help="Local beamforming (fk) data files", default=None)
-@click.option("--local-fd-out", help="Local detection data files", default=None)
+@click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
+@click.option("--local-detect-label", help="Local detection data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
-    freq_min, freq_max, local_fk_out, local_fd_out, figure_out):
+    freq_min, freq_max, local_fk_label, local_detect_label, figure_out):
     '''
     Visualize detection (fd) results
 
@@ -228,8 +228,8 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     freq_max = config.set_param(user_config, 'FK', 'freq_max', freq_max, 'float')
 
     # Result IO
-    local_fk_out = config.set_param(user_config, 'DETECTION IO', 'local_fk_out', local_fk_out, 'string')
-    local_fd_out = config.set_param(user_config, 'DETECTION IO', 'local_fd_out', local_fd_out, 'string')
+    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
     figure_out = config.set_param(user_config, 'VISUALIZATION', 'figure_out', figure_out, 'string')
 
     click.echo('\n' + "Data parameters:")
@@ -256,8 +256,8 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
         
-    click.echo("  local_fk_out: " + str(local_fk_out))
-    click.echo("  local_fd_out: " + str(local_fd_out))
+    click.echo("  local_fk_label: " + str(local_fk_label))
+    click.echo("  local_detect_label: " + str(local_detect_label))
 
     click.echo('\n' + "Visualization parameters:")
     click.echo("  freq_min: " + str(freq_min))
@@ -272,32 +272,32 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     if stream is not None:
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
-        if local_fk_out is None or local_fk_out == "auto":
-            local_fk_out = stream[-1].stats.network + "." + stream[-1].stats.station
-            local_fk_out = local_fk_out + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
-            local_fk_out = local_fk_out + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
-        times = np.load(local_fk_out + ".fk_times.npy")
-        peaks = np.load(local_fk_out + ".fk_peaks.npy")
+        if local_fk_label is None or local_fk_label == "auto":
+            local_fk_label = stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
+            local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
+        times = np.load(local_fk_label + ".fk_times.npy")
+        peaks = np.load(local_fk_label + ".fk_peaks.npy")
 
         # Read in detection list
-        det_list = data_io.set_det_list(local_fk_out + ".dets.json", merge=True)
+        det_list = data_io.set_det_list(local_fk_label + ".dets.json", merge=True)
         if len(det_list) == 0:
             click.echo("Note: no detections found in analysis.")
 
-        det_vis.plot_fk1(stream, latlon, times, peaks, detections=det_list, title=local_fk_out, output_path=figure_out)
+        det_vis.plot_fk1(stream, latlon, times, peaks, detections=det_list, title=local_fk_label, output_path=figure_out)
     else:
-        if os.path.isfile(local_fk_out + ".fk_times.npy"):
-            times = np.load(local_fk_out + ".fk_times.npy")
-            peaks = np.load(local_fk_out + ".fk_peaks.npy")
+        if os.path.isfile(local_fk_label + ".fk_times.npy"):
+            times = np.load(local_fk_label + ".fk_times.npy")
+            peaks = np.load(local_fk_label + ".fk_peaks.npy")
 
             # Read in detection list
-            det_list = data_io.set_det_list(local_fd_out, merge=True)
+            det_list = data_io.set_det_list(local_detect_label, merge=True)
             if len(det_list) == 0:
                 click.echo("Note: no detections found in analysis.")
 
             det_vis.plot_fk2(times, peaks, detections=det_list, output_path=figure_out)
         else:
-            msg = "Beamforming (fk) results not found.  No file: " + local_fk_out + ".fk_times.npy"
+            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_times.npy"
             warnings.warn(msg)
 
 
@@ -305,15 +305,15 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 @click.command('plot_dets', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
-@click.option("--local-dets-in", help="Detection path and pattern", default=None)
+@click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_dets(config_file, range_max, local_dets_in, figure_out):
+def plot_dets(config_file, range_max, local_detect_label, figure_out):
     '''
     Visualize detections on a map
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot_dets --local-dets-in 'data/detection_set1.json' --figure-out detection_set1.png
+    \tinfrapy plot_dets --local-detect-label 'data/detection_set1.json' --figure-out detection_set1.png
 
     '''
 
@@ -335,10 +335,10 @@ def plot_dets(config_file, range_max, local_dets_in, figure_out):
     else:
         user_config = None
 
-    local_dets_in = config.set_param(user_config, 'DETECTION IO', 'local_dets_in', local_dets_in, 'string')
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_dets_in: " + str(local_dets_in))
+    click.echo("  local_detect_label: " + str(local_detect_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
 
@@ -347,25 +347,70 @@ def plot_dets(config_file, range_max, local_dets_in, figure_out):
 
 
     click.echo('\n' + "Reading in detection list...")
-    det_list = data_io.set_det_list(local_dets_in, merge=False)
+    det_list = data_io.set_det_list(local_detect_label, merge=False)
 
     click.echo("Drawing map with detection back azimuth projections...")
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
 
 
 
-@click.command('plot_origin_time', short_help="Plot detections on a map")
+@click.command('plot_bisl_loc', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-bisl-out", help="Localization results", default=None)
+@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
+@click.option("--local-detect-label", help="Detection path and pattern", default=None)
+@click.option("--local-event-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_origin_time(config_file, local_bisl_out, figure_out):
+def plot_bisl_loc(config_file, range_max, zoom, local_detect_label, local_event_label, figure_out):
     '''
-    Visualize detections on a map
+    Visualize BISL results in with wide or zoomed format
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy infrapy plot_origin_time --local-bisl-out temp.json 
+    \tinfrapy infrapy plot_bisl_loc --local-event-label temp.json 
 
+    '''
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  local_event_label: " + str(local_event_label))
+
+    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+
+    click.echo('\n' + "Visualization parameters:")
+    click.echo("  range_max: " + str(range_max))
+    click.echo("  zoom: " + str(zoom))
+
+    click.echo('\n' + "Reading in detection list...")
+    det_list = data_io.set_det_list(local_detect_label, merge=False)
+    bisl_result = data_io.read_locs(local_event_label)
+
+    click.echo("Drawing map with BISL source location estimate...")
+    loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out)
+
+
+
+@click.command('plot_origin_time', short_help="Plot detections on a map")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-event-label", help="Localization results", default=None)
+@click.option("--figure-out", help="Destination for figure", default=None)
+def plot_origin_time(config_file, local_event_label, figure_out):
+    '''
+    Visualize the BISL origin time distribution
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \t infrapy plot_bisl_loc --local-detect-label data/detection_set2.json --local-event-label data/location2.json --range-max 1000
     '''
     click.echo("")
     click.echo("#####################################")
@@ -383,13 +428,13 @@ def plot_origin_time(config_file, local_bisl_out, figure_out):
     else:
         user_config = None
 
-    local_bisl_out = config.set_param(user_config, 'DETECTION IO', 'local_bisl_out', local_bisl_out, 'string')
+    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_dets_in: " + str(local_bisl_out))
+    click.echo("  local_detect_label: " + str(local_event_label))
 
     click.echo('\n' + "Reading in BISL results...")
-    bisl_results = data_io.read_locs(local_bisl_out)
+    bisl_results = data_io.read_locs(local_event_label)
 
     click.echo("Plotting origin time distribution...")
     loc_vis.plot_origin_time(bisl_results, output_path=figure_out)

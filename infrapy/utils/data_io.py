@@ -102,9 +102,9 @@ def set_det_list(local_det_info, merge=True):
 ##     Data Writing     ##
 ##        Methods       ##
 ##########################
-def write_fk_meta(stream, latlon, local_fk_out, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
+def write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step):
-        file_out = open(local_fk_out + ".fk_meta.txt", 'w')
+        file_out = open(local_fk_label + ".fk_meta.txt", 'w')
 
         print("InfraPy Beamforming (fk) Analysis", file=file_out)
         print("---------------------------------", file=file_out)
@@ -162,23 +162,23 @@ def _define_deteection(det_info, array_loc, channel_cnt, freq_band, note=None):
 
     return temp
 
-def write_events(events, event_qls, det_list, local_events_out):
-    print("Writing " + str(len(events)) + " identified events into files: " + local_events_out + "-ev#.json")
+def write_events(events, event_qls, det_list, local_event_label):
+    print("Writing " + str(len(events)) + " identified events into files: " + local_event_label + "-ev#.json")
     for ev_n, ev in enumerate(events):
         temp = []
         for det_id in ev:
             temp = temp + [det_list[det_id]]
-        lklhds.detection_list_to_json(local_events_out + "-ev" + str(ev_n) + ".json", temp)
+        lklhds.detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".json", temp)
 
 
-def write_locs(bisl_results, local_bisl_out):
-    print("Writing localization results into " + local_bisl_out)
+def write_locs(bisl_results, local_event_label):
+    print("Writing localization results into " + local_event_label)
     
-    with open(local_bisl_out, 'w') as of:
+    with open(local_event_label, 'w') as of:
         json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
 
 
-def read_locs(local_bisl_in):
-    print("Reading localization results from " + local_bisl_in)
+def read_locs(local_bisl_file):
+    print("Reading localization results from " + local_bisl_file)
 
-    return json.load(open(local_bisl_in))
+    return json.load(open(local_bisl_file))
