@@ -136,7 +136,13 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
         if local_fk_label is None or local_fk_label == "auto":
-            local_fk_label = stream[-1].stats.network + "." + stream[-1].stats.station
+            if local_wvfrms is not None and "/" in local_wvfrms:
+                local_fk_label = os.path.dirname(local_wvfrms) + "/"
+            else:
+                local_fk_label = ""
+
+            local_fk_label = local_fk_label + stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
         times = np.load(local_fk_label + ".fk_times.npy")
@@ -273,7 +279,13 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
         if local_fk_label is None or local_fk_label == "auto":
-            local_fk_label = stream[-1].stats.network + "." + stream[-1].stats.station
+            if local_wvfrms is not None and "/" in local_wvfrms:
+                local_fk_label = os.path.dirname(local_wvfrms) + "/"
+            else:
+                local_fk_label = ""
+
+            local_fk_label = local_fk_label + stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
         times = np.load(local_fk_label + ".fk_times.npy")
