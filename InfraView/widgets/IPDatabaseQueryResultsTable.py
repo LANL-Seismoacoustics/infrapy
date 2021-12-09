@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget
-from PyQt5.QtCore import Qt, QAbstractTableModel
+from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
 
 import pandas as pd
 
@@ -18,15 +18,40 @@ class IPPandasModel(QAbstractTableModel):
     def columnCount(self, parent=None):
         return self.dataframe.shape[1]
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role):
         if index.isValid():
             if role == Qt.DisplayRole:
                 return str(self.dataframe.iloc[index.row()][index.column()])
+            #elif role == Qt.CheckStateRole:
+            #    if (index.row() == 1 and index.column() == 2):
+            #        return Qt.Checked
+            elif role == Qt.EditRole:
+                return str(self.dataframe.iloc[index.row()][index.column()])
         return None
 
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.dataframe.columns[col]
+    def setData(self, index, value, role):
+        if index.isValid():
+            if role == Qt.EditRole:
+                self.dataframe.iat[index.row(), index.column()] = value
+                self.editCompleted.emit(value)
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def flags(self, index):
+        # return Qt.ItemIsEditable | QAbstractTableModel.flags(index)
+        #return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return self.dataframe.columns[section]
+            elif orientation == Qt.Vertical:
+                return self.dataframe.index[section]
+        return QVariant()
 
 
 class IPDatabaseQueryResultsTable(QWidget):
