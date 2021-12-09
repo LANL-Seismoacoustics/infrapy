@@ -32,6 +32,7 @@ main.add_command(cli_loc.run_loc)
 main.add_command(cli_visualization.plot_fk)
 main.add_command(cli_visualization.plot_fd)
 main.add_command(cli_visualization.plot_dets)
+main.add_command(cli_visualization.plot_bisl_loc)
 main.add_command(cli_visualization.plot_origin_time)
 
 if __name__ == '__main__':
