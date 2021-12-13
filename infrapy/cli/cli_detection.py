@@ -258,9 +258,6 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = local_fk_label
-
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
     click.echo("  local_detect_label: " + local_detect_label)
