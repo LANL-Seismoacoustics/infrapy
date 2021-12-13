@@ -358,8 +358,6 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
 
     # Analyze the resulting pdf to identify mean, variance, and exact 95% and 99% confidence bounds
     time_bnds_90 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.90)
-    time_bnds_95 = find_confidence(time_pdf_fit, [dts[0], dts[-1]], 0.95)
-
     temporal_pdf = [t_vals, time_marg_pdf / norm]
 
     # Maximum a Posteriori analysis
@@ -390,8 +388,6 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
               'covar': covar,
               't_mean': time_lims[0] + np.timedelta64(int(time_mean * 1e3), 'ms'),
               't_stdev': time_stdev,
-              # 't_min' : time_lims[0] + np.timedelta64(int(min(time_bnds_95[0]) * 1e3), 'ms'),
-              # 't_max' : time_lims[0] + np.timedelta64(int(max(time_bnds_95[0]) * 1e3), 'ms'),
               't_min' : time_lims[0] + np.timedelta64(int(min(time_bnds_90[0]) * 1e3), 'ms'),
               't_max' : time_lims[0] + np.timedelta64(int(max(time_bnds_90[0]) * 1e3), 'ms'),
               'lat_MaP': MaP.x[0],
@@ -427,7 +423,7 @@ def summarize(result, confidence_level=95):
 
                'Source time analysis:\n'
                '\tMean and standard deviation: {stmean} +/- {stvar} second\n'
-               '\tExact 95% confidence bounds: [{ex95confmin}, {ex95confmax}]\n'
+               '\tExact 90% confidence bounds: [{ex95confmin}, {ex95confmax}]\n'
                )
     summary = summary.format(
         slat = np.round(result['lat_MaP'], 3),
@@ -439,7 +435,7 @@ def summarize(result, confidence_level=95):
         ewvar = np.round(result['EW_stdev'], 3),
         s_confidence = str(confidence_level),
         covar = np.round(result['covar'], 3),
-        conf = np.round(np.pi * result['NS_stdev'] * result['EW_stdev'] * chi2(2).ppf(confidence_level/100), 3),
+        conf = np.round(np.pi * result['NS_stdev'] * result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 3),
         stmean = result['t_mean'],
         stvar = np.round(result['t_stdev'],3),
         ex95confmin = result['t_min'],
