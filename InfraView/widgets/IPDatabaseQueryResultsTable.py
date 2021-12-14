@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget
-from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget, QAbstractItemView
+from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, QItemSelectionModel
 
 import pandas as pd
 
@@ -65,11 +65,16 @@ class IPDatabaseQueryResultsTable(QWidget):
 
     def buildUI(self):
         self.tableView = QTableView(self)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.clear_button = QPushButton("Clear Table")
+        self.select_all_button = QPushButton("Select All")
+        self.select_none_button = QPushButton("Select None")
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.clear_button)
+        button_layout.addWidget(self.select_all_button)
+        button_layout.addWidget(self.select_none_button)
         button_layout.addStretch()
 
         main_layout = QVBoxLayout()
@@ -81,6 +86,8 @@ class IPDatabaseQueryResultsTable(QWidget):
 
     def connect_signals_and_slots(self):
         self.clear_button.clicked.connect(self.clearTable)
+        self.select_none_button.clicked.connect(self.selectNone)
+        self.select_all_button.clicked.connect(self.selectNone)
 
     def setData(self, data):
         '''This takes a pandas dataframe, and converts it for display in our tableView'''
@@ -91,6 +98,12 @@ class IPDatabaseQueryResultsTable(QWidget):
     def clearTable(self):
         # maybe do some additional clean-up here?
         self.model.deleteLater()
+
+    def selectAll(self):
+        self.tableView.selectAll()
+
+    def selectNone(self):
+        self.tableView.clearSelection()
 
 
     

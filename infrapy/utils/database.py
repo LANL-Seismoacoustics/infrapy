@@ -62,7 +62,8 @@ def check_connection(session):
     try:
         engine.connect()
         return True
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 
