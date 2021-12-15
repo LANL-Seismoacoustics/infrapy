@@ -3,6 +3,9 @@ from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, QItemSelectionModel
 
 import pandas as pd
 
+import obspy
+from obspy.core import read as obsRead
+
 
 class IPPandasModel(QAbstractTableModel):
     """
@@ -22,7 +25,7 @@ class IPPandasModel(QAbstractTableModel):
         if index.isValid():
             if role == Qt.DisplayRole:
                 return str(self.dataframe.iloc[index.row()][index.column()])
-            #elif role == Qt.CheckStateRole:
+            # elif role == Qt.CheckStateRole:
             #    if (index.row() == 1 and index.column() == 2):
             #        return Qt.Checked
             elif role == Qt.EditRole:
@@ -35,14 +38,12 @@ class IPPandasModel(QAbstractTableModel):
                 self.dataframe.iat[index.row(), index.column()] = value
                 self.editCompleted.emit(value)
                 return True
-            else:
-                return False
-        else:
             return False
+        return False
 
     def flags(self, index):
         # return Qt.ItemIsEditable | QAbstractTableModel.flags(index)
-        #return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        # return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled
         
     def headerData(self, section, orientation, role):
@@ -70,11 +71,13 @@ class IPDatabaseQueryResultsTable(QWidget):
         self.clear_button = QPushButton("Clear Table")
         self.select_all_button = QPushButton("Select All")
         self.select_none_button = QPushButton("Select None")
+        self.get_selected_rows_button = QPushButton("Get Selected")
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.clear_button)
         button_layout.addWidget(self.select_all_button)
         button_layout.addWidget(self.select_none_button)
+        button_layout.addWidget(self.get_selected_rows_button)
         button_layout.addStretch()
 
         main_layout = QVBoxLayout()
@@ -87,10 +90,12 @@ class IPDatabaseQueryResultsTable(QWidget):
     def connect_signals_and_slots(self):
         self.clear_button.clicked.connect(self.clearTable)
         self.select_none_button.clicked.connect(self.selectNone)
-        self.select_all_button.clicked.connect(self.selectNone)
+        self.select_all_button.clicked.connect(self.selectAll)
+        self.get_selected_rows_button.clicked.connect(self.getSelected)
 
     def setData(self, data):
         '''This takes a pandas dataframe, and converts it for display in our tableView'''
+        self.data = data
         self.model = IPPandasModel(data)
         self.tableView.setModel(self.model)
         self.tableView.reset()
@@ -104,6 +109,44 @@ class IPDatabaseQueryResultsTable(QWidget):
 
     def selectNone(self):
         self.tableView.clearSelection()
+
+    def getSelected(self):
+        # if nothing is selected, then selectionModel() will return None
+        if self.tableView.selectionModel():
+            rows = self.tableView.selectionModel().selectedRows()
+
+        # in order to get the data from the table, I need to know what column numbers to pull...
+        # this works if the directory column is named 'dir', and the filename column is 'dfile'
+        # will this always work?  Who knows?
+        for idx in range(self.model.columnCount()):
+            if self.model.headerData(idx, Qt.Horizontal, Qt.DisplayRole) == 'dir':
+                dir_col = idx
+            elif self.model.headerData(idx, Qt.Horizontal, Qt.DisplayRole) == 'dfile':
+                file_col = idx
+
+        self.sts = None
+        for row in rows:
+            index_dir = self.model.index(row.row(), dir_col)
+            index_file = self.model.index(row.row(), file_col)
+
+            dir_name = self.model.data(index_dir, Qt.DisplayRole)
+            file_name = self.model.data(index_file, Qt.DisplayRole)
+
+            if dir_name.endswith('/'):
+                file_name = dir_name + file_name
+            else:
+                file_name = dir_name + '/' + file_name
+
+            if self.sts is not None:
+                self.sts += obsRead(file_name)
+            else:
+                self.sts = obsRead(file_name)
+
+            print("filename = {}".format(file_name))
+
+        if self.sts:
+            self.sts.plot()
+
 
 
     

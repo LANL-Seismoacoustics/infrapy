@@ -64,7 +64,6 @@ class IPDatabaseConnectWidget(QFrame):
         self.close_session_button.setMaximumWidth(200)
 
         self.test_connection_button = QPushButton("Test Connection")
-        self.test_connection_label = QLabel("")
 
         self.form_layout.addWidget(self.load_config_button)
         self.form_layout.addWidget(self.save_current_button)
@@ -82,7 +81,6 @@ class IPDatabaseConnectWidget(QFrame):
         horiz_layout_1.addWidget(self.create_session_button)
         horiz_layout_1.addWidget(self.close_session_button)
         horiz_layout_1.addWidget(self.test_connection_button)
-        horiz_layout_1.addWidget(self.test_connection_label)
         horiz_layout_1.addStretch()
 
         horiz_layout_2 = QHBoxLayout()
@@ -171,21 +169,23 @@ class IPDatabaseConnectWidget(QFrame):
     def check_connection(self):
         if self.session is not None:
             if database.check_connection(self.session):
-                self.test_connection_label.setStyleSheet("QLabel {color: green}")
-                self.test_connection_label.setText("Connection is good")
+                self.test_connection_button.setText("Good Connection")
+                self.test_connection_button.setStyleSheet('QPushButton {color: green}')
                 QTimer.singleShot(3000, self.reset_connection_colors)
             else:
-                self.test_connection_label.setStyleSheet("QLabel {color: red}")
-                self.test_connection_label.setText("Bad Connection")
+                self.test_connection_button.setText("Bad Connection")
+                self.test_connection_button.setStyleSheet('QPushButton {color: red}')
+
                 QTimer.singleShot(3000, self.reset_connection_colors)
         else:
-            self.test_connection_label.setText("No active session")
+            self.test_connection_button.setText("No active session")
             QTimer.singleShot(3000, self.reset_connection_colors)
 
     @pyqtSlot()
     def reset_connection_colors(self):
-        self.test_connection_label.setStyleSheet("QLabel {color: black}")
-        self.test_connection_label.setText("")
+        self.test_connection_button.setText('Test Connection')
+        self.test_connection_button.setStyleSheet('QPushButton {color: black}')
+
 
     def load_config_file(self):
         if self.config_file_dialog.exec_():

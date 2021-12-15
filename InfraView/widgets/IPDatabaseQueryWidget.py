@@ -110,22 +110,22 @@ class IPDatabaseQueryWidget(QFrame):
         end_time = start_time + trace_length
 
         if self.net_edit.text() in ['*', '']:
-            net = '*'
+            net = '%'
         else:
             net = self.net_edit.text()
 
         if self.sta_edit.text() in ['*', '']:
-            sta = '*'
+            sta = '%'
         else:
             sta = self.sta_edit.text()
 
         if self.loc_edit.text() in ['*', '']:
-            loc = '*'
+            loc = '%'
         else:
             loc = self.loc_edit.text()
 
         if self.cha_edit.text() in ['*', '']:
-            cha = '*'
+            cha = '%'
         else:
             cha = self.cha_edit.text()
 
