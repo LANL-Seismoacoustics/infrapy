@@ -218,10 +218,8 @@ def compute_assoc_pair(det1, det2,  bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             The joint-likelihood value for the pair of detections
     """
 
-    latlon1 = np.array([det1.latitude, det1.longitude], dtype=np.float)
-    latlon2 = np.array([det2.latitude, det2.longitude], dtype=np.float)
-
-    if np.array_equal(latlon1, latlon2):
+    array_sep = sph_proj.inv(det1.longitude, det1.latitude, det2.longitude, det2.latitude)[2] / 1000.0 
+    if array_sep < 1.0:
         # Integration separates into a product of 1-dimensional
         # integrals for detections on the same array
         az_diff = det1.back_azimuth - det2.back_azimuth

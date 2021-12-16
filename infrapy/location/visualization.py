@@ -8,7 +8,7 @@
 from infrapy.utils import latlon
 import numpy as np
 
-from pyproj import Geod, transform
+from pyproj import Geod
 
 import matplotlib.pyplot as plt 
 from matplotlib import cm
@@ -16,8 +16,6 @@ from matplotlib import cm
 import matplotlib.pyplot as plt 
 import matplotlib.cm as cm
 import matplotlib.ticker as mticker
-
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import cartopy.crs as crs
 import cartopy.feature as cfeature
@@ -31,6 +29,7 @@ sph_proj = Geod(ellps='sphere')
 marker_size = 1.0
 map_proj = crs.PlateCarree()
 
+# Need to decide on a color combination
 back_az_color = "DarkRed"
 conf_color = "r"
 pdf_cm = cm.hot_r
@@ -48,8 +47,13 @@ def _setup_map(fig, latlon_bnds):
     gl.right_labels = False
 
     lat_tick, lon_tick = max(1, int((lat_max - lat_min) / 4)), max(1, int((lon_max - lon_min) / 4))
-    gl.xlocator = mticker.FixedLocator(np.arange(lon_min - np.ceil(lon_tick / 2), lon_max + lon_tick, lon_tick))
-    gl.ylocator = mticker.FixedLocator(np.arange(lat_min - np.ceil(lat_tick / 2), lat_max + lat_tick, lat_tick))
+    while len(np.arange(lat_min, lat_max, lat_tick)) < 3:
+        lat_tick = lat_tick / 2.0
+    while len(np.arange(lon_min, lon_max, lon_tick)) < 3:
+        lon_tick = lon_tick / 2.0
+
+    gl.xlocator = mticker.FixedLocator(np.arange(lon_min - np.ceil(lon_tick), lon_max + np.ceil(lon_tick), lon_tick))
+    gl.ylocator = mticker.FixedLocator(np.arange(lat_min - np.ceil(lat_tick), lat_max + np.ceil(lat_tick), lat_tick))
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
 

@@ -366,14 +366,14 @@ def plot_dets(config_file, range_max, local_detect_label, figure_out):
 
 
 
-@click.command('plot_bisl_loc', short_help="Plot detections on a map")
+@click.command('plot_loc', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-event-label", help="Detection path and pattern", default=None)
+@click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
-@click.option("--local-detect-label", help="Detection path and pattern", default=None)
-@click.option("--local-event-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_bisl_loc(config_file, range_max, zoom, local_detect_label, local_event_label, figure_out):
+def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, figure_out):
     '''
     Visualize BISL results in with wide or zoomed format
 
@@ -390,12 +390,12 @@ def plot_bisl_loc(config_file, range_max, zoom, local_detect_label, local_event_
     else:
         user_config = None
 
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
     local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
     click.echo("  local_event_label: " + str(local_event_label))
+    click.echo("  local_loc_label: " + str(local_loc_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
 
@@ -404,8 +404,8 @@ def plot_bisl_loc(config_file, range_max, zoom, local_detect_label, local_event_
     click.echo("  zoom: " + str(zoom))
 
     click.echo('\n' + "Reading in detection list...")
-    det_list = data_io.set_det_list(local_detect_label, merge=False)
-    bisl_result = data_io.read_locs(local_event_label)
+    det_list = data_io.set_det_list(local_event_label, merge=False)
+    bisl_result = data_io.read_locs(local_loc_label + ".loc.json")
 
     click.echo("Drawing map with BISL source location estimate...")
     loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out)

@@ -572,7 +572,6 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
 
     infr_cnt = len(infr_det_list)
     seis_cnt = len(seis_det_list)
-    from IPython import embed
 
     if 3**infr_cnt > resol:
         def temp(la, lo):
