@@ -129,8 +129,8 @@ class IPDatabaseQueryWidget(QFrame):
         else:
             cha = self.cha_edit.text()
 
-        df = database.query_db(session, start_time, end_time, sta=sta, loc=loc, cha=cha)
-        self.parent.ipdatabase_query_results_table.setData(df)
+        wfs = database.query_db(session, start_time, end_time, sta=sta, loc=loc, cha=cha, return_type='wfdisc_rows')
+        self.parent.ipdatabase_query_results_table.setData(wfs)
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):

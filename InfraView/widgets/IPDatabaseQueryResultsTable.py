@@ -1,14 +1,59 @@
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget, QAbstractItemView
-from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, QItemSelectionModel
-
+from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
 import pandas as pd
 
-import obspy
 from obspy.core import read as obsRead
+
+
+class IPWfdiscModel(QAbstractTableModel):
+    """
+    class to populate a tableview with rows of Wfdisc results
+    """
+
+    def __init__(self, wfs, parent=None):
+        super().__init__()
+        self.wfs = wfs
+        self.col_headers = [c.name for c in self.wfs[0].__table__.columns]
+
+    def rowCount(self, parent=None):
+        return len(self.wfs)
+
+    def columnCount(self, parent=None):
+        return len(self.wfs[0])
+
+    def data(self, index, role):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return str(self.wfs[index.row()][index.column()])
+            elif role == Qt.EditRole:
+                return str(self.wfs[index.row()][index.column()])
+
+        return None
+
+    def setData(self, index, value, role):
+        if index.isValid():
+            if role == Qt.EditRole:
+                self.wfs[index.row()][index.column()] = value
+                self.editCompleted.emit(value)
+                return True
+            return False
+        return False
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return self.col_headers[section]
+            elif orientation == Qt.Vertical:
+                return section
+        return QVariant()
 
 
 class IPPandasModel(QAbstractTableModel):
     """
+    NOT CURRENTLY USED!
     class to populate a tableview with a pandas dataframe
     """
     def __init__(self, dataframe, parent=None):
@@ -45,7 +90,7 @@ class IPPandasModel(QAbstractTableModel):
         # return Qt.ItemIsEditable | QAbstractTableModel.flags(index)
         # return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled
-        
+
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
@@ -61,6 +106,8 @@ class IPDatabaseQueryResultsTable(QWidget):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.data = None
+        self.model = None
         self.parent = parent
         self.buildUI()
 
@@ -88,15 +135,18 @@ class IPDatabaseQueryResultsTable(QWidget):
         self.connect_signals_and_slots()
 
     def connect_signals_and_slots(self):
+        """I find it useful to group as many connections in one place as possible"""
+
         self.clear_button.clicked.connect(self.clearTable)
         self.select_none_button.clicked.connect(self.selectNone)
         self.select_all_button.clicked.connect(self.selectAll)
         self.get_selected_rows_button.clicked.connect(self.getSelected)
 
     def setData(self, data):
-        '''This takes a pandas dataframe, and converts it for display in our tableView'''
+        '''This takes Wfdisc rows, and converts it for display in our tableView'''
+
         self.data = data
-        self.model = IPPandasModel(data)
+        self.model = IPWfdiscModel(data)
         self.tableView.setModel(self.model)
         self.tableView.reset()
 
@@ -115,38 +165,14 @@ class IPDatabaseQueryResultsTable(QWidget):
         if self.tableView.selectionModel():
             rows = self.tableView.selectionModel().selectedRows()
 
-        # in order to get the data from the table, I need to know what column numbers to pull...
-        # this works if the directory column is named 'dir', and the filename column is 'dfile'
-        # will this always work?  Who knows?
-        for idx in range(self.model.columnCount()):
-            if self.model.headerData(idx, Qt.Horizontal, Qt.DisplayRole) == 'dir':
-                dir_col = idx
-            elif self.model.headerData(idx, Qt.Horizontal, Qt.DisplayRole) == 'dfile':
-                file_col = idx
-
-        self.sts = None
+        selected_rows = []
         for row in rows:
-            index_dir = self.model.index(row.row(), dir_col)
-            index_file = self.model.index(row.row(), file_col)
+            selected_rows.append(row.row())
 
-            dir_name = self.model.data(index_dir, Qt.DisplayRole)
-            file_name = self.model.data(index_file, Qt.DisplayRole)
+        selected_wds = []
+        for idx, wd in enumerate(self.data):
+            if idx in selected_rows:
+                selected_wds.append(wd)
 
-            if dir_name.endswith('/'):
-                file_name = dir_name + file_name
-            else:
-                file_name = dir_name + '/' + file_name
+        print("selected wfdisc length = {}".format(len(selected_wds)))
 
-            if self.sts is not None:
-                self.sts += obsRead(file_name)
-            else:
-                self.sts = obsRead(file_name)
-
-            print("filename = {}".format(file_name))
-
-        if self.sts:
-            self.sts.plot()
-
-
-
-    
