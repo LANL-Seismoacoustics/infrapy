@@ -70,10 +70,17 @@ def check_connection(session):
 class Site(kb.Site):
     __tablename__ = 'global.site'
 
+
 class Wfdisc(kb.Wfdisc):
     __tablename__ = 'global.wfdisc_raw'
 
-def query_db(session, start_time, end_time, sta="*", loc="*", cha="*"):
+
+def query_db(session, start_time, end_time, sta="%", loc="%", cha="%", return_type='dataframe'):
+    """
+    function to query a database using an existing session.  
+
+    return_type values can be 'dataframe' for a pandas dataframe, or 'wfdisc_rows' for wfdisc rows
+    """
 
     if session is None:
         return None
@@ -83,6 +90,9 @@ def query_db(session, start_time, end_time, sta="*", loc="*", cha="*"):
                                     .filter(Wfdisc.endtime > start_time.timestamp)\
                                     .filter(Wfdisc.chan.like(cha))
 
-    df = pd.read_sql(my_query.statement, session.bind)
-    
-    return df
+    if return_type == 'dataframe':
+        return pd.read_sql(my_query.statement, session.bind)
+    elif return_type == 'wfdisc_rows':
+        return ps.request.get_wfdisc_rows(session, Wfdisc, sta=sta, t1=start_time, t2=end_time)
+    else:
+        return None
