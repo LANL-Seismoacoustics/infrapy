@@ -316,7 +316,7 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
 @click.command('plot_dets', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_dets(config_file, range_max, local_detect_label, figure_out):
@@ -370,7 +370,7 @@ def plot_dets(config_file, range_max, local_detect_label, figure_out):
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-event-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
-@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, figure_out):
@@ -382,6 +382,15 @@ def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, f
     \tinfrapy infrapy plot_bisl_loc --local-event-label temp.json 
 
     '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##       Localization Mapping      ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)

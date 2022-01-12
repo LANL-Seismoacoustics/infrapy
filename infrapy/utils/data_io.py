@@ -163,7 +163,6 @@ def _define_deteection(det_info, array_loc, channel_cnt, freq_band, note=None):
     return temp
 
 def write_events(events, event_qls, det_list, local_event_label):
-    print("Writing " + str(len(events)) + " identified events into files: " + local_event_label + "-ev#.json")
     for ev_n, ev in enumerate(events):
         temp = []
         for det_id in ev:
@@ -172,13 +171,9 @@ def write_events(events, event_qls, det_list, local_event_label):
 
 
 def write_locs(bisl_results, local_event_label):
-    print("Writing localization results into " + local_event_label)
-    
     with open(local_event_label, 'w') as of:
         json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
 
 
 def read_locs(local_bisl_file):
-    print("Reading localization results from " + local_bisl_file)
-
     return json.load(open(local_bisl_file))

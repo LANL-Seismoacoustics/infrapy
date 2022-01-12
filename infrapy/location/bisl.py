@@ -8,19 +8,14 @@
 #
 # Author            Philip Blom (pblom@lanl.gov)
 
-import sys
-import datetime
-import time
-import itertools
-import random
-import copyreg
+
+import warnings
 
 import numpy as np
 
 from scipy.integrate import simps
-from scipy.interpolate import interp1d, interp2d
-from scipy.optimize import minimize, bisect
-from scipy.special import i0
+from scipy.interpolate import interp1d
+from scipy.optimize import minimize
 from scipy.stats import chi2
 
 from pyproj import Geod
@@ -291,10 +286,18 @@ def run(det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=1
     print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
     # Determine region of interest and define the polar <--> latlon grid definition
     if custom_region:
-        center = custom_region[0]
-        radius = custom_region[1]
+        center = (custom_region[0], custom_region[1])
+        radius = custom_region[2]
     else:
-        center, radius = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max)
+        az_cnt = sum(det.back_azimuth is not None for det in det_list)
+        if az_cnt > 2:
+            center, radius = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max)
+        else:
+            msg = "Detection set doesn't include at least 3 direction-of-arrival detections.  Analysis requires source region definition: --src-est '(lat, lon, radius)'"
+            # warnings.warn(msg)
+
+            raise ValueError(msg)
+
     resol = int(resol)
 
     print('\t' + "Identifying integration region...")
