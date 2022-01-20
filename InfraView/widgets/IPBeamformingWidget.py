@@ -1332,6 +1332,7 @@ class BeamformingWorkerObject(QtCore.QObject):
                 for station in network.stations:
                     station_id = network.code + '.' + station.code
                     if station_id == stream_station_id:
+                        print("lat = {}, lon = {}".format(station.latitude, station.longitude))
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 
