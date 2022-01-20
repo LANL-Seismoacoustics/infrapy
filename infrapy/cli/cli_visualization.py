@@ -10,7 +10,7 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from infrapy.location import visualization
+from infrapy.location import bisl, visualization
 
 from ..utils import config
 from ..utils import data_io
@@ -416,9 +416,12 @@ def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, f
     det_list = data_io.set_det_list(local_event_label, merge=False)
     bisl_result = data_io.read_locs(local_loc_label + ".loc.json")
 
+    click.echo('\n' + "BISL Summary:")
+    click.echo(bisl.summarize(bisl_result))
+
     click.echo("Drawing map with BISL source location estimate...")
     loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out)
-
+    
 
 
 @click.command('plot_origin_time', short_help="Plot detections on a map")
@@ -455,7 +458,8 @@ def plot_origin_time(config_file, local_event_label, figure_out):
     click.echo("  local_detect_label: " + str(local_event_label))
 
     click.echo('\n' + "Reading in BISL results...")
-    bisl_results = data_io.read_locs(local_event_label)
+    bisl_result = data_io.read_locs(local_event_label)
 
     click.echo("Plotting origin time distribution...")
-    loc_vis.plot_origin_time(bisl_results, output_path=figure_out)
+    loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
+    
