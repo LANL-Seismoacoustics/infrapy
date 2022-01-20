@@ -93,9 +93,10 @@ class IPStationView(QWidget):
         self.loadButton.clicked.connect(self.loadStations)
         self.reconcileButton.clicked.connect(self.reconcileStations)
 
-    def setInventory(self, _inventory):
-
-        if _inventory is None:
+    def setInventory(self, inventory):
+        print("StationView.setInventory()")
+        print(inventory)
+        if inventory is None:
             self.clear()
             return
 
@@ -103,9 +104,9 @@ class IPStationView(QWidget):
 
         self.station_TabWidget.clear()
 
-        for network in _inventory.networks:
+        for network in inventory.networks:
             for station in network.stations:
-
+                print("# chans: {}".format(len(station.channels)))
                 names = []
                 if len(station.channels) > 0:
                     for channel in station.channels:
@@ -138,43 +139,44 @@ class IPStationView(QWidget):
                                 lat=station.latitude, lng=station.longitude, elevation=station.elevation,
                                 alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
                                 historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
-
+                            print(ret)
                             newStationEdit.setHtml(ret)
                             self.station_TabWidget.addTab(newStationEdit, name)
                 else:
                     name = network.code + '.' + station.code
-                    for channel in station.channels:
-                        if name not in tab_names:
-                            # Ok, need at least one, so lets assemble the interesting station info for display
-                            newStationEdit = QTextEdit()
-                            contents = station.get_contents()
-                            ret = ("<b>Network Code:</b> {network_code} <br/>"
-                                "<b>Station Code:</b> {station_code} <br/>"
-                                "<b>Location Code:</b> {location_code} </br>"
-                                "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
-                                "<Available Dates:</b> {start_date} - {end_date}<br/>"
-                                "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                                "<b>Latitude:</b> {lat:.8f}<br/>"
-                                "<b>Longitude:</b> {lng:.8f}<br/>"
-                                "<b>Elevation:</b> {elevation:.2f} m<br/>")
-                            ret = ret.format(
-                                network_code=network.code,
-                                station_name=contents["stations"][0],
-                                station_code=station.code,
-                                location_code='',
-                                selected=station.selected_number_of_channels,
-                                total=station.total_number_of_channels,
-                                start_date=str(station.start_date),
-                                end_date=str(station.end_date) if station.end_date else "",
-                                restricted=station.restricted_status,
-                                lat=station.latitude, lng=station.longitude, elevation=station.elevation,
-                                alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
-                                historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
+                    
+                    print("hi mom")
+                    if name not in tab_names:
+                        # Ok, need at least one, so lets assemble the interesting station info for display
+                        newStationEdit = QTextEdit()
+                        contents = station.get_contents()
+                        ret = ("<b>Network Code:</b> {network_code} <br/>"
+                            "<b>Station Code:</b> {station_code} <br/>"
+                            "<b>Location Code:</b> {location_code} </br>"
+                            "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
+                            "<Available Dates:</b> {start_date} - {end_date}<br/>"
+                            "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
+                            "<b>Latitude:</b> {lat:.8f}<br/>"
+                            "<b>Longitude:</b> {lng:.8f}<br/>"
+                            "<b>Elevation:</b> {elevation:.2f} m<br/>")
+                        ret = ret.format(
+                            network_code=network.code,
+                            station_name=contents["stations"][0],
+                            station_code=station.code,
+                            location_code='',
+                            selected=station.selected_number_of_channels,
+                            total=station.total_number_of_channels,
+                            start_date=str(station.start_date),
+                            end_date=str(station.end_date) if station.end_date else "",
+                            restricted=station.restricted_status,
+                            lat=station.latitude, lng=station.longitude, elevation=station.elevation,
+                            alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
+                            historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
+                            
+                        newStationEdit.setHtml(ret)
+                        self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code)
 
-                            newStationEdit.setHtml(ret)
-                            self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code + '..' + channel.code)
-
-        self.inventory_changed.emit(_inventory)
+        self.inventory_changed.emit(inventory)
         return
 
     def getStationCount(self):
@@ -322,17 +324,17 @@ class IPStationView(QWidget):
             for sta in trace_stations:
                 if sta not in loaded_stations:
                     needed_stations.append(sta)
-
+        print("needed = {}".format(needed_stations))
         if needed_stations is not None:
             if self.matchDialog.exec_(needed_stations, (self.__parent.get_earliest_start_time(), self.__parent.get_earliest_start_time())):
-                newInventory = self.matchDialog.getInventory()
-                if newInventory is not None:
+                new_inventory = self.matchDialog.getInventory()
+                if new_inventory is not None:
                     if inventory is None:
-                        inventory = newInventory
+                        inventory = new_inventory
                     else:
-                        inventory += newInventory
-
+                        inventory += new_inventory
                     self.__parent.set_inventory(inventory)
+                    self.setInventory(inventory)
 
     def errorPopup(self, message):
         msgBox = QMessageBox()

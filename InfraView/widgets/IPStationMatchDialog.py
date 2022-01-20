@@ -13,7 +13,7 @@ class IPStationMatchDialog(QDialog):
     # This dialog is used to ATTEMPT to download stations (that aren't already downloaded) for
     # currently visible waveforms.
 
-    __inv = None
+    inv = None
 
     def __init__(self, parent=None):
         super(IPStationMatchDialog, self).__init__(parent)
@@ -106,10 +106,10 @@ class IPStationMatchDialog(QDialog):
             try:
                 inv = client.get_stations(network=network, station=station, location=location, startbefore=UTCDateTime(self.timeRange[0]), endafter=UTCDateTime(self.timeRange[1]))
                 listItem.setForeground(Qt.darkGreen)
-                if self.__inv is None:
-                    self.__inv = inv
+                if self.inv is None:
+                    self.inv = inv
                 else:
-                    self.__inv += inv
+                    self.inv += inv
                 foundCount = foundCount + 1
             except:
                 listItem.setForeground(Qt.red)
@@ -117,7 +117,7 @@ class IPStationMatchDialog(QDialog):
         self.statusLine.setText('Found ' + str(foundCount) + ' of ' + str(self.stationListEdit.count()) + ' stations.')
 
     def getInventory(self):
-        return self.__inv
+        return self.inv
 
 
 class IPListItem(QListWidgetItem):
