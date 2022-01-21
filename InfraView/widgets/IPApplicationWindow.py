@@ -419,7 +419,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 ele = 0.333
 
         if _network == 'LARSA' and _station == '121':
-            print("WOOHOOO")
             if _channel == 'ai0':
                 lat = 35.8492497
                 lon = -106.2705465

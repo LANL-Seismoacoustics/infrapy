@@ -94,8 +94,6 @@ class IPStationView(QWidget):
         self.reconcileButton.clicked.connect(self.reconcileStations)
 
     def setInventory(self, inventory):
-        print("StationView.setInventory()")
-        print(inventory)
         if inventory is None:
             self.clear()
             return
@@ -139,7 +137,7 @@ class IPStationView(QWidget):
                                 lat=station.latitude, lng=station.longitude, elevation=station.elevation,
                                 alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
                                 historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
-                            print(ret)
+                
                             newStationEdit.setHtml(ret)
                             self.station_TabWidget.addTab(newStationEdit, name)
                 else:

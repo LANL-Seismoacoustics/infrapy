@@ -1287,6 +1287,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
+        self.signal_reset_beamformer.emit()
 
     @staticmethod
     def window_beamforming_map_wrapper(args):
@@ -1299,6 +1300,13 @@ class BeamformingWorkerObject(QtCore.QObject):
     #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
     #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
+    @pyqtSlot(str, str)
+    def errorPopup(self, message, title="Oops..."):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()
 
     @pyqtSlot()
     def run(self):
@@ -1332,7 +1340,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                 for station in network.stations:
                     station_id = network.code + '.' + station.code
                     if station_id == stream_station_id:
-                        print("lat = {}, lon = {}".format(station.latitude, station.longitude))
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 
@@ -1372,7 +1379,14 @@ class BeamformingWorkerObject(QtCore.QObject):
                                         self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
                                         self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
 
-                beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:,0,:]
+                try:
+                    beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:, 0, :]
+                except IndexError:
+                    self.errorPopup('Index Error...This usually occurs because the width \n'
+                                    'of your noise window is less than the length of your \n'
+                                    'beamforming window.  Correct that and try rerunning.')
+                    self.stop()
+                    return
 
             else:
                 beam_results = []
@@ -1497,3 +1511,5 @@ def window_beamforming_map(x,
                                      normalize_beam=norm_beam)
        
     return beamforming_new.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)
+
+    
