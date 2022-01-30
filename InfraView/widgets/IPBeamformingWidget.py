@@ -1,46 +1,36 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLabel,
-                             QMessageBox, QPushButton, QSpinBox, QDoubleSpinBox,
-                             QGroupBox, QComboBox, QSplitter, QTabWidget, QAction,
+
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
+                             QMessageBox, 
+                             QSplitter, QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QLine
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QFont, QFontDatabase, QIcon, QPainterPath, QColor, QCursor
+from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
-import platform
 import warnings
 import csv
 import numpy as np
 from pathlib import Path
-from scipy import signal
-from operator import itemgetter
-
 
 # import infraview widgets here
 from InfraView.widgets import IPDetectionWidget
 from InfraView.widgets import IPDetectorSettingsWidget
 from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
-from InfraView.widgets import IPPickItem
 from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
-from InfraView.widgets import IPLine
 from InfraView.widgets import IPSaveBeamformingResultsDialog
 
 # import infrapy modules here
 from infrapy.detection import beamforming_new
 
 # import obspy modules here
-from obspy.core import UTCDateTime, read
-
-# multiprocessing modules
-import pathos.multiprocessing as mp
-from multiprocessing import cpu_count
+from obspy.core import UTCDateTime
 
 
 class IPBeamformingWidget(QWidget):

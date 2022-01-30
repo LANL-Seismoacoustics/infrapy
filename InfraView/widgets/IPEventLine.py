@@ -1,14 +1,12 @@
 import pyqtgraph as pg
-from pyqtgraph import Point
+
 
 from pyqtgraph.graphicsItems.InfiniteLine import InfLineLabel
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QPen
-from PyQt5.QtWidgets import QMenu
 
-import pdb
 
 class IPEventLine(pg.InfiniteLine):
 
@@ -33,11 +31,9 @@ class IPEventLine(pg.InfiniteLine):
             # does nothing right now
 
     def mouseDragEvent(self, ev):
-
         if self.movable and ev.button() == QtCore.Qt.LeftButton:
             pos = self.pos().x()
             self.sigEventLineMoving.emit(pos)           
-
         super().mouseDragEvent(ev)          
 
     def setColor(self, color):
@@ -47,6 +43,9 @@ class IPEventLine(pg.InfiniteLine):
     def setID(self, label):
         self.label.setText(label)
 
+    @pyqtSlot(float)
+    def updatePosition(self, newPosition):
+        self.setPos(newPosition)
             
 
             

@@ -1,13 +1,11 @@
-import os, sys
-import time
+import  sys
 
-from PyQt5.QtWidgets import (QApplication, QDateTimeEdit, QDialogButtonBox, QMessageBox, QPushButton, QLabel, QLineEdit,  
-                             QFileDialog, QGridLayout, QFormLayout, QHBoxLayout, QDoubleSpinBox, 
-                             QSpinBox, QVBoxLayout,QTimeEdit, QWidget, QCheckBox, QFrame, QAbstractItemView,
+from PyQt5.QtWidgets import (QApplication, QDateTimeEdit, QDialogButtonBox, QMessageBox, QPushButton, 
+                             QLabel, QLineEdit, QGridLayout, QHBoxLayout, QDoubleSpinBox, 
+                             QVBoxLayout, QWidget, QFrame, QAbstractItemView,
                              QTabWidget, QTableWidget, QTableWidgetItem, QDialog)
 
-from PyQt5.QtCore import QDir, QSettings, QTime, QDate, QDateTime, pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QIcon, QMovie
+from PyQt5.QtCore import QDateTime, pyqtSlot, Qt
 
 import obspy
 from obspy.core import UTCDateTime

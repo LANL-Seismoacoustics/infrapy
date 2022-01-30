@@ -1,6 +1,6 @@
-import os, sys, json
+import os, json
 
-from PyQt5.QtWidgets import (QApplication, QDateEdit, QPushButton, QLabel, QLineEdit, QFileDialog, QHBoxLayout,
+from PyQt5.QtWidgets import (QDateEdit, QPushButton, QLabel, QLineEdit, QFileDialog, QHBoxLayout,
                              QFormLayout, QDoubleSpinBox, QSpinBox, QVBoxLayout, QTimeEdit, QWidget,
                              QCheckBox)
 from PyQt5.QtCore import QDir, QTime, QDate, QSettings, pyqtSignal
@@ -16,7 +16,6 @@ class IPEventWidget(QWidget):
     
     savefile = None
     parent = None
-
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -34,14 +33,13 @@ class IPEventWidget(QWidget):
         formWidget = QWidget()
         formLayout = QFormLayout()
 
-        self.displayEvent_cb = QCheckBox(self.tr('Show on Waveforms'))
-        self.displayEvent_cb.setChecked(True)
+        self.displayEvent_cb = QCheckBox(self.tr('Show on waveform plots'))
+        self.displayEvent_cb.setChecked(False)
         self.displayEvent_cb.stateChanged.connect(self.eventChanged)
 
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
         self.event_name_edit.textChanged.connect(self.eventChanged)
-
 
         label_latitude = QLabel(self.tr('Latitude'))
         self.event_lat_edit = QDoubleSpinBox()
@@ -99,7 +97,6 @@ class IPEventWidget(QWidget):
         self.event_mag_edit.setValue(self.event_mag_edit.minimum())
         self.event_mag_edit.valueChanged.connect(self.eventChanged)
 
-
         self.load_button = QPushButton(self.tr(' Load Event...'))
         self.load_button.setMaximumWidth(100)
         self.load_button.clicked.connect(self.loadEvent)
@@ -119,12 +116,15 @@ class IPEventWidget(QWidget):
         self.clear_button.clicked.connect(self.clear)
         self.clear_button.setIcon(self.clearIcon)
         
-        self.browse_button = QPushButton(self.tr(' Event Browser...'))
+        self.browse_button = QPushButton(self.tr(' IRIS Event Browser...'))
         self.browse_button.setMaximumWidth(200)
         self.browse_button.clicked.connect(self.browse)
 
+        show_layout = QHBoxLayout()
+        show_layout.addStretch()
+        show_layout.addWidget(self.displayEvent_cb)
+        show_layout.addStretch()
 
-        formLayout.addRow(self.displayEvent_cb)
         formLayout.addRow(label_event_name, self.event_name_edit)
         formLayout.addRow(label_longitude, self.event_lon_edit)
         formLayout.addRow(label_latitude, self.event_lat_edit)
@@ -135,18 +135,25 @@ class IPEventWidget(QWidget):
         formLayout.addRow(label_event_mag, self.event_mag_edit)
 
         buttonLayout = QHBoxLayout()
+        buttonLayout.addStretch()
         buttonLayout.addWidget(self.load_button)
         buttonLayout.addWidget(self.save_button)
         buttonLayout.addWidget(self.clear_button)
         buttonLayout.addWidget(self.update_button)
         buttonLayout.addStretch()
 
+        browseLayout = QHBoxLayout()
+        browseLayout.addStretch()
+        browseLayout.addWidget(self.browse_button)
+        browseLayout.addStretch()
+
         formWidget.setLayout(formLayout)
 
         verticalLayout = QVBoxLayout()
+        # verticalLayout.addLayout(show_layout)
         verticalLayout.addWidget(formWidget)
         verticalLayout.addLayout(buttonLayout)
-        verticalLayout.addWidget(self.browse_button)
+        verticalLayout.addLayout(browseLayout)
         verticalLayout.addStretch()
 
         self.setLayout(verticalLayout)
@@ -160,7 +167,6 @@ class IPEventWidget(QWidget):
         self.openIcon = QIcon.fromTheme("document-open")
         self.saveIcon = QIcon.fromTheme("document-save")
         self.saveAsIcon = QIcon.fromTheme("document-save-as")
-
 
     def getID(self):
         return self.event_name_edit.text()
@@ -186,7 +192,6 @@ class IPEventWidget(QWidget):
         utcString = str(date) + 'T' + str(time)
         return utcString
         
-
     def setUTCDateTime(self, newUTCTime_iso):
         datetime = newUTCTime_iso.isoformat()
 
@@ -206,7 +211,6 @@ class IPEventWidget(QWidget):
     def eventChanged(self):
         # whenever any widget changes, this signal is emitted with the new event dictionary
         self.sigEventWidgetChanged.emit(self.Dict())
-
 
     def Dict(self):
         # Returns a dictionary representation of the data in the widget
@@ -337,9 +341,6 @@ class IPEventWidget(QWidget):
             self.event_date_edit.setDate(QDate.fromString(event['UTC Date'], 'yyyy-MM-dd'))
             self.event_time_edit.setTime(QTime.fromString(event['UTC Time'], 'hh:mm:ss.zzz'))
             self.sigEventWidgetLoaded.emit()
-
-
-
 
     def clear(self):
         self.event_name_edit.setText('')

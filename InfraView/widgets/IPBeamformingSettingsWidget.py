@@ -1,8 +1,6 @@
-from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
-                             QHBoxLayout, QFormLayout, QGroupBox, QFrame)
+from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QDoubleSpinBox, QSpinBox,
+                             QHBoxLayout, QFormLayout, QFrame)
 from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSignal, QSettings, Qt
-import sys
 
 
 class IPBeamformingSettingsWidget(QWidget):
@@ -28,26 +26,6 @@ class IPBeamformingSettingsWidget(QWidget):
         self.windowStep_spin.setMaximum(1000000)
         self.windowStep_spin.setValue(2.5)
 
-        self.fmin_spin = QDoubleSpinBox()
-        self.fmin_spin.setDecimals(3)
-        self.fmin_spin.setMaximumWidth(60)
-        self.fmin_spin.setSuffix(' Hz')
-        self.fmin_spin.setMinimum(0.001)
-        self.fmin_spin.setMaximum(10000)
-        self.fmin_spin.setValue(0.5)    # if changed here, make sure you change in the IPPSDWidget
-        self.fmin_spin.setReadOnly(True)
-        self.fmin_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-
-        self.fmax_spin = QDoubleSpinBox()
-        self.fmax_spin.setDecimals(3)
-        self.fmax_spin.setMaximumWidth(60)
-        self.fmax_spin.setSuffix(' Hz')
-        self.fmax_spin.setMinimum(0.001)
-        self.fmax_spin.setMaximum(10000)
-        self.fmax_spin.setValue(5.0)    # if changed here, make sure you change in the IPPSDWidget
-        self.fmax_spin.setReadOnly(True)
-        self.fmax_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-
         self.numSigs_spin = QSpinBox()
         self.numSigs_spin.setMaximumWidth(40)
         self.numSigs_spin.setMinimum(1)
@@ -62,37 +40,16 @@ class IPBeamformingSettingsWidget(QWidget):
         self.method_cb.addItem('music')
         self.method_cb.currentTextChanged.connect(self.methodChanged)
 
-        self.noiseStart_spin = QDoubleSpinBox()
-        self.noiseStart_spin.setMinimum(0.0)
-        self.noiseStart_spin.setMaximum(1000000)
-        self.noiseStart_spin.setMaximumWidth(60)
-        self.noiseStart_spin.setSuffix(' s')
-        self.noiseStart_spin.setReadOnly(True)
-        self.noiseStart_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.fmin_label = QLabel("0.5 Hz") # if changed here, make sure you change in the IPPSDWidget
+        self.fmin_label.setMinimumWidth(75)
+        self.fmax_label = QLabel("5.0 Hz")
+        self.fmax_label.setMinimumWidth(75)   
 
-        self.noiseDuration_spin = QDoubleSpinBox()
-        self.noiseDuration_spin.setMaximumWidth(60)
-        self.noiseDuration_spin.setMinimum(0.0)
-        self.noiseDuration_spin.setMaximum(1000000)
-        self.noiseDuration_spin.setSuffix(' s')
-        self.noiseDuration_spin.setReadOnly(True)
-        self.noiseDuration_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.noiseStart_label = QLabel()
+        self.noiseDuration_label = QLabel()
 
-        self.sigStart_spin = QDoubleSpinBox()
-        self.sigStart_spin.setMaximumWidth(60)
-        self.sigStart_spin.setMinimum(0.0)
-        self.sigStart_spin.setMaximum(1000000)
-        self.sigStart_spin.setSuffix(' s')
-        self.sigStart_spin.setReadOnly(True)
-        self.sigStart_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-
-        self.sigDuration_spin = QDoubleSpinBox()
-        self.sigDuration_spin.setMaximumWidth(60)
-        self.sigDuration_spin.setMinimum(0.0)
-        self.sigDuration_spin.setMaximum(1000000)
-        self.sigDuration_spin.setSuffix(' s')
-        self.sigDuration_spin.setReadOnly(True)
-        self.sigDuration_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.sigStart_label = QLabel()
+        self.sigDuration_label = QLabel()
 
         self.subwindow_cb = QCheckBox()
         self.subwindow_cb.setEnabled(False)
@@ -159,17 +116,17 @@ class IPBeamformingSettingsWidget(QWidget):
         sub_win_layout.addWidget(self.subwindow_cb)
         formlayout_col2.addRow("Subwindow Length: ", sub_win_layout)
 
-        formlayout_col3 = QFormLayout()
-        formlayout_col3.addRow("Freq Min: ", self.fmin_spin)
-        formlayout_col3.addRow("Freq Max: ", self.fmax_spin)
+        # removed col3
 
         formlayout_col4 = QFormLayout()
-        formlayout_col4.addRow("Noise Range Start: ", self.noiseStart_spin)
-        formlayout_col4.addRow("Signal Range Start: ", self.sigStart_spin)
+        formlayout_col4.addRow("Freq Min: ", self.fmin_label)
+        formlayout_col4.addRow("Noise Range Start: ", self.noiseStart_label)
+        formlayout_col4.addRow("Signal Range Start: ", self.sigStart_label)
 
         formlayout_col5 = QFormLayout()
-        formlayout_col5.addRow("Duration: ", self.noiseDuration_spin)
-        formlayout_col5.addRow("Duration: ", self.sigDuration_spin)
+        formlayout_col5.addRow("Freq Max: ", self.fmax_label)
+        formlayout_col5.addRow("Duration: ", self.noiseDuration_label)
+        formlayout_col5.addRow("Duration: ", self.sigDuration_label)
 
         formlayout_col6 = QFormLayout()
         formlayout_col6.addRow("Back Azimuth Resolution: ", self.backaz_resol_spin)
@@ -184,7 +141,6 @@ class IPBeamformingSettingsWidget(QWidget):
         horizLayout = QHBoxLayout()
         horizLayout.addLayout(formlayout_col1)
         horizLayout.addLayout(formlayout_col2)
-        horizLayout.addLayout(formlayout_col3)
         horizLayout.addLayout(formlayout_col4)
         horizLayout.addLayout(formlayout_col5)
         horizLayout.addLayout(formlayout_col6)
@@ -206,19 +162,22 @@ class IPBeamformingSettingsWidget(QWidget):
         return vl
 
     def setFmin(self, min):
-        self.fmin_spin.setValue(min)
+        self.fmin_label.setText("{:.4f}".format(min))
 
     def setFmax(self, max):
-        self.fmax_spin.setValue(max)
+        self.fmax_label.setText("{:.4f}".format(max))
 
     def getNoiseRange(self):
-        return (self.noiseStart_spin.value(), self.noiseStart_spin.value() + self.noiseDuration_spin.value())
+        return (float(self.noiseStart_label.text()), float(self.noiseStart_label.text()) + float(self.noiseDuration_label.text()))
 
     def getSignalRange(self):
-        return (self.sigStart_spin.value(), self.sigStart_spin.value() + self.sigDuration_spin.value())
+        return (float(self.sigStart_label.text()), float(self.sigStart_label.text()) + float(self.sigDuration_label.text()))
 
     def getFreqRange(self):
-        return (self.fmin_spin.value(), self.fmax_spin.value())
+        # we need to remove the " Hz" from the label strings...
+        min = float(self.fmin_label.text()[:-3])
+        max = float(self.fmax_label.text()[:-3])
+        return (min, max)
 
     def getWinLength(self):
         return self.windowLength_spin.value()
@@ -279,19 +238,19 @@ class IPBeamformingSettingsWidget(QWidget):
 
     @QtCore.pyqtSlot(tuple)
     def setNoiseValues(self, values):   # values is a tuple containing (start, stop)
-        self.noiseStart_spin.setValue(values[0])
-        self.noiseDuration_spin.setValue(values[1] - values[0])
+        self.noiseStart_label.setText("{:.2f}".format(values[0]))
+        self.noiseDuration_label.setText("{:.2f}".format(values[1] - values[0]))
 
     @QtCore.pyqtSlot(tuple)
     def setSignalValues(self, values):   # values is a tuple containing (start, stop)
-        self.sigStart_spin.setValue(values[0])
-        self.sigDuration_spin.setValue(values[1] - values[0])
+        self.sigStart_label.setText("{:.2f}".format(values[0]))
+        self.sigDuration_label.setText("{:.2f}".format(values[1] - values[0]))
 
     @QtCore.pyqtSlot(tuple)
     def setFreqValues(self, IPLinearRegionItem):
         values = IPLinearRegionItem.getRegion()
-        self.fmin_spin.setValue(10**values[0])
-        self.fmax_spin.setValue(10**values[1])
+        self.fmin_label.setText("{:.4f} Hz".format(10**values[0]))
+        self.fmax_label.setText("{:.4f} Hz".format(10**values[1]))
 
     @QtCore.pyqtSlot(str)
     def methodChanged(self, newMethod):
