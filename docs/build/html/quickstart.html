@@ -1,44 +1,39 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>Quickstart &mdash; Infrapy 1.0 documentation</title>
   
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
+  
   
   
 
   
-  
-
-  
-
-  
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Infraview" href="infraview.html" />
@@ -82,7 +77,6 @@
           
         </div>
 
-        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -107,7 +101,6 @@
             
           
         </div>
-        
       </div>
     </nav>
 
@@ -142,20 +135,18 @@
 
 
 
-
-
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
       <li>Quickstart</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -230,7 +221,7 @@ Writing results to specified output...
 </li>
 <li><p>Once completed, this analysis produces three output files:</p></li>
 </ul>
-<table class="docutils align-default">
+<table class="docutils align-center">
 <colgroup>
 <col style="width: 52%" />
 <col style="width: 48%" />
@@ -345,6 +336,15 @@ Writing detections to data/BRP_analysis.dets.json
     }, ...
 </pre></div>
 </div>
+</div></blockquote>
+</li>
+<li><p>Once detections are identified in the data record, they can be visualized similarly to the <code class="code docutils literal notranslate"><span class="pre">plot_fk</span></code> option via <code class="code docutils literal notranslate"><span class="pre">plot_fd</span></code>.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_fd --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span> --freq-min <span class="m">1</span>.0 --freq-max <span class="m">8</span>.0
+</pre></div>
+</div>
+<p>This plot has the same format as the above <code class="code docutils literal notranslate"><span class="pre">plot_fk</span></code> output, but now includes shaded boxes denoting where detections were identified in the analsysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.</p>
+<a class="reference internal image-reference" href="_images/plot_fd.png"><img alt="_images/plot_fd.png" class="align-center" src="_images/plot_fd.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
 <li><p>In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> is useful in such scenarios.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the <code class="code docutils literal notranslate"><span class="pre">run_fkd</span></code> option.</p>
@@ -462,7 +462,7 @@ Cleaning up and merging clusters...
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label example1-ev0  --local-loc-label example1-ev0
 </pre></div>
 </div>
-<p>The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy’s localization is also a .json format file, but it’s naming convention uses “.loc.json” to distinguish it from a detection result file)</p>
+<p>The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy’s localization is also a .json format file, but it’s naming convention uses “.loc.json” to distinguish it from a “.dets.json” detection file)</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#####################################
 ##                                 ##
 ##             InfraPy             ##
@@ -531,72 +531,219 @@ Writing localization result into example1-ev0.loc.json
 <div class="section" id="scripting-and-notebook-based-analysis">
 <h2>Scripting and Notebook-Based Analysis<a class="headerlink" href="#scripting-and-notebook-based-analysis" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>A series of scripts illustrating how to use infrapy subroutines as stand-alone modules are found in the /examples folder.</p></li>
+<li><p>In addition to the command line interace methods for infrapy, the analysis algorithms can be imported directly into user Python scripts or notebooks for custom applications.  Example import and usage scripts are included in the examples/ directory and will be detailed below for this somewhat more advanced usage.  The example scripts are summarized in the below table.</p></li>
 </ul>
-<p>The jupyter notebook documenting these steps is found in /tutorials/Quick Start.ipynb.  The notebook can be run by installing jupyter notebook via conda.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">jupyter</span> <span class="n">notebook</span>
-</pre></div>
-</div>
-<p><em>Example Analysis Scripts:</em></p>
-<table class="docutils align-default">
+<table class="docutils align-center">
 <colgroup>
-<col style="width: 37%" />
-<col style="width: 63%" />
+<col style="width: 30%" />
+<col style="width: 70%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p>examples/test_beamforming.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
+<tr class="row-odd"><td><p>example_fkd.py</p></td>
+<td><p>Run beamforming and detection analysis on an Obspy stream</p></td>
 </tr>
-<tr class="row-even"><td><p>examples/test_slowness-grid.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
+<tr class="row-even"><td><p>example_assoc.py</p></td>
+<td><p>Run event identification methods on a list of detections</p></td>
 </tr>
-<tr class="row-odd"><td><p>examples/test_detection.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
+<tr class="row-odd"><td><p>example_bisl.py</p></td>
+<td><p>Run localization methods on a list of detections</p></td>
 </tr>
-<tr class="row-even"><td><p>examples/test_assoc.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
-</tr>
-<tr class="row-odd"><td><p>examples/test_bisl.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
-</tr>
-<tr class="row-even"><td><p>examples/test_yield.py</p></td>
-<td><p>Run beamforming (fk) analysis on an Obspy stream</p></td>
+<tr class="row-even"><td><p>example_yield.py</p></td>
+<td><p>Run spectral yield estimation methods</p></td>
 </tr>
 </tbody>
 </table>
-<ol class="arabic simple">
-<li><p>Run Bartlett, Capon or Generalized Least Squares beamforming processes on an hour-long dataset from the BRP array in Utah</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">python</span> <span class="n">test_beamforming</span><span class="o">.</span><span class="n">py</span>
+<ul>
+<li><p>The beamforming and detection analysis can be imported from the <code class="code docutils literal notranslate"><span class="pre">infrapy.detection.beamforming_new</span></code> library.  Beamforming analysis includes setting up an ObsPy stream, converting it to an array data instance, and then scanning through with a defined analysis window.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">read</span>
+<span class="kn">from</span> <span class="nn">infrapy.detection</span> <span class="kn">import</span> <span class="n">beamforming_new</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="c1"># ######################### #</span>
+    <span class="c1">#     Define Parameters     #</span>
+    <span class="c1"># ######################### #</span>
+    <span class="n">sac_glob</span> <span class="o">=</span> <span class="s2">&quot;data/*.SAC&quot;</span>
+
+    <span class="n">freq_min</span><span class="p">,</span> <span class="n">freq_max</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.5</span>
+    <span class="n">fk_win_len</span><span class="p">,</span> <span class="n">window_step</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">2.5</span>
+    <span class="n">sig_start</span><span class="p">,</span> <span class="n">sig_end</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">800</span>
+
+    <span class="n">back_az_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">180.0</span><span class="p">,</span> <span class="mf">180.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">trc_vel_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">300.0</span><span class="p">,</span> <span class="mf">600.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+
+    <span class="c1"># ######################### #</span>
+    <span class="c1">#        Run Methods        #</span>
+    <span class="c1"># ######################### #</span>
+
+    <span class="c1"># Read data and convert to array format</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">geom</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">stream_to_array_data</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">sac_glob</span><span class="p">))</span>
+    <span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Define slowness and delays</span>
+    <span class="n">slowness</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">build_slowness</span><span class="p">(</span><span class="n">back_az_vals</span><span class="p">,</span> <span class="n">trc_vel_vals</span><span class="p">)</span>
+    <span class="n">delays</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">compute_delays</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">slowness</span><span class="p">)</span>
+
+    <span class="c1"># Run beamforming in each window and find best beam info</span>
+    <span class="n">times</span><span class="p">,</span> <span class="n">beam_results</span> <span class="o">=</span> <span class="p">[],[]</span>
+    <span class="k">for</span> <span class="n">window_start</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">sig_start</span><span class="p">,</span> <span class="n">sig_end</span><span class="p">,</span> <span class="n">window_step</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">window_start</span> <span class="o">+</span> <span class="n">fk_win_len</span> <span class="o">&gt;</span> <span class="n">sig_end</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">X</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">fft_array_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="n">window_start</span><span class="p">,</span> <span class="n">window_start</span> <span class="o">+</span> <span class="n">fk_win_len</span><span class="p">])</span>
+        <span class="n">beam_power</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">geom</span><span class="p">,</span> <span class="n">delays</span><span class="p">,</span> <span class="p">[</span><span class="n">freq_min</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">])</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">find_peaks</span><span class="p">(</span><span class="n">beam_power</span><span class="p">,</span> <span class="n">back_az_vals</span><span class="p">,</span> <span class="n">trc_vel_vals</span><span class="p">)</span>
+
+        <span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">+</span> <span class="p">[[</span><span class="n">t0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">window_start</span><span class="p">),</span> <span class="s1">&#39;s&#39;</span><span class="p">)]]</span>
+        <span class="n">beam_results</span> <span class="o">=</span> <span class="n">beam_results</span> <span class="o">+</span> <span class="p">[[</span><span class="n">peaks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">peaks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">peaks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">peaks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]]</span>
+
+    <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">beam_results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">beam_results</span><span class="p">)</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
-<li><p>Visualize beamforming results in the sx/sy space</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">python</span> <span class="n">test_slowness</span><span class="o">-</span><span class="n">grid</span><span class="o">.</span><span class="n">py</span>
+<p>Detection analysis is then completed by scanning back through the beamforming results and can be appended to the end of the above beamforming analysis as it requires the times and beam_results information computed there.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fd_win_len</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span>
+<span class="n">det_thresh</span> <span class="o">=</span> <span class="mf">0.99</span>
+
+<span class="n">min_seq</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">back_az_lim</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">TB_prod</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_max</span> <span class="o">-</span> <span class="n">freq_min</span><span class="p">)</span> <span class="o">*</span> <span class="n">fk_window_len</span>
+<span class="n">dets</span> <span class="o">=</span> <span class="n">beamforming_new</span><span class="o">.</span><span class="n">detect_signals</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">beam_results</span><span class="p">,</span> <span class="n">fd_win_len</span><span class="p">,</span> <span class="n">TB_prod</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">min_seq</span><span class="o">=</span><span class="n">min_seq</span><span class="p">,</span> <span class="n">back_az_lim</span><span class="o">=</span><span class="n">back_az_lim</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">dets</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Detection time:&quot;</span><span class="p">,</span> <span class="n">det</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;Rel. detection onset:&quot;</span><span class="p">,</span> <span class="n">det</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span><span class="s2">&quot;Rel. detection end:&quot;</span><span class="p">,</span> <span class="n">det</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span><span class="n">end</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Back azimuth:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;Trace velocity:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;F-stat:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;Array dim:&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Detection:</p>
-<ol class="arabic simple">
-<li><p>Run detection on the series of beamforming results produced in the above step</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">python</span> <span class="n">test_detection</span><span class="o">.</span><span class="n">py</span>
+</div></blockquote>
+</li>
+<li><p>The association methods require ingesting a detection list and defining a clustering threshold for the hierarchical linkage cut off.  The likelihood methods include a function to read in a .json format file as output in the CLI detection analysis.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">infrapy.association</span> <span class="kn">import</span> <span class="n">hjl</span>
+<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example1.dets.json&#39;</span><span class="p">)</span>
+    <span class="n">clustering_threshold</span> <span class="o">=</span> <span class="mf">5.0</span>
+
+    <span class="n">labels</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">hjl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">clustering_threshold</span><span class="p">)</span>
+
+    <span class="n">clusters</span><span class="p">,</span> <span class="n">qualities</span> <span class="o">=</span> <span class="n">hjl</span><span class="o">.</span><span class="n">summarize_clusters</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">dists</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Cluster:&quot;</span><span class="p">,</span> <span class="n">clusters</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;Cluster Quality:&quot;</span><span class="p">,</span> <span class="mf">10.0</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">qualities</span><span class="p">[</span><span class="n">n</span><span class="p">]))</span>
 </pre></div>
 </div>
-<p>Association</p>
-<ol class="arabic simple">
-<li><p>Associate a number of detections contained in a .dat file (/data/detection_set1.dat or /data/detection_set2.dat)</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">python</span> <span class="n">test_assoc</span><span class="o">.</span><span class="n">py</span>
+</div></blockquote>
+</li>
+<li><p>Similar to the association methods, localization requires just a detection set from an event:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">infrapy.location</span> <span class="kn">import</span> <span class="n">bisl</span>
+<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example2.dets.json&#39;</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="p">,</span><span class="n">pdf</span> <span class="o">=</span> <span class="n">bisl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">bisl</span><span class="o">.</span><span class="n">summarize</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>Location</p>
-<ol class="arabic simple">
-<li><p>Test the Bayesian Infrasonic Source Localization (BISL) methodology using a set of provided detections (/data/detection_set1.dat or /data/detection_set2.dat).  Location will be run twice, once assuming uniform atmospheric propagation and a second time applying provided atmospheric propagation priors for the Western US (see Blom et al., 2015 for further explanation)</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">python</span> <span class="n">test_bisl</span><span class="o">.</span><span class="n">py</span>
+</div></blockquote>
+</li>
+<li><p>Yield estimation analysis is not currently available through the CLI due to the more complicated nature of the ingested data (requiring waveform data across multiple detecting arrays as well as transmission loss models for the region).  The example yield estimation provided shows how to set up the analysis and estimate yield for an above-ground explosion.  Analysis parameters include the detection file for the event, waveform data location, and strings to ingest each array’s data.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">read</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">infrasound</span>
+
+<span class="kn">from</span> <span class="nn">infrapy.characterization</span> <span class="kn">import</span> <span class="n">spye</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># ######################### #</span>
+    <span class="c1">#     Define Parameters     #</span>
+    <span class="c1"># ######################### #</span>
+
+    <span class="n">det_file</span> <span class="o">=</span> <span class="s2">&quot;data/detection_HRR-5.json&quot;</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="s2">&quot;../infrapy-data/hrr-5/&quot;</span>
+    <span class="n">data_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;W220/HR5.W220*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W240/HR5.W240*.sac&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;W340/HR5.W340*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W420/HR5.W420*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W460/HR5.W460*.sac&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
+<p>The analysis parameters include a noise option (“pre” or “post” detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ns_opt</span> <span class="o">=</span> <span class="s2">&quot;post&quot;</span>
+<span class="n">win_buffer</span> <span class="o">=</span> <span class="mf">0.2</span>
+
+<span class="n">src_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">33.5377</span><span class="p">,</span> <span class="o">-</span><span class="mf">106.333961</span><span class="p">])</span>
+<span class="n">freq_band</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">yld_rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0e3</span><span class="p">,</span> <span class="mf">1000.0e3</span><span class="p">])</span>
+<span class="n">ref_rng</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">grnd_truth</span><span class="o">=</span><span class="bp">None</span>
+<span class="n">resol</span> <span class="o">=</span> <span class="mi">200</span>
+</pre></div>
+</div>
+<p>The detection list and waveform files are ingested and spectral amplitudes are computed,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ############################# #</span>
+<span class="c1">#     Define the detections     #</span>
+<span class="c1">#          and spectra          #</span>
+<span class="c1"># ############################# #</span>
+<span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="n">det_file</span><span class="p">)</span>
+<span class="n">st_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">det_list</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st_list</span><span class="p">)):</span>
+    <span class="n">st_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">data_path</span> <span class="o">+</span> <span class="n">data_ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">)</span>
+<span class="n">smn_specs</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">extract_spectra</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">st_list</span><span class="p">,</span>
+                        <span class="n">win_buffer</span><span class="o">=</span><span class="n">win_buffer</span><span class="p">,</span> <span class="n">ns_opt</span><span class="o">=</span><span class="n">ns_opt</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The tranmission loss model models are defined and loaded,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">.</span>
+    <span class="c1"># ######################### #</span>
+    <span class="c1">#     Load TLoss Models     #</span>
+    <span class="c1"># ######################### #</span>
+    <span class="n">tloss_f_min</span><span class="p">,</span> <span class="n">tloss_f_max</span><span class="p">,</span> <span class="n">tloss_f_cnt</span> <span class="o">=</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">25</span>
+
+    <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_min</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_max</span><span class="p">),</span> <span class="n">tloss_f_cnt</span><span class="p">))</span>
+    <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">tloss_f_cnt</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tloss_f_cnt</span><span class="p">):</span>
+        <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">infrasound</span><span class="o">.</span><span class="n">TLossModel</span><span class="p">()</span>
+        <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;Hz.pri&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, analysis can be performed, and results printed and visualized,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ######################## #</span>
+<span class="c1">#         Run Yield        #</span>
+<span class="c1">#    Estimation Methods    #</span>
+<span class="c1"># ######################## #</span>
+<span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">conf_bnds</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">smn_specs</span><span class="p">,</span> <span class="n">src_loc</span><span class="p">,</span> <span class="n">freq_band</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span>
+                                        <span class="n">yld_rng</span><span class="o">=</span><span class="n">yld_rng</span><span class="p">,</span> <span class="n">ref_src_rng</span><span class="o">=</span><span class="n">ref_rng</span><span class="p">,</span> <span class="n">resol</span><span class="o">=</span><span class="n">resol</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Results:&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;Maximum a Posteriori Yield:&quot;</span><span class="p">,</span> <span class="n">yld_vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">yld_pdf</span><span class="p">)])</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;68% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;95% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_vals</span> <span class="o">&lt;=</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_vals</span> <span class="o">&lt;=</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
 </div>
 </div>
 
@@ -605,29 +752,29 @@ Writing localization result into example1-ev0.loc.json
            
           </div>
           <footer>
+  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="infraview.html" class="btn btn-neutral float-right" title="Infraview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+      
+        <a href="infraview.html" class="btn btn-neutral float-right" title="Infraview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster.
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster
 
     </p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
 
@@ -635,6 +782,7 @@ Writing localization result into example1-ev0.loc.json
 
   </div>
   
+
 
   <script type="text/javascript">
       jQuery(function () {

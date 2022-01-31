@@ -9,7 +9,7 @@ import numpy as np
 from infrapy.location import bisl
 from infrapy.propagation import likelihoods as lklhds
 from infrapy.propagation import infrasound as infsnd
-from infrapy.location import plot_loc_res
+from infrapy.location import visualization as vis
 
 
 # ######################### #
@@ -39,11 +39,10 @@ det_list = [det1, det2, det3]
 #det_list = lklhds.file2dets("data/detection_set2.dat")
 
 # Load detection list from json file
-det_list = lklhds.json_to_detection_list('data/detection_set2.json')
-
+det_list = lklhds.json_to_detection_list('data/example2.dets.json')
 
 # Plot detections
-plot_loc_res.plot_dets(det_list, display=True,save_fig=None)
+vis.plot_dets_on_map(det_list)
 
 # ########################## #
 #          Run BISL          #
@@ -51,32 +50,29 @@ plot_loc_res.plot_dets(det_list, display=True,save_fig=None)
 # ########################## #
 
 # Run analysis without priors
-result,pdf = bisl.run(det_list,
+result = bisl.run(det_list,
                     bm_width=bm_width,
                     rad_min=rad_min, 
                     rad_max=rad_max, 
                     rng_max=rng_max, 
                     resol=resolution,angle=[-180,180])
 
-summary = bisl.summarize(result)
-
 print('-' * 75)
 print('BISL Summary\n')
-print(summary)
+print(bisl.summarize(result))
 print('\n' + '-'*75 + '\n')
 
 # ###############################
 # plot the results from bisl ####
 
-plot_loc_res.plot_loc(det_list, result,pdf,confidence=[95,99],display=True,save_fig=None,grnd_trth =grnd_trth)
-plot_loc_res.plot_time(result,display=True, save_fig=None,grnd_trth =grnd_trth)
+vis.plot_loc(det_list, result)
+
 # Define priors, load from file, and display
 model = infsnd.PathGeometryModel()
 model.load("../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm")
-#model.display()
 
 # Re-run analysis with priors
-result,pdf = bisl.run(det_list, 
+result = bisl.run(det_list, 
                     bm_width=bm_width,
                     rad_min=rad_min, 
                     rad_max=rad_max, 
@@ -85,12 +81,9 @@ result,pdf = bisl.run(det_list,
                     path_geo_model=model)
 
 
-summary = bisl.summarize(result)
-
 print('-' * 75)
 print('BISL Summary\n')
-print(summary)
+print(bisl.summarize(result))
 print('\n' + '-'*75 + '\n')
 
-plot_loc_res.plot_loc(det_list, result,pdf,confidence=[95,99],display=True,save_fig=None,grnd_trth =grnd_trth)
-plot_loc_res.plot_time(result,display=True, save_fig=None,grnd_trth =grnd_trth)
+vis.plot_loc(det_list, result)

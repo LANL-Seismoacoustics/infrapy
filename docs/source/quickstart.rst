@@ -187,6 +187,18 @@ Array-Level Analyses
             }, ...
 
 
+- Once detections are identified in the data record, they can be visualized similarly to the :code:`plot_fk` option via :code:`plot_fd`.
+
+    .. code-block:: bash
+
+        infrapy plot_fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
+
+    This plot has the same format as the above :code:`plot_fk` output, but now includes shaded boxes denoting where detections were identified in the analsysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
+
+    .. image:: _static/_images/plot_fd.png
+        :width: 1200px
+        :align: center
+
 - In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the :code:`run_fd` is useful in such scenarios.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the :code:`run_fkd` option.  
 
     .. code-block:: bash
@@ -313,7 +325,7 @@ Network-Level Analyses
 
         infrapy plot_dets --local-detect-label example1-ev0  --local-loc-label example1-ev0
 
-    The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a detection result file)
+    The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
 
     .. code-block:: none
 
@@ -393,63 +405,212 @@ Network-Level Analyses
 Scripting and Notebook-Based Analysis 
 *************************************
 
-- A series of scripts illustrating how to use infrapy subroutines as stand-alone modules are found in the /examples folder.
-The jupyter notebook documenting these steps is found in /tutorials/Quick Start.ipynb.  The notebook can be run by installing jupyter notebook via conda.
+- In addition to the command line interace methods for infrapy, the analysis algorithms can be imported directly into user Python scripts or notebooks for custom applications.  Example import and usage scripts are included in the examples/ directory and will be detailed below for this somewhat more advanced usage.  The example scripts are summarized in the below table.
 
-.. code-block:: python
++-------------------------+-----------------------------------------------------------+
+| example_fkd.py          | Run beamforming and detection analysis on an Obspy stream |
++-------------------------+-----------------------------------------------------------+
+| example_assoc.py        | Run event identification methods on a list of detections  |
++-------------------------+-----------------------------------------------------------+
+| example_bisl.py         | Run localization methods on a list of detections          |
++-------------------------+-----------------------------------------------------------+
+| example_yield.py        | Run spectral yield estimation methods                     |
++-------------------------+-----------------------------------------------------------+
 
-    >> conda install jupyter notebook
+- The beamforming and detection analysis can be imported from the :code:`infrapy.detection.beamforming_new` library.  Beamforming analysis includes setting up an ObsPy stream, converting it to an array data instance, and then scanning through with a defined analysis window.
 
-*Example Analysis Scripts:*
+    .. code-block:: python
 
-+--------------------------------+------------------------------------------------------+
-| examples/test_beamforming.py   | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
-| examples/test_slowness-grid.py | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
-| examples/test_detection.py     | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
-| examples/test_assoc.py         | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
-| examples/test_bisl.py          | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
-| examples/test_yield.py         | Run beamforming (fk) analysis on an Obspy stream     |
-+--------------------------------+------------------------------------------------------+
+        import numpy as np
+
+        from obspy.core import read
+        from infrapy.detection import beamforming_new
+
+        if __name__ == '__main__':
+
+            # ######################### #
+            #     Define Parameters     #
+            # ######################### #
+            sac_glob = "data/*.SAC"
+
+            freq_min, freq_max = 0.5, 2.5
+            fk_win_len, window_step = 10.0, 2.5
+            sig_start, sig_end = 600, 800
+
+            back_az_vals = np.arange(-180.0, 180.0, 2.0)
+            trc_vel_vals = np.arange(300.0, 600.0, 2.5)
+
+            # ######################### #
+            #        Run Methods        #
+            # ######################### #
+
+            # Read data and convert to array format
+            x, t, t0, geom = beamforming_new.stream_to_array_data(read(sac_glob))
+            M, N = x.shape
+
+            # Define slowness and delays
+            slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
+            delays = beamforming_new.compute_delays(geom, slowness)
+
+            # Run beamforming in each window and find best beam info
+            times, beam_results = [],[]
+            for window_start in np.arange(sig_start, sig_end, window_step):
+                if window_start + fk_win_len > sig_end:
+                    break
+
+                X, S, f = beamforming_new.fft_array_data(x, t, window=[window_start, window_start + fk_win_len])
+                beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max])
+                peaks = beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals)
+                
+                times = times + [[t0 + np.timedelta64(int(window_start), 's')]]
+                beam_results = beam_results + [[peaks[0][0], peaks[0][1], peaks[0][2] / (1.0 - peaks[0][2]) * (x.shape[0] - 1)]]
+
+            times = np.array(times)[:, 0]
+            beam_results = np.array(beam_results)
+
+    Detection analysis is then completed by scanning back through the beamforming results and can be appended to the end of the above beamforming analysis as it requires the times and beam_results information computed there.
+
+    .. code-block:: python
+
+            fd_win_len = 60 * 5
+            det_thresh = 0.99
+
+            min_seq = 5
+            back_az_lim = 10
+
+            TB_prod = (freq_max - freq_min) * fk_window_len
+            dets = beamforming_new.detect_signals(times, beam_results, fd_win_len, TB_prod, M, min_seq=min_seq, back_az_lim=back_az_lim)
+
+            for det in dets:
+                print("Detection time:", det[0], '\t', "Rel. detection onset:", det[1], '\t',"Rel. detection end:", det[2], '\t',end=' ')
+                print("Back azimuth:", np.round(det[3], 2), '\t', "Trace velocity:", np.round(det[4], 2), '\t', "F-stat:", np.round(det[5], 2), '\t', "Array dim:", M)
 
 
+-  The association methods require ingesting a detection list and defining a clustering threshold for the hierarchical linkage cut off.  The likelihood methods include a function to read in a .json format file as output in the CLI detection analysis.
 
-1. Run Bartlett, Capon or Generalized Least Squares beamforming processes on an hour-long dataset from the BRP array in Utah
+    .. code-block:: python
 
-.. code-block:: python
+        from infrapy.association import hjl
+        from infrapy.propagation import likelihoods as lklhds
 
-    >> python test_beamforming.py
+        if __name__ == '__main__':
+            det_list = lklhds.json_to_detection_list('data/example1.dets.json')
+            clustering_threshold = 5.0
 
-2. Visualize beamforming results in the sx/sy space
+            labels, dists = hjl.run(det_list, clustering_threshold)
 
-.. code-block:: python
+            clusters, qualities = hjl.summarize_clusters(labels, dists)
+            for n in range(len(clusters)):
+                print("Cluster:", clusters[n], '\t', "Cluster Quality:", 10.0**(-qualities[n]))
 
-    >> python test_slowness-grid.py
 
-Detection:
+- Similar to the association methods, localization requires just a detection set from an event:
 
-1. Run detection on the series of beamforming results produced in the above step
+    .. code-block:: python
 
-.. code-block:: python
+        from infrapy.location import bisl
+        from infrapy.propagation import likelihoods as lklhds
 
-    >> python test_detection.py
+        if __name__ == '__main__':
+            det_list = lklhds.json_to_detection_list('data/example2.dets.json')
 
-Association
+            result,pdf = bisl.run(det_list)
+            print(bisl.summarize(result))
 
-1. Associate a number of detections contained in a .dat file (/data/detection_set1.dat or /data/detection_set2.dat)
+- Yield estimation analysis is not currently available through the CLI due to the more complicated nature of the ingested data (requiring waveform data across multiple detecting arrays as well as transmission loss models for the region).  The example yield estimation provided shows how to set up the analysis and estimate yield for an above-ground explosion.  Analysis parameters include the detection file for the event, waveform data location, and strings to ingest each array's data.
 
-.. code-block:: python
+    .. code-block:: python
 
-    >> python test_assoc.py
+        from obspy.core import read
 
-Location
+        import numpy as np
 
-1. Test the Bayesian Infrasonic Source Localization (BISL) methodology using a set of provided detections (/data/detection_set1.dat or /data/detection_set2.dat).  Location will be run twice, once assuming uniform atmospheric propagation and a second time applying provided atmospheric propagation priors for the Western US (see Blom et al., 2015 for further explanation)
+        import matplotlib.pyplot as plt 
 
-.. code-block:: python
+        from infrapy.propagation import likelihoods as lklhds
+        from infrapy.propagation import infrasound
 
-    >> python test_bisl.py
+        from infrapy.characterization import spye
+
+        if __name__ == '__main__':
+            # ######################### #
+            #     Define Parameters     #
+            # ######################### #
+
+            det_file = "data/HRR-5.dets.json"
+            data_path = "../infrapy-data/hrr-5/"
+            data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", 
+                        "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]
+
+    The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
+
+    .. code-block:: python
+
+            ns_opt = "post"
+            win_buffer = 0.2
+    
+            src_loc = np.array([33.5377, -106.333961])
+            freq_band = np.array([0.25, 2.0])
+            yld_rng = np.array([1.0e3, 1000.0e3])
+            ref_rng = 1.0
+
+            grnd_truth=None
+            resol = 200
+
+    The detection list and waveform files are ingested and spectral amplitudes are computed,
+
+    .. code-block:: python
+
+            # ############################# #
+            #     Define the detections     #
+            #          and spectra          #
+            # ############################# #
+            det_list = lklhds.json_to_detection_list(det_file)
+            st_list = [0] * len(det_list)
+            for j in range(len(st_list)):
+                st_list[j] = read(data_path + data_ids[j] )
+            smn_specs = spye.extract_spectra(det_list, st_list, 
+                                    win_buffer=win_buffer, ns_opt=ns_opt)
+    
+
+    The tranmission loss model models are defined and loaded,
+
+    .. code-block:: python
+        
+        .
+            # ######################### #
+            #     Load TLoss Models     #
+            # ######################### #
+            tloss_f_min, tloss_f_max, tloss_f_cnt = 0.025, 2.5, 25
+
+            models = [0] * 2
+            models[0] = list(np.logspace(np.log10(tloss_f_min), 
+                                np.log10(tloss_f_max), tloss_f_cnt))
+            models[1] = [0] * tloss_f_cnt
+            for n in range(tloss_f_cnt):
+                models[1][n] = infrasound.TLossModel()
+                models[1][n].load("../infrapy/propagation/priors/tloss/2007_08-" + "%.3f" % models[0][n] + "Hz.pri")
+
+    Finally, analysis can be performed, and results printed and visualized,
+
+    .. code-block:: python
+
+            # ######################## #
+            #         Run Yield        #
+            #    Estimation Methods    #
+            # ######################## #
+            yld_vals, yld_pdf, conf_bnds = spye.run(det_list, smn_specs, src_loc, freq_band, models, 
+                                                    yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
+
+            print('\nResults:')
+            print('\t' + "Maximum a Posteriori Yield:", yld_vals[np.argmax(yld_pdf)])
+            print('\t' + "68% Confidence Bounds:", conf_bnds[0])
+            print('\t' + "95% Confidence Bounds:", conf_bnds[1])
+
+            plt.semilogx(yld_vals, yld_pdf)
+            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[0][0] <= yld_vals, yld_vals <= conf_bnds[0][1]), color='g', alpha=0.25)
+            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[1][0] <= yld_vals, yld_vals <= conf_bnds[1][1]), color='g', alpha=0.25)
+
+            plt.show(block=False)
+            plt.pause(5.0)
+            plt.close()

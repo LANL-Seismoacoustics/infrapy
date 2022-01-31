@@ -20,7 +20,7 @@ if __name__ == '__main__':
     #########################
 
     # Read in detections from file
-    det_list = lklhds.json_to_detection_list('data/detection_set1.json')
+    det_list = lklhds.json_to_detection_list('data/example1.dets.json')
 
     # define joint-likelihood calculation parameters
     width = 10.0
