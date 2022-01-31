@@ -20,7 +20,7 @@ Array-Level Analyses
 
         infrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC'
 
-    Note that the data path must be in quotes in order to properly parsed.  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:
+    Note that the data path must be in quotes in order to properly parsed and that this Quickstart assumes you are in the infrapy/examples directory (if you are getting an error that the waveform data isn't found, make sure you're in the correct directory).  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:
 
     .. code-block:: none
 
@@ -537,7 +537,7 @@ Scripting and Notebook-Based Analysis
             #     Define Parameters     #
             # ######################### #
 
-            det_file = "data/detection_HRR-5.json"
+            det_file = "data/HRR-5.dets.json"
             data_path = "../infrapy-data/hrr-5/"
             data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", 
                         "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]

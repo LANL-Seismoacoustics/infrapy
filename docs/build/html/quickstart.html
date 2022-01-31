@@ -173,7 +173,7 @@
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span>
 </pre></div>
 </div>
-<p>Note that the data path must be in quotes in order to properly parsed.  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:</p>
+<p>Note that the data path must be in quotes in order to properly parsed and that this Quickstart assumes you are in the infrapy/examples directory (if you are getting an error that the waveform data isn’t found, make sure you’re in the correct directory).  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#####################################
 ##                                 ##
 ##             InfraPy             ##
@@ -671,7 +671,7 @@ Writing localization result into example1-ev0.loc.json
     <span class="c1">#     Define Parameters     #</span>
     <span class="c1"># ######################### #</span>
 
-    <span class="n">det_file</span> <span class="o">=</span> <span class="s2">&quot;data/detection_HRR-5.json&quot;</span>
+    <span class="n">det_file</span> <span class="o">=</span> <span class="s2">&quot;data/HRR-5.dets.json&quot;</span>
     <span class="n">data_path</span> <span class="o">=</span> <span class="s2">&quot;../infrapy-data/hrr-5/&quot;</span>
     <span class="n">data_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;W220/HR5.W220*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W240/HR5.W240*.sac&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;W340/HR5.W340*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W420/HR5.W420*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W460/HR5.W460*.sac&quot;</span><span class="p">]</span>

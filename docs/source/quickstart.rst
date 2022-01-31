@@ -20,7 +20,7 @@ Array-Level Analyses
 
         infrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC'
 
-    Note that the data path must be in quotes in order to properly parsed.  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:
+    Note that the data path must be in quotes in order to properly parsed and that this Quickstart assumes you are in the infrapy/examples directory (if you are getting an error that the waveform data isn't found, make sure you're in the correct directory).  As the methods are run, data and algorithm parameters are summarized and a progress bar shows how much of the data has been analyzed:
 
     .. code-block:: none
 
