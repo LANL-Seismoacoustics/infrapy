@@ -1,4 +1,0 @@
-
-{
-    "path": "../../tutorials/DBConnect.ipynb"
-}

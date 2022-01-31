@@ -49,26 +49,43 @@ To deactivate an active environment, use
 Testing
 -------------------------------------
 
-Once the installation is complete, you can test some things by first activating the environment with:
+Once the installation is complete, you can test that the InfraPy methods are set up and accessible by first activating the environment with:
 
 .. code-block:: none
 
     >> conda activate infrapy_env
 
-Then navigate to the /example directory located in the infrapy base directory, and run the test scripts via something like:
+The InfraPy command line methods have usage summarizes that can be displayed via the :code:`--help` option.  On the command line, run:
 
 .. code-block:: none
 
-    >> python test_beamforming.py
+    infrapy --help
 
-If infrapy was successfully installed, all of the test scripts should run and finish without any errors.
-
-----------------------------------------
-Running the InfraView GUI Application
-----------------------------------------
-
-Once installation is complete, and the new environment is activated, you can run the GUI with the command:
+The usage information should be displayed:
 
 .. code-block:: none
 
-    >> infraview
+    Usage: infrapy [OPTIONS] COMMAND [ARGS]...
+
+      infrapy - Python-based Infrasound Data Analysis Toolkit
+
+      Command line interface (CLI) for running and visualizing infrasound analysis
+
+    Options:
+      -h, --help  Show this message and exit.
+
+    Commands:
+      arrivals2json     Convert infraGA/GeoAc arrivals to detection file
+      plot_dets         Plot detections on a map
+      plot_fd           Visualize detections from beamforming results
+      plot_fk           Visualize beamforming (fk) results
+      plot_loc          Plot location estimate on a map
+      plot_origin_time  Visualize origin time estimate
+      run_assoc         Associate detections into events
+      run_fd            Identify detections from beamforming results
+      run_fk            Run beamforming methods on waveform data
+      run_fkd           Run beamforming and detection methods in sequence
+      run_loc           Estimate source locations and times for events
+
+Each of the individual methods have usage information (e.g., :code:`infrapy run_fk --help`) that will be discussed in the :ref:`quickstart`
+

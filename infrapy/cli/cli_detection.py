@@ -194,7 +194,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     # run fk analysis
     beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
 
-    print('\n' + "Write results to specified output..." + '\n')
+    print('\n' + "Writing results to specified output..." + '\n')
     if local_fk_label is None or local_fk_label == "auto":
         if local_wvfrms is not None and "/" in local_wvfrms:
             local_fk_label = os.path.dirname(local_wvfrms) + "/"
@@ -257,6 +257,9 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     # use local ingestion for initial testing
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+
+    if local_detect_label is None or local_detect_label == "auto":
+        local_detect_label = local_fk_label
 
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
@@ -545,15 +548,13 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     output_id = output_id + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
     output_id = output_id + '-' + "%02d" % tr.stats.endtime.hour + "." + "%02d" % tr.stats.endtime.minute + "." + "%02d" % tr.stats.endtime.second
 
-    if local_fk_label is not None:
-        if local_fk_label == "auto":
-            local_fk_label = output_id
+    if local_fk_label is None or local_fk_label == "auto":
+        local_fk_label = output_id
 
-        click.echo("Writing fk results using label: " + local_fk_label)
-        
-        np.save(local_fk_label + ".fk_times", beam_times)
-        np.save(local_fk_label + ".fk_peaks", beam_peaks)
-        data_io.write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
+    click.echo("Writing fk results using label: " + local_fk_label)    
+    np.save(local_fk_label + ".fk_times", beam_times)
+    np.save(local_fk_label + ".fk_peaks", beam_peaks)
+    data_io.write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
             signal_start, signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step)
 
     if local_detect_label is None or local_detect_label == "auto":

@@ -19,10 +19,11 @@ _____________________________________
     :maxdepth: 5
     :titlesonly:
 
-    authorship
     userguide
+    authorship
     installation
     quickstart
+    infraview
     pisces
     algorithms
     processing_model

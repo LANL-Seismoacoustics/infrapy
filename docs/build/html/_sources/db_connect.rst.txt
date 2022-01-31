@@ -1,9 +1,0 @@
-.. _db_connect:
-
-=====================================
-Establishing a Database Connection
-=====================================
-
-This tutorial is a continuation of the section :ref:`pisces` that will detail how to establish, test and utilize a database connection.
-
-.. notebook:: DBConnect.ipynb

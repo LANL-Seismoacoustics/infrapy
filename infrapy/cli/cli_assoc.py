@@ -76,7 +76,7 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
     click.echo("  endtime: " + str(endtime))
 
     if local_detect_label is None or local_event_label is None:
-        msg = "Association analysis requires detection input (--local-det-in) and output path (--local-event-label)"
+        msg = "Association analysis requires detection input (--local-detect-label) and output path (--local-event-label)"
         warnings.warn(msg)
         return 0
 
@@ -106,6 +106,7 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
         pl = Pool(cpu_cnt)
     else:
         pl = None
+    click.echo("")
 
     det_list = data_io.set_det_list(local_detect_label, merge=True)
     events, event_qls = hjl.id_events(det_list, cluster_threshold, starttime=starttime, endtime=endtime, dist_max=distance_matrix_max, 

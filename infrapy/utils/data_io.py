@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os 
+import os
+from threading import local 
 import warnings 
 import fnmatch
 import json
@@ -62,24 +63,28 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
 
     return stream, latlon
 
-def set_det_list(local_det_info, merge=True):
+def set_det_list(local_detect_label, merge=True):
 
-    if "*" not in local_det_info:
-        det_list = lklhds.json_to_detection_list(local_det_info)
+    if ".dets.json" not in local_detect_label:
+        local_detect_label = local_detect_label + ".dets.json"
+
+    if "*" not in local_detect_label:
+        print("Loading detections from file: " + local_detect_label)
+        det_list = lklhds.json_to_detection_list(local_detect_label)
     else:
-        if len(os.path.dirname(local_det_info)) > 0:
-            file_path = os.path.dirname(local_det_info) + "/"
+        if len(os.path.dirname(local_detect_label)) > 0:
+            file_path = os.path.dirname(local_detect_label) + "/"
         else:
             file_path = ""
 
         file_list = []
-        if "/" in local_det_info:
-            dir_files = os.listdir(os.path.dirname(local_det_info))
+        if "/" in local_detect_label:
+            dir_files = os.listdir(os.path.dirname(local_detect_label))
         else:
             dir_files = os.listdir(".")
             
         for file in dir_files:
-            if fnmatch.fnmatch(file, os.path.basename(local_det_info)):
+            if fnmatch.fnmatch(file, os.path.basename(local_detect_label)):
                 file_list += [file]
 
         if len(file_list) == 0:
@@ -87,10 +92,14 @@ def set_det_list(local_det_info, merge=True):
             warnings.warn(msg)
             det_list = None 
         elif len(file_list) == 1:
-            det_list = [lklhds.json_to_detection_list(file_path + local_det_info)]
+            print("Loading detections from file: " + file_path + local_detect_label)
+            det_list = [lklhds.json_to_detection_list(file_path + local_detect_label)]
         else:
+            print("Loading detections from files:")
             det_list = []
             for file in file_list:
+                print('\t' + file_path + file)
+
                 if merge:
                     det_list = det_list + lklhds.json_to_detection_list(file_path + file)
                 else:
@@ -167,13 +176,20 @@ def write_events(events, event_qls, det_list, local_event_label):
         temp = []
         for det_id in ev:
             temp = temp + [det_list[det_id]]
-        lklhds.detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".json", temp)
+        lklhds.detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".dets.json", temp)
 
 
-def write_locs(bisl_results, local_event_label):
-    with open(local_event_label, 'w') as of:
-        json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
+def write_locs(bisl_results, local_loc_label):
+    if ".loc.json" in local_loc_label:
+        with open(local_loc_label, 'w') as of:
+            json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
+    else:
+        with open(local_loc_label + ".loc.json", 'w') as of:
+            json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
 
 
-def read_locs(local_bisl_file):
-    return json.load(open(local_bisl_file))
+def read_locs(local_loc_label):
+    if ".loc.json" in local_loc_label:
+        return json.load(open(local_loc_label))
+    else:
+        return json.load(open(local_loc_label + ".loc.json"))
