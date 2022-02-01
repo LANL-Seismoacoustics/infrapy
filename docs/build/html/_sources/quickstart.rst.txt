@@ -8,7 +8,7 @@ Quickstart
 Command Line Interface (CLI) 
 ****************************
 
-Most of InfraPy's analysis methods are accessible through a command line interface (CLI) with configuation options either via command line parameter definitions or a configuation file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via :code:`obspy.core.read`) or downloaded from FDSN clients via :code:`obspy.clients.fdsn`.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.
+Most of InfraPy's analysis methods are accessible through a command line interface (CLI) with parameters specified either via command line flags or a configuation file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via :code:`obspy.core.read`) or downloaded from FDSN clients via :code:`obspy.clients.fdsn`.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.
 
 --------------------
 Array-Level Analyses
@@ -94,7 +94,7 @@ Array-Level Analyses
 
         infrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
-    The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as :code:`--local_fk-label example`.
+    The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as :code:`--local-fk-label example`.
 
 - In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of anlaysis.  Create a text file called :code:`BRP_analysis.config` and enter the following:
 
@@ -104,7 +104,7 @@ Array-Level Analyses
         local_wvfrms = data/YJ.BRP*.SAC
 
         [DETECTION IO]
-        local_fk_label = BRP_analysis
+        local_fk_label = data/BRP_analysis
 
         [FK]
         freq_min = 1.0
@@ -113,7 +113,7 @@ Array-Level Analyses
         window_step = 2.5
         cpu_cnt = 8
 
-    Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:
+    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., --local-fk-label vs. local_fk_label).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:
 
     .. code-block:: bash
 
@@ -127,12 +127,11 @@ Array-Level Analyses
 
     If a parameter is not included in a config file or via the command line, a default value is used and can be found in the ouput at the time of the analysis or in the meta-data file.
 
-- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This anlaysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.
+- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.
 
     .. code-block:: bash
 
         infrapy run_fd --local-fk-label data/BRP_analysis
-
 
     Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this anlaysis is relatively quick there is no progress bar:
 
@@ -228,15 +227,15 @@ Array-Level Analyses
 
 - Analysis of data from a local database is also available through the InfraPy CLI, and is covered in a separate tutorial on :ref:`pisces`.
 
---------------------
+----------------------
 Network-Level Analyses
---------------------
+----------------------
 
 - Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evalution of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
 
     .. code-block:: bash
     
-        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label example
+        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example
 
     Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  The analysis results will be summarized to the screen,
 
@@ -312,7 +311,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_dets --local-detect-label 'example1-ev0.dets.json'  --range-max 1000
+        infrapy plot_dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
 
     .. image:: _static/_images/plot_dets2.png
         :width: 1200px
@@ -323,7 +322,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_dets --local-detect-label example1-ev0  --local-loc-label example1-ev0
+        infrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
 
     The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
 
@@ -357,24 +356,24 @@ Network-Level Analyses
 
         BISL Summary:
         Maximum a posteriori analysis: 
-        	Source location: 41.092, -113.144 
-        	Source time: 2004-06-02T17:20:14.150 
+        	Source location: 37.212, -115.283 
+        	Source time: 2010-01-01T12:11:16.645000 
         Source location analysis:
-	        Latitude (mean and standard deviation): 40.977 +/- 29.236 km. 
-	        Longitude (mean and standard deviation): -113.256 +/- 30.177 km.
-	        Covariance: -0.139.
-	        Area of 95 confidence ellipse: 16606.375 square kilometers
+	        Latitude (mean and standard deviation): 37.212 +/- 27.882 km. 
+        	Longitude (mean and standard deviation): -115.283 +/- 34.18 km.
+	        Covariance: -0.41.
+        	Area of 95 confidence ellipse: 17938.387 square kilometers
         Source time analysis:
-        	Mean and standard deviation: 2004-06-02T17:19:14.339 +/- 99.051 second
-        	Exact 90% confidence bounds: [2004-06-02T17:16:26.109, 2004-06-02T17:21:50.533]
+	        Mean and standard deviation: 2010-01-01T12:11:55.838 +/- 100.512 second
+	        Exact 90% confidence bounds: [2010-01-01T12:09:12.885, 2010-01-01T12:14:46.185]
 
-        Writing localization result into example1-ev0.loc.json
+        Writing localization result into GJI_example-ev0.loc.json
 
 - The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max 1000.0
+        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max 1200.0
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
@@ -384,7 +383,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max 1000.0 --zoom true
+        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --zoom true
 
     .. image:: _static/_images/plot_loc2.png
         :width: 900px

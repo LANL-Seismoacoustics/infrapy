@@ -596,8 +596,8 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
                 seis_t1 = max(np.array([det.peakF_UTCtime - np.timedelta64(int(seis_rngs[n] / 2.0 * 1e3), 'ms') for n, det in enumerate(seis_det_list)]))
                 seis_t2 = min(np.array([det.peakF_UTCtime - np.timedelta64(int(seis_rngs[n] / 8.0 * 1e3), 'ms') for n, det in enumerate(seis_det_list)]))
             else:
-                seis_t1 = -np.inf
-                seis_t2 = np.inf 
+                seis_t1 = np.datetime64("0000-01-01T00:00:00")
+                seis_t2 = np.datetime64("9999-01-01T00:00:00")
 
             t1 = max(infr_t1, seis_t1)
             t2 = min(infr_t2, seis_t2)

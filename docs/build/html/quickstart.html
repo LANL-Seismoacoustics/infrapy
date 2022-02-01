@@ -164,7 +164,7 @@
 <span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="command-line-interface-cli">
 <h2>Command Line Interface (CLI)<a class="headerlink" href="#command-line-interface-cli" title="Permalink to this headline">¶</a></h2>
-<p>Most of InfraPy’s analysis methods are accessible through a command line interface (CLI) with configuation options either via command line parameter definitions or a configuation file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via <code class="code docutils literal notranslate"><span class="pre">obspy.core.read</span></code>) or downloaded from FDSN clients via <code class="code docutils literal notranslate"><span class="pre">obspy.clients.fdsn</span></code>.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.</p>
+<p>Most of InfraPy’s analysis methods are accessible through a command line interface (CLI) with parameters specified either via command line flags or a configuation file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via <code class="code docutils literal notranslate"><span class="pre">obspy.core.read</span></code>) or downloaded from FDSN clients via <code class="code docutils literal notranslate"><span class="pre">obspy.clients.fdsn</span></code>.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.</p>
 <div class="section" id="array-level-analyses">
 <h3>Array-Level Analyses<a class="headerlink" href="#array-level-analyses" title="Permalink to this headline">¶</a></h3>
 <ul>
@@ -253,7 +253,7 @@ Writing results to specified output...
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span> --freq-min <span class="m">1</span>.0 --freq-max <span class="m">8</span>.0
 </pre></div>
 </div>
-<p>The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as <code class="code docutils literal notranslate"><span class="pre">--local_fk-label</span> <span class="pre">example</span></code>.</p>
+<p>The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as <code class="code docutils literal notranslate"><span class="pre">--local-fk-label</span> <span class="pre">example</span></code>.</p>
 </div></blockquote>
 </li>
 <li><p>In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of anlaysis.  Create a text file called <code class="code docutils literal notranslate"><span class="pre">BRP_analysis.config</span></code> and enter the following:</p>
@@ -262,7 +262,7 @@ Writing results to specified output...
 local_wvfrms = data/YJ.BRP*.SAC
 
 [DETECTION IO]
-local_fk_label = BRP_analysis
+local_fk_label = data/BRP_analysis
 
 [FK]
 freq_min = 1.0
@@ -272,7 +272,7 @@ window_step = 2.5
 cpu_cnt = 8
 </pre></div>
 </div>
-<p>Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:</p>
+<p>Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., –local-fk-label vs. local_fk_label).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file BRP_analysis.config
 </pre></div>
 </div>
@@ -283,7 +283,7 @@ cpu_cnt = 8
 <p>If a parameter is not included in a config file or via the command line, a default value is used and can be found in the ouput at the time of the analysis or in the meta-data file.</p>
 </div></blockquote>
 </li>
-<li><p>From the beamforming results, detection analysis can be conducted via the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> method.  This anlaysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.</p>
+<li><p>From the beamforming results, detection analysis can be conducted via the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --local-fk-label data/BRP_analysis
 </pre></div>
@@ -382,7 +382,7 @@ local_detect_label = I53US_analysis
 <ul>
 <li><p>Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evalution of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_assoc --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span> --local-event-label example
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_assoc --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span> --local-event-label GJI_example
 </pre></div>
 </div>
 <p>Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it’s recommended to add on a <code class="code docutils literal notranslate"><span class="pre">--cpu-cnt</span></code> option and multithread the computation of the joint-likelihood values.  The analysis results will be summarized to the screen,</p>
@@ -451,7 +451,7 @@ Cleaning up and merging clusters...
 </div>
 <a class="reference internal image-reference" href="_images/plot_dets1.png"><img alt="_images/plot_dets1.png" class="align-center" src="_images/plot_dets1.png" style="width: 1200px;" /></a>
 <p>This result is rather busy, but plotting each individual event’s detections shows that the association algorithm correctly identified the events,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label <span class="s1">&#39;example1-ev0.dets.json&#39;</span>  --range-max <span class="m">1000</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label <span class="s1">&#39;GJI_example-ev0.dets.json&#39;</span>  --range-max <span class="m">1000</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_dets2.png"><img alt="_images/plot_dets2.png" class="align-center" src="_images/plot_dets2.png" style="width: 1200px;" /></a>
@@ -459,7 +459,7 @@ Cleaning up and merging clusters...
 </li>
 <li><p>Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al (2015).  This requires specifying the detection list file as well as an output location file label,</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label example1-ev0  --local-loc-label example1-ev0
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
 </pre></div>
 </div>
 <p>The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy’s localization is also a .json format file, but it’s naming convention uses “.loc.json” to distinguish it from a “.dets.json” detection file)</p>
@@ -491,30 +491,30 @@ Running Bayesian Infrasonic Source Localization (BISL) Analysis...
 
 BISL Summary:
 Maximum a posteriori analysis:
-        Source location: 41.092, -113.144
-        Source time: 2004-06-02T17:20:14.150
+        Source location: 37.212, -115.283
+        Source time: 2010-01-01T12:11:16.645000
 Source location analysis:
-        Latitude (mean and standard deviation): 40.977 +/- 29.236 km.
-        Longitude (mean and standard deviation): -113.256 +/- 30.177 km.
-        Covariance: -0.139.
-        Area of 95 confidence ellipse: 16606.375 square kilometers
+        Latitude (mean and standard deviation): 37.212 +/- 27.882 km.
+        Longitude (mean and standard deviation): -115.283 +/- 34.18 km.
+        Covariance: -0.41.
+        Area of 95 confidence ellipse: 17938.387 square kilometers
 Source time analysis:
-        Mean and standard deviation: 2004-06-02T17:19:14.339 +/- 99.051 second
-        Exact 90% confidence bounds: [2004-06-02T17:16:26.109, 2004-06-02T17:21:50.533]
+        Mean and standard deviation: 2010-01-01T12:11:55.838 +/- 100.512 second
+        Exact 90% confidence bounds: [2010-01-01T12:09:12.885, 2010-01-01T12:14:46.185]
 
-Writing localization result into example1-ev0.loc.json
+Writing localization result into GJI_example-ev0.loc.json
 </pre></div>
 </div>
 </div></blockquote>
 </li>
 <li><p>The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max <span class="m">1000</span>.0
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max <span class="m">1200</span>.0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc1.png"><img alt="_images/plot_loc1.png" class="align-center" src="_images/plot_loc1.png" style="width: 1200px;" /></a>
 <p>For Visualization of the source region in more detail, the <code class="code docutils literal notranslate"><span class="pre">--zoom</span></code> option can be set to true and the map zooms in to show only the estimated source region.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max <span class="m">1000</span>.0 --zoom <span class="nb">true</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --zoom <span class="nb">true</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc2.png"><img alt="_images/plot_loc2.png" class="align-center" src="_images/plot_loc2.png" style="width: 900px;" /></a>
