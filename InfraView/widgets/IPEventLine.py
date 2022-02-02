@@ -11,7 +11,7 @@ from PyQt5.QtGui import QPen
 class IPEventLine(pg.InfiniteLine):
 
     sigEventLineMoving = pyqtSignal(float)
-    sigEventLineMoved  = pyqtSignal(float)
+    sigEventLineMoved = pyqtSignal(float)
 
     def __init__(self, eventPosition, eventID=None, parent=None):
         super().__init__(angle=90, movable=True, pen='b', label='')

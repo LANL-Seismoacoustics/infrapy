@@ -99,7 +99,6 @@ class IPWaveformWidget(QWidget):
         msgBox.setWindowTitle(title)
         msgBox.exec_()
 
-
     @pyqtSlot(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     def appendTraces(self, newTraces, newInventory):
         if newTraces is None:

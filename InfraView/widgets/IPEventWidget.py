@@ -30,7 +30,6 @@ class IPEventWidget(QWidget):
 
         self.buildIcons()
 
-        formWidget = QWidget()
         formLayout = QFormLayout()
 
         self.displayEvent_cb = QCheckBox(self.tr('Show on waveform plots'))
@@ -39,10 +38,12 @@ class IPEventWidget(QWidget):
 
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
+        self.event_name_edit.setMaximumWidth(150)
         self.event_name_edit.textChanged.connect(self.eventChanged)
 
         label_latitude = QLabel(self.tr('Latitude'))
         self.event_lat_edit = QDoubleSpinBox()
+        self.event_lat_edit.setMaximumWidth(150)
         self.event_lat_edit.setRange(-90.1,90.0)
         self.event_lat_edit.setDecimals(8)
         self.event_lat_edit.setSpecialValueText('--')
@@ -52,6 +53,7 @@ class IPEventWidget(QWidget):
 
         label_longitude = QLabel(self.tr('Longitude'))
         self.event_lon_edit = QDoubleSpinBox()
+        self.event_lon_edit.setMaximumWidth(150)
         self.event_lon_edit.setRange(-180.1, 180.0)
         self.event_lon_edit.setDecimals(8)
         self.event_lon_edit.setSpecialValueText('--')
@@ -61,6 +63,7 @@ class IPEventWidget(QWidget):
 
         label_event_date = QLabel(self.tr('Date (UTC):'))
         self.event_date_edit = QDateEdit()
+        self.event_date_edit.setMaximumWidth(150)
         self.event_date_edit.setDisplayFormat("yyyy-MM-dd")
         self.event_date_edit.setDate(self.event_date_edit.minimumDate())
         self.event_date_edit.setSpecialValueText("yyyy-MM-dd")
@@ -68,6 +71,7 @@ class IPEventWidget(QWidget):
 
         label_event_time = QLabel(self.tr('Time (UTC):'))
         self.event_time_edit = QTimeEdit()
+        self.event_time_edit.setMaximumWidth(150)
         self.event_time_edit.setDisplayFormat('HH:mm:ss.zzz')
         self.event_time_edit.setTime(self.event_time_edit.minimumTime())
         self.event_time_edit.setSpecialValueText('HH:mm:ss.zzz')
@@ -75,6 +79,7 @@ class IPEventWidget(QWidget):
 
         label_event_elev = QLabel(self.tr('Elevation'))
         self.event_elev_edit = QSpinBox()
+        self.event_elev_edit.setMaximumWidth(150)
         self.event_elev_edit.setRange(-1000000, 1000000)
         self.event_elev_edit.setSpecialValueText('--')
         self.event_elev_edit.setValue(self.event_elev_edit.minimum())
@@ -83,6 +88,7 @@ class IPEventWidget(QWidget):
 
         label_event_depth = QLabel(self.tr('Depth'))
         self.event_depth_edit = QSpinBox()
+        self.event_depth_edit.setMaximumWidth(150)
         self.event_depth_edit.setRange(-1000000, 1000000)
         self.event_depth_edit.setSpecialValueText('--')
         self.event_depth_edit.setValue(self.event_depth_edit.minimum())
@@ -91,6 +97,7 @@ class IPEventWidget(QWidget):
 
         label_event_mag = QLabel(self.tr('Magnitude'))
         self.event_mag_edit = QDoubleSpinBox()
+        self.event_mag_edit.setMaximumWidth(150)
         self.event_mag_edit.setRange(0.0, 1000.0)
         self.event_mag_edit.setSpecialValueText('--')
         self.event_mag_edit.setSingleStep(0.1)
@@ -133,6 +140,11 @@ class IPEventWidget(QWidget):
         formLayout.addRow(label_event_elev, self.event_elev_edit)
         formLayout.addRow(label_event_depth, self.event_depth_edit)
         formLayout.addRow(label_event_mag, self.event_mag_edit)
+        
+        form_hbox = QHBoxLayout()
+        form_hbox.addStretch()
+        form_hbox.addLayout(formLayout)
+        form_hbox.addStretch()
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch()
@@ -147,11 +159,9 @@ class IPEventWidget(QWidget):
         browseLayout.addWidget(self.browse_button)
         browseLayout.addStretch()
 
-        formWidget.setLayout(formLayout)
-
         verticalLayout = QVBoxLayout()
-        # verticalLayout.addLayout(show_layout)
-        verticalLayout.addWidget(formWidget)
+        verticalLayout.addLayout(show_layout)
+        verticalLayout.addLayout(form_hbox)
         verticalLayout.addLayout(buttonLayout)
         verticalLayout.addLayout(browseLayout)
         verticalLayout.addStretch()

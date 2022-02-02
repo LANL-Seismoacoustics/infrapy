@@ -172,7 +172,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.waveformPlot.sigXRangeChanged.connect(self.waveformWidget.plotViewer.pl_widget.adjustSignalRegionRange)
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
+
         self.eventWidget.sigEventWidgetChanged.connect(self.locationWidget.showgroundtruth.eventChanged)
+        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
+
     def errorPopup(self, message):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)

@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPWaveformSelectorWidget
+from InfraView.widgets import IPEventLine
 
 import obspy
 from obspy.core import UTCDateTime
@@ -95,7 +96,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     h_lines = []
     position_labels = []
 
-    pick_line_list = []  # array to hold the references to pick lines
+    pick_line_list = []     # list to hold the references to pick lines
+    event_line_list = []    # list to hold the references to event lines
 
     active_plot = 0
     last_range = []
@@ -337,6 +339,75 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     def update_filtered_line_data(self, filtered_streams):
         for idx, trace in enumerate(filtered_streams):
             self.filtered_plot_lines[idx].setData(self.t[idx], trace.data)
+
+    # --------------------------------------------------
+    # Event line routines...
+    @QtCore.pyqtSlot()
+    def plotEventLines(self):
+
+        eventWidget = self.window().eventWidget       # reference for convenience
+
+        if eventWidget.hasValidEvent():
+            self.clearEventLines()
+
+            utcEventTime = UTCDateTime(eventWidget.getUTCDateTimeString())
+            for idx, plot in enumerate(self.plot_list):
+
+                position = utcEventTime - UTCDateTime(self.earliest_start_time)
+
+                self.event_line_list.append(IPEventLine.IPEventLine(position, eventID=eventWidget.getID()))
+                plot.addItem(self.event_line_list[idx])
+
+                # set visibility appropriately
+                self.event_line_list[idx].setVisible(eventWidget.displayEvent_cb.isChecked())
+
+                # connect line so that if moved, the event widget will update
+                self.event_line_list[idx].sigEventLineMoving.connect(self.updateEventWidget)
+
+                # need to connect the moveline events so they all move together
+                if idx > 0:
+                    for jdx in range(0, idx):
+                        self.event_line_list[jdx].sigEventLineMoving.connect(self.event_line_list[idx].setValue)
+                        self.event_line_list[idx].sigEventLineMoving.connect(self.event_line_list[jdx].setValue)
+
+    # This will be called whenever a signal is emitted from the eventwidget
+    # saying something has changed
+    @QtCore.pyqtSlot()
+    def updateEventLines(self):
+        eventWidget = self.window().eventWidget       # reference for convenience
+
+        if eventWidget.hasValidEvent():
+            if not self.event_line_list:
+                return
+
+            for idx, eline in enumerate(self.event_line_list):
+
+                eline.setVisible(eventWidget.displayEvent_cb.isChecked())
+
+                utc_event_time = UTCDateTime(eventWidget.getUTCDateTimeString())
+                eline.setPos(utc_event_time - UTCDateTime(self.sts[idx].stats.starttime))
+                eline.setID(eventWidget.getID())
+
+    @QtCore.pyqtSlot()
+    def updateEventWidget(self):
+        eventWidget = self.window().eventWidget       # reference for convenience
+
+        sender = self.sender()
+        if isinstance(sender, IPEventLine.IPEventLine):
+            new_UTC_event_time = self.sts[0].stats.starttime + self.event_line_list[0].pos().x()
+            eventWidget.setUTCDateTime(new_UTC_event_time)
+
+    @QtCore.pyqtSlot()
+    def clearEventLines(self):
+        for plot in self.plot_list:
+            for item in reversed(plot.items):
+                if isinstance(item, IPEventLine.IPEventLine):
+                    plot.removeItem(item)
+                    del item
+        self.event_line_list = []
+
+    # end Event line routines
+    # --------------------------------------------------------------
 
     def updateAxes(self):
         # This little bit links the axes of the newly created plot to those of the first one
@@ -586,11 +657,11 @@ class IPLinearRegionSettingsWidget(QWidget):
         nrange = regionItem.getRegion()
 
         # All of the regions are linked, so pull off the values of the first one
-        if type(regionItem) is IPPlotWidget.IPLinearRegionItem_Noise:
+        if isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Noise):
             self.noiseStartSpin.setValue(nrange[0])
             self.noiseDurationSpin.setValue(nrange[1] - nrange[0])
 
-        elif type(regionItem) is IPPlotWidget.IPLinearRegionItem_Signal:
+        elif isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Signal):
             self.signalStartSpin.setValue(nrange[0])
             self.signalDurationSpin.setValue(nrange[1] - nrange[0])
 
