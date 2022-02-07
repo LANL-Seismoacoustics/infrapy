@@ -76,6 +76,8 @@ Array-Level Analyses
 | YJ.BRP4_2012.04.09_18.00.00-18.19.59.fk_peaks.npy | Peak info (Fisher stat, direction of arrival) |
 +---------------------------------------------------+-----------------------------------------------+
 
+    The naming convention of these files uses the network, station, and time associated with the waveform data.  The two .npy files are :code:`numpy` binary files containing the analysis information and the .txt file contains meta-data about the analysis run.
+
 - The beamforming results from the :code:`infrapy run_fk` analysis can be visualized using:
 
     .. code-block:: bash
@@ -113,7 +115,7 @@ Array-Level Analyses
         window_step = 2.5
         cpu_cnt = 8
 
-    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., --local-fk-label vs. local_fk_label).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:
+    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:
 
     .. code-block:: bash
 
@@ -223,7 +225,7 @@ Array-Level Analyses
         local_fk_label = I53US_analysis
         local_detect_label = I53US_analysis
 
-    Although not yet included in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
+    Although not currently included in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
 
 - Analysis of data from a local database is also available through the InfraPy CLI, and is covered in a separate tutorial on :ref:`pisces`.
 
@@ -373,7 +375,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max 1200.0
+        infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
@@ -383,7 +385,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --zoom true
+        infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
 
     .. image:: _static/_images/plot_loc2.png
         :width: 900px
@@ -393,7 +395,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_origin_time --local-loc-label example1-ev0 
+        infrapy plot_origin_time --local-loc-label GJI_example-ev0 
 
 
     .. image:: _static/_images/plot_origin_time.png
@@ -430,7 +432,7 @@ Scripting and Notebook-Based Analysis
             # ######################### #
             #     Define Parameters     #
             # ######################### #
-            sac_glob = "data/*.SAC"
+            sac_glob = "data/YJ.BRP*.SAC"
 
             freq_min, freq_max = 0.5, 2.5
             fk_win_len, window_step = 10.0, 2.5

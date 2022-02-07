@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Infraview &mdash; Infrapy 1.0 documentation</title>
+  <title>InfraView &mdash; Infrapy 1.0 documentation</title>
   
 
   
@@ -89,7 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Infraview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -141,7 +141,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Infraview</li>
+      <li>InfraView</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -161,10 +161,89 @@
            <div itemprop="articleBody">
             
   <div class="section" id="infraview">
-<span id="id1"></span><h1>Infraview<a class="headerlink" href="#infraview" title="Permalink to this headline">¶</a></h1>
-<p>You can run the GUI with the command:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; infraview
+<span id="id1"></span><h1>InfraView<a class="headerlink" href="#infraview" title="Permalink to this headline">¶</a></h1>
+<p>Background on InfraView…</p>
+<div class="section" id="array-level-analyses">
+<h2>Array-Level Analyses<a class="headerlink" href="#array-level-analyses" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>You can run the GUI with the command:</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; infraview
 </pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>The starting point is the waveform viewer…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/wvfrms1.png"><img alt="_images/wvfrms1.png" class="align-center" src="_images/wvfrms1.png" style="width: 900px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Load data…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/wvfrms2.png"><img alt="_images/wvfrms2.png" class="align-center" src="_images/wvfrms2.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Select analysis and noise windows…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/wvfrms3.png"><img alt="_images/wvfrms3.png" class="align-center" src="_images/wvfrms3.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Switch tabs and select beamforming parameters…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/beam1.png"><img alt="_images/beam1.png" class="align-center" src="_images/beam1.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Run beamforming and identify detections…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/beam2.png"><img alt="_images/beam2.png" class="align-center" src="_images/beam2.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Name and save detections…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/detection1.png"><img alt="_images/detection1.png" class="align-center" src="_images/detection1.png" style="width: 300px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Download data from IRIS…using the station browser…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/station_browser.png"><img alt="_images/station_browser.png" class="align-center" src="_images/station_browser.png" style="width: 300px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Loading data from IRIS…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/fdsn_loader.png"><img alt="_images/fdsn_loader.png" class="align-center" src="_images/fdsn_loader.png" style="width: 300px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Continue analysis…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/fdsn_data.png"><img alt="_images/fdsn_data.png" class="align-center" src="_images/fdsn_data.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="network-level-analyses">
+<h2>Network-Level Analyses<a class="headerlink" href="#network-level-analyses" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Load an example detection set for event ID…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/load_detections.png"><img alt="_images/load_detections.png" class="align-center" src="_images/load_detections.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Load an example detection set for event ID…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/event_id1.png"><img alt="_images/event_id1.png" class="align-center" src="_images/event_id1.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Select an event in the distance matrix…</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/event_id2.png"><img alt="_images/event_id2.png" class="align-center" src="_images/event_id2.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>Run localization on the event</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/location1.png"><img alt="_images/location1.png" class="align-center" src="_images/location1.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+</ul>
 </div>
 </div>
 

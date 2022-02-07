@@ -238,6 +238,9 @@ Writing results to specified output...
 </tr>
 </tbody>
 </table>
+<blockquote>
+<div><p>The naming convention of these files uses the network, station, and time associated with the waveform data.  The two .npy files are <code class="code docutils literal notranslate"><span class="pre">numpy</span></code> binary files containing the analysis information and the .txt file contains meta-data about the analysis run.</p>
+</div></blockquote>
 <ul>
 <li><p>The beamforming results from the <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">run_fk</span></code> analysis can be visualized using:</p>
 <blockquote>
@@ -272,7 +275,7 @@ window_step = 2.5
 cpu_cnt = 8
 </pre></div>
 </div>
-<p>Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., –local-fk-label vs. local_fk_label).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:</p>
+<p>Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., <code class="code docutils literal notranslate"><span class="pre">--local-fk-label`</span></code> vs. <code class="code docutils literal notranslate"><span class="pre">local_fk_label`</span></code>).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file BRP_analysis.config
 </pre></div>
 </div>
@@ -371,7 +374,7 @@ local_fk_label = I53US_analysis
 local_detect_label = I53US_analysis
 </pre></div>
 </div>
-<p>Although not yet included in the CLI methods, an FDSN station browser is available in the <a class="reference internal" href="infraview.html#infraview"><span class="std std-ref">Infraview</span></a> GUI to search for available data given a reference location, radius, and time bounds.</p>
+<p>Although not currently included in the CLI methods, an FDSN station browser is available in the <a class="reference internal" href="infraview.html#infraview"><span class="std std-ref">Infraview</span></a> GUI to search for available data given a reference location, radius, and time bounds.</p>
 </div></blockquote>
 </li>
 <li><p>Analysis of data from a local database is also available through the InfraPy CLI, and is covered in a separate tutorial on <a class="reference internal" href="pisces.html#pisces"><span class="std std-ref">Interfacing with Pisces</span></a>.</p></li>
@@ -509,17 +512,17 @@ Writing localization result into GJI_example-ev0.loc.json
 </li>
 <li><p>The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --range-max <span class="m">1200</span>.0
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max <span class="m">1200</span>.0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc1.png"><img alt="_images/plot_loc1.png" class="align-center" src="_images/plot_loc1.png" style="width: 1200px;" /></a>
 <p>For Visualization of the source region in more detail, the <code class="code docutils literal notranslate"><span class="pre">--zoom</span></code> option can be set to true and the map zooms in to show only the estimated source region.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label example1-ev0 --local-loc-label example1-ev0 --zoom <span class="nb">true</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom <span class="nb">true</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc2.png"><img alt="_images/plot_loc2.png" class="align-center" src="_images/plot_loc2.png" style="width: 900px;" /></a>
 <p>Lastly, the origin time is estimated as part of the BISL analysis and can be visualized as,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_origin_time --local-loc-label example1-ev0
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_origin_time --local-loc-label GJI_example-ev0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_origin_time.png"><img alt="_images/plot_origin_time.png" class="align-center" src="_images/plot_origin_time.png" style="width: 1200px;" /></a>
@@ -566,7 +569,7 @@ Writing localization result into GJI_example-ev0.loc.json
     <span class="c1"># ######################### #</span>
     <span class="c1">#     Define Parameters     #</span>
     <span class="c1"># ######################### #</span>
-    <span class="n">sac_glob</span> <span class="o">=</span> <span class="s2">&quot;data/*.SAC&quot;</span>
+    <span class="n">sac_glob</span> <span class="o">=</span> <span class="s2">&quot;data/YJ.BRP*.SAC&quot;</span>
 
     <span class="n">freq_min</span><span class="p">,</span> <span class="n">freq_max</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.5</span>
     <span class="n">fk_win_len</span><span class="p">,</span> <span class="n">window_step</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">2.5</span>
