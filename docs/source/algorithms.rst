@@ -4,10 +4,10 @@
 Algorithms
 =====================================
 
-* Analyst methods are modular so that results from other processing tools (e.g., Bloodhound, Cardinal, PMCC) can be used in later analysis steps and vice versa.
-* Algorithms are written to be data source agnostic so analysis can be performed regardless of data source once IO method is understood
-    * Waveform analysis utilizes an ObsPy Stream object for data ingestion 
-    * Detection information is stored in .json or ascii .dat files that can be ingested using functions in :code:`infrapy.likelihoods`
+- Analyst methods are modular so that results from other processing tools (e.g., Bloodhound, Cardinal, PMCC) can be used in later analysis steps and vice versa.
+- Algorithms are written to be data source agnostic so analysis can be performed regardless of data source once IO method is understood
+    - Waveform analysis utilizes an ObsPy Stream object for data ingestion 
+    - Detection information is stored in .json or ascii .dat files that can be ingested using functions in :code:`infrapy.likelihoods`
 
 ***************************
 Station Level Processing
