@@ -539,7 +539,7 @@ class IPBeamformingWidget(QWidget):
         #        if idx == 0:
         #            self.position_label.setVisible(True)
         #            self.value_label.setVisible(True)
-       #             self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
+        #            self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()

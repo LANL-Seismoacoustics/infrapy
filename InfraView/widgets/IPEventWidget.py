@@ -8,6 +8,9 @@ from PyQt5.QtGui import QIcon
 
 from InfraView.widgets import IPEventBrowser
 
+from obspy.core import UTCDateTime
+import pyproj
+
 class IPEventWidget(QWidget):
 
     sigEventWidgetLoaded = pyqtSignal()
@@ -32,9 +35,15 @@ class IPEventWidget(QWidget):
 
         formLayout = QFormLayout()
 
-        self.displayEvent_cb = QCheckBox(self.tr('Show on waveform plots'))
+        self.displayEvent_cb = QCheckBox(self.tr('Show Event on waveform plots'))
         self.displayEvent_cb.setChecked(False)
         self.displayEvent_cb.stateChanged.connect(self.eventChanged)
+
+        self.displayArrivals_cb = QCheckBox(self.tr('Show Arrival estimations on waveform plots'))
+        self.displayArrivals_cb.setChecked(False)
+        self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
+        self.displayArrivals_cb.stateChanged.connect(self.eventChanged)
+        #self.displayArrivals_cb.stateChanged.connect(self.displayArrivalsChanged)
 
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
@@ -127,18 +136,27 @@ class IPEventWidget(QWidget):
         self.browse_button.setMaximumWidth(200)
         self.browse_button.clicked.connect(self.browse)
 
-        show_layout = QHBoxLayout()
-        show_layout.addStretch()
+        
+        show_layout = QVBoxLayout()
         show_layout.addWidget(self.displayEvent_cb)
-        show_layout.addStretch()
+        show_layout.addWidget(self.displayArrivals_cb)
+
+        show_layout_horiz = QHBoxLayout()
+        show_layout_horiz.addStretch()
+        show_layout_horiz.addLayout(show_layout)
+        show_layout_horiz.addStretch()
 
         formLayout.addRow(label_event_name, self.event_name_edit)
         formLayout.addRow(label_longitude, self.event_lon_edit)
         formLayout.addRow(label_latitude, self.event_lat_edit)
-        formLayout.addRow(label_event_date, self.event_date_edit)
-        formLayout.addRow(label_event_time, self.event_time_edit)
-        formLayout.addRow(label_event_elev, self.event_elev_edit)
-        formLayout.addRow(label_event_depth, self.event_depth_edit)
+        formLayout.addRow(label_event_date, self.event_date_edit)            ##################################################################################
+            #  Now we can initialize the background colors of the plots
+            #
+            # we want to highlight the active plot, so set the background color here
+            # if idx == self.active_plot:
+            #     new_plot.setBackgroundColor(255, 255, 255)
+            # else:
+            #     new_plot.setBackgroundColor(200, 200, 200)
         formLayout.addRow(label_event_mag, self.event_mag_edit)
         
         form_hbox = QHBoxLayout()
@@ -160,7 +178,7 @@ class IPEventWidget(QWidget):
         browseLayout.addStretch()
 
         verticalLayout = QVBoxLayout()
-        verticalLayout.addLayout(show_layout)
+        verticalLayout.addLayout(show_layout_horiz)
         verticalLayout.addLayout(form_hbox)
         verticalLayout.addLayout(buttonLayout)
         verticalLayout.addLayout(browseLayout)
@@ -220,6 +238,7 @@ class IPEventWidget(QWidget):
 
     def eventChanged(self):
         # whenever any widget changes, this signal is emitted with the new event dictionary
+        self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
         self.sigEventWidgetChanged.emit(self.Dict())
 
     def Dict(self):
@@ -335,6 +354,27 @@ class IPEventWidget(QWidget):
                 self.settings.setValue("last_eventfile_directory", os.path.dirname(self.__openfile[0]))
 
             self.sigEventWidgetLoaded.emit()
+
+    def calculate_arrival_travel_times(self, receiver_coord):
+        # maybe this belongs in a different widget?
+        if self.hasValidEvent():
+
+            # first get event day/time in usable form
+            eventTime = UTCDateTime(self.getUTCDateTimeString())
+            
+            # calculate the travel time in seconds for a pressure wave to go from event to receiver
+            # receiver_coord is a tuple containing the (lat, lon) of the receiver
+            apparent_vels = {'thermospheric': 250.0, 'stratospheric': 290.0, 'tropospheric': 340.0}      # all in m/s
+
+            geod = pyproj.Geod(ellps='WGS84')
+            _, _, distance = geod.inv(self.event_lon_edit.value(), self.event_lat_edit.value(), receiver_coord[1], receiver_coord[0])
+
+            result_dict = {}
+            for arrival, velocity in apparent_vels:
+                result_dict[arrival] = distance/velocity
+            return result_dict
+        else:
+            return None
 
     def browse(self):
         self.eventDialog = IPEventBrowser.IPEventDialog()

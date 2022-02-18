@@ -175,6 +175,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.eventWidget.sigEventWidgetChanged.connect(self.locationWidget.showgroundtruth.eventChanged)
         self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
+        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.plotEventLines)
 
     def errorPopup(self, message):
         msgBox = QMessageBox()
