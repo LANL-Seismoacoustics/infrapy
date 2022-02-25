@@ -50,9 +50,10 @@ from ..propagation import likelihoods as lklhds
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--multithread", help="Use multithreading (default: " + config.defaults['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--write-wvfrms", help="Write waveforms into local SAC files (default: " + config.defaults['FK']['write_wvfrms'] + ")", default=None, type=bool)
 def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
-    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
+    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt, write_wvfrms):
     '''
     Run beamforming (fk) analysis
 
@@ -154,6 +155,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     window_step = config.set_param(user_config, 'FK', 'window_step', window_step, 'float')
     multithread = config.set_param(user_config, 'FK', 'multithread', multithread, 'bool')
     cpu_cnt = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
+    write_wvfrms = config.set_param(user_config, 'FK', 'write_wvfrms', write_wvfrms, 'bool')
 
     click.echo('\n' + "Algorithm parameters:")
     click.echo("  freq_min: " + str(freq_min))
@@ -179,6 +181,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         pl = Pool(cpu_cnt)
     else:
         pl = None
+    click.echo("  write_wvfrms: " + str(write_wvfrms))
 
     # Check data option and populate obspy Stream
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime, local_latlon)
@@ -186,6 +189,13 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     click.echo('\n' + "Data summary:")
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    if write_wvfrms:
+        if local_wvfrms is None:
+            click.echo('\n' + "Writing waveform data to local SAC files...")
+            data_io.write_stream(stream, latlon)
+        else: 
+            click.echo('\n' + "Cannot write waveform data when using local data...")
 
     # Define DOA values
     back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
@@ -201,10 +211,10 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         else:
             local_fk_label = ""
 
-        local_fk_label = local_fk_label + tr.stats.network + "." + tr.stats.station
-        local_fk_label = local_fk_label + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
-        local_fk_label = local_fk_label + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
-        local_fk_label = local_fk_label + '-' + "%02d" % tr.stats.endtime.hour + "." + "%02d" % tr.stats.endtime.minute + "." + "%02d" % tr.stats.endtime.second
+        local_fk_label = local_fk_label + stream[0].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
+        local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.year + ".%02d" % stream[0].stats.starttime.month + ".%02d" % stream[0].stats.starttime.day
+        local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.hour + "." + "%02d" % stream[0].stats.starttime.minute + "." + "%02d" % stream[0].stats.starttime.second
+        local_fk_label = local_fk_label + '-' + "%02d" % stream[0].stats.endtime.hour + "." + "%02d" % stream[0].stats.endtime.minute + "." + "%02d" % stream[0].stats.endtime.second
 
     np.save(local_fk_label + ".fk_times", beam_times)
     np.save(local_fk_label + ".fk_peaks", beam_peaks)
@@ -543,7 +553,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     else:
         output_id = ""
 
-    output_id = output_id + tr.stats.network + "." + tr.stats.station
+    output_id = output_id + tr.stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
     output_id = output_id + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
     output_id = output_id + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
     output_id = output_id + '-' + "%02d" % tr.stats.endtime.hour + "." + "%02d" % tr.stats.endtime.minute + "." + "%02d" % tr.stats.endtime.second

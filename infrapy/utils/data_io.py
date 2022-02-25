@@ -14,6 +14,8 @@ from obspy import UTCDateTime
 
 from ..propagation import likelihoods as lklhds
 
+blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, 'depmen': None, 'b': 0.0, 'e': None, 'stla': None, 'stlo': None, 
+                  'nzyear': None, 'nzjday': None, 'nzhour': None, 'nzmin': None, 'nzsec': None, 'nzmsec': None, 'kstnm': None, 'kcmpnm': None, 'knetwk': None}
 
 ############################
 ##     Data Ingestion     ##
@@ -111,6 +113,39 @@ def set_det_list(local_detect_label, merge=True):
 ##     Data Writing     ##
 ##        Methods       ##
 ##########################
+def write_stream(stream, latlon):
+    sac_info = [blank_sac_dict] * len(stream)
+    for m, tr in enumerate(stream):
+        sac_info[m]['delta'] = tr.stats.delta
+        sac_info[m]['npts'] = tr.stats.npts
+        sac_info[m]['e'] = tr.stats.npts * tr.stats.delta
+
+        sac_info[m]['depmin'] = min(tr.data)
+        sac_info[m]['depmax'] = max(tr.data)
+        sac_info[m]['depmen'] = np.mean(tr.data)
+
+        sac_info[m]['stla'] = latlon[m][0]
+        sac_info[m]['stlo'] = latlon[m][1]
+
+        sac_info[m]['nzyear'] = tr.stats.starttime.year
+        sac_info[m]['nzjday'] = tr.stats.starttime.julday
+        sac_info[m]['nzhour'] = tr.stats.starttime.hour
+        sac_info[m]['nzmin'] = tr.stats.starttime.minute
+        sac_info[m]['nzsec'] = tr.stats.starttime.second
+
+        sac_info[m]['knetwk'] = tr.stats.network
+        sac_info[m]['kstnm'] = tr.stats.station
+        sac_info[m]['kcmpnm'] = tr.stats.channel
+        
+        tr.stats.sac = sac_info[m]
+
+        label = tr.stats.network + "." + tr.stats.station
+        label = label + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
+        label = label + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
+
+        tr.write(label + ".sac", format='SAC') 
+
+
 def write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step):
         file_out = open(local_fk_label + ".fk_meta.txt", 'w')
