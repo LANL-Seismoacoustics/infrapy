@@ -376,10 +376,11 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--back-az-width", help="Maximum azimuth scatter (default: " + config.defaults['FD']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
+@click.option("--write-wvfrms", help="Write waveforms into local SAC files (default: " + config.defaults['FK']['write_wvfrms'] + ")", default=None, type=bool)
 def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method,  signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, multithread, cpu_cnt, fd_window_len, p_value, min_duration, 
-    back_az_width, fixed_thresh, return_thresh):
+    back_az_width, fixed_thresh, return_thresh, write_wvfrms):
     '''
     Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
     
@@ -483,6 +484,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     fk_window_step = config.set_param(user_config, 'FK', 'window_step', fk_window_step, 'float')
     multithread = config.set_param(user_config, 'FK', 'multithread', multithread, 'bool')
     cpu_cnt = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
+    write_wvfrms = config.set_param(user_config, 'FK', 'write_wvfrms', write_wvfrms, 'bool')
 
     fd_window_len = config.set_param(user_config, 'FD', 'window_len', fd_window_len, 'float')
     p_value = config.set_param(user_config, 'FD', 'p_value', p_value, 'float')
@@ -515,6 +517,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
         pl = Pool(cpu_cnt)
     else:
         pl = None
+    click.echo("  write_wvfrms: " + str(write_wvfrms))
 
     click.echo(" ")
     click.echo("  window_len (fd): " + str(fd_window_len))
@@ -530,6 +533,13 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     click.echo('\n' + "Data summary:")
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    if write_wvfrms:
+        if local_wvfrms is None:
+            click.echo('\n' + "Writing waveform data to local SAC files...")
+            data_io.write_stream(stream, latlon)
+        else: 
+            click.echo('\n' + "Cannot write waveform data when using local data...")
 
     # Define DOA values
     back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
