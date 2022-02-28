@@ -14,7 +14,6 @@ dependencies:
   - obspy=1.2.2
   - pyqt=5.12
   - pyqtgraph=0.12
-  - pathlib
   - pandas
   - cx_oracle
   - scikit-learn
