@@ -79,9 +79,10 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
     lon_min, lon_max = min(array_lons), max(array_lons)
 
     for det in det_list:
-        gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
-        lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
-        lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
+        if det.back_azimuth is not None:
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
+            lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
+            lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
 
     lat_min, lat_max = np.floor(lat_min), np.ceil(lat_max)
     lon_min, lon_max = np.floor(lon_min), np.ceil(lon_max)
@@ -91,8 +92,9 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
 
     ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
     for det in det_list:
-        gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
-        ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
+        if det.back_azimuth is not None:
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
+            ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
 
     if title:
         plt.title(title)
@@ -124,9 +126,10 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
         lon_min, lon_max = min(array_lons), max(array_lons)
 
         for det in det_list:
-            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
-            lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
-            lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
+            if det.back_azimuth is not None:
+                gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
+                lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
+                lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
 
     lat_min, lat_max = np.floor(lat_min), np.ceil(lat_max)
     lon_min, lon_max = np.floor(lon_min), np.ceil(lon_max)
@@ -141,8 +144,9 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
     if not zoom:
         ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
         for det in det_list:
-            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
-            ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
+            if det.back_azimuth is not None:
+                gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
+                ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
 
     if title:
         plt.set_title(title)

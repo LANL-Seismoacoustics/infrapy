@@ -21,11 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -85,10 +85,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">Infraview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -176,7 +177,7 @@
 <span id="spye"></span><h2>SPYE<a class="headerlink" href="#module-infrapy.characterization.spye" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="infrapy.characterization.spye.blastwave">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">blastwave</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">p0</em>, <em class="sig-param">t0</em>, <em class="sig-param">alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">blastwave</code><span class="sig-paren">(</span><em>t</em>, <em>p0</em>, <em>t0</em>, <em>alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Acoustic blastwave that can be used as a source</dt><dd><p>for surface explosions out to several scale
 kilometers.</p>
@@ -202,7 +203,7 @@ kilometers.</p>
 
 <dl class="function">
 <dt id="infrapy.characterization.spye.blastwave_spectrum">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">blastwave_spectrum</code><span class="sig-paren">(</span><em class="sig-param">f</em>, <em class="sig-param">p0</em>, <em class="sig-param">t0</em>, <em class="sig-param">alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave_spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">blastwave_spectrum</code><span class="sig-paren">(</span><em>f</em>, <em>p0</em>, <em>t0</em>, <em>alpha=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave_spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><dl class="simple">
 <dt>Fourier transform amplitude for the acoustic</dt><dd><p>blastwave in sasm.acoustic.blastwave().</p>
@@ -241,7 +242,7 @@ rac{1}{sqrt{lpha + 1}</p>
 
 <dl class="function">
 <dt id="infrapy.characterization.spye.extract_spectra">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">extract_spectra</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">st_list</em>, <em class="sig-param">win_buffer=0.25</em>, <em class="sig-param">ns_opt='pre'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.extract_spectra" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">extract_spectra</code><span class="sig-paren">(</span><em>det_list</em>, <em>st_list</em>, <em>win_buffer=0.25</em>, <em>ns_opt='pre'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.extract_spectra" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Extract spectra for a list of detections using a list of</dt><dd><p>obspy streams with a defined window buffer and noise
 window option</p>
@@ -271,7 +272,7 @@ window option</p>
 
 <dl class="function">
 <dt id="infrapy.characterization.spye.kg_op">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">kg_op</code><span class="sig-paren">(</span><em class="sig-param">W</em>, <em class="sig-param">r</em>, <em class="sig-param">p_amb=101.325</em>, <em class="sig-param">T_amb=288.15</em>, <em class="sig-param">type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_op" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">kg_op</code><span class="sig-paren">(</span><em>W</em>, <em>r</em>, <em>p_amb=101.325</em>, <em>T_amb=288.15</em>, <em>type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_op" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kinney &amp; Graham scaling law peak overpressure model</p>
 <dl class="simple">
 <dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
@@ -293,7 +294,7 @@ window option</p>
 
 <dl class="function">
 <dt id="infrapy.characterization.spye.kg_ppd">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">kg_ppd</code><span class="sig-paren">(</span><em class="sig-param">W</em>, <em class="sig-param">r</em>, <em class="sig-param">p_amb=101.325</em>, <em class="sig-param">T_amb=288.15</em>, <em class="sig-param">type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_ppd" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">kg_ppd</code><span class="sig-paren">(</span><em>W</em>, <em>r</em>, <em>p_amb=101.325</em>, <em>T_amb=288.15</em>, <em>type='chemical'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_ppd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kinney &amp; Graham scaling law positive phase duration model</p>
 <dl class="simple">
 <dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
@@ -315,7 +316,7 @@ window option</p>
 
 <dl class="function">
 <dt id="infrapy.characterization.spye.run">
-<code class="sig-prename descclassname">infrapy.characterization.spye.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">smn_spec</em>, <em class="sig-param">src_loc</em>, <em class="sig-param">freq_band</em>, <em class="sig-param">tloss_models</em>, <em class="sig-param">resol=150</em>, <em class="sig-param">yld_rng=array([    10.</em>, <em class="sig-param">10000.])</em>, <em class="sig-param">ref_src_rng=1.0</em>, <em class="sig-param">grnd_brst=True</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.run" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.characterization.spye.</code><code class="descname">run</code><span class="sig-paren">(</span><em>det_list</em>, <em>smn_spec</em>, <em>src_loc</em>, <em>freq_band</em>, <em>tloss_models</em>, <em>resol=150</em>, <em>yld_rng=array([   10.</em>, <em>10000.])</em>, <em>ref_src_rng=1.0</em>, <em>grnd_brst=True</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield</p>
 <dl>
 <dt>det_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></span></dt><dd><p>Iterable of detections with defined start and end times</p>

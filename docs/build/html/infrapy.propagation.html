@@ -21,11 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -85,10 +85,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">Infraview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -176,139 +177,139 @@
 <span id="infrasound"></span><h2>Infrasound<a class="headerlink" href="#module-infrapy.propagation.infrasound" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel">
-<em class="property">class </em><code class="sig-prename descclassname">infrapy.propagation.infrasound.</code><code class="sig-name descname">PathGeometryModel</code><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">infrapy.propagation.infrasound.</code><code class="descname">PathGeometryModel</code><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.az_bin_cnt">
-<code class="sig-name descname">az_bin_cnt</code><em class="property"> = 8</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.az_bin_cnt" title="Permalink to this definition">¶</a></dt>
+<code class="descname">az_bin_cnt</code><em class="property"> = 8</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.az_bin_cnt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.az_bin_wdth">
-<code class="sig-name descname">az_bin_wdth</code><em class="property"> = 60.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.az_bin_wdth" title="Permalink to this definition">¶</a></dt>
+<code class="descname">az_bin_wdth</code><em class="property"> = 60.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.az_bin_wdth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.bnc_max">
-<code class="sig-name descname">bnc_max</code><em class="property"> = 10</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.bnc_max" title="Permalink to this definition">¶</a></dt>
+<code class="descname">bnc_max</code><em class="property"> = 10</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.bnc_max" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.bnd_overlap">
-<code class="sig-name descname">bnd_overlap</code><em class="property"> = 0.075</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.bnd_overlap" title="Permalink to this definition">¶</a></dt>
+<code class="descname">bnd_overlap</code><em class="property"> = 0.075</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.bnd_overlap" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.build">
-<code class="sig-name descname">build</code><span class="sig-paren">(</span><em class="sig-param">results_file</em>, <em class="sig-param">model_file</em>, <em class="sig-param">show_fits=False</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">verbose_output=False</em>, <em class="sig-param">rng_width=40.0</em>, <em class="sig-param">rng_spacing=10.0</em>, <em class="sig-param">data_format='new'</em>, <em class="sig-param">abs_lim=-100.0</em>, <em class="sig-param">trn_ht_min=2.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.build" title="Permalink to this definition">¶</a></dt>
+<code class="descname">build</code><span class="sig-paren">(</span><em>results_file</em>, <em>model_file</em>, <em>show_fits=False</em>, <em>file_id=None</em>, <em>verbose_output=False</em>, <em>rng_width=40.0</em>, <em>rng_spacing=10.0</em>, <em>data_format='new'</em>, <em>abs_lim=-100.0</em>, <em>trn_ht_min=2.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.build" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.default_az_dev_var">
-<code class="sig-name descname">default_az_dev_var</code><em class="property"> = 4.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.default_az_dev_var" title="Permalink to this definition">¶</a></dt>
+<code class="descname">default_az_dev_var</code><em class="property"> = 4.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.default_az_dev_var" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.display">
-<code class="sig-name descname">display</code><span class="sig-paren">(</span><em class="sig-param">file_id=None</em>, <em class="sig-param">hold_fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.display" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display</code><span class="sig-paren">(</span><em>file_id=None</em>, <em>hold_fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.display" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_mn">
-<code class="sig-name descname">eval_az_dev_mn</code><span class="sig-paren">(</span><em class="sig-param">rng</em>, <em class="sig-param">az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_mn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">eval_az_dev_mn</code><span class="sig-paren">(</span><em>rng</em>, <em>az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_mn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_vr">
-<code class="sig-name descname">eval_az_dev_vr</code><span class="sig-paren">(</span><em class="sig-param">rng</em>, <em class="sig-param">az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_vr" title="Permalink to this definition">¶</a></dt>
+<code class="descname">eval_az_dev_vr</code><span class="sig-paren">(</span><em>rng</em>, <em>az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_az_dev_vr" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.eval_rcel_gmm">
-<code class="sig-name descname">eval_rcel_gmm</code><span class="sig-paren">(</span><em class="sig-param">rng</em>, <em class="sig-param">rcel</em>, <em class="sig-param">az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_rcel_gmm" title="Permalink to this definition">¶</a></dt>
+<code class="descname">eval_rcel_gmm</code><span class="sig-paren">(</span><em>rng</em>, <em>rcel</em>, <em>az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.eval_rcel_gmm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.load">
-<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">model_file</em>, <em class="sig-param">smooth=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.load" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load</code><span class="sig-paren">(</span><em>model_file</em>, <em>smooth=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.min_az_dev_var">
-<code class="sig-name descname">min_az_dev_var</code><em class="property"> = 0.9</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.min_az_dev_var" title="Permalink to this definition">¶</a></dt>
+<code class="descname">min_az_dev_var</code><em class="property"> = 0.9</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.min_az_dev_var" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.rcel_vrs_min">
-<code class="sig-name descname">rcel_vrs_min</code><em class="property"> = 0.05</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.rcel_vrs_min" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rcel_vrs_min</code><em class="property"> = 0.05</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.rcel_vrs_min" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.rng_max">
-<code class="sig-name descname">rng_max</code><em class="property"> = 1000.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.rng_max" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rng_max</code><em class="property"> = 1000.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.rng_max" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.strat_therm_bnd">
-<code class="sig-name descname">strat_therm_bnd</code><em class="property"> = 3.846153846153846</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.strat_therm_bnd" title="Permalink to this definition">¶</a></dt>
+<code class="descname">strat_therm_bnd</code><em class="property"> = 3.846153846153846</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.strat_therm_bnd" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.PathGeometryModel.tropo_strat_bnd">
-<code class="sig-name descname">tropo_strat_bnd</code><em class="property"> = 3.2258064516129035</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.tropo_strat_bnd" title="Permalink to this definition">¶</a></dt>
+<code class="descname">tropo_strat_bnd</code><em class="property"> = 3.2258064516129035</em><a class="headerlink" href="#infrapy.propagation.infrasound.PathGeometryModel.tropo_strat_bnd" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="infrapy.propagation.infrasound.TLossModel">
-<em class="property">class </em><code class="sig-prename descclassname">infrapy.propagation.infrasound.</code><code class="sig-name descname">TLossModel</code><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">infrapy.propagation.infrasound.</code><code class="descname">TLossModel</code><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.TLossModel.az_bin_cnt">
-<code class="sig-name descname">az_bin_cnt</code><em class="property"> = 8</em><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.az_bin_cnt" title="Permalink to this definition">¶</a></dt>
+<code class="descname">az_bin_cnt</code><em class="property"> = 8</em><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.az_bin_cnt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="infrapy.propagation.infrasound.TLossModel.az_bin_wdth">
-<code class="sig-name descname">az_bin_wdth</code><em class="property"> = 60.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.az_bin_wdth" title="Permalink to this definition">¶</a></dt>
+<code class="descname">az_bin_wdth</code><em class="property"> = 60.0</em><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.az_bin_wdth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.TLossModel.build">
-<code class="sig-name descname">build</code><span class="sig-paren">(</span><em class="sig-param">results_file</em>, <em class="sig-param">model_file</em>, <em class="sig-param">show_fits=False</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.build" title="Permalink to this definition">¶</a></dt>
+<code class="descname">build</code><span class="sig-paren">(</span><em>results_file</em>, <em>model_file</em>, <em>show_fits=False</em>, <em>file_id=None</em>, <em>pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.build" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.TLossModel.display">
-<code class="sig-name descname">display</code><span class="sig-paren">(</span><em class="sig-param">title='Transmission Loss Statistics'</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">hold_fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.display" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display</code><span class="sig-paren">(</span><em>title='Transmission Loss Statistics'</em>, <em>file_id=None</em>, <em>hold_fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.display" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.TLossModel.eval">
-<code class="sig-name descname">eval</code><span class="sig-paren">(</span><em class="sig-param">rng</em>, <em class="sig-param">tloss</em>, <em class="sig-param">az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.eval" title="Permalink to this definition">¶</a></dt>
+<code class="descname">eval</code><span class="sig-paren">(</span><em>rng</em>, <em>tloss</em>, <em>az</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.eval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.infrasound.TLossModel.load">
-<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">model_file</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.load" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load</code><span class="sig-paren">(</span><em>model_file</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.TLossModel.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.infrasound.canonical_rcel">
-<code class="sig-prename descclassname">infrapy.propagation.infrasound.</code><code class="sig-name descname">canonical_rcel</code><span class="sig-paren">(</span><em class="sig-param">rcel</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.canonical_rcel" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.infrasound.</code><code class="descname">canonical_rcel</code><span class="sig-paren">(</span><em>rcel</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.canonical_rcel" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.infrasound.canonical_tloss">
-<code class="sig-prename descclassname">infrapy.propagation.infrasound.</code><code class="sig-name descname">canonical_tloss</code><span class="sig-paren">(</span><em class="sig-param">rng</em>, <em class="sig-param">tloss</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.canonical_tloss" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.infrasound.</code><code class="descname">canonical_tloss</code><span class="sig-paren">(</span><em>rng</em>, <em>tloss</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.canonical_tloss" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.infrasound.find_azimuth_bin">
-<code class="sig-prename descclassname">infrapy.propagation.infrasound.</code><code class="sig-name descname">find_azimuth_bin</code><span class="sig-paren">(</span><em class="sig-param">az</em>, <em class="sig-param">bin_cnt=8</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.find_azimuth_bin" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.infrasound.</code><code class="descname">find_azimuth_bin</code><span class="sig-paren">(</span><em>az</em>, <em>bin_cnt=8</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.infrasound.find_azimuth_bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -316,38 +317,38 @@
 <span id="likelihoods"></span><h2>Likelihoods<a class="headerlink" href="#module-infrapy.propagation.likelihoods" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
 <dt id="infrapy.propagation.likelihoods.BadArrayDimensionError">
-<em class="property">exception </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">BadArrayDimensionError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadArrayDimensionError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">BadArrayDimensionError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadArrayDimensionError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#infrapy.propagation.likelihoods.CustomError" title="infrapy.propagation.likelihoods.CustomError"><code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.propagation.likelihoods.CustomError</span></code></a></p>
 <p>Raised when someone tries to set the array dimension to something that isnt an integer</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="infrapy.propagation.likelihoods.BadLatitudeError">
-<em class="property">exception </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">BadLatitudeError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadLatitudeError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">BadLatitudeError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadLatitudeError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#infrapy.propagation.likelihoods.CustomError" title="infrapy.propagation.likelihoods.CustomError"><code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.propagation.likelihoods.CustomError</span></code></a></p>
 <p>Rasied when the latitude is out of range</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="infrapy.propagation.likelihoods.BadLongitudeError">
-<em class="property">exception </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">BadLongitudeError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadLongitudeError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">BadLongitudeError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.BadLongitudeError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#infrapy.propagation.likelihoods.CustomError" title="infrapy.propagation.likelihoods.CustomError"><code class="xref py py-class docutils literal notranslate"><span class="pre">infrapy.propagation.likelihoods.CustomError</span></code></a></p>
 <p>Raised when the longitude is out of range</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="infrapy.propagation.likelihoods.CustomError">
-<em class="property">exception </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">CustomError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.CustomError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">CustomError</code><a class="headerlink" href="#infrapy.propagation.likelihoods.CustomError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="infrapy.propagation.likelihoods.Infrapy_Encoder">
-<em class="property">class </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">Infrapy_Encoder</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">skipkeys=False</em>, <em class="sig-param">ensure_ascii=True</em>, <em class="sig-param">check_circular=True</em>, <em class="sig-param">allow_nan=True</em>, <em class="sig-param">sort_keys=False</em>, <em class="sig-param">indent=None</em>, <em class="sig-param">separators=None</em>, <em class="sig-param">default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">Infrapy_Encoder</code><span class="sig-paren">(</span><em>*</em>, <em>skipkeys=False</em>, <em>ensure_ascii=True</em>, <em>check_circular=True</em>, <em>allow_nan=True</em>, <em>sort_keys=False</em>, <em>indent=None</em>, <em>separators=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">json.encoder.JSONEncoder</span></code></p>
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.Infrapy_Encoder.default">
-<code class="sig-name descname">default</code><span class="sig-paren">(</span><em class="sig-param">obj</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder.default" title="Permalink to this definition">¶</a></dt>
+<code class="descname">default</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder.default" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implement this method in a subclass such that it returns
 a serializable object for <code class="docutils literal notranslate"><span class="pre">o</span></code>, or calls the base implementation
 (to raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>).</p>
@@ -370,269 +371,274 @@ implement default like this:</p>
 
 <dl class="class">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection">
-<em class="property">class </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">InfrasoundDetection</code><span class="sig-paren">(</span><em class="sig-param">lat_loc=None</em>, <em class="sig-param">lon_loc=None</em>, <em class="sig-param">time=None</em>, <em class="sig-param">azimuth=None</em>, <em class="sig-param">f_stat=None</em>, <em class="sig-param">array_d=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">InfrasoundDetection</code><span class="sig-paren">(</span><em>lat_loc=None</em>, <em>lon_loc=None</em>, <em>time=None</em>, <em>azimuth=None</em>, <em>f_stat=None</em>, <em>array_d=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.array_dim">
-<em class="property">property </em><code class="sig-name descname">array_dim</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.array_dim" title="Permalink to this definition">¶</a></dt>
+<code class="descname">array_dim</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.array_dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>(int) Number of elements in the detecting array</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.az_pdf">
-<code class="sig-name descname">az_pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.az_pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descname">az_pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.az_pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.back_azimuth">
-<em class="property">property </em><code class="sig-name descname">back_azimuth</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.back_azimuth" title="Permalink to this definition">¶</a></dt>
+<code class="descname">back_azimuth</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.back_azimuth" title="Permalink to this definition">¶</a></dt>
 <dd><p>(float) Back azimuth of the detected signal</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.calc_kappa_etc">
-<code class="sig-name descname">calc_kappa_etc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.calc_kappa_etc" title="Permalink to this definition">¶</a></dt>
+<code class="descname">calc_kappa_etc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.calc_kappa_etc" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.elevation">
-<em class="property">property </em><code class="sig-name descname">elevation</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.elevation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">elevation</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.elevation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Elevation of the detecting array</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.end">
-<em class="property">property </em><code class="sig-name descname">end</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.end" title="Permalink to this definition">¶</a></dt>
+<code class="descname">end</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.end" title="Permalink to this definition">¶</a></dt>
 <dd><p>(float) End time in seconds relative to the peak F utc time of the detection</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.event_id">
-<em class="property">property </em><code class="sig-name descname">event_id</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.event_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">event_id</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.event_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optional id of the event</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.fillFromDict">
-<code class="sig-name descname">fillFromDict</code><span class="sig-paren">(</span><em class="sig-param">dict</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.fillFromDict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fillFromDict</code><span class="sig-paren">(</span><em>dict</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.fillFromDict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.frequency_range">
-<em class="property">property </em><code class="sig-name descname">frequency_range</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.frequency_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">frequency_range</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.frequency_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>(tuple) Frequency range of the measurement</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.generateDict">
-<code class="sig-name descname">generateDict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.generateDict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">generateDict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.generateDict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_array_dim">
-<code class="sig-name descname">get_array_dim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_array_dim" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_array_dim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_array_dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_back_azimuth">
-<code class="sig-name descname">get_back_azimuth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_back_azimuth" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_back_azimuth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_back_azimuth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_ele">
-<code class="sig-name descname">get_ele</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_ele" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_ele</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_ele" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_end">
-<code class="sig-name descname">get_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_end" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_end" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_event_id">
-<code class="sig-name descname">get_event_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_event_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_event_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_event_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_freq_range">
-<code class="sig-name descname">get_freq_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_freq_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_freq_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_freq_range" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_lat">
-<code class="sig-name descname">get_lat</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_lat" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_lat</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_lat" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_lon">
-<code class="sig-name descname">get_lon</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_lon" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_lon</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_lon" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_method">
-<code class="sig-name descname">get_method</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_method" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_method</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_method" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_name">
-<code class="sig-name descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_note">
-<code class="sig-name descname">get_note</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_note" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_note</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_note" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_UTCtime">
-<code class="sig-name descname">get_peakF_UTCtime</code><span class="sig-paren">(</span><em class="sig-param">type='numpy'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_peakF_UTCtime</code><span class="sig-paren">(</span><em>type='numpy'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_value">
-<code class="sig-name descname">get_peakF_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_value" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_peakF_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_peakF_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_start">
-<code class="sig-name descname">get_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_start" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.get_trace_velocity">
-<code class="sig-name descname">get_trace_velocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_trace_velocity" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_trace_velocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_trace_velocity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="infrapy.propagation.likelihoods.InfrasoundDetection.is_equal_to">
+<code class="descname">is_equal_to</code><span class="sig-paren">(</span><em>other_detection</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.is_equal_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.latitude">
-<em class="property">property </em><code class="sig-name descname">latitude</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.latitude" title="Permalink to this definition">¶</a></dt>
+<code class="descname">latitude</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.latitude" title="Permalink to this definition">¶</a></dt>
 <dd><p>Latitude of the array</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.longitude">
-<em class="property">property </em><code class="sig-name descname">longitude</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.longitude" title="Permalink to this definition">¶</a></dt>
+<code class="descname">longitude</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.longitude" title="Permalink to this definition">¶</a></dt>
 <dd><p>Longitude of the detecting array</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.method">
-<em class="property">property </em><code class="sig-name descname">method</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.method" title="Permalink to this definition">¶</a></dt>
+<code class="descname">method</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.method" title="Permalink to this definition">¶</a></dt>
 <dd><p>(string) Beamforming method used to generate the detection</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.name">
-<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">name</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optional name of the detection</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.note">
-<em class="property">property </em><code class="sig-name descname">note</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.note" title="Permalink to this definition">¶</a></dt>
+<code class="descname">note</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.note" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optional note regarding the detection</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.pdf">
-<code class="sig-name descname">pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">t</em>, <em class="sig-param">path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>t</em>, <em>path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.peakF_UTCtime">
-<em class="property">property </em><code class="sig-name descname">peakF_UTCtime</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
+<code class="descname">peakF_UTCtime</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
 <dd><p>time of the peak F value, in UTC</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.peakF_value">
-<em class="property">property </em><code class="sig-name descname">peakF_value</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_value" title="Permalink to this definition">¶</a></dt>
+<code class="descname">peakF_value</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Peak F values</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.rng_pdf">
-<code class="sig-name descname">rng_pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">t</em>, <em class="sig-param">path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.rng_pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rng_pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>t</em>, <em>path_geo_model=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.rng_pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_array_dim">
-<code class="sig-name descname">set_array_dim</code><span class="sig-paren">(</span><em class="sig-param">ad</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_array_dim" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_array_dim</code><span class="sig-paren">(</span><em>ad</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_array_dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_back_azimuth">
-<code class="sig-name descname">set_back_azimuth</code><span class="sig-paren">(</span><em class="sig-param">ba</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_back_azimuth" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_back_azimuth</code><span class="sig-paren">(</span><em>ba</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_back_azimuth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_ele">
-<code class="sig-name descname">set_ele</code><span class="sig-paren">(</span><em class="sig-param">ele</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_ele" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_ele</code><span class="sig-paren">(</span><em>ele</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_ele" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_end">
-<code class="sig-name descname">set_end</code><span class="sig-paren">(</span><em class="sig-param">end</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_end" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_end</code><span class="sig-paren">(</span><em>end</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_end" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_event_id">
-<code class="sig-name descname">set_event_id</code><span class="sig-paren">(</span><em class="sig-param">evt</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_event_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_event_id</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_event_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_freq_range">
-<code class="sig-name descname">set_freq_range</code><span class="sig-paren">(</span><em class="sig-param">frange</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_freq_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_freq_range</code><span class="sig-paren">(</span><em>frange</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_freq_range" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_lat">
-<code class="sig-name descname">set_lat</code><span class="sig-paren">(</span><em class="sig-param">lat</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_lat" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_lat</code><span class="sig-paren">(</span><em>lat</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_lat" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_lon">
-<code class="sig-name descname">set_lon</code><span class="sig-paren">(</span><em class="sig-param">lon</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_lon" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_lon</code><span class="sig-paren">(</span><em>lon</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_lon" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_method">
-<code class="sig-name descname">set_method</code><span class="sig-paren">(</span><em class="sig-param">method</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_method" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_method</code><span class="sig-paren">(</span><em>method</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_method" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_name">
-<code class="sig-name descname">set_name</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_name</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_note">
-<code class="sig-name descname">set_note</code><span class="sig-paren">(</span><em class="sig-param">note</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_note" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_note</code><span class="sig-paren">(</span><em>note</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_note" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_UTCtime">
-<code class="sig-name descname">set_peakF_UTCtime</code><span class="sig-paren">(</span><em class="sig-param">pf_UTCtime</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_peakF_UTCtime</code><span class="sig-paren">(</span><em>pf_UTCtime</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_UTCtime" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_value">
-<code class="sig-name descname">set_peakF_value</code><span class="sig-paren">(</span><em class="sig-param">pfv</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_value" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_peakF_value</code><span class="sig-paren">(</span><em>pfv</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_peakF_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_start">
-<code class="sig-name descname">set_start</code><span class="sig-paren">(</span><em class="sig-param">start</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_start</code><span class="sig-paren">(</span><em>start</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_start" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.set_trace_velocity">
-<code class="sig-name descname">set_trace_velocity</code><span class="sig-paren">(</span><em class="sig-param">tv</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_trace_velocity" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_trace_velocity</code><span class="sig-paren">(</span><em>tv</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_trace_velocity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.src_spec_pdf">
-<code class="sig-name descname">src_spec_pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">freqs</em>, <em class="sig-param">src_spec</em>, <em class="sig-param">smn_spec</em>, <em class="sig-param">tloss_models</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.src_spec_pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descname">src_spec_pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>freqs</em>, <em>src_spec</em>, <em>smn_spec</em>, <em>tloss_models</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.src_spec_pdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the probability of detection being produced by a given source</p>
 <p>Computes the probability of a given source spectral amplitude, P(f),
 producing this detection given its signal-minus-noise spectrum and
@@ -661,15 +667,15 @@ a transmission loss model</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.start">
-<em class="property">property </em><code class="sig-name descname">start</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>(float) Start time in seconds relative to the peak F utc time of the detection</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="attribute">
 <dt id="infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity">
-<em class="property">property </em><code class="sig-name descname">trace_velocity</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity" title="Permalink to this definition">¶</a></dt>
+<code class="descname">trace_velocity</code><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trace velocity of the detection</p>
 </dd></dl>
 
@@ -677,63 +683,63 @@ a transmission loss model</p>
 
 <dl class="class">
 <dt id="infrapy.propagation.likelihoods.SeismicDetection">
-<em class="property">class </em><code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">SeismicDetection</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">time</em>, <em class="sig-param">phase='p'</em>, <em class="sig-param">slowness=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">SeismicDetection</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>time</em>, <em>phase='p'</em>, <em>slowness=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.SeismicDetection.pdf">
-<code class="sig-name descname">pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">t</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.SeismicDetection.sigma">
-<code class="sig-name descname">sigma</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.sigma" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sigma</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.sigma" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="infrapy.propagation.likelihoods.SeismicDetection.trvl_tm">
-<code class="sig-name descname">trvl_tm</code><span class="sig-paren">(</span><em class="sig-param">rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.trvl_tm" title="Permalink to this definition">¶</a></dt>
+<code class="descname">trvl_tm</code><span class="sig-paren">(</span><em>rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.SeismicDetection.trvl_tm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.db2dets">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">db2dets</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.db2dets" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">db2dets</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.db2dets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.detection_list_to_json">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">detection_list_to_json</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">detections</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.detection_list_to_json" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">detection_list_to_json</code><span class="sig-paren">(</span><em>filename</em>, <em>detections</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.detection_list_to_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.file2dets">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">file2dets</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.file2dets" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">file2dets</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.file2dets" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.joint_pdf">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">joint_pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">t</em>, <em class="sig-param">det_list</em>, <em class="sig-param">path_geo_model=None</em>, <em class="sig-param">prog_step=0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">joint_pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>t</em>, <em>det_list</em>, <em>path_geo_model=None</em>, <em>prog_step=0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.joint_pdf_wrapper">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">joint_pdf_wrapper</code><span class="sig-paren">(</span><em class="sig-param">args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf_wrapper" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">joint_pdf_wrapper</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf_wrapper" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.json_to_detection_list">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">json_to_detection_list</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.json_to_detection_list" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">json_to_detection_list</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.json_to_detection_list" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.marginal_spatial_pdf">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">marginal_spatial_pdf</code><span class="sig-paren">(</span><em class="sig-param">lat</em>, <em class="sig-param">lon</em>, <em class="sig-param">det_list</em>, <em class="sig-param">path_geo_model=None</em>, <em class="sig-param">prog_step=0</em>, <em class="sig-param">resol=100</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.marginal_spatial_pdf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">marginal_spatial_pdf</code><span class="sig-paren">(</span><em>lat</em>, <em>lon</em>, <em>det_list</em>, <em>path_geo_model=None</em>, <em>prog_step=0</em>, <em>resol=100</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.marginal_spatial_pdf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.likelihoods.marginal_spatial_pdf_wrapper">
-<code class="sig-prename descclassname">infrapy.propagation.likelihoods.</code><code class="sig-name descname">marginal_spatial_pdf_wrapper</code><span class="sig-paren">(</span><em class="sig-param">args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.marginal_spatial_pdf_wrapper" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.likelihoods.</code><code class="descname">marginal_spatial_pdf_wrapper</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.marginal_spatial_pdf_wrapper" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -741,12 +747,12 @@ a transmission loss model</p>
 <span id="seismic"></span><h2>Seismic<a class="headerlink" href="#module-infrapy.propagation.seismic" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="infrapy.propagation.seismic.ak135_p_tr_time">
-<code class="sig-prename descclassname">infrapy.propagation.seismic.</code><code class="sig-name descname">ak135_p_tr_time</code><span class="sig-paren">(</span><em class="sig-param">rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.seismic.ak135_p_tr_time" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.seismic.</code><code class="descname">ak135_p_tr_time</code><span class="sig-paren">(</span><em>rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.seismic.ak135_p_tr_time" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.propagation.seismic.ak135_s_tr_time">
-<code class="sig-prename descclassname">infrapy.propagation.seismic.</code><code class="sig-name descname">ak135_s_tr_time</code><span class="sig-paren">(</span><em class="sig-param">rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.seismic.ak135_s_tr_time" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.propagation.seismic.</code><code class="descname">ak135_s_tr_time</code><span class="sig-paren">(</span><em>rng</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.seismic.ak135_s_tr_time" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>

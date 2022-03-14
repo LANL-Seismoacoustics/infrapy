@@ -10,7 +10,7 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from infrapy.location import visualization
+from infrapy.location import bisl, visualization
 
 from ..utils import config
 from ..utils import data_io
@@ -141,7 +141,7 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             else:
                 local_fk_label = ""
 
-            local_fk_label = local_fk_label + stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + stream[-1].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
@@ -284,7 +284,7 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             else:
                 local_fk_label = ""
 
-            local_fk_label = local_fk_label + stream[-1].stats.network + "." + stream[-1].stats.station
+            local_fk_label = local_fk_label + stream[-1].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
@@ -316,8 +316,8 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
 @click.command('plot_dets', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_dets(config_file, range_max, local_detect_label, figure_out):
     '''
@@ -355,25 +355,22 @@ def plot_dets(config_file, range_max, local_detect_label, figure_out):
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
 
     click.echo('\n' + "Visualization parameters:")
-    click.echo("  range_max: " + str(range_max))
+    click.echo("  range_max: " + str(range_max) + '\n')
 
+    det_list = data_io.set_det_list(local_detect_label, merge=True)
 
-    click.echo('\n' + "Reading in detection list...")
-    det_list = data_io.set_det_list(local_detect_label, merge=False)
-
-    click.echo("Drawing map with detection back azimuth projections...")
+    click.echo('\n' + "Drawing map with detection back azimuth projections...")
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
-
 
 
 @click.command('plot_loc', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-event-label", help="Detection path and pattern", default=None)
+@click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
-@click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, figure_out):
+def plot_loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out):
     '''
     Visualize BISL results in with wide or zoomed format
 
@@ -383,6 +380,15 @@ def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, f
 
     '''
 
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##       Localization Mapping      ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
         user_config = cnfg.ConfigParser()
@@ -390,11 +396,11 @@ def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, f
     else:
         user_config = None
 
-    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_event_label: " + str(local_event_label))
+    click.echo("  local_event_label: " + str(local_detect_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
@@ -404,25 +410,28 @@ def plot_loc(config_file, local_event_label, local_loc_label, range_max, zoom, f
     click.echo("  zoom: " + str(zoom))
 
     click.echo('\n' + "Reading in detection list...")
-    det_list = data_io.set_det_list(local_event_label, merge=False)
+    det_list = data_io.set_det_list(local_detect_label, merge=False)
     bisl_result = data_io.read_locs(local_loc_label + ".loc.json")
+
+    click.echo('\n' + "BISL Summary:")
+    click.echo(bisl.summarize(bisl_result))
 
     click.echo("Drawing map with BISL source location estimate...")
     loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out)
+    
 
 
-
-@click.command('plot_origin_time', short_help="Plot detections on a map")
+@click.command('plot_origin_time', short_help="Plot origin time distribution")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-event-label", help="Localization results", default=None)
+@click.option("--local-loc-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_origin_time(config_file, local_event_label, figure_out):
+def plot_origin_time(config_file, local_loc_label, figure_out):
     '''
     Visualize the BISL origin time distribution
 
     \b
     Example usage (run from infrapy/examples directory):
-    \t infrapy plot_bisl_loc --local-detect-label data/detection_set2.json --local-event-label data/location2.json --range-max 1000
+    \t infrapy plot_bisl_loc --local-loc-label data/location2.json --range-max 1000
     '''
     click.echo("")
     click.echo("#####################################")
@@ -440,13 +449,14 @@ def plot_origin_time(config_file, local_event_label, figure_out):
     else:
         user_config = None
 
-    local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_event_label))
+    click.echo("  local_detect_label: " + str(local_loc_label))
 
     click.echo('\n' + "Reading in BISL results...")
-    bisl_results = data_io.read_locs(local_event_label)
+    bisl_result = data_io.read_locs(local_loc_label)
 
     click.echo("Plotting origin time distribution...")
-    loc_vis.plot_origin_time(bisl_results, output_path=figure_out)
+    loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
+    

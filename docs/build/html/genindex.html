@@ -22,11 +22,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -84,10 +84,11 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -190,6 +191,8 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="infrapy.database.html#infrapy.database.schema.fd_params.adapwlen">adapwlen (infrapy.database.schema.fd_params attribute)</a>
+</li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_params.additional1">additional1 (infrapy.database.schema.fd_params attribute)</a>
 
       <ul>
@@ -246,7 +249,7 @@
         <li><a href="infrapy.utils.html#infrapy.utils.ms2db.apply_plugins">(in module infrapy.utils.ms2db)</a>
 </li>
       </ul></li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.array_dim">array_dim() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.array_dim">array_dim (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_params">ASSOC_params (class in infrapy.database.schema)</a>
 </li>
@@ -282,7 +285,7 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.back_azimuth">back_azimuth() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.back_azimuth">back_azimuth (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_params.backazlim">backazlim (infrapy.database.schema.fd_params attribute)</a>
 </li>
@@ -298,16 +301,20 @@
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.BadLongitudeError">BadLongitudeError</a>
 </li>
+      <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.beam_window">beam_window() (in module infrapy.detection.beamforming_new)</a>
+</li>
+      <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.beam_window_wrapper">beam_window_wrapper() (in module infrapy.detection.beamforming_new)</a>
+</li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_params.beamwidth">beamwidth (infrapy.database.schema.ASSOC_params attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_params.beamwinlen">beamwinlen (infrapy.database.schema.fk_params attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_params.beamwinstep">beamwinstep (infrapy.database.schema.fk_params attribute)</a>
 </li>
-      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.beta">beta() (in module infrapy.utils.ref2sac)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.beta">beta() (in module infrapy.utils.ref2sac)</a>
+</li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.bfstat">bfstat() (in module infrapy.detection.beamforming)</a>
 </li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.bfstat2">bfstat2() (in module infrapy.detection.beamforming)</a>
@@ -405,8 +412,6 @@
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_processing">data_processing() (infrapy.database.taskbase.assoc.AssocInfraPy_LANL method)</a>
 
       <ul>
-        <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.data_processing">(infrapy.database.taskbase.fdet.FDet method)</a>
-</li>
         <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.data_processing">(infrapy.database.taskbase.loc.LocInfraPy method)</a>
 </li>
       </ul></li>
@@ -414,19 +419,13 @@
 </li>
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.data_processingLOC">data_processingLOC() (infrapy.database.taskbase.loc.LocInfraPy method)</a>
 </li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.data_retrieving">data_retrieving() (infrapy.database.taskbase.fdet.FDet method)</a>
-
-      <ul>
-        <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.data_retrieving">(infrapy.database.taskbase.loc.LocInfraPy method)</a>
+      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.data_retrieving">data_retrieving() (infrapy.database.taskbase.loc.LocInfraPy method)</a>
 </li>
-      </ul></li>
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.data_retrievingS">data_retrievingS() (infrapy.database.taskbase.assoc.AssocInfraPy_LANL method)</a>
 </li>
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.assoc.AssocInfraPy_LANL.database_connecting">database_connecting() (infrapy.database.taskbase.assoc.AssocInfraPy_LANL method)</a>
 
       <ul>
-        <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.database_connecting">(infrapy.database.taskbase.fdet.FDet method)</a>
-</li>
         <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.database_connecting">(infrapy.database.taskbase.loc.LocInfraPy method)</a>
 </li>
       </ul></li>
@@ -436,10 +435,10 @@
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.infrasound.PathGeometryModel.default_az_dev_var">default_az_dev_var (infrapy.propagation.infrasound.PathGeometryModel attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.detect_peaks">detect_peaks() (in module infrapy.detection.beamforming)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.detect_signals">detect_signals() (in module infrapy.detection.beamforming_new)</a>
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.detection_list_to_json">detection_list_to_json() (in module infrapy.propagation.likelihoods)</a>
@@ -461,8 +460,6 @@
 </li>
       </ul></li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.dist_az">dist_az() (in module infrapy.detection.beamforming)</a>
-</li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.distfit">distfit() (infrapy.database.taskbase.fdet.FDet method)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_params.domain">domain (infrapy.database.schema.fk_params attribute)</a>
 </li>
@@ -486,9 +483,9 @@
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.EDetectParams">EDetectParams (class in infrapy.database.schema)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.elevation">elevation() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.elevation">elevation (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.end">end() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.end">end (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_results.eslofk">eslofk (infrapy.database.schema.fk_results attribute)</a>
 </li>
@@ -516,11 +513,7 @@
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.infrasound.PathGeometryModel.eval_rcel_gmm">eval_rcel_gmm() (infrapy.propagation.infrasound.PathGeometryModel method)</a>
 </li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.event_detection">event_detection() (infrapy.database.taskbase.fdet.FDet method)</a>
-</li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.event_detection2">event_detection2() (infrapy.database.taskbase.fdet.FDet method)</a>
-</li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.event_id">event_id() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.event_id">event_id (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_results.eventid">eventid (infrapy.database.schema.ASSOC_results attribute)</a>
 
@@ -551,8 +544,6 @@
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_params">fd_params (class in infrapy.database.schema)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_results">fd_results (class in infrapy.database.schema)</a>
-</li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet">FDet (class in infrapy.database.taskbase.fdet)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_results.fdid">fdid (infrapy.database.schema.ASSOC_results attribute)</a>
 
@@ -618,7 +609,7 @@
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_params.freqmin">freqmin (infrapy.database.schema.fk_params attribute)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.frequency_range">frequency_range() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.frequency_range">frequency_range (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_params.from_string">from_string() (infrapy.database.schema.ASSOC_params class method)</a>
 
@@ -742,8 +733,6 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.files2db.get_wfdisc">get_wfdisc() (in module infrapy.utils.files2db)</a>
 </li>
-      <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.fdet.FDet.getdet">getdet() (infrapy.database.taskbase.fdet.FDet method)</a>
-</li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.getXY_array">getXY_array() (in module infrapy.detection.beamforming)</a>
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.gumbel">gumbel() (in module infrapy.utils.ref2sac)</a>
@@ -766,6 +755,8 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="infrapy.association.html#infrapy.association.hjl.id_events">id_events() (in module infrapy.association.hjl)</a>
+</li>
       <li><a href="infrapy.utils.html#infrapy.utils.prog_bar.increment">increment() (in module infrapy.utils.prog_bar)</a>
 </li>
       <li><a href="index.html#module-infrapy">infrapy (module)</a>
@@ -781,8 +772,6 @@
       <li><a href="infrapy.database.html#module-infrapy.database.schema">infrapy.database.schema (module)</a>
 </li>
       <li><a href="infrapy.database.taskbase.html#module-infrapy.database.taskbase.assoc">infrapy.database.taskbase.assoc (module)</a>
-</li>
-      <li><a href="infrapy.database.taskbase.html#module-infrapy.database.taskbase.fdet">infrapy.database.taskbase.fdet (module)</a>
 </li>
       <li><a href="infrapy.database.taskbase.html#module-infrapy.database.taskbase.loc">infrapy.database.taskbase.loc (module)</a>
 </li>
@@ -844,6 +833,8 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.latlon.inlonrng">inlonrng() (in module infrapy.utils.latlon)</a>
 </li>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.is_equal_to">is_equal_to() (infrapy.propagation.likelihoods.InfrasoundDetection method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -878,7 +869,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.laplace">laplace() (in module infrapy.utils.ref2sac)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.latitude">latitude() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.latitude">latitude (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.loc_results.latlonorigcovar">latlonorigcovar (infrapy.database.schema.loc_results attribute)</a>
 </li>
@@ -912,7 +903,7 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.logseries">logseries() (in module infrapy.utils.ref2sac)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.longitude">longitude() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.longitude">longitude (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.latlon.lonmod">lonmod() (in module infrapy.utils.latlon)</a>
 </li>
@@ -960,7 +951,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.LocInfraPy.meanlocations">meanlocations() (infrapy.database.taskbase.loc.LocInfraPy method)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.method">method() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.method">method (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.infrasound.PathGeometryModel.min_az_dev_var">min_az_dev_var (infrapy.propagation.infrasound.PathGeometryModel attribute)</a>
 </li>
@@ -1007,13 +998,11 @@
 </li>
         <li><a href="infrapy.database.html#infrapy.database.schema.noise_params.name">(infrapy.database.schema.noise_params attribute)</a>
 </li>
-      </ul></li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.name">name() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
-
-      <ul>
-        <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.name">(infrapy.utils.files2db.CoreTable property)</a>
+        <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.name">(infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
-        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.name">(infrapy.utils.ms2db.CoreTable property)</a>
+        <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.name">(infrapy.utils.files2db.CoreTable attribute)</a>
+</li>
+        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.name">(infrapy.utils.ms2db.CoreTable attribute)</a>
 </li>
       </ul></li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_results.nchan">nchan (infrapy.database.schema.fk_results attribute)</a>
@@ -1036,7 +1025,7 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.normal">normal() (in module infrapy.utils.ref2sac)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.note">note() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.note">note (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_params.numsources">numsources (infrapy.database.schema.fd_params attribute)</a>
 
@@ -1092,9 +1081,9 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.skew_norm.pdf_3comp">pdf_3comp() (in module infrapy.utils.skew_norm)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_UTCtime">peakF_UTCtime() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_UTCtime">peakF_UTCtime (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_value">peakF_value() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.peakF_value">peakF_value (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.EDetectParams.pedetectid">pedetectid (infrapy.database.schema.EDetectParams attribute)</a>
 </li>
@@ -1142,10 +1131,10 @@
 </li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.project_beam">project_beam() (in module infrapy.detection.beamforming_new)</a>
 </li>
-      <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.prototype">prototype() (infrapy.utils.files2db.CoreTable property)</a>
+      <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.prototype">prototype (infrapy.utils.files2db.CoreTable attribute)</a>
 
       <ul>
-        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.prototype">(infrapy.utils.ms2db.CoreTable property)</a>
+        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.prototype">(infrapy.utils.ms2db.CoreTable attribute)</a>
 </li>
       </ul></li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_params.pthreshold">pthreshold (infrapy.database.schema.fd_params attribute)</a>
@@ -1186,12 +1175,14 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.latlon.randsphere">randsphere() (in module infrapy.utils.latlon)</a>
 </li>
+      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.ranf">ranf() (in module infrapy.utils.ref2sac)</a>
+</li>
       <li><a href="infrapy.database.html#infrapy.database.schema.ASSOC_params.rangemax">rangemax (infrapy.database.schema.ASSOC_params attribute)</a>
+</li>
+      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.rayleigh">rayleigh() (in module infrapy.utils.ref2sac)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.rayleigh">rayleigh() (in module infrapy.utils.ref2sac)</a>
-</li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.infrasound.PathGeometryModel.rcel_vrs_min">rcel_vrs_min (infrapy.propagation.infrasound.PathGeometryModel attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_results.rmsval">rmsval (infrapy.database.schema.fk_results attribute)</a>
@@ -1212,12 +1203,18 @@
       </ul></li>
       <li><a href="infrapy.database.taskbase.html#infrapy.database.taskbase.loc.run_bislSC_wrapper">run_bislSC_wrapper() (in module infrapy.database.taskbase.loc)</a>
 </li>
+      <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.run_fd">run_fd() (in module infrapy.detection.beamforming_new)</a>
+</li>
+      <li><a href="infrapy.detection.html#infrapy.detection.beamforming_new.run_fk">run_fk() (in module infrapy.detection.beamforming_new)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.sample">sample() (in module infrapy.utils.ref2sac)</a>
+</li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.seed">seed() (in module infrapy.utils.ref2sac)</a>
 </li>
       <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.SeismicDetection">SeismicDetection (class in infrapy.propagation.likelihoods)</a>
@@ -1266,10 +1263,10 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.shuffle">shuffle() (in module infrapy.utils.ref2sac)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.SeismicDetection.sigma">sigma() (infrapy.propagation.likelihoods.SeismicDetection method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.SeismicDetection.sigma">sigma() (infrapy.propagation.likelihoods.SeismicDetection method)</a>
+</li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_results.slofk">slofk (infrapy.database.schema.fk_results attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_results.sourcenum">sourcenum (infrapy.database.schema.fd_results attribute)</a>
@@ -1302,7 +1299,7 @@
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.standard_t">standard_t() (in module infrapy.utils.ref2sac)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.start">start() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.start">start (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fk_params.stepslowness">stepslowness (infrapy.database.schema.fk_params attribute)</a>
 </li>
@@ -1328,10 +1325,10 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.table">table() (infrapy.utils.files2db.CoreTable property)</a>
+      <li><a href="infrapy.utils.html#infrapy.utils.files2db.CoreTable.table">table (infrapy.utils.files2db.CoreTable attribute)</a>
 
       <ul>
-        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.table">(infrapy.utils.ms2db.CoreTable property)</a>
+        <li><a href="infrapy.utils.html#infrapy.utils.ms2db.CoreTable.table">(infrapy.utils.ms2db.CoreTable attribute)</a>
 </li>
       </ul></li>
       <li><a href="infrapy.detection.html#infrapy.detection.beamforming.tapering">tapering() (in module infrapy.detection.beamforming)</a>
@@ -1380,7 +1377,7 @@
 </li>
       <li><a href="infrapy.database.html#infrapy.database.schema.fd_results.tonset">tonset (infrapy.database.schema.fd_results attribute)</a>
 </li>
-      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity">trace_velocity() (infrapy.propagation.likelihoods.InfrasoundDetection property)</a>
+      <li><a href="infrapy.propagation.html#infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity">trace_velocity (infrapy.propagation.likelihoods.InfrasoundDetection attribute)</a>
 </li>
       <li><a href="infrapy.utils.html#infrapy.utils.ref2sac.triangular">triangular() (in module infrapy.utils.ref2sac)</a>
 </li>

@@ -21,11 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -85,10 +85,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">Infraview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="processing_model.html">Data Processing Flow</a><ul class="current">
@@ -197,8 +198,8 @@
 <div class="line">-d SQ         name of the database connection, e.g.: -d sqlite:///UT_tutorial.sqlite</div>
 <div class="line">-a ARRAY      array name, e.g.: -HWU4</div>
 <div class="line">-t FKRESULTS  specific table with results, e.g.: -t fk_HWU</div>
-<div class="line">-s TS        starttime plot, e.g.: -s /’2014-03-02T00:00:00/’</div>
-<div class="line">-e TE        endtime plot, e.g.: -s /’2014-03-03T00:00:00/’</div>
+<div class="line">-s TS        starttime plot, e.g.: -s /‘2014-03-02T00:00:00/’</div>
+<div class="line">-e TE        endtime plot, e.g.: -s /‘2014-03-03T00:00:00/’</div>
 <div class="line">-F FVAL      limit Fvalue, e.g.: -F 0</div>
 <div class="line">-o OUTTEXT    print fk data, e.g.: -o res_FILE</div>
 </div>
@@ -215,8 +216,8 @@
 <div class="line">-f PFK_ID    FK parameter ID to be plot, e.g.: -f 3</div>
 <div class="line">-t FKRESULTS specific table with results, e.g.: -t fk_res_HWU</div>
 <div class="line">-w WAVEPLOT  plot waveforms, e.g.: -w 0</div>
-<div class="line">-s TS        starttime plot, e.g.: -s /’2014-03-02T00:00:00/’</div>
-<div class="line">-e TE        endtime plot, e.g.: -s /’2014-03-03T00:00:00/’</div>
+<div class="line">-s TS        starttime plot, e.g.: -s /‘2014-03-02T00:00:00/’</div>
+<div class="line">-e TE        endtime plot, e.g.: -s /‘2014-03-03T00:00:00/’</div>
 <div class="line">-F FVAL      limit Fvalue, e.g.: -F 0</div>
 <div class="line">-slo SLOFK   limit slofk, e.g.: -slo 0</div>
 <div class="line">-bzmin BZMIN limit min bz, e.g.: -bzmin 0</div>
@@ -253,10 +254,10 @@
 <div class="line">-t FDRESULTS          specific table with results, e.g.: -t fd_res_HWU</div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">read_rfd</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">-</span><span class="n">d</span> <span class="n">SQ</span> <span class="o">-</span><span class="n">a</span> <span class="n">ARRAY</span> <span class="o">-</span><span class="n">f</span> <span class="n">PFK_ID</span> <span class="o">-</span><span class="n">j</span> <span class="n">PFDID</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="n">FDRESULTS</span><span class="p">]</span>
-<span class="n">fdid</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mi">00</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">5.54282460217</span> <span class="mf">0.60800443287</span>
-<span class="n">fdid</span><span class="p">:</span> <span class="mi">2</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">00</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">30</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">3.67253815208</span> <span class="mf">0.46716764663</span>
-<span class="n">fdid</span><span class="p">:</span> <span class="mi">3</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">00</span><span class="p">:</span><span class="mi">56</span><span class="p">:</span><span class="mi">30</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">2.61098286001</span> <span class="mf">0.372113714177</span>
-<span class="n">fdid</span><span class="p">:</span> <span class="mi">4</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mi">01</span><span class="p">:</span><span class="mi">49</span><span class="p">:</span><span class="mi">00</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">9.91099311406</span> <span class="mf">0.749628285504</span>
+<span class="n">fdid</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mo">00</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">5.54282460217</span> <span class="mf">0.60800443287</span>
+<span class="n">fdid</span><span class="p">:</span> <span class="mi">2</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mo">00</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">30</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">3.67253815208</span> <span class="mf">0.46716764663</span>
+<span class="n">fdid</span><span class="p">:</span> <span class="mi">3</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">00</span><span class="p">:</span><span class="mi">56</span><span class="p">:</span><span class="mi">30</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">2.61098286001</span> <span class="mf">0.372113714177</span>
+<span class="n">fdid</span><span class="p">:</span> <span class="mi">4</span>  <span class="n">pfdid</span><span class="p">:</span> <span class="mi">0</span> <span class="n">pfkid</span><span class="p">:</span> <span class="mi">0</span>   <span class="n">timeini</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">01</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">30</span>   <span class="n">timeend</span><span class="p">:</span> <span class="mi">12</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">14</span> <span class="mo">01</span><span class="p">:</span><span class="mi">49</span><span class="p">:</span><span class="mo">00</span>   <span class="n">maxf0</span><span class="p">:</span> <span class="mf">9.91099311406</span> <span class="mf">0.749628285504</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">

@@ -23,6 +23,7 @@ _____________________________________
     authorship
     installation
     quickstart
+    infraview
     pisces
     algorithms
     processing_model

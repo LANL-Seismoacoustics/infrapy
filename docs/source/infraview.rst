@@ -1,5 +1,101 @@
 .. _infraview:
 
 =====================================
-Infraview
+InfraView
 =====================================
+
+Background on InfraView...
+
+    .. code-block:: none
+
+        >> infraview
+
+--------------------
+Array-Level Analyses
+--------------------
+
+- The starting point is the waveform viewer...
+
+    .. image:: _static/_images/infraview/wvfrms1.png
+        :width: 900px
+        :align: center
+
+- Load data...
+
+    .. image:: _static/_images/infraview/wvfrms2.png
+        :width: 1200px
+        :align: center
+
+- Select analysis and noise windows...
+
+    .. image:: _static/_images/infraview/wvfrms3.png
+        :width: 1200px
+        :align: center
+
+- Switch tabs and select beamforming parameters...
+
+    .. image:: _static/_images/infraview/beam1.png
+        :width: 1200px
+        :align: center
+
+- Run beamforming and identify detections...
+
+    .. image:: _static/_images/infraview/beam2.png
+        :width: 1200px
+        :align: center
+
+- Name and save detections...
+
+    .. image:: _static/_images/infraview/detection1.png
+        :width: 300px
+        :align: center
+
+- Download data from IRIS...using the station browser...
+
+    .. image:: _static/_images/infraview/station_browser.png
+        :width: 300px
+        :align: center
+
+- Loading data from IRIS...
+
+    .. image:: _static/_images/infraview/fdsn_loader.png
+        :width: 300px
+        :align: center
+
+
+- Continue analysis...
+
+    .. image:: _static/_images/infraview/fdsn_data.png
+        :width: 1200px
+        :align: center
+
+
+
+----------------------
+Network-Level Analyses
+----------------------
+
+- Load an example detection set for event ID...
+
+    .. image:: _static/_images/infraview/load_detections.png
+        :width: 1200px
+        :align: center
+
+- Load an example detection set for event ID...
+
+    .. image:: _static/_images/infraview/event_id1.png
+        :width: 1200px
+        :align: center
+
+- Select an event in the distance matrix...
+
+    .. image:: _static/_images/infraview/event_id2.png
+        :width: 1200px
+        :align: center
+
+- Run localization on the event
+
+    .. image:: _static/_images/infraview/location1.png
+        :width: 1200px
+        :align: center
+

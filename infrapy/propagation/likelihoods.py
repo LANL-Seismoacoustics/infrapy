@@ -10,7 +10,6 @@
 
 from datetime import datetime
 import itertools
-import imp
 
 import json
 
@@ -169,40 +168,45 @@ class InfrasoundDetection(object):
         return result / rng
 
     def pdf(self, lat, lon, t, path_geo_model=None):
-        if len(np.atleast_1d(lat)) == 1:
-            temp = sph_proj.inv(self.__lon, self.__lat, lon, lat, radians=False)
-            az_diff = np.radians(temp[0] - self.__back_az)
-            rng = temp[2] / 1000.0
-
-            if path_geo_model:
-                az_diff -= np.radians(path_geo_model.eval_az_dev_mn(rng, self.__back_az - 180.0))
-                width_diff = 2.0 * np.radians(path_geo_model.eval_az_dev_vr(rng, self.__back_az - 180.0))
-                kappa = np.log(2.0) / (1.0 - self.cos_half * np.cos(width_diff) + self.sin_half * np.sin(width_diff))
-                norm = 2.0 * np.pi * i0(kappa)
-
-                az_pdf = np.exp(kappa * np.cos(az_diff)) / norm
-                rng_pdf = path_geo_model.eval_rcel_gmm(rng, (self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng, self.__back_az - 180.0)
-            else:
-                az_pdf = np.exp(self.kappa * np.cos(az_diff)) / self.vm_norm
-                rng_pdf = infrasound.canonical_rcel((self.get_peakF_UTCtime() - t).astype('m8[s]').astype(float) / rng)
+        if self.back_azimuth is None:
+            return self.rng_pdf(lat, lon, t, path_geo_model)
+        elif self.__peakF_UTCtime > UTCDateTime("9999-01-01T00:00:00"):
+            return self.az_pdf(lat, lon, path_geo_model)
         else:
-            temp = np.asarray(sph_proj.inv([self.__lon] * len(lon), [self.__lat] * len(lon), lon, lat, radians=False))
-            az_diff = np.radians(temp[0] - [self.__back_az] * len(lon))
-            rng = temp[2] / 1000.0
+            if len(np.atleast_1d(lat)) == 1:
+                temp = sph_proj.inv(self.__lon, self.__lat, lon, lat, radians=False)
+                az_diff = np.radians(temp[0] - self.__back_az)
+                rng = temp[2] / 1000.0
 
-            if path_geo_model:
-                az_diff -= np.radians(path_geo_model.eval_az_dev_mn(rng, np.array([self.__back_az] * len(lon)) - 180.0))
-                width_diff = 2.0 * np.radians(path_geo_model.eval_az_dev_vr(rng, np.array([self.__back_az] * len(lon)) - 180.0))
-                kappa = np.log(2.0) / (1.0 - self.cos_half * np.cos(width_diff) + self.sin_half * np.sin(width_diff))
-                norm = 2.0 * np.pi * i0(kappa)
+                if path_geo_model:
+                    az_diff -= np.radians(path_geo_model.eval_az_dev_mn(rng, self.__back_az - 180.0))
+                    width_diff = 2.0 * np.radians(path_geo_model.eval_az_dev_vr(rng, self.__back_az - 180.0))
+                    kappa = np.log(2.0) / (1.0 - self.cos_half * np.cos(width_diff) + self.sin_half * np.sin(width_diff))
+                    norm = 2.0 * np.pi * i0(kappa)
 
-                az_pdf = np.exp(kappa * np.cos(az_diff)) / norm
-                rng_pdf = path_geo_model.eval_rcel_gmm(rng, (self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng, np.asarray([self.__back_az - 180.0] * len(lon)))
+                    az_pdf = np.exp(kappa * np.cos(az_diff)) / norm
+                    rng_pdf = path_geo_model.eval_rcel_gmm(rng, (self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng, self.__back_az - 180.0)
+                else:
+                    az_pdf = np.exp(self.kappa * np.cos(az_diff)) / self.vm_norm
+                    rng_pdf = infrasound.canonical_rcel((self.get_peakF_UTCtime() - t).astype('m8[s]').astype(float) / rng)
             else:
-                az_pdf = np.exp(self.kappa * np.cos(az_diff)) / self.vm_norm
-                rng_pdf = infrasound.canonical_rcel((self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng)
+                temp = np.asarray(sph_proj.inv([self.__lon] * len(lon), [self.__lat] * len(lon), lon, lat, radians=False))
+                az_diff = np.radians(temp[0] - [self.__back_az] * len(lon))
+                rng = temp[2] / 1000.0
 
-        return az_pdf * rng_pdf / rng
+                if path_geo_model:
+                    az_diff -= np.radians(path_geo_model.eval_az_dev_mn(rng, np.array([self.__back_az] * len(lon)) - 180.0))
+                    width_diff = 2.0 * np.radians(path_geo_model.eval_az_dev_vr(rng, np.array([self.__back_az] * len(lon)) - 180.0))
+                    kappa = np.log(2.0) / (1.0 - self.cos_half * np.cos(width_diff) + self.sin_half * np.sin(width_diff))
+                    norm = 2.0 * np.pi * i0(kappa)
+
+                    az_pdf = np.exp(kappa * np.cos(az_diff)) / norm
+                    rng_pdf = path_geo_model.eval_rcel_gmm(rng, (self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng, np.asarray([self.__back_az - 180.0] * len(lon)))
+                else:
+                    az_pdf = np.exp(self.kappa * np.cos(az_diff)) / self.vm_norm
+                    rng_pdf = infrasound.canonical_rcel((self.__peakF_UTCtime - t).astype('m8[s]').astype(float) / rng)
+
+            return az_pdf * rng_pdf / rng
 
     def src_spec_pdf(self, lat, lon, freqs, src_spec, smn_spec, tloss_models):
         """Defines the probability of detection being produced by a given source
@@ -473,9 +477,15 @@ class InfrasoundDetection(object):
         if 'Name' in dict:
             self.set_name(dict['Name'])
         if 'Peak F-Stat Time (UTC)' in dict:    # This is here for legacy data
-            self.set_peakF_UTCtime(UTCDateTime(dict['Peak F-Stat Time (UTC)']))
+            if dict['Peak F-Stat Time (UTC)'] is not None:
+                self.set_peakF_UTCtime(UTCDateTime(dict['Peak F-Stat Time (UTC)']))
+            else:
+                self.set_peakF_UTCtime(UTCDateTime("9999-01-02T00:00:00"))
         if 'Time (UTC)' in dict:
-            self.set_peakF_UTCtime(UTCDateTime(dict['Time (UTC)']))
+            if dict['Time (UTC)'] is not None:
+                self.set_peakF_UTCtime(UTCDateTime(dict['Time (UTC)']))
+            else:
+                self.set_peakF_UTCtime(UTCDateTime("9999-01-02T00:00:00"))
         if 'F Statistic' in dict:   # This is here for legacy data
             self.set_peakF_value(dict['F Statistic'])
         if 'F Stat.' in dict:
@@ -568,26 +578,29 @@ def joint_pdf_wrapper(args):
 def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, resol=100):
     # define seprate lists of infrasound and seismic only detections
     infr_det_list = [det for det in det_list if type(det) == InfrasoundDetection]
+    infr_det_list2 = [det for det in infr_det_list if det.peakF_UTCtime < UTCDateTime("9999-01-01T00:00:00")]
+
     seis_det_list = [det for det in det_list if type(det) == SeismicDetection]
 
-    infr_cnt = len(infr_det_list)
+    infr2_cnt = len(infr_det_list2)
     seis_cnt = len(seis_det_list)
 
-    if 3**infr_cnt > resol:
+    if 3**infr2_cnt > resol:
         def temp(la, lo):
-            infr_rngs = np.array([sph_proj.inv(det.longitude, det.latitude, lo, la)[2] / 1000.0 for det in infr_det_list])
-            infr_t1 = max(np.array([det.peakF_UTCtime - np.timedelta64(int(infr_rngs[n] / 0.2 * 1e3), 'ms') for n, det in enumerate(infr_det_list)]))
-            infr_t2 = min(np.array([det.peakF_UTCtime - np.timedelta64(int(infr_rngs[n] / 0.4 * 1e3), 'ms') for n, det in enumerate(infr_det_list)]))
+            infr_rngs = np.array([sph_proj.inv(det.longitude, det.latitude, lo, la)[2] / 1000.0 for det in infr_det_list2])
+            infr_t1 = max(np.array([det.peakF_UTCtime - np.timedelta64(int(infr_rngs[n] / 0.2 * 1e3), 'ms') for n, det in enumerate(infr_det_list2)]))
+            infr_t2 = min(np.array([det.peakF_UTCtime - np.timedelta64(int(infr_rngs[n] / 0.4 * 1e3), 'ms') for n, det in enumerate(infr_det_list2)]))
 
             if seis_cnt > 0:
                 seis_rngs = np.array([sph_proj.inv(det.longitude, det.latitude, lo, la)[2] / 1000.0 for det in seis_det_list])
                 seis_t1 = max(np.array([det.peakF_UTCtime - np.timedelta64(int(seis_rngs[n] / 2.0 * 1e3), 'ms') for n, det in enumerate(seis_det_list)]))
                 seis_t2 = min(np.array([det.peakF_UTCtime - np.timedelta64(int(seis_rngs[n] / 8.0 * 1e3), 'ms') for n, det in enumerate(seis_det_list)]))
-
-                t1 = max(infr_t1, seis_t1)
-                t2 = min(infr_t2, seis_t2)
             else:
-                t1, t2 = infr_t1, infr_t2
+                seis_t1 = np.datetime64("0000-01-01T00:00:00")
+                seis_t2 = np.datetime64("9999-01-01T00:00:00")
+
+            t1 = max(infr_t1, seis_t1)
+            t2 = min(infr_t2, seis_t2)
 
             t_vals = np.array([t1 + (t2 - t1) / (resol - 1) * m for m in range(resol)])
             pdf_vals = joint_pdf(np.array([la] * resol),np.array([lo] * resol), t_vals, det_list, path_geo_model=path_geo_model)
@@ -600,125 +613,126 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
             return np.array([temp(la, lon[n]) for n, la in enumerate(lat)])
 
     else:
-        # pull out the latitudes and longitudes for infrasonic and seismic detections
-        infr_lats = np.array([det.latitude for det in infr_det_list])
-        infr_lons = np.array([det.longitude for det in infr_det_list])
+        # compute azimuthal distribution for all infrasound detections        
+        az_pdf = np.array([det.az_pdf(lat, lon, path_geo_model) if det.back_azimuth is not None else np.ones_like(lat) for det in infr_det_list]).prod(axis=0)
 
-        seis_lats = np.array([det.latitude for det in seis_det_list])
-        seis_lons = np.array([det.longitude for det in seis_det_list])
+        if infr2_cnt > 0:
+            # pull out the latitudes and longitudes for infrasonic and seismic detections
+            infr_lats = np.array([det.latitude for det in infr_det_list2])
+            infr_lons = np.array([det.longitude for det in infr_det_list2])
+            infr_tms = np.array([(det.peakF_UTCtime - det_list[0].peakF_UTCtime).astype('m8[ms]').astype(float) * 1.0e-3 for det in infr_det_list2])
 
-        # compute the relative travel times and source-receiver ranges for infrasonic and seismic detections
-        infr_tms = np.array([(det.peakF_UTCtime - det_list[0].peakF_UTCtime).astype('m8[ms]').astype(float) * 1.0e-3 for det in infr_det_list])
-        seis_tms = np.array([(det.peakF_UTCtime - det_list[0].peakF_UTCtime).astype('m8[ms]').astype(float) * 1.0e-3 for det in seis_det_list])
+            seis_lats = np.array([det.latitude for det in seis_det_list])
+            seis_lons = np.array([det.longitude for det in seis_det_list])
+            seis_tms = np.array([(det.peakF_UTCtime - det_list[0].peakF_UTCtime).astype('m8[ms]').astype(float) * 1.0e-3 for det in seis_det_list])
 
-        # compute azimuthal distribution for all infrasound detections
-        az_pdf = np.array([det.az_pdf(lat, lon, path_geo_model) for det in infr_det_list]).prod(axis=0)
+            # Compute the index sequences for infrasound likelihoods
+            sequences = []
+            for seq in itertools.product(list(range(3)), repeat=infr2_cnt):
+                sequences = sequences + [list(seq)]
+            sequences = np.array(sequences, dtype=int)
 
-        # Compute the index sequences for infrasound likelihoods
-        sequences = []
-        for seq in itertools.product(list(range(3)), repeat=infr_cnt):
-            sequences = sequences + [list(seq)]
-        sequences = np.array(sequences, dtype=int)
+            if len(np.atleast_1d(lat)) == 1:
+                infr_rngs = sph_proj.inv(infr_lons, infr_lats, np.array([lon] * infr2_cnt), np.array([lat] * infr2_cnt), radians=False)[2] / 1000.0
+                seis_rngs = sph_proj.inv(seis_lons, seis_lats, np.array([lon] * seis_cnt), np.array([lat] * seis_cnt), radians=False)[2] / 1000.0
+                if path_geo_model:
+                    mns = np.empty((infr2_cnt, 3))
+                    vrs = np.empty((infr2_cnt, 3))
+                    wts = np.empty((infr2_cnt, 3))
 
-        if len(np.atleast_1d(lat)) == 1:
-            infr_rngs = sph_proj.inv(infr_lons, infr_lats, np.array([lon] * infr_cnt), np.array([lat] * infr_cnt), radians=False)[2] / 1000.0
-            seis_rngs = sph_proj.inv(seis_lons, seis_lats, np.array([lon] * seis_cnt), np.array([lat] * seis_cnt), radians=False)[2] / 1000.0
-            if path_geo_model:
-                mns = np.empty((infr_cnt, 3))
-                vrs = np.empty((infr_cnt, 3))
-                wts = np.empty((infr_cnt, 3))
+                    for n, (rng_n, az_n) in enumerate(zip(infr_rngs, np.array([det.__back_az for det in infr_det_list]))):
+                        az_bin = infrasound.find_azimuth_bin(az_n - 180.0)
 
-                for n, (rng_n, az_n) in enumerate(zip(infr_rngs, np.array([det.__back_az for det in infr_det_list]))):
-                    az_bin = infrasound.find_azimuth_bin(az_n - 180.0)
+                        mns[n] = np.array([path_geo_model.rcel_mns[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
+                        vrs[n] = np.array([path_geo_model.rcel_vrs[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
+                        wts[n] = np.array([path_geo_model.rcel_wts[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
+                else:
+                    mns = np.array([infrasound.canon_rcel_mns] * infr2_cnt)
+                    vrs = np.array([infrasound.canon_rcel_vrs] * infr2_cnt)
+                    wts = np.array([infrasound.canon_rcel_wts] * infr2_cnt)
+                temp1 = np.array([1.0 / det.sigma()**2 for det in seis_det_list])
+                temp2 = np.array([seis_tms[n] - det.trvl_tm(seis_rngs[n]) for n, det in enumerate(seis_det_list)])
 
-                    mns[n] = np.array([path_geo_model.rcel_mns[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
-                    vrs[n] = np.array([path_geo_model.rcel_vrs[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
-                    wts[n] = np.array([path_geo_model.rcel_wts[az_bin][m](min(rng_n, path_geo_model.rng_max)) for m in range(3)])
+                a_seis = temp1.sum()
+                b_seis = (temp2 * temp1).sum()
+                c_seis = (temp2**2 * temp1).sum()
+
+                rng_cel_pdf = 0.0
+                for seq in sequences:
+                    a, b, c, N = a_seis, b_seis, c_seis, 1.0
+
+                    for n, ni in enumerate(zip(seq)):
+                        dt = infr_tms[n] - infr_rngs[n] * mns[n][ni]
+                        sig = infr_rngs[n] * vrs[n][ni]
+
+                        a += 1.0 / sig**2
+                        b += dt / sig**2
+                        c += (dt / sig)**2
+                        N *= wts[n][ni] / sig
+
+                    rng_cel_pdf += N / np.sqrt(a) * np.exp(-1.0 / 2.0 * (c - b**2 / a))
+
+                rng_cel_pdf /= np.power(2.0 * np.pi, (seis_cnt + infr2_cnt - 1.0) / 2.0)
+                prog_bar.increment(n=prog_step)
             else:
-                mns = np.array([infrasound.canon_rcel_mns] * infr_cnt)
-                vrs = np.array([infrasound.canon_rcel_vrs] * infr_cnt)
-                wts = np.array([infrasound.canon_rcel_wts] * infr_cnt)
-            temp1 = np.array([1.0 / det.sigma()**2 for det in seis_det_list])
-            temp2 = np.array([seis_tms[n] - det.trvl_tm(seis_rngs[n]) for n, det in enumerate(seis_det_list)])
+                infr_rngs = sph_proj.inv(np.array([infr_lons] * len(lon)), np.array([infr_lats] * len(lat)), np.array([lon] * infr2_cnt).T, np.array([lat] * infr2_cnt).T, radians=False)[2].reshape(len(lat), infr2_cnt) / 1000.0
+                seis_rngs = sph_proj.inv(np.array([seis_lons] * len(lon)), np.array([seis_lats] * len(lat)), np.array([lon] * seis_cnt).T, np.array([lat] * seis_cnt).T, radians=False)[2].reshape(len(lat), seis_cnt) / 1000.0
 
-            a_seis = temp1.sum()
-            b_seis = (temp2 * temp1).sum()
-            c_seis = (temp2**2 * temp1).sum()
+                if path_geo_model:
+                    mns = np.empty((len(lat), infr2_cnt, 3))
+                    vrs = np.empty((len(lat), infr2_cnt, 3))
+                    wts = np.empty((len(lat), infr2_cnt, 3))
 
-            rng_cel_pdf = 0.0
-            for seq in sequences:
-                a, b, c, N = a_seis, b_seis, c_seis, 1.0
+                    infr_azs = np.array([np.array([det.back_azimuth for det in det_list if type(det) == InfrasoundDetection])] * len(lat))
+                    az_bins = infrasound.find_azimuth_bin(infr_azs.flatten() - 180.0, path_geo_model.az_bin_cnt)
+                    rngs_eval = infr_rngs.flatten()
+                    rngs_eval[rngs_eval > path_geo_model.rng_max] = path_geo_model.rng_max
 
-                for n, ni in enumerate(zip(seq)):
-                    dt = infr_tms[n] - infr_rngs[n] * mns[n][ni]
-                    sig = infr_rngs[n] * vrs[n][ni]
+                    for k in range(3):
+                        mns_temp = np.empty_like(az_bins, dtype=float)
+                        vrs_temp = np.empty_like(az_bins, dtype=float)
+                        wts_temp = np.empty_like(az_bins, dtype=float)
 
-                    a += 1.0 / sig**2
-                    b += dt / sig**2
-                    c += (dt / sig)**2
-                    N *= wts[n][ni] / sig
+                        for n_az in range(path_geo_model.az_bin_cnt):
+                            if np.any(az_bins == n_az):
+                                mns_temp[az_bins == n_az] = path_geo_model.rcel_mns[n_az][k](rngs_eval[az_bins==n_az])
+                                vrs_temp[az_bins == n_az] = path_geo_model.rcel_vrs[n_az][k](rngs_eval[az_bins==n_az])
+                                wts_temp[az_bins == n_az] = path_geo_model.rcel_wts[n_az][k](rngs_eval[az_bins==n_az])
 
-                rng_cel_pdf += N / np.sqrt(a) * np.exp(-1.0 / 2.0 * (c - b**2 / a))
+                        mns[:, :, k] = mns_temp.reshape(len(lat), infr2_cnt)
+                        vrs[:, :, k] = vrs_temp.reshape(len(lat), infr2_cnt)
+                        wts[:, :, k] = wts_temp.reshape(len(lat), infr2_cnt)
 
-            rng_cel_pdf /= np.power(2.0 * np.pi, (seis_cnt + infr_cnt - 1.0) / 2.0)
-            prog_bar.increment(n=prog_step)
+                else:
+                    mns = np.array([np.array([infrasound.canon_rcel_mns] * infr2_cnt)] * len(lat))
+                    vrs = np.array([np.array([infrasound.canon_rcel_vrs] * infr2_cnt)] * len(lat))
+                    wts = np.array([np.array([infrasound.canon_rcel_wts] * infr2_cnt)] * len(lat))
+
+                temp1 = np.array([[1.0 / det.sigma()**2] * len(lat) for det in seis_det_list])
+                temp2 = np.array([seis_tms[n] - det.trvl_tm(seis_rngs[:, n]) for n, det in enumerate(seis_det_list)])
+
+                a_seis = temp1.sum(axis=0)
+                b_seis = (temp2 * temp1).sum(axis=0)
+                c_seis = (temp2**2 * temp1).sum(axis=0)
+
+                rng_cel_pdf = 0.0
+                for seq in sequences:
+                    a, b, c, N = a_seis, b_seis, c_seis, 1.0
+
+                    for n in range(infr2_cnt):
+                        dt = infr_tms[n] - infr_rngs[:, n] * mns[:, n, seq[n]]
+                        sig = infr_rngs[:, n] * vrs[:, n, seq[n]]
+
+                        a = a + 1.0 / sig**2
+                        b = b + dt / sig**2
+                        c = c + (dt / sig)**2
+                        N = N * wts[:, n, seq[n]] / sig
+
+                    rng_cel_pdf += N / np.sqrt(a) * np.exp(-1.0 / 2.0 * (c - b**2 / a))
+                rng_cel_pdf /= np.power(2.0 * np.pi, (seis_cnt + infr2_cnt - 1.0) / 2.0)
+                prog_bar.increment(n=prog_step)
         else:
-            infr_rngs = sph_proj.inv(np.array([infr_lons] * len(lon)), np.array([infr_lats] * len(lat)), np.array([lon] * infr_cnt).T, np.array([lat] * infr_cnt).T, radians=False)[2].reshape(len(lat), infr_cnt) / 1000.0
-            seis_rngs = sph_proj.inv(np.array([seis_lons] * len(lon)), np.array([seis_lats] * len(lat)), np.array([lon] * seis_cnt).T, np.array([lat] * seis_cnt).T, radians=False)[2].reshape(len(lat), seis_cnt) / 1000.0
-
-            if path_geo_model:
-                mns = np.empty((len(lat), infr_cnt, 3))
-                vrs = np.empty((len(lat), infr_cnt, 3))
-                wts = np.empty((len(lat), infr_cnt, 3))
-
-                infr_azs = np.array([np.array([det.back_azimuth for det in det_list if type(det) == InfrasoundDetection])] * len(lat))
-                az_bins = infrasound.find_azimuth_bin(infr_azs.flatten() - 180.0, path_geo_model.az_bin_cnt)
-                rngs_eval = infr_rngs.flatten()
-                rngs_eval[rngs_eval > path_geo_model.rng_max] = path_geo_model.rng_max
-
-                for k in range(3):
-                    mns_temp = np.empty_like(az_bins, dtype=float)
-                    vrs_temp = np.empty_like(az_bins, dtype=float)
-                    wts_temp = np.empty_like(az_bins, dtype=float)
-
-                    for n_az in range(path_geo_model.az_bin_cnt):
-                        if np.any(az_bins == n_az):
-                            mns_temp[az_bins == n_az] = path_geo_model.rcel_mns[n_az][k](rngs_eval[az_bins==n_az])
-                            vrs_temp[az_bins == n_az] = path_geo_model.rcel_vrs[n_az][k](rngs_eval[az_bins==n_az])
-                            wts_temp[az_bins == n_az] = path_geo_model.rcel_wts[n_az][k](rngs_eval[az_bins==n_az])
-
-                    mns[:, :, k] = mns_temp.reshape(len(lat), infr_cnt)
-                    vrs[:, :, k] = vrs_temp.reshape(len(lat), infr_cnt)
-                    wts[:, :, k] = wts_temp.reshape(len(lat), infr_cnt)
-
-            else:
-                mns = np.array([np.array([infrasound.canon_rcel_mns] * infr_cnt)] * len(lat))
-                vrs = np.array([np.array([infrasound.canon_rcel_vrs] * infr_cnt)] * len(lat))
-                wts = np.array([np.array([infrasound.canon_rcel_wts] * infr_cnt)] * len(lat))
-
-            temp1 = np.array([[1.0 / det.sigma()**2] * len(lat) for det in seis_det_list])
-            temp2 = np.array([seis_tms[n] - det.trvl_tm(seis_rngs[:, n]) for n, det in enumerate(seis_det_list)])
-
-            a_seis = temp1.sum(axis=0)
-            b_seis = (temp2 * temp1).sum(axis=0)
-            c_seis = (temp2**2 * temp1).sum(axis=0)
-
-            rng_cel_pdf = 0.0
-            for seq in sequences:
-                a, b, c, N = a_seis, b_seis, c_seis, 1.0
-
-                for n in range(infr_cnt):
-                    dt = infr_tms[n] - infr_rngs[:, n] * mns[:, n, seq[n]]
-                    sig = infr_rngs[:, n] * vrs[:, n, seq[n]]
-
-                    a = a + 1.0 / sig**2
-                    b = b + dt / sig**2
-                    c = c + (dt / sig)**2
-                    N = N * wts[:, n, seq[n]] / sig
-                #embed()
-                rng_cel_pdf += N / np.sqrt(a) * np.exp(-1.0 / 2.0 * (c - b**2 / a))
-            rng_cel_pdf /= np.power(2.0 * np.pi, (seis_cnt + infr_cnt - 1.0) / 2.0)
-            prog_bar.increment(n=prog_step)
+            rng_cel_pdf = 1.0
 
         return az_pdf * rng_cel_pdf
 

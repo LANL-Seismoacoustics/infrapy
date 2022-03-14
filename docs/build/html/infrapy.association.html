@@ -21,11 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -85,10 +85,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">Infraview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -176,7 +177,7 @@
 <span id="hjl"></span><h2>HJL<a class="headerlink" href="#module-infrapy.association.hjl" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="infrapy.association.hjl.build_distance_matrix">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">build_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">bm_width=10.0</em>, <em class="sig-param">rng_max=10005.97260168349</em>, <em class="sig-param">rad_min=100.0</em>, <em class="sig-param">rad_max=1000.0</em>, <em class="sig-param">resol=180</em>, <em class="sig-param">pool=None</em>, <em class="sig-param">progress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.build_distance_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">build_distance_matrix</code><span class="sig-paren">(</span><em>det_list</em>, <em>bm_width=10.0</em>, <em>rng_max=10005.97260168349</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em>, <em>resol=180</em>, <em>pool=None</em>, <em>progress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.build_distance_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the joint-likelihood for all pairs of detections to define the distance matrix</p>
 <p>Computes the joint-likelihood value for each unique pair of detections in a provided list and
 uses a negative-log-joint-likelihood to convert to non-Euclidean distance for clustering analysis</p>
@@ -205,7 +206,7 @@ dist_matrix : 2darray</p>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.cluster">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">cluster</code><span class="sig-paren">(</span><em class="sig-param">distance_matrix</em>, <em class="sig-param">threshold</em>, <em class="sig-param">linkage_method='weighted'</em>, <em class="sig-param">show_result=False</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">den_label_size=9</em>, <em class="sig-param">mat_label_size=7</em>, <em class="sig-param">trim_indices=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.cluster" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">cluster</code><span class="sig-paren">(</span><em>distance_matrix</em>, <em>threshold</em>, <em>linkage_method='weighted'</em>, <em>show_result=False</em>, <em>file_id=None</em>, <em>den_label_size=9</em>, <em>mat_label_size=7</em>, <em>trim_indices=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.cluster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the clustering solution for a distance matrix and threshold</p>
 <p>Computes the linkages for a distance matrix using SciPy’s hierarchical (agglomerative) clustering
 methods and returns the event labels for the original detection list</p>
@@ -242,7 +243,7 @@ links : scipy.cluster.hierarchy.linkage</p>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.compute_assoc_pair">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">compute_assoc_pair</code><span class="sig-paren">(</span><em class="sig-param">det1</em>, <em class="sig-param">det2</em>, <em class="sig-param">bm_width=10.0</em>, <em class="sig-param">rng_max=10005.97260168349</em>, <em class="sig-param">rad_min=100.0</em>, <em class="sig-param">rad_max=1000.0</em>, <em class="sig-param">resol=180</em>, <em class="sig-param">prog_step=0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.compute_assoc_pair" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">compute_assoc_pair</code><span class="sig-paren">(</span><em>det1</em>, <em>det2</em>, <em>bm_width=10.0</em>, <em>rng_max=10005.97260168349</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em>, <em>resol=180</em>, <em>prog_step=0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.compute_assoc_pair" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the joint-likelihiood for a pair of detections</p>
 <p>Projects finite width beams from each of the detecting arrays and looks for intersections
 of the primary (center) and secondary (edge) lines to define the integration region
@@ -274,12 +275,17 @@ jntlklhd : float</p>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.compute_assoc_pair_wrapper">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">compute_assoc_pair_wrapper</code><span class="sig-paren">(</span><em class="sig-param">args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.compute_assoc_pair_wrapper" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">compute_assoc_pair_wrapper</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.compute_assoc_pair_wrapper" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="infrapy.association.hjl.id_events">
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">id_events</code><span class="sig-paren">(</span><em>det_list</em>, <em>threshold</em>, <em>starttime=None</em>, <em>endtime=None</em>, <em>dist_max=10.0</em>, <em>bm_width=10.0</em>, <em>rng_max=2500.0</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em>, <em>resol=180</em>, <em>linkage_method='weighted'</em>, <em>trimming_thresh=3.8</em>, <em>cluster_det_population=3</em>, <em>cluster_array_population=2</em>, <em>prg_bar=True</em>, <em>pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.id_events" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.run">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">det_list</em>, <em class="sig-param">threshold</em>, <em class="sig-param">dist_max=10.0</em>, <em class="sig-param">bm_width=10.0</em>, <em class="sig-param">rng_max=10005.97260168349</em>, <em class="sig-param">rad_min=100.0</em>, <em class="sig-param">rad_max=1000.0</em>, <em class="sig-param">resol=180</em>, <em class="sig-param">show_result=None</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">linkage_method='weighted'</em>, <em class="sig-param">trimming_thresh=None</em>, <em class="sig-param">trim_thresh_scalar=1.0</em>, <em class="sig-param">pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.run" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">run</code><span class="sig-paren">(</span><em>det_list</em>, <em>threshold</em>, <em>dist_max=10.0</em>, <em>bm_width=10.0</em>, <em>rng_max=10005.97260168349</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em>, <em>resol=180</em>, <em>show_result=None</em>, <em>file_id=None</em>, <em>linkage_method='weighted'</em>, <em>trimming_thresh=None</em>, <em>trim_thresh_scalar=1.0</em>, <em>prg_bar=False</em>, <em>pool=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the Hierarchical Joint-Likelihood (HJL) association analysis</p>
 <p>Runs the clustering analysis on a list of detecctions and returns the
 membership labels and sorted distance matrix for event identification</p>
@@ -287,6 +293,8 @@ membership labels and sorted distance matrix for event identification</p>
 <dt>det_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></span></dt><dd><p>List of detections (see infrapy.propagation.likelihoods)</p>
 </dd>
 <dt>threshold<span class="classifier">float</span></dt><dd><p>Threshold value defining linkage cutoff</p>
+</dd>
+<dt>dist_max: float</dt><dd><p>Maximum value allowed in distance matrix</p>
 </dd>
 <dt>bm_width<span class="classifier">float</span></dt><dd><p>Width of the projected beam [degrees]</p>
 </dd>
@@ -322,7 +330,7 @@ labels : <code class="xref py py-obj docutils literal notranslate"><span class="
 
 <dl class="function">
 <dt id="infrapy.association.hjl.set_region">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">set_region</code><span class="sig-paren">(</span><em class="sig-param">det1</em>, <em class="sig-param">det2</em>, <em class="sig-param">bm_width=10.0</em>, <em class="sig-param">rng_max=10005.97260168349</em>, <em class="sig-param">rad_min=100.0</em>, <em class="sig-param">rad_max=1000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.set_region" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">set_region</code><span class="sig-paren">(</span><em>det1</em>, <em>det2</em>, <em>bm_width=10.0</em>, <em>rng_max=10005.97260168349</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.set_region" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the integration region for computation of the joint-likelihood for a pair of detections</p>
 <p>Projects finite width beams from each of the detecting arrays and looks for intersections
 of the primary (center) and secondary (edge) lines to define the integration region
@@ -356,7 +364,7 @@ Successs : boolean</p>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.summarize_clusters">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">summarize_clusters</code><span class="sig-paren">(</span><em class="sig-param">labels</em>, <em class="sig-param">distance_matrix</em>, <em class="sig-param">population_min=3</em>, <em class="sig-param">show_result=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.summarize_clusters" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">summarize_clusters</code><span class="sig-paren">(</span><em>labels</em>, <em>distance_matrix</em>, <em>population_min=3</em>, <em>show_result=False</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.summarize_clusters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints summary of cluster association solution to screen</p>
 <p>Searches through labels to identify clusters with sufficient
 membership to declare events and summarizes cluster quality</p>
@@ -372,7 +380,7 @@ membership to declare events and summarizes cluster quality</p>
 
 <dl class="function">
 <dt id="infrapy.association.hjl.trim_clusters">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">trim_clusters</code><span class="sig-paren">(</span><em class="sig-param">labels</em>, <em class="sig-param">distance_matrix</em>, <em class="sig-param">population_min=3</em>, <em class="sig-param">ratio_thresh=3.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.trim_clusters" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">trim_clusters</code><span class="sig-paren">(</span><em>labels</em>, <em>distance_matrix</em>, <em>population_min=3</em>, <em>ratio_thresh=3.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.trim_clusters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trims linkages in poorly shaped clusters</p>
 <p>Identifies poorly shaped clusters by the ratio of their mean inter-element
 distances and radius (maximum inter-element distance) and returns indices
@@ -396,7 +404,7 @@ trim_indices : <code class="xref py py-obj docutils literal notranslate"><span c
 
 <dl class="function">
 <dt id="infrapy.association.hjl.view_distance_matrix">
-<code class="sig-prename descclassname">infrapy.association.hjl.</code><code class="sig-name descname">view_distance_matrix</code><span class="sig-paren">(</span><em class="sig-param">distance_matrix</em>, <em class="sig-param">file_id=None</em>, <em class="sig-param">ordering=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.view_distance_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">infrapy.association.hjl.</code><code class="descname">view_distance_matrix</code><span class="sig-paren">(</span><em>distance_matrix</em>, <em>file_id=None</em>, <em>ordering=None</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.association.hjl.view_distance_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>View distance matrix used for clustering analysis</p>
 <dl class="simple">
 <dt>dist_matrix<span class="classifier">2darray</span></dt><dd><p>Distance matrix describing joint-likelihood separations for all pairs</p>

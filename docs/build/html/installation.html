@@ -21,11 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quickstart" href="quickstart.html" />
-    <link rel="prev" title="Overview" href="userguide.html" /> 
+    <link rel="prev" title="Authorship" href="authorship.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,10 +85,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="infraview.html">Infraview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
@@ -191,22 +192,39 @@ named infrapy_env.yml), and run:</p>
 </div>
 <div class="section" id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
-<p>Once the installation is complete, you can test some things by first activating the environment with:</p>
+<p>Once the installation is complete, you can test that the InfraPy methods are set up and accessible by first activating the environment with:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; conda activate infrapy_env
 </pre></div>
 </div>
-<p>Then navigate to the /example directory located in the infrapy base directory, and run the test scripts via something like:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; python test_beamforming.py
+<p>The InfraPy command line methods have usage summarizes that can be displayed via the <code class="code docutils literal notranslate"><span class="pre">--help</span></code> option.  On the command line, run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>infrapy --help
 </pre></div>
 </div>
-<p>If infrapy was successfully installed, all of the test scripts should run and finish without any errors.</p>
-</div>
-<div class="section" id="running-the-infraview-gui-application">
-<h2>Running the InfraView GUI Application<a class="headerlink" href="#running-the-infraview-gui-application" title="Permalink to this headline">¶</a></h2>
-<p>Once installation is complete, and the new environment is activated, you can run the GUI with the command:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; infraview
+<p>The usage information should be displayed:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Usage: infrapy [OPTIONS] COMMAND [ARGS]...
+
+  infrapy - Python-based Infrasound Data Analysis Toolkit
+
+  Command line interface (CLI) for running and visualizing infrasound analysis
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  arrivals2json     Convert infraGA/GeoAc arrivals to detection file
+  plot_dets         Plot detections on a map
+  plot_fd           Visualize detections from beamforming results
+  plot_fk           Visualize beamforming (fk) results
+  plot_loc          Plot location estimate on a map
+  plot_origin_time  Visualize origin time estimate
+  run_assoc         Associate detections into events
+  run_fd            Identify detections from beamforming results
+  run_fk            Run beamforming methods on waveform data
+  run_fkd           Run beamforming and detection methods in sequence
+  run_loc           Estimate source locations and times for events
 </pre></div>
 </div>
+<p>Each of the individual methods have usage information (e.g., <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">run_fk</span> <span class="pre">--help</span></code>) that will be discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a></p>
 </div>
 </div>
 
@@ -221,7 +239,7 @@ named infrapy_env.yml), and run:</p>
         <a href="quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="userguide.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="authorship.html" class="btn btn-neutral float-left" title="Authorship" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
