@@ -10,7 +10,7 @@ from scipy.integrate import quad
 def find_confidence(func, lims, conf_aim):
     if conf_aim > 1.0:
         print("WARNING - find_confidence cannot use conf > 1.0")
-        return [lim0, lim1]
+        return lims
 
     def conf_func(x, thresh):
         val = func(x)

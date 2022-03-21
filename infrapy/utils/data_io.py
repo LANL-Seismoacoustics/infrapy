@@ -9,8 +9,8 @@ import json
 import numpy as np
 
 from obspy.clients.fdsn import Client
-from obspy.core import read as obspy_read
-from obspy import UTCDateTime
+from obspy import read as obspy_read
+from obspy import UTCDateTime, read_inventory
 
 from ..propagation import likelihoods as lklhds
 
@@ -44,18 +44,17 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
     elif fdsn_opt is not None:
         print('\n' + "Loading data from FDSN (" + fdsn_opt + ")...")
         client = Client(fdsn_opt)
-        stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime))
-        inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
+        stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime), attach_response = True)
+        stream.remove_response()  
 
+        inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
         latlon = []
         for network in inventory:
             for station in network:
                 latlon = latlon + [[station.latitude, station.longitude]]
 
-        return stream, latlon
-
     elif db_opt is not None:
-        print('\n' + "Loading data from database (methods not set up yet, so returning 'None's)...")
+        print('\n' + "Loading data from database (methods not set up yet, so returning None's)...")
         stream, latlon = wvfrms_from_db(db_opt, network, station, location, channel, starttime, endtime)
 
     else:
@@ -64,6 +63,7 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
         stream, latlon = None, None
 
     return stream, latlon
+
 
 def set_det_list(local_detect_label, merge=True):
 
@@ -109,6 +109,7 @@ def set_det_list(local_detect_label, merge=True):
 
     return det_list
 
+
 ##########################
 ##     Data Writing     ##
 ##        Methods       ##
@@ -146,50 +147,50 @@ def write_stream(stream, latlon):
         tr.write(label + ".sac", format='SAC') 
 
 
-def write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
-    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step):
-        file_out = open(local_fk_label + ".fk_meta.txt", 'w')
+def fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step):
+    header = "InfraPy Beamforming (fk) Results" + '\n'
+    header = header + '\n' + "Data summary:" + '\n'
+    for tr in stream:
+        header = header + "    " + tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
 
-        print("InfraPy Beamforming (fk) Analysis", file=file_out)
-        print("---------------------------------", file=file_out)
+    header = header + '\n' + "  channel_cnt: " + str(len(stream)) + '\n'
 
-        print('\n' + "Data summary:", file=file_out)
-        for tr in stream:
-            print("  " + tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime), file=file_out)
+    if latlon:
+        mean_lat = latlon[0][0]
+        mean_lon = latlon[0][1]
+    else:
+        mean_lat = stream[0].stats.sac['stla']
+        mean_lon = stream[0].stats.sac['stlo']
 
-        print('\n' + "  channel_cnt: " + str(len(stream)), file=file_out)
-        if latlon:
-            mean_lat = latlon[0][0]
-            mean_lon = latlon[0][1]
-        else:
-            mean_lat = stream[0].stats.sac['stla']
-            mean_lon = stream[0].stats.sac['stlo']
+    header = header + "  t0: " + str(stream[0].stats.starttime) + '\n'
+    header = header + "  latitude: " + str(mean_lat) + '\n'
+    header = header + "  longitude: " + str(mean_lon) + '\n'
 
-        print("  latitude: " + str(mean_lat), file=file_out)        
-        print("  longitude: " + str(mean_lon), file=file_out)        
+    header = header + '\n' + "Algorithm parameters:" + '\n'
+    header = header + "  freq_min: " + str(freq_min) + '\n'
+    header = header + "  freq_max: " + str(freq_max) + '\n'
+    header = header + "  back_az_min: " + str(back_az_min) + '\n'
+    header = header + "  back_az_max: " + str(back_az_max) + '\n'
+    header = header + "  back_az_step: " + str(back_az_step) + '\n'
+    header = header + "  trace_vel_min: " + str(trace_vel_min) + '\n'
+    header = header + "  trace_vel_max: " + str(trace_vel_max) + '\n'
+    header = header + "  trace_vel_step: " + str(trace_vel_step) + '\n'
+    header = header + "  method: " + str(method) + '\n'
+    header = header + "  signal_start: " + str(signal_start) + '\n'
+    header = header + "  signal_end: " + str(signal_end) + '\n'
+    if method == "GLS":
+        header = header + "  noise_start: " + str(noise_start) + '\n'
+        header = header + "  noise_end: " + str(noise_end) + '\n'
+    header = header + "  window_len: " + str(window_len) + '\n'
+    header = header + "  sub_window_len: " + str(sub_window_len) + '\n'
+    header = header + "  window_step: " + str(window_step) + '\n'
 
-        print('\n' + "Algorithm parameters:", file=file_out)
-        print("  freq_min: " + str(freq_min), file=file_out)
-        print("  freq_max: " + str(freq_max), file=file_out)
-        print("  back_az_min: " + str(back_az_min), file=file_out)
-        print("  back_az_max: " + str(back_az_max), file=file_out)
-        print("  back_az_step: " + str(back_az_step), file=file_out)
-        print("  trace_vel_min: " + str(trace_vel_min), file=file_out)
-        print("  trace_vel_max: " + str(trace_vel_max), file=file_out)
-        print("  trace_vel_step: " + str(trace_vel_step), file=file_out)
-        print("  method: " + str(method), file=file_out)
-        print("  signal_start: " + str(signal_start), file=file_out)
-        print("  signal_end: " + str(signal_end), file=file_out)
-        if method == "GLS":
-            print("  noise_start: " + str(noise_start), file=file_out)
-            print("  noise_end: " + str(noise_end), file=file_out)
-        print("  window_len: " + str(window_len), file=file_out)
-        print("  sub_window_len: " + str(sub_window_len), file=file_out)
-        print("  window_step: " + str(window_step), file=file_out)
-        file_out.close()
+    header = header + '\n' + "Time (rel t0) [s]      Back Az [deg]	           Tr. Velocity [m/s]       F-stat"
+
+    return header 
 
 
-def _define_deteection(det_info, array_loc, channel_cnt, freq_band, note=None):
+def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
     temp = lklhds.InfrasoundDetection()
     temp.latitude = float(array_loc[0])
     temp.longitude = float(array_loc[1])
@@ -205,6 +206,7 @@ def _define_deteection(det_info, array_loc, channel_cnt, freq_band, note=None):
     temp.note = note
 
     return temp
+
 
 def write_events(events, event_qls, det_list, local_event_label):
     for ev_n, ev in enumerate(events):

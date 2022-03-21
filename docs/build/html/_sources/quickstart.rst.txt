@@ -8,7 +8,7 @@ Quickstart
 Command Line Interface (CLI) 
 ****************************
 
-Most of InfraPy's analysis methods are accessible through a command line interface (CLI) with parameters specified either via command line flags or a configuation file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via :code:`obspy.core.read`) or downloaded from FDSN clients via :code:`obspy.clients.fdsn`.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.
+Most of InfraPy's analysis methods are accessible through a command line interface (CLI) with parameters specified either via command line flags or a configuration file.  Waveform data can be ingested from local files (eg., SAC or similar format that can be ingested via :code:`obspy.core.read`) or downloaded from FDSN clients via :code:`obspy.clients.fdsn`.  Array- and network-level analyses can be performed from the command line enabling a full pipeline of analysis from beamforming/detection to event identification and localization.  Visualization methods are also included to quickly interrogate analysis results.  The Quickstart summarized here steps through these various CLI methods and demonstrates the usage of InfraPy from the command line.
 
 --------------------
 Array-Level Analyses
@@ -66,17 +66,49 @@ Array-Level Analyses
 
         Writing results to specified output...
 
-- Once completed, this analysis produces three output files: 
+- Once completed, this analysis produces an output file containing the beamforming results, :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat`, that has header information summarizing the analysis parameter settings.
 
-+---------------------------------------------------+-----------------------------------------------+
-| YJ.BRP4_2012.04.09_18.00.00-18.19.59.fk_meta.txt  | Meta-data summarizing the fk calculations     |
-+---------------------------------------------------+-----------------------------------------------+
-| YJ.BRP4_2012.04.09_18.00.00-18.19.59.fk_times.npy | Analysis window times                         |
-+---------------------------------------------------+-----------------------------------------------+
-| YJ.BRP4_2012.04.09_18.00.00-18.19.59.fk_peaks.npy | Peak info (Fisher stat, direction of arrival) |
-+---------------------------------------------------+-----------------------------------------------+
+    .. code-block:: none 
 
-    The naming convention of these files uses the network, station, and time associated with the waveform data.  The two .npy files are :code:`numpy` binary files containing the analysis information and the .txt file contains meta-data about the analysis run.
+        # InfraPy Beamforming (fk) Results
+        # 
+        # Data summary:
+        #     YJ.BRP1..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+        #     YJ.BRP2..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+        #     YJ.BRP3..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+        #     YJ.BRP4..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+        # 
+        #   channel_cnt: 4
+        #   t0: 2012-04-09T18:00:00.008300Z
+        #   latitude: 39.4727
+        #   longitude: -110.741
+        # 
+        # Algorithm parameters:
+        #   freq_min: 0.5
+        #   freq_max: 5.0
+        #   back_az_min: -180.0
+        #   back_az_max: 180.0
+        #   back_az_step: 2.0
+        #   trace_vel_min: 300.0
+        #   trace_vel_max: 600.0
+        #   trace_vel_step: 2.5
+        #   method: bartlett
+        #   signal_start: None
+        #   signal_end: None
+        #   window_len: 10.0
+        #   sub_window_len: None
+        #   window_step: 5.0
+        # 
+        # Time (rel t0) [s]      Back Az [deg]	           Tr. Velocity [m/s]       F-stat
+        5.000000000000000000e+00 -1.387287391860265870e+02 2.993126218419760676e+02 1.787104441793843090e+00
+        1.000000000000000000e+01 -1.023142582570893637e+02 5.004422637641642382e+02 1.432896340216525566e+00
+        1.500000000000000000e+01 1.262012941070060066e+02 2.993477387779522587e+02 1.628381775483823013e+00
+        2.000000000000000000e+01 -6.640044354652907543e+01 3.443074961913744119e+02 2.057173196304753926e+00
+        2.500000000000000000e+01 -3.284497729652116504e+01 3.857456350755477388e+02 2.461603800702443223e+00
+        ...
+
+
+    The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--local-fk-label` parameter.
 
 - The beamforming results from the :code:`infrapy run_fk` analysis can be visualized using:
 
@@ -90,7 +122,7 @@ Array-Level Analyses
         :width: 1200px
         :align: center
 
-- The default beamforming parameters in :code:`run_fk` are useful, but in many cases the frequency band for a signal of interst or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorthm as summarized in the :code:`--help` information.  For example, the analysis of data from BRP can be completed using a modified frequency band via:
+- The default beamforming parameters in :code:`run_fk` are useful, but in many cases the frequency band for a signal of interest or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorithm as summarized in the :code:`--help` information.  For example, the analysis of data from BRP can be completed using a modified frequency band via:
 
     .. code-block:: bash
 
@@ -98,7 +130,7 @@ Array-Level Analyses
 
     The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as :code:`--local-fk-label example`.
 
-- In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of anlaysis.  Create a text file called :code:`BRP_analysis.config` and enter the following:
+- In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Create a text file called :code:`BRP_analysis.config` and enter the following:
 
     .. code-block:: none
 
@@ -127,7 +159,7 @@ Array-Level Analyses
 
         infrapy run_fk --config-file BRP_analysis.config --freq-max 10.0
 
-    If a parameter is not included in a config file or via the command line, a default value is used and can be found in the ouput at the time of the analysis or in the meta-data file.
+    If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the :code:`fk_results` output file header.
 
 - From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.
 
@@ -135,7 +167,7 @@ Array-Level Analyses
 
         infrapy run_fd --local-fk-label data/BRP_analysis
 
-    Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this anlaysis is relatively quick there is no progress bar:
+    Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:
 
     .. code-block:: none
 
@@ -194,7 +226,7 @@ Array-Level Analyses
 
         infrapy plot_fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
-    This plot has the same format as the above :code:`plot_fk` output, but now includes shaded boxes denoting where detections were identified in the analsysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
+    This plot has the same format as the above :code:`plot_fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
 
     .. image:: _static/_images/plot_fd.png
         :width: 1200px
@@ -233,7 +265,7 @@ Array-Level Analyses
 Network-Level Analyses
 ----------------------
 
-- Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evalution of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
+- Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evaluation of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
 
     .. code-block:: bash
     
@@ -326,7 +358,7 @@ Network-Level Analyses
 
         infrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
 
-    The analysis steps are udpated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
+    The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
 
     .. code-block:: none
 
@@ -406,7 +438,7 @@ Network-Level Analyses
 Scripting and Notebook-Based Analysis 
 *************************************
 
-- In addition to the command line interace methods for infrapy, the analysis algorithms can be imported directly into user Python scripts or notebooks for custom applications.  Example import and usage scripts are included in the examples/ directory and will be detailed below for this somewhat more advanced usage.  The example scripts are summarized in the below table.
+- In addition to the command line interface methods for infrapy, the analysis algorithms can be imported directly into user Python scripts or notebooks for custom applications.  Example import and usage scripts are included in the examples/ directory and will be detailed below for this somewhat more advanced usage.  The example scripts are summarized in the below table.
 
 +-------------------------+-----------------------------------------------------------+
 | example_fkd.py          | Run beamforming and detection analysis on an Obspy stream |
@@ -574,7 +606,7 @@ Scripting and Notebook-Based Analysis
                                     win_buffer=win_buffer, ns_opt=ns_opt)
     
 
-    The tranmission loss model models are defined and loaded,
+    The transmission loss model models are defined and loaded,
 
     .. code-block:: python
         

@@ -6,22 +6,19 @@ InfraView
 
 Background on InfraView...
 
---------------------
-Array-Level Analyses
---------------------
-
-- You can run the GUI with the command:
-
     .. code-block:: none
 
         >> infraview
+
+--------------------
+Array-Level Analyses
+--------------------
 
 - The starting point is the waveform viewer...
 
     .. image:: _static/_images/infraview/wvfrms1.png
         :width: 900px
         :align: center
-
 
 - Load data...
 
