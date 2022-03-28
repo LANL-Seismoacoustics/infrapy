@@ -50,7 +50,7 @@ from ..propagation import likelihoods as lklhds
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--multithread", help="Use multithreading (default: " + config.defaults['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-@click.option("--write-wvfrms", help="Write waveforms into local SAC files (default: " + config.defaults['FK']['write_wvfrms'] + ")", default=None, type=bool)
+@click.option("--write-wvfrms", help="Write waveforms into local files (default: " + config.defaults['FK']['write_wvfrms'] + ")", default=None, type=bool)
 def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origin, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt, write_wvfrms):
@@ -59,9 +59,9 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 8
-    \tinfrapy run_fk --config-file config/fk_example2.config --cpu-cnt 8
-
+    \tinfrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
+    \tinfrapy run_fk --config-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy run_fk --config-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
 
@@ -204,7 +204,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     # run fk analysis
     beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
 
-    print('\n' + "Writing results to specified output..." + '\n')
     if local_fk_label is None or local_fk_label == "auto":
         if local_wvfrms is not None and "/" in local_wvfrms:
             local_fk_label = os.path.dirname(local_wvfrms) + "/"
@@ -216,14 +215,27 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.hour + "." + "%02d" % stream[0].stats.starttime.minute + "." + "%02d" % stream[0].stats.starttime.second
         local_fk_label = local_fk_label + '-' + "%02d" % stream[0].stats.endtime.hour + "." + "%02d" % stream[0].stats.endtime.minute + "." + "%02d" % stream[0].stats.endtime.second
 
-    np.save(local_fk_label + ".fk_times", beam_times)
-    np.save(local_fk_label + ".fk_peaks", beam_peaks)
-    data_io.write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
+    # new save methods
+    dt = np.array([(tn - np.datetime64(tr.stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+    fk_results = np.hstack((np.atleast_2d(dt).T, beam_peaks))
+    fk_header = data_io.fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
         signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step)
- 
+
+    if not os.path.isfile(local_fk_label + ".fk_results.dat"):
+        click.echo('\n' + "Writing results into " + local_fk_label + ".fk_results.dat")
+        np.savetxt(local_fk_label + ".fk_results.dat", fk_results, header=fk_header)
+    else:
+        k = 0
+        while os.path.isfile(local_fk_label + "-v" + str(k) + ".fk_results.dat"):
+            k += 1
+        click.echo('\n' + "WARNING!  fk results file(s) already exist." + '\n' + "Writing a new version: " + local_fk_label + "-v" + str(k) + ".fk_results.dat")
+        np.savetxt(local_fk_label + "-v" + str(k) + ".fk_results.dat", fk_results, header=fk_header)
+
     if multithread or cpu_cnt is not None:
         pl.terminate()
         pl.close()
+
+    click.echo('')
 
 
 @click.command('run_fd', short_help="Identify detections from beamforming results")
@@ -241,10 +253,9 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     Run fd analysis to identify detections in beamforming results
 
     \b
-    Example usage (run from infrapy/examples directory after running fk examples):
-    \tinfrapy run_fd --local-fk-label data/YJ.BRP4_18.00.00-18.19.59
-    \tinfrapy run_fd --config-file config/fd_example1.config
-    
+    Example usage (run from infrapy/examples directory after run_fk examples):
+    \tinfrapy run_fd --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+    \tinfrapy run_fd --local-fk-label IM.I53H_2018.12.19_01.00.00-03.00.00
     '''
 
     click.echo("")
@@ -267,6 +278,9 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     # use local ingestion for initial testing
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+
+    if ".fk_results.dat" in local_fk_label:
+        local_fk_label = local_fk_label[:-15]
 
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = local_fk_label
@@ -294,36 +308,39 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     print('\n' + "Running fd...")
 
     if local_fk_label is not None:
-        beam_times = np.load(local_fk_label + ".fk_times.npy")
-        beam_peaks = np.load(local_fk_label + ".fk_peaks.npy")
-        beam_meta = open(local_fk_label + ".fk_meta.txt")
+        temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        dt, beam_peaks = temp[:, 0], temp[:, 1:]
+
+        temp = open(local_fk_label + ".fk_results.dat", 'r')
+        for line in temp:
+            if "t0:" in line:
+                t0 = np.datetime64(line.split(' ')[-1][:-1])
+            elif "freq_min" in line:
+                freq_min = float(line.split(' ')[-1])
+            elif "freq_max" in line:
+                freq_max = float(line.split(' ')[-1])
+            elif "window_len" in line and "sub_window_len" not in line:
+                fk_window_len = float(line.split(' ')[-1])
+            elif "channel_cnt" in line:
+                channel_cnt = float(line.split(' ')[-1])
+            elif "latitude" in line:
+                array_lat = float(line.split(' ')[-1])
+            elif "longitude" in line:
+                array_lon = float(line.split(' ')[-1])
+
+        beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
     else:
         print("Non-local data not yet set up...")
         return 0
-
-    for line in beam_meta:
-        if "freq_min" in line:
-            freq_min = float(line.split(' ')[-1])
-        elif "freq_max" in line:
-            freq_max = float(line.split(' ')[-1])
-        elif "window_len" in line and "sub_window_len" not in line:
-            fk_window_len = float(line.split(' ')[-1])
-        elif "channel_cnt" in line:
-            channel_cnt = float(line.split(' ')[-1])
-        elif "latitude" in line:
-            array_lat = float(line.split(' ')[-1])
-        elif "longitude" in line:
-            array_lon = float(line.split(' ')[-1])
 
     TB_prod = (freq_max - freq_min) * fk_window_len
     min_seq = max(2, int(min_duration / fk_window_len))
 
     dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, window_len, TB_prod, channel_cnt, p_value, min_seq, back_az_width, fixed_thresh, True)
 
-
     det_list = []
     for det_info in dets:
-        det_list = det_list + [data_io._define_deteection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
+        det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
     print("Writing detections to " + local_detect_label + ".dets.json")
     lklhds.detection_list_to_json(local_detect_label + ".dets.json", det_list)
 
@@ -386,8 +403,10 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_fkd --local-wvfrms 'data/YJ.BRP*.SAC' --local-detect-label auto
-    \tinfrapy run_fkd --config-file config/fd_example1.config
+    \tinfrapy run_fkd --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
+    \tinfrapy run_fkd --config-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy run_fkd --config-file config/detection_fdsn.config --cpu-cnt 4
+
     '''
     
 
@@ -571,18 +590,29 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = output_id
 
-    click.echo("Writing fk results using label: " + local_fk_label)    
-    np.save(local_fk_label + ".fk_times", beam_times)
-    np.save(local_fk_label + ".fk_peaks", beam_peaks)
-    data_io.write_fk_meta(stream, latlon, local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
-            signal_start, signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step)
+    # save fk results
+    dt = np.array([(tn - np.datetime64(tr.stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+    fk_results = np.hstack((np.atleast_2d(dt).T, beam_peaks))
+    fk_header = data_io.fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
+        signal_start, signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step)
+
+    if not os.path.isfile(local_fk_label + ".fk_results.dat"):
+        click.echo('\n' + "Writing results into " + local_fk_label + ".fk_results.dat")
+        np.savetxt(local_fk_label + ".fk_results.dat", fk_results, header=fk_header)
+    else:
+        k = 0
+        while os.path.isfile(local_fk_label + "-v" + str(k) + ".fk_results.dat"):
+            k += 1
+        click.echo('\n' + "WARNING!  fk results file(s) already exist." + '\n' + "Writing a new version: " + local_fk_label + "-v" + str(k) + ".fk_results.dat")
+        np.savetxt(local_fk_label + "-v" + str(k) + ".fk_results.dat", fk_results, header=fk_header)
+
+    # save detection results
+    det_list = []
+    for det_info in dets:
+        det_list = det_list + [data_io.define_detection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
 
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id
-
-    det_list = []
-    for det_info in dets:
-        det_list = det_list + [data_io._define_deteection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
 
     click.echo("Writing detection results using label: " + local_detect_label)
     lklhds.detection_list_to_json(local_detect_label + ".dets.json", det_list)

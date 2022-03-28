@@ -145,17 +145,39 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
-        times = np.load(local_fk_label + ".fk_times.npy")
-        peaks = np.load(local_fk_label + ".fk_peaks.npy")
 
-        det_vis.plot_fk1(stream, latlon, times, peaks, title=local_fk_label, output_path=figure_out)
+        temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        dt, beam_peaks = temp[:, 0], temp[:, 1:]
+
+        temp = open(local_fk_label + ".fk_results.dat", 'r')
+        for line in temp:
+            if "t0:" in line:
+                t0 = np.datetime64(line.split(' ')[-1][:-1])
+            elif "freq_min" in line:
+                freq_min = float(line.split(' ')[-1])
+            elif "freq_max" in line:
+                freq_max = float(line.split(' ')[-1])
+
+        beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, title=local_fk_label, output_path=figure_out)
     else:
-        if os.path.isfile(local_fk_label + ".fk_times.npy"):
-            times = np.load(local_fk_label + ".fk_times.npy")
-            peaks = np.load(local_fk_label + ".fk_peaks.npy")
-            det_vis.plot_fk2(times, peaks, output_path=figure_out)
+        if os.path.isfile(local_fk_label + ".fk_results.dat"):
+            temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+            dt, beam_peaks = temp[:, 0], temp[:, 1:]
+
+            temp = open(local_fk_label + ".fk_results.dat", 'r')
+            for line in temp:
+                if "t0:" in line:
+                    t0 = np.datetime64(line.split(' ')[-1][:-1])
+                elif "freq_min" in line:
+                    freq_min = float(line.split(' ')[-1])
+                elif "freq_max" in line:
+                    freq_max = float(line.split(' ')[-1])
+
+            beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+            det_vis.plot_fk2(beam_times, beam_peaks, output_path=figure_out)
         else:
-            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_times.npy"
+            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_results.dat"
             warnings.warn(msg)
 
 
@@ -174,13 +196,11 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-@click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
-@click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--local-detect-label", help="Local detection data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
-    freq_min, freq_max, local_fk_label, local_detect_label, figure_out):
+    local_fk_label, local_detect_label, figure_out):
     '''
     Visualize detection (fd) results
 
@@ -229,10 +249,6 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
-    # Frequency limits
-    freq_min = config.set_param(user_config, 'FK', 'freq_min', freq_min, 'float')
-    freq_max = config.set_param(user_config, 'FK', 'freq_max', freq_max, 'float')
-
     # Result IO
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
@@ -265,9 +281,6 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
     click.echo("  local_fk_label: " + str(local_fk_label))
     click.echo("  local_detect_label: " + str(local_detect_label))
 
-    click.echo('\n' + "Visualization parameters:")
-    click.echo("  freq_min: " + str(freq_min))
-    click.echo("  freq_max: " + str(freq_max))
     if figure_out:
         click.echo("  figure_out: " + figure_out)
 
@@ -276,8 +289,6 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 
     # Check if waveform data is specified and populate obspy Stream
     if stream is not None:
-        stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
-
         if local_fk_label is None or local_fk_label == "auto":
             if local_wvfrms is not None and "/" in local_wvfrms:
                 local_fk_label = os.path.dirname(local_wvfrms) + "/"
@@ -288,30 +299,54 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
-        times = np.load(local_fk_label + ".fk_times.npy")
-        peaks = np.load(local_fk_label + ".fk_peaks.npy")
 
+        temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        dt, beam_peaks = temp[:, 0], temp[:, 1:]
+
+        temp = open(local_fk_label + ".fk_results.dat", 'r')
+        for line in temp:
+            if "t0:" in line:
+                t0 = np.datetime64(line.split(' ')[-1][:-1])
+            elif "freq_min" in line:
+                freq_min = float(line.split(' ')[-1])
+            elif "freq_max" in line:
+                freq_max = float(line.split(' ')[-1])
+
+        beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+        stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
+        
         # Read in detection list
         det_list = data_io.set_det_list(local_fk_label + ".dets.json", merge=True)
         if len(det_list) == 0:
             click.echo("Note: no detections found in analysis.")
 
-        det_vis.plot_fk1(stream, latlon, times, peaks, detections=det_list, title=local_fk_label, output_path=figure_out)
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out)
     else:
         if os.path.isfile(local_fk_label + ".fk_times.npy"):
-            times = np.load(local_fk_label + ".fk_times.npy")
-            peaks = np.load(local_fk_label + ".fk_peaks.npy")
+            temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+            dt, beam_peaks = temp[:, 0], temp[:, 1:]
+
+            temp = open(local_fk_label + ".fk_results.dat", 'r')
+            for line in temp:
+                if "t0:" in line:
+                    t0 = np.datetime64(line.split(' ')[-1][:-1])
+                elif "freq_min" in line:
+                    freq_min = float(line.split(' ')[-1])
+                elif "freq_max" in line:
+                    freq_max = float(line.split(' ')[-1])
+
+            beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+            stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
             # Read in detection list
             det_list = data_io.set_det_list(local_detect_label, merge=True)
             if len(det_list) == 0:
                 click.echo("Note: no detections found in analysis.")
 
-            det_vis.plot_fk2(times, peaks, detections=det_list, output_path=figure_out)
+            det_vis.plot_fk2(beam_times, beam_peaks, detections=det_list, output_path=figure_out)
         else:
             msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_times.npy"
             warnings.warn(msg)
-
 
 
 @click.command('plot_dets', short_help="Plot detections on a map")
