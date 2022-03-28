@@ -7,11 +7,9 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from ..utils import config
-from ..utils import data_io
-
-from ..detection import beamforming_new as fkd
-from ..propagation import likelihoods as lklhds
+from infrapy.utils import config
+from infrapy.utils import data_io
+from infrapy.detection import beamforming_new as fkd
 
 
 @click.command('run_fk', short_help="Run beamforming methods on waveform data")
@@ -193,7 +191,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
     if write_wvfrms:
         if local_wvfrms is None:
             click.echo('\n' + "Writing waveform data to local SAC files...")
-            data_io.write_stream(stream, latlon)
+            data_io.write_stream_to_sac(stream, latlon)
         else: 
             click.echo('\n' + "Cannot write waveform data when using local data...")
 
@@ -342,7 +340,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
     print("Writing detections to " + local_detect_label + ".dets.json")
-    lklhds.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
 
     if return_thresh:
         np.save(local_detect_label + ".thresholds", thresh_vals)
@@ -556,7 +554,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     if write_wvfrms:
         if local_wvfrms is None:
             click.echo('\n' + "Writing waveform data to local SAC files...")
-            data_io.write_stream(stream, latlon)
+            data_io.write_stream_to_sac(stream, latlon)
         else: 
             click.echo('\n' + "Cannot write waveform data when using local data...")
 
@@ -615,7 +613,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
         local_detect_label = output_id
 
     click.echo("Writing detection results using label: " + local_detect_label)
-    lklhds.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
 
     if return_thresh:
         np.save(local_detect_label + ".thresholds", thresh_vals)

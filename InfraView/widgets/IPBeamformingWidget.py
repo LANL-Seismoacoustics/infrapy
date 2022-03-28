@@ -1,23 +1,19 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLabel,
-                             QMessageBox, QPushButton, QSpinBox, QDoubleSpinBox,
-                             QGroupBox, QComboBox, QSplitter, QTabWidget, QAction,
+
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
+                             QMessageBox, QSplitter, QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QLine
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QFont, QFontDatabase, QIcon, QPainterPath, QColor, QCursor
+from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
-import platform
 import warnings
-import csv
+
 import numpy as np
 from pathlib import Path
-from scipy import signal
-from operator import itemgetter
 
 
 # import infraview widgets here
@@ -34,6 +30,7 @@ from InfraView.widgets import IPSaveBeamformingResultsDialog
 
 # import infrapy modules here
 from infrapy.detection import beamforming_new
+from infrapy.utils import data_io
 
 # import obspy modules here
 from obspy.core import UTCDateTime, read
@@ -1172,34 +1169,28 @@ class IPBeamformingWidget(QWidget):
             results_path = Path.home()
 
         earliest_start_time = self.get_earliest_start_time()
-                
 
         if self.save_results_dialog.exec_(results_path):
             filename = self.save_results_dialog.getFilename()
-            with open(filename, 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile, delimiter=',')
-                writer.writerow(["Datetime", "Fstat", "TraveV", "BackAz"])
-                for idx, t in enumerate(self._t):
-                    writer.writerow([earliest_start_time + t, self._f_stats[idx], self._trace_vel[idx], self._back_az[idx]])
-                    
+            t_utc = []
+            for t in self._t:
+                t_utc.append(earliest_start_time + t)
+            
+            data_io.export_beam_results_to_csv(filename, t_utc, self._f_stats, self._back_az, self._trace_vel)
+
             if self.save_results_dialog.wavefileIsChecked():
-                # here we want to save the dqta that is in the visible portion of the waveform chart at the top of the beamfinder window
+                # here we want to save the data that is in the visible portion of the waveform chart at the top of the beamfinder window
                 wavefilename = self.save_results_dialog.getWaveFilename()
-                with open(wavefilename, 'w', newline='') as wavecvsfile:
-                    writer = csv.writer(wavecvsfile, delimiter=',')
-                    writer.writerow(["Datetime", "Waveform"])
-                    
-                    plot_range = self.waveformPlot.viewRange()
-                    plot_xrange = plot_range[0]
-                    xdata, ydata = self.waveform_data_item.getData()
-                    
-                    for idx, x in enumerate(xdata):
-                        if  plot_xrange[0] <= x <= plot_xrange[1]:
-                            writer.writerow([earliest_start_time + x, ydata[idx]])
+                
+                xdata, ydata = self.waveform_data_item.getData()
+
+                t_utc =[]
+                for t in xdata:
+                    t_utc.append(earliest_start_time + t)
+
+                data_io.export_waveform_to_csv(wavefilename, t, ydata)
         else:
             pass
-            
-        
 
     def clearResultPlots(self):
         self.fstatPlot.clear()
@@ -1332,7 +1323,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                 for station in network.stations:
                     station_id = network.code + '.' + station.code
                     if station_id == stream_station_id:
-                        print("lat = {}, lon = {}".format(station.latitude, station.longitude))
                         latlon.append([station.latitude, station.longitude])
                         location_count += 1
 

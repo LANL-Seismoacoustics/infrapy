@@ -12,11 +12,10 @@ from multiprocessing import Pool
 
 from infrapy.location import bisl, visualization
 
-from ..utils import config
-from ..utils import data_io
-
-from ..detection import visualization as det_vis
-from ..location import visualization as loc_vis
+from infrapy.utils import config
+from infrapy.utils import data_io
+from infrapy.detection import visualization as det_vis
+from infrapy.location import visualization as loc_vis
 
 
 @click.command('plot_fk', short_help="Visualize beamforming (fk) results")

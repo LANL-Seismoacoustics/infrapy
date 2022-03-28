@@ -13,7 +13,8 @@ import numpy as np
 
 from obspy import UTCDateTime 
 
-from ..propagation import likelihoods as lklhds
+from infrapy.propagation import likelihoods as lklhds
+from infrapy.utils import data_io
 
 @click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file")
 @click.option("--arrivals-file", help="InfraGA/GeoAc arrivals file", default=None)
@@ -60,7 +61,7 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
         det.note = "InfraGA/GeoAc arrival output"
         det_list = det_list + [det]
 
-    lklhds.detection_list_to_json(json_file, det_list)
+    data_io.detection_list_to_json(json_file, det_list)
 
 
 

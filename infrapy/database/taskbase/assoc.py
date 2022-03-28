@@ -1,63 +1,32 @@
 '''
 Created on Oct 31, 2014
-Updated Jan 2020
+Updated Mar 2022
 
-@author: omarcillo, fkdd
+@author: omarcillo, fkdd, jwebster
 '''
 
-from .base import Base
+from infrapy.database.taskbase import Base
 
-import sys, pdb
+import sys
 
-import sqlalchemy as sa
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import func
-from sqlalchemy import MetaData
-
-import pisces as ps
 from pisces.util import load_config
-from pisces.io.trace import read_waveform
 from obspy.core import UTCDateTime
-from obspy.core.util import AttribDict
 from datetime import datetime
 
-from scipy import stats
 import numpy as np
-import scipy as sc
 from IPython import embed
-import pisces as ps
 
 from sqlalchemy import func
-import cmath
-import math
-import itertools
-import pylab as py
-import matplotlib
 
-import matplotlib.pyplot as pl
-import matplotlib.mlab as mpy
+from infrapy.utils.short_time import short_time
+from infrapy.association import hjl
+from infrapy.utils import data_io
+from infrapy import schema
 
-#pl.ioff()
-
-import time
-
-from ...utils.cart2pol import cart2pol
-from ...utils.short_time import short_time
-from .. import schema
-
-import matplotlib.dates as mdates
-from ...propagation import likelihoods
-from ...propagation.likelihoods import InfrasoundDetection
-from ...propagation import infrasound
-from ...association import hjl
 import numpy as np
 
 import pathos.multiprocessing as mp
 from multiprocessing import cpu_count
-
-from infrapy.association import hjl
-from infrapy.propagation import likelihoods as lklhds
 
 import warnings
 from sqlalchemy import exc as sa_exc
@@ -188,7 +157,7 @@ class AssocInfraPy_LANL(Base):
             print(x1)
             embed()
             self.Passoc_Q=[]
-            print(Passoc_Q)
+            print(self.Passoc_Q)
         if bool(self.Passoc_Q)==False:
             print('New process parameters, write process to INFRA_ASSOC_PARAM table')
             new_row=self.session.query(self.ASSOC_par).count()
@@ -426,7 +395,7 @@ class AssocInfraPy_LANL(Base):
 
         '''
         print('data processing',short_time(UTCDateTime(self.time_initial)),short_time(UTCDateTime(self.time_end)))
-        det_list = lklhds.db2dets(self.det_tot)
+        det_list = data_io.db2dets(self.det_tot)
         min_array_pop=self.minarraypop
         EVIDs=[]
         if len(det_list)>1:
@@ -580,7 +549,6 @@ class AssocInfraPy_LANL(Base):
         '''
         Constructor
         '''
-        #import pdb; pdb.set_trace()
         try:
             self.Affiliation_Q=self.session.query(self.Affiliation).filter(self.Affiliation.net==self.net).all()
         except Exception as ex1:

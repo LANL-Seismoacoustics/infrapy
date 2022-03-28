@@ -7,7 +7,7 @@ Updated Jan 2020
 
 from .base import Base
 
-import sys, pdb
+import sys
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
@@ -15,32 +15,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from sqlalchemy import MetaData
 
-import pisces as ps
 from pisces.util import load_config
 from pisces.io.trace import read_waveform
 from obspy.core import UTCDateTime
 from obspy.core.util import AttribDict
 from datetime import datetime
 
-from scipy import stats
 import numpy as np
-import scipy as sc
 from IPython import embed
-import pisces as ps
 
 from sqlalchemy import func
-import cmath
-import math
-import itertools
-import pylab as py
-import matplotlib
 
 import matplotlib.pyplot as pl
 import matplotlib.mlab as mpy
-
-#pl.ioff()
-
-import time
 
 from ...utils.cart2pol import cart2pol
 from ...utils.short_time import short_time
@@ -57,7 +44,7 @@ import pathos.multiprocessing as mp
 from multiprocessing import cpu_count
 
 from infrapy.association import hjl
-from infrapy.propagation import likelihoods as lklhds
+from infrapy.utils import data_io
 
 
 
@@ -332,7 +319,7 @@ class AssocInfraPy_LANL(Base):
         '''
         print('data processing',short_time(UTCDateTime(self.time_initial)),short_time(UTCDateTime(self.time_end)))
 
-        det_list = lklhds.db2dets(self.det_tot)
+        det_list = data_io.db2dets(self.det_tot)
         EVIDs=[]
         embed()
         if len(det_list)>1:

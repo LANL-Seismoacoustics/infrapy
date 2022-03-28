@@ -86,7 +86,7 @@ class InfrasoundDetection(object):
     # increase in beam width for propagation effects
     __prop_width = np.radians(4.0)  
 
-    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None):
+    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None, f_range=None, start_end=None, note=None, traceV=None):
 
         self.set_lat(lat_loc)
         self.set_lon(lon_loc)
@@ -94,6 +94,10 @@ class InfrasoundDetection(object):
         self.set_array_dim(array_d)
         self.set_back_azimuth(azimuth)
         self.set_peakF_value(f_stat)
+        self.set_freq_range(f_range)
+        self.set_startend(start_end)
+        self.set_note(note)
+        self.set_trace_velocity(traceV)
 
         if self.__peakF_value is None or self.__array_dim is None:
             # This happens when creating a InfrasoundDetection object using the json_to_detection method, where an object is created,
@@ -318,7 +322,7 @@ class InfrasoundDetection(object):
     def set_name(self, n):
         self.__name = n
 
-    name = property(get_name, set_name, doc="Optional name of the detection")
+    name = property(get_name, set_name, doc="(optional) Name of the detection")
 
     def set_ele(self, ele):
         self.__ele = ele
@@ -355,6 +359,20 @@ class InfrasoundDetection(object):
 
     end = property(get_end, set_end, doc="(float) End time in seconds relative to the peak F utc time of the detection")
 
+    def set_startend(self, start_end):
+        #start_end is a tuple containing the start and end values of the detection
+        if start_end is None:
+            self.start = None
+            self.end = None
+        else:
+            self.start = start_end[0]
+            self.end = start_end[1]
+
+    def get_startend(self):
+        return (self.start, self.end)
+
+    start_end = property(get_startend, set_startend, doc="(tuple) starting and ending values for the detection")
+
     def set_freq_range(self, frange):
         self.__freq_range = frange
 
@@ -385,7 +403,7 @@ class InfrasoundDetection(object):
     def get_note(self):
         return self.__note
 
-    note = property(get_note, set_note, doc="Optional note regarding the detection")
+    note = property(get_note, set_note, doc="(optional) Note regarding the detection")
 
     def set_event_id(self, evt):
         self.__event_id = evt
@@ -393,7 +411,7 @@ class InfrasoundDetection(object):
     def get_event_id(self):
         return self.__event_id
 
-    event_id = property(get_event_id, set_event_id, doc="Optional id of the event")
+    event_id = property(get_event_id, set_event_id, doc="(optional) ID of the event")
 
     def set_method(self, method):
         self.__method = method
@@ -738,72 +756,3 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
 
 def marginal_spatial_pdf_wrapper(args):
     return marginal_spatial_pdf(*args)
-
-
-# ############################# #
-#        Load Detections        #
-#           From File           #
-# ############################# #
-def file2dets(file_name):
-    det_list = []
-    input = np.genfromtxt(file_name, dtype=None)
-    for line in input:
-        det_list += [InfrasoundDetection(line[0], line[1], np.datetime64(line[2].astype(str)), line[3], line[4], line[5])]
-
-    return det_list
-
-
-# ############################# #
-#   Save detections to a json   #
-#   file                        #
-# ############################# #
-class Infrapy_Encoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.int64):
-            return int(obj)
-        elif isinstance(obj, np.float64):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, str):
-            return str(obj)
-        else:
-            return str(obj)
-
-
-def detection_list_to_json(filename, detections):
-    output = []
-    for entry in detections:
-        output.append(entry.generateDict())
-
-    with open(filename, 'w') as of:
-        json.dump(output, of, indent=4, cls=Infrapy_Encoder)
-
-# ############################# #
-#   Load detections from a json   #
-#   file                        #
-# ############################# #
-
-
-def json_to_detection_list(filename):
-    detection_list = []
-    with open(filename, 'r') as infile:
-        newdata = json.load(infile)
-        for entry in newdata:
-            detection = InfrasoundDetection()
-            detection.fillFromDict(entry)
-            detection_list.append(detection)
-    return detection_list
-
-
-# ############################# #
-#   Load detections from    #
-#   database processing         #
-# ############################# #
-
-def db2dets(file_name):
-    det_list = []
-    for line in file_name:
-        # det_list += [InfrasoundDetection(line[0], line[1], np.datetime64(line[2].astype(str)), line[3], line[4], line[5])]
-        det_list += [InfrasoundDetection(line[0], line[1], np.datetime64(UTCDateTime(line[2])), line[3], line[4], line[5])]
-    return det_list

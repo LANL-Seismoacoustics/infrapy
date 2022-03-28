@@ -29,18 +29,10 @@ from IPython import embed
 import pisces as ps
 
 from sqlalchemy import func
-import cmath
-import math
-import itertools
 import pylab as py
-import matplotlib
 
 import matplotlib.pyplot as pl
 import matplotlib.mlab as mpy
-
-#pl.ioff()
-
-import time
 
 from ...utils.cart2pol import cart2pol
 from ...utils.short_time import short_time
@@ -57,7 +49,7 @@ import pathos.multiprocessing as mp
 from multiprocessing import cpu_count
 
 from infrapy.association import hjl
-from infrapy.propagation import likelihoods as lklhds
+from infrapy.utils import data_io
 
 class AssocInfraPy_LANL(Base):
     '''
@@ -329,7 +321,7 @@ class AssocInfraPy_LANL(Base):
         '''
         print('data processing',short_time(UTCDateTime(self.time_initial)),short_time(UTCDateTime(self.time_end)))
 
-        det_list = lklhds.db2dets(self.det_tot)
+        det_list = data_io.db2dets(self.det_tot)
         EVIDs=[]
         embed()
         if len(det_list)>1:

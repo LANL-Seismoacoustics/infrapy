@@ -5,6 +5,7 @@ from threading import local
 import warnings 
 import fnmatch
 import json
+import csv
 
 import numpy as np
 
@@ -12,7 +13,8 @@ from obspy.clients.fdsn import Client
 from obspy import read as obspy_read
 from obspy import UTCDateTime, read_inventory
 
-from ..propagation import likelihoods as lklhds
+from infrapy.propagation import likelihoods as lklhds
+
 
 blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, 'depmen': None, 'b': 0.0, 'e': None, 'stla': None, 'stlo': None, 
                   'nzyear': None, 'nzjday': None, 'nzhour': None, 'nzmin': None, 'nzsec': None, 'nzmsec': None, 'kstnm': None, 'kcmpnm': None, 'knetwk': None}
@@ -72,7 +74,7 @@ def set_det_list(local_detect_label, merge=True):
 
     if "*" not in local_detect_label:
         print("Loading detections from file: " + local_detect_label)
-        det_list = lklhds.json_to_detection_list(local_detect_label)
+        det_list = json_to_detection_list(local_detect_label)
     else:
         if len(os.path.dirname(local_detect_label)) > 0:
             file_path = os.path.dirname(local_detect_label) + "/"
@@ -95,7 +97,7 @@ def set_det_list(local_detect_label, merge=True):
             det_list = None 
         elif len(file_list) == 1:
             print("Loading detections from file: " + file_path + local_detect_label)
-            det_list = [lklhds.json_to_detection_list(file_path + local_detect_label)]
+            det_list = [json_to_detection_list(file_path + local_detect_label)]
         else:
             print("Loading detections from files:")
             det_list = []
@@ -103,9 +105,9 @@ def set_det_list(local_detect_label, merge=True):
                 print('\t' + file_path + file)
 
                 if merge:
-                    det_list = det_list + lklhds.json_to_detection_list(file_path + file)
+                    det_list = det_list + json_to_detection_list(file_path + file)
                 else:
-                    det_list = det_list + [lklhds.json_to_detection_list(file_path + file)]
+                    det_list = det_list + [json_to_detection_list(file_path + file)]
 
     return det_list
 
@@ -114,7 +116,7 @@ def set_det_list(local_detect_label, merge=True):
 ##     Data Writing     ##
 ##        Methods       ##
 ##########################
-def write_stream(stream, latlon):
+def write_stream_to_sac(stream, latlon):
     sac_info = [blank_sac_dict] * len(stream)
     for m, tr in enumerate(stream):
         sac_info[m]['delta'] = tr.stats.delta
@@ -191,29 +193,28 @@ def fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back
 
 
 def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
-    temp = lklhds.InfrasoundDetection()
-    temp.latitude = float(array_loc[0])
-    temp.longitude = float(array_loc[1])
-    temp.array_dim = int(channel_cnt)
-    temp.frequency_range = freq_band
-
-    temp.peakF_UTCtime = det_info[0]
-    temp.start = det_info[1]
-    temp.end = det_info[2]
-    temp.back_azimuth = np.round(det_info[3], 2)
-    temp.trace_velocity = np.round(det_info[4], 2)
-    temp.peakF_value = np.round(det_info[5], 4)
-    temp.note = note
-
-    return temp
+    # I expanded the InfrasoundDetection constructor to include everything here, so maybe this is now redundant?
+    return lklhds.InfrasoundDetection(lat_loc=float(array_loc[0]), 
+                                      lon_loc=float(array_loc[1]), 
+                                      time=det_info[0], 
+                                      azimuth=np.round(det_info[3], 2), 
+                                      f_stat=np.round(det_info[5], 4), 
+                                      array_d=int(channel_cnt),
+                                      f_range=freq_band,
+                                      start_end=(det_info[1], det_info[2]),
+                                      note=note,
+                                      traceV=np.round(det_info[4],2)
+                                      )
 
 
 def write_events(events, event_qls, det_list, local_event_label):
+    # TODO: event_qls isn't used in this function. Are we saving it for later?
+
     for ev_n, ev in enumerate(events):
         temp = []
         for det_id in ev:
             temp = temp + [det_list[det_id]]
-        lklhds.detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".dets.json", temp)
+        detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".dets.json", temp)
 
 
 def write_locs(bisl_results, local_loc_label):
@@ -230,3 +231,91 @@ def read_locs(local_loc_label):
         return json.load(open(local_loc_label))
     else:
         return json.load(open(local_loc_label + ".loc.json"))
+
+
+def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
+    # export the results of the beamforming operation to a csv file for external analysis/plotting
+    # t, f_stats, back_az, and trace_v are all lists, and they must be the same length
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(["Datetime", "Fstat", "TraceV", "BackAz"])
+        for idx, t in enumerate(t):
+            writer.writerow(t[idx], f_stats[idx], trace_v[idx], back_az[idx])
+
+
+def export_waveform_to_csv(filename, time, waveform_data):
+    # export the timeseries data to a csv file for external analysis/plotting
+    # t and data are lists, and they must be the same length
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow("DateTime", "Waveform")
+        for t, data in zip(time, waveform_data):
+            writer.writerow(t, data)
+
+
+# ####################################### #
+#        Load InfrasoundDetections        #
+#           From File                     #
+# ####################################### #
+def file2dets(file_name):
+    det_list = []
+    input = np.genfromtxt(file_name, dtype=None)
+    for line in input:
+        det_list += [lklhds.InfrasoundDetection(line[0], line[1], np.datetime64(line[2].astype(str)), line[3], line[4], line[5])]
+
+    return det_list
+
+
+# ############################# #
+#   Save detections to a json   #
+#   file                        #
+# ############################# #
+class Infrapy_Encoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.int64):
+            return int(obj)
+        elif isinstance(obj, np.float64):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, str):
+            return str(obj)
+        else:
+            return str(obj)
+
+
+def detection_list_to_json(filename, detections):
+    output = []
+    for entry in detections:
+        output.append(entry.generateDict())
+
+    with open(filename, 'w') as of:
+        json.dump(output, of, indent=4, cls=Infrapy_Encoder)
+
+# ############################# #
+#   Load detections from a json   #
+#   file                        #
+# ############################# #
+
+
+def json_to_detection_list(filename):
+    detection_list = []
+    with open(filename, 'r') as infile:
+        newdata = json.load(infile)
+        for entry in newdata:
+            detection = lklhds.InfrasoundDetection()
+            detection.fillFromDict(entry)
+            detection_list.append(detection)
+    return detection_list
+
+
+# ############################# #
+#   Load detections from    #
+#   database processing         #
+# ############################# #
+
+def db2dets(file_name):
+    det_list = []
+    for line in file_name:
+        det_list += [lklhds.InfrasoundDetection(line[0], line[1], np.datetime64(UTCDateTime(line[2])), line[3], line[4], line[5])]
+    return det_list
