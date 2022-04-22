@@ -110,11 +110,11 @@ Array-Level Analyses
 
     The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--local-fk-label` parameter.
 
-- The beamforming results from the :code:`infrapy run_fk` analysis can be visualized using:
+- The beamforming results from the :code:`infrapy run_fk` analysis can be visualized using the :code:`fk` option in :code:`infrapy plot`:
 
     .. code-block:: bash
 
-        infrapy plot_fk --local-wvfrms 'data/YJ.BRP*.SAC'
+        infrapy plot fk --local-wvfrms 'data/YJ.BRP*.SAC'
 
     The resulting plot of the included example data set is shown below for comparison:
 
@@ -224,7 +224,7 @@ Array-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
+        infrapy plot fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
     This plot has the same format as the above :code:`plot_fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
 
@@ -335,7 +335,7 @@ Network-Level Analyses
 
     .. code-block:: bash
     
-        infrapy plot_dets --local-detect-label 'data/Blom_etal2020_GJI/*'
+        infrapy plot dets --local-detect-label 'data/Blom_etal2020_GJI/*'
 
     .. image:: _static/_images/plot_dets1.png
         :width: 1200px
@@ -345,7 +345,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
+        infrapy plot dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
 
     .. image:: _static/_images/plot_dets2.png
         :width: 1200px
@@ -407,7 +407,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+        infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
@@ -417,7 +417,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+        infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
 
     .. image:: _static/_images/plot_loc2.png
         :width: 900px
@@ -427,7 +427,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot_origin_time --local-loc-label GJI_example-ev0 
+        infrapy plot origin_time --local-loc-label GJI_example-ev0 
 
 
     .. image:: _static/_images/plot_origin_time.png

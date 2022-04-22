@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-import os 
 
+import os 
 import click
+import warnings
+
 import configparser as cnfg
 import numpy as np
 
 from multiprocessing import Pool
+
+from obspy import UTCDateTime 
 
 from infrapy.utils import config
 from infrapy.utils import data_io
@@ -39,10 +43,10 @@ from infrapy.detection import beamforming_new as fkd
 @click.option("--trace-vel-max", help="Maximum trace velocity (default: " + config.defaults['FK']['trace_vel_max'] + " [m/s])", default=None, type=float)
 @click.option("--trace-vel-step", help="Trace velocity resolution (default: " + config.defaults['FK']['trace_vel_step'] + " [m/s])", default=None, type=float)
 @click.option("--method", help="Beamforming method (default: " + config.defaults['FK']['method'] + ")", default=None)
-@click.option("--signal-start", help="Start of signal window (rel. starttime [s])", default=None, type=float)
-@click.option("--signal-end", help="End of signal window (rel. starttime [s])", default=None, type=float)
-@click.option("--noise-start", help="Start of noise sample (see GLS algorithm notes)", default=None, type=float)
-@click.option("--noise-end", help="End of noise sample (see GLS algorithm notes)", default=None, type=float)
+@click.option("--signal-start", help="Start of signal window", default=None)
+@click.option("--signal-end", help="End of signal window", default=None)
+@click.option("--noise-start", help="Start of noise sample", default=None)
+@click.option("--noise-end", help="End of noise sample", default=None)
 @click.option("--window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
@@ -195,13 +199,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         else: 
             click.echo('\n' + "Cannot write waveform data when using local data...")
 
-    # Define DOA values
-    back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
-    trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
-
-    # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
-
     if local_fk_label is None or local_fk_label == "auto":
         if local_wvfrms is not None and "/" in local_wvfrms:
             local_fk_label = os.path.dirname(local_wvfrms) + "/"
@@ -212,6 +209,56 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_origi
         local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.year + ".%02d" % stream[0].stats.starttime.month + ".%02d" % stream[0].stats.starttime.day
         local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.hour + "." + "%02d" % stream[0].stats.starttime.minute + "." + "%02d" % stream[0].stats.starttime.second
         local_fk_label = local_fk_label + '-' + "%02d" % stream[0].stats.endtime.hour + "." + "%02d" % stream[0].stats.endtime.minute + "." + "%02d" % stream[0].stats.endtime.second
+
+    # Define DOA values
+    back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
+    trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
+
+    '''
+    # Check if using a noise window
+    if noise_start is not None:
+        print("Analyzing noise window to compute noise covariance...")
+        st_noise = stream.copy()
+        st_noise.trim(UTCDateTime(noise_start), UTCDateTime(noise_end))
+
+        # Compute noise covariance
+        x, t, _, _ = fkd.stream_to_array_data(st_noise, latlon=latlon)
+        _, S, _ = fkd.fft_array_data(x, t, sub_window_len=window_len)
+
+        ns_covar_inv = np.empty_like(S)
+        for n in range(S.shape[2]):
+            S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
+            ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
+    '''
+            
+    # Check if using a signal window
+    if signal_start is not None:
+        t1 = UTCDateTime(signal_start)
+        t2 = UTCDateTime(signal_end)
+
+        click.echo('\n' + "Trimming data to signal analysis window...")
+        click.echo('\t' + "start time: " + str(t1))
+        click.echo('\t' + "end time: " + str(t2))
+
+
+        warning_message = "signal_start and signal_end values poorly defined."
+        if t1 > t2:
+            warning_message = warning_message + "  signal_start after signal_end."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t1 < stream[0].stats.starttime:
+            warning_message = warning_message + "  signal_start before data start time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t2 > stream[0].stats.endtime:
+            warning_message = warning_message + "  signal_end after data end time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        else:
+            stream.trim(t1, t2)
+
+    # run fk analysis
+    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
 
     # new save methods
     dt = np.array([(tn - np.datetime64(tr.stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
@@ -375,10 +422,10 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--trace-vel-max", help="Maximum trace velocity (default: " + config.defaults['FK']['trace_vel_max'] + " [m/s])", default=None, type=float)
 @click.option("--trace-vel-step", help="Trace velocity resolution (default: " + config.defaults['FK']['trace_vel_step'] + " [m/s])", default=None, type=float)
 @click.option("--method", help="Beamforming method (default: " + config.defaults['FK']['method'] + ")", default=None)
-@click.option("--signal-start", help="Start of analysis window (rel. starttime [s])", default=None, type=float)
-@click.option("--signal-end", help="End of analysis window (rel. starttime [s])", default=None, type=float)
-@click.option("--noise-start", help="Start of noise sample (see GLS algorithm notes)", default=None, type=float)
-@click.option("--noise-end", help="End of noise sample (see GLS algorithm notes)", default=None, type=float)
+@click.option("--signal-start", help="Start of analysis window", default=None)
+@click.option("--signal-end", help="End of analysis window", default=None)
+@click.option("--noise-start", help="Start of noise sample", default=None)
+@click.option("--noise-end", help="End of noise sample", default=None)
 @click.option("--fk-window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--fk-sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--fk-window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
@@ -558,18 +605,6 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
         else: 
             click.echo('\n' + "Cannot write waveform data when using local data...")
 
-    # Define DOA values
-    back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
-    trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
-
-    # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], fk_window_len, fk_sub_window_len, fk_window_step, method, back_az_vals, trc_vel_vals, pl)
-
-    print("Running adaptive f-detector..." + '\n')
-    TB_prod = (freq_max - freq_min) * fk_window_len
-    min_seq = max(2, int(min_duration / fk_window_len))
-    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, fd_window_len, TB_prod, len(stream), p_value, min_seq, back_az_width, fixed_thresh, True)
-
     if latlon:
         array_loc = latlon[0]
     else:
@@ -584,6 +619,45 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, db_orig
     output_id = output_id + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
     output_id = output_id + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
     output_id = output_id + '-' + "%02d" % tr.stats.endtime.hour + "." + "%02d" % tr.stats.endtime.minute + "." + "%02d" % tr.stats.endtime.second
+
+    # Check if using a signal window
+    if signal_start is not None:
+        t1 = UTCDateTime(signal_start)
+        t2 = UTCDateTime(signal_end)
+
+        click.echo('\n' + "Trimming data to signal analysis window...")
+        click.echo('\t' + "start time: " + str(t1))
+        click.echo('\t' + "end time: " + str(t2))
+
+
+        warning_message = "signal_start and signal_end values poorly defined."
+        if t1 > t2:
+            warning_message = warning_message + "  signal_start after signal_end."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t1 < stream[0].stats.starttime:
+            warning_message = warning_message + "  signal_start before data start time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t2 > stream[0].stats.endtime:
+            warning_message = warning_message + "  signal_end after data end time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        else:
+            stream.trim(t1, t2)
+
+
+    # Define DOA values
+    back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
+    trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
+
+    # run fk analysis
+    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], fk_window_len, fk_sub_window_len, fk_window_step, method, back_az_vals, trc_vel_vals, pl)
+
+    print("Running adaptive f-detector..." + '\n')
+    TB_prod = (freq_max - freq_min) * fk_window_len
+    min_seq = max(2, int(min_duration / fk_window_len))
+    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, fd_window_len, TB_prod, len(stream), p_value, min_seq, back_az_width, fixed_thresh, True)
 
     if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = output_id

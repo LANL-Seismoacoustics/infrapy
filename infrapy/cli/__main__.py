@@ -11,25 +11,51 @@ from . import cli_utils
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
 def main():
     '''
-    infrapy - Python-based Infrasound Data Analysis Toolkit
+    infrapy - Python-based Infrasound Signal Analysis Toolkit
 
     Command line interface (CLI) for running and visualizing infrasound analysis
     '''
     pass
 
+
+@click.group('plot', short_help="Visualize infrapy analysis results", context_settings={'help_option_names': ['-h', '--help']})
+def plot():
+    '''
+    infrapy plot - Visualization methods for analysis results
+    
+    '''
+    pass 
+
+
+@click.group('utils', short_help="Various utility functions for infrapy analysis", context_settings={'help_option_names': ['-h', '--help']})
+def utils():
+    '''
+    infrapy utils - various utility functions for infrapy analysis
+    
+    '''
+    pass 
+
+
+main.add_command(plot)
+main.add_command(utils)
+
+# main functions (run analysis)
 main.add_command(cli_detection.run_fk)
 main.add_command(cli_detection.run_fd)
 main.add_command(cli_detection.run_fkd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
 
-main.add_command(cli_visualization.plot_fk)
-main.add_command(cli_visualization.plot_fd)
-main.add_command(cli_visualization.plot_dets)
-main.add_command(cli_visualization.plot_loc)
-main.add_command(cli_visualization.plot_origin_time)
+# visualizations
+plot.add_command(cli_visualization.fk)
+plot.add_command(cli_visualization.fd)
+plot.add_command(cli_visualization.dets)
+plot.add_command(cli_visualization.loc)
+plot.add_command(cli_visualization.origin_time)
 
-main.add_command(cli_utils.arrivals2json)
+# Utilities
+utils.add_command(cli_utils.arrivals2json)
+utils.add_command(cli_utils.arrival_time)
 
 
 if __name__ == '__main__':

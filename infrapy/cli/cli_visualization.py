@@ -18,7 +18,7 @@ from infrapy.detection import visualization as det_vis
 from infrapy.location import visualization as loc_vis
 
 
-@click.command('plot_fk', short_help="Visualize beamforming (fk) results")
+@click.command('fk', short_help="Visualize beamforming (fk) results")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
@@ -37,15 +37,15 @@ from infrapy.location import visualization as loc_vis
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, 
+def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, 
     channel, starttime, endtime, freq_min, freq_max, local_fk_label, figure_out):
     '''
     Visualize beamforming (fk) results
 
     \b
     Example usage (run from infrapy/examples directory after running the run_fk examples):
-    \tinfrapy plot_fk --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_beam.png
-    \tinfrapy plot_fk --config-file config/fk_example2.config
+    \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_beam.png
+    \tinfrapy plot fk --config-file config/fk_example2.config
 
     '''
 
@@ -180,7 +180,7 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             warnings.warn(msg)
 
 
-@click.command('plot_fd', short_help="Visualize detections from beamforming results")
+@click.command('fd', short_help="Visualize detections from beamforming results")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
@@ -198,7 +198,7 @@ def plot_fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--local-detect-label", help="Local detection data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
+def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
     local_fk_label, local_detect_label, figure_out):
     '''
     Visualize detection (fd) results
@@ -348,18 +348,18 @@ def plot_fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_w
             warnings.warn(msg)
 
 
-@click.command('plot_dets', short_help="Plot detections on a map")
+@click.command('dets', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_dets(config_file, range_max, local_detect_label, figure_out):
+def dets(config_file, range_max, local_detect_label, figure_out):
     '''
     Visualize detections on a map
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot_dets --local-detect-label 'data/detection_set1.json' --figure-out detection_set1.png
+    \tinfrapy plot dets --local-detect-label 'data/detection_set1.json' --figure-out detection_set1.png
 
     '''
 
@@ -397,20 +397,20 @@ def plot_dets(config_file, range_max, local_detect_label, figure_out):
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
 
 
-@click.command('plot_loc', short_help="Plot detections on a map")
+@click.command('loc', short_help="Plot localization result on a map")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out):
+def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out):
     '''
     Visualize BISL results in with wide or zoomed format
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy infrapy plot_bisl_loc --local-event-label temp.json 
+    \tinfrapy plot loc --local-event-label temp.json 
 
     '''
 
@@ -455,17 +455,17 @@ def plot_loc(config_file, local_detect_label, local_loc_label, range_max, zoom, 
     
 
 
-@click.command('plot_origin_time', short_help="Plot origin time distribution")
+@click.command('origin-time', short_help="Plot origin time distribution")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-loc-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def plot_origin_time(config_file, local_loc_label, figure_out):
+def origin_time(config_file, local_loc_label, figure_out):
     '''
     Visualize the BISL origin time distribution
 
     \b
     Example usage (run from infrapy/examples directory):
-    \t infrapy plot_bisl_loc --local-loc-label data/location2.json --range-max 1000
+    \t infrapy plot origin-time --local-loc-label data/location2.json --range-max 1000
     '''
     click.echo("")
     click.echo("#####################################")
