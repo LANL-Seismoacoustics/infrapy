@@ -19,6 +19,7 @@ class IPProject:
     customFilterPath = None         # where custom filters will be saved
     homePath = None                 # user's home directory
     stationsPath = None             # where station xml files will be saved
+    eventPath = None                # where event json files will be saved
 
     projectName = None
     projectFileName = None
@@ -37,6 +38,7 @@ class IPProject:
             self.stationsPath = Path(str(self.projectPath) + '/stations')
             self.customFilterPath = Path(str(self.projectPath) + '/customFilters')
             self.beamformingResutsPath = Path(str(self.projectPath) + '/beamformingResults')
+            self.eventPath = Path(str(self.projectPath) + '/events')
 
             # Create the project directories
             self.projectPath.mkdir(parents=True, exist_ok=True)
@@ -45,6 +47,7 @@ class IPProject:
             self.stationsPath.mkdir(parents=True, exist_ok=True)
             self.customFilterPath.mkdir(parents=True, exist_ok=True)
             self.beamformingResutsPath.mkdir(parents=True, exist_ok=True)
+            self.eventPath.mkdir(parents=True, exist_ok=True)
 
             # Create a settings object/file for the new project and populate it with the directories
             self.projectFileName = self.projectName + '.ipprj'
@@ -60,6 +63,7 @@ class IPProject:
             self.projectSettings.setValue('stationsPathName', str(self.stationsPath))
             self.projectSettings.setValue('customFilterPathName', str(self.customFilterPath))
             self.projectSettings.setValue('beamformingResultsPath', str(self.beamformingResutsPath))
+            self.projectSettings.setValue('eventPath', str(self.eventPath))
 
             self.projectSettings.endGroup()
 
@@ -89,8 +93,16 @@ class IPProject:
             # when opening old projects, newer settings might not be present
             if self.projectSettings.value('beamformingResultsPath') is None:
                 self.beamformingResutsPath = Path(str(self.projectPath) + '/beamformingResults')
+                # the directory might not exist at this point, so create it
+                Path(self.beamformingResutsPath).mkdir(parents=True, exist_ok=True)
             else:
                 self.beamformingResutsPath = Path(self.projectSettings.value('beamformingResultsPath'))
+            if self.projectSettings.value('eventPath') is None:
+                self.eventPath = Path(str(self.projectPath) + '/events')
+                # the directory might not exist at this point, so create it
+                Path(self.eventPath).mkdir(parents=True, exist_ok=True)
+            else:
+                self.eventPath = Path(self.projectSettings.value('eventPath'))
 
             self.projectSettings.endGroup()
             return True
@@ -127,6 +139,9 @@ class IPProject:
     def get_beamformResultsPath(self):
         return self.beamformingResutsPath
 
+    def get_eventPath(self):
+        return self.eventPath
+
     def clear(self):
         self.basePath = None                # base path projects are saved in
         self.projectPath = None             # path of actual project
@@ -138,6 +153,7 @@ class IPProject:
         self.projectName = None
         self.projectFileName = None
         self.beamformingResutsPath = None   # beamforming results directory
+        self.eventPath = None
 
 
 class IPNewProjectDialog(QDialog):

@@ -1,7 +1,6 @@
-import sys
 import pandas as pd
 
-from PyQt5.QtWidgets import QApplication, QMenu, QTableView, QHeaderView
+from PyQt5.QtWidgets import QMenu, QTableView
 from PyQt5 import QtCore
 from PyQt5.QtCore import QAbstractTableModel, Qt, pyqtSignal, pyqtSlot
 

@@ -44,7 +44,7 @@ class IPMapWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__()
-        self._parent = parent
+        self.parent = parent
 
         self._resolution = '110m'
 
@@ -165,7 +165,7 @@ class IPMapWidget(QWidget):
 
         self.draw_map(extent=self.axes.get_extent())
         self.update_detections(self._detections,
-                               self._parent.bislSettings.rng_max_edit.value() * 1000,     # need range in m
+                               self.parent.bislSettings.rng_max_edit.value() * 1000,     # need range in m
                                linecolor=line_color)
 
     @pyqtSlot()
@@ -180,6 +180,7 @@ class IPMapWidget(QWidget):
             self._gt_marker.remove()
         self._gt_marker, = self.axes.plot(lon, lat, 'X', color='red', transform=self._transform, markersize=16, gid='ground_truth_marker')
         self.fig.canvas.draw()
+        self.show_hide_ground_truth(self.parent.showgroundtruth.show_gt())
         self.repaint()
 
     @pyqtSlot(bool)
@@ -347,9 +348,9 @@ class IPMapWidget(QWidget):
             lons.append(source_location[0])
             lats.append(source_location[1])
 
-        if self._parent.showgroundtruth.showGT_cb.isChecked():
-            lons.append(self._parent.showgroundtruth.lon_spinbox.value())
-            lats.append(self._parent.showgroundtruth.lat_spinbox.value())
+        if self.parent.showgroundtruth.showGT_cb.isChecked():
+            lons.append(self.parent.showgroundtruth.lon_spinbox.value())
+            lats.append(self.parent.showgroundtruth.lat_spinbox.value())
 
         maxLat = max(lats + self.end_lats)
         minLat = min(lats + self.end_lats)
@@ -481,7 +482,7 @@ class IPMapSettingsWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._parent = parent
+        self.parent = parent
         self.buildUI()
 
     def buildUI(self):

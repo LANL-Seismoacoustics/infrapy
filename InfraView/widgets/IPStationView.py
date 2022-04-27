@@ -104,7 +104,6 @@ class IPStationView(QWidget):
 
         for network in inventory.networks:
             for station in network.stations:
-                print("# chans: {}".format(len(station.channels)))
                 names = []
                 if len(station.channels) > 0:
                     for channel in station.channels:
@@ -142,8 +141,6 @@ class IPStationView(QWidget):
                             self.station_TabWidget.addTab(newStationEdit, name)
                 else:
                     name = network.code + '.' + station.code
-                    
-                    print("hi mom")
                     if name not in tab_names:
                         # Ok, need at least one, so lets assemble the interesting station info for display
                         newStationEdit = QTextEdit()
@@ -322,7 +319,6 @@ class IPStationView(QWidget):
             for sta in trace_stations:
                 if sta not in loaded_stations:
                     needed_stations.append(sta)
-        print("needed = {}".format(needed_stations))
         if needed_stations is not None:
             if self.matchDialog.exec_(needed_stations, (self.__parent.get_earliest_start_time(), self.__parent.get_earliest_start_time())):
                 new_inventory = self.matchDialog.getInventory()

@@ -1,17 +1,13 @@
-import sys
-import time
-
 import obspy
 from obspy.clients.fdsn import Client
-from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import URL_MAPPINGS
 
 from PyQt5 import QtGui, QtCore
 
-from PyQt5.QtCore import Qt, QDate, QTime, QDateTime, pyqtSignal, QCoreApplication
+from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import (QApplication, QWidget,
                              QVBoxLayout, QLineEdit,
-                             QPlainTextEdit, QGridLayout,
+                             QGridLayout,
                              QLabel, QComboBox, QDialog,
                              QDialogButtonBox, QMessageBox,
                              QPushButton, QDateEdit,
@@ -35,8 +31,8 @@ class IPStationBrowser(QWidget):
         super().__init__()
 
         # these are for managing the event info in form elements
-        # self.eventInfoPopulated = False
-        # self.currentEvent = None
+        self.eventInfoPopulated = False
+        self.currentEvent = None
 
         self.__buildUI__(service, network)
         self.show()
@@ -109,7 +105,7 @@ class IPStationBrowser(QWidget):
         self.lon_edit.setSingleStep(0.1)
         self.lon_edit.setValue(self.lon_edit.minimum())
 
-        # self.evt_import_button = QPushButton('Populate with Event Info')
+        self.evt_import_button = QPushButton('Populate with Event Info')
 
         self.minLat_edit = QDoubleSpinBox()
         self.minLat_edit.setRange(-90.1, 90.0)
@@ -188,7 +184,7 @@ class IPStationBrowser(QWidget):
         gridLayout.addWidget(QLabel(self.tr('Longitude: ')), 5, 2, alignment=Qt.AlignRight)
         gridLayout.addWidget(self.lon_edit, 5, 3)
 
-        # gridLayout.addWidget(self.evt_import_button, 6, 1, 1, 2)
+        gridLayout.addWidget(self.evt_import_button, 6, 1, 1, 2)
 
         gridLayout.addWidget(self.HLine(), 7, 0, 1, 4)  # This is a horizontal line
 
@@ -243,7 +239,7 @@ class IPStationBrowser(QWidget):
 
         self.searchButton.clicked.connect(self.onActivated_search)
         self.resetButton.clicked.connect(self.onActivated_reset)
-        # self.evt_import_button.clicked.connect(self.populateEventInfo)
+        self.evt_import_button.clicked.connect(self.populateEventInfo)
 
         self.stationListWidget.itemClicked.connect(self.getSelected)
 
@@ -409,28 +405,31 @@ class IPStationBrowser(QWidget):
         self.minRadius_edit.setValue(self.minRadius_edit.minimum())
         self.maxRadius_edit.setValue(self.maxRadius_edit.minimum())
         self.stationListWidget.clear()
-        # self.eventInfoPopulated = False
+        self.eventInfoPopulated = False
 
-    # def populateEventInfo(self):
-    #     if self.currentEvent is not None:
-    #         date = self.currentEvent['UTC Date']
-    #         lat = self.currentEvent['Latitude']
-    #         lon = self.currentEvent['Longitude']
-
-    #         self.lat_edit.setValue(lat)
-    #         self.lon_edit.setValue(lon)
-    #         qdate = QDate.fromString(date, 'yyyy-MM-dd')
-    #         self.startDate_edit.setDate(qdate)
-    #         self.endDate_edit.setDate(qdate.addDays(1))
-
-    #         self.eventInfoPopulated = True
-    #     else:
-    #         msg = QMessageBox()
-    #         msg.setIcon(QMessageBox.Warning)
-    #         msg.setText('There is not a valid event in the Event Tab')
-    #         msg.setWindowTitle('oops...')
-    #         msg.setStandardButtons(QMessageBox.Ok)
-    #         msg.exec_()
+    def populateEventInfo(self):
+        # find out if there is a valid event in the eventwidget, if there is, proceed
+        #lol...there's got to be a better way
+        event_widget = self.parentWidget().parentWidget().parentWidget().parentWidget().eventWidget
+        if event_widget.hasValidEvent():
+            event_dict = event_widget.Dict()
+            date = event_dict['UTC Date']
+            lat = event_dict['Latitude']
+            lon = event_dict['Longitude']
+            # populate the form elements
+            self.lat_edit.setValue(lat)
+            self.lon_edit.setValue(lon)
+            datedate = QDate.fromString(date, 'yyyy-MM-dd')
+            self.startDate_edit.setDate(datedate)
+            self.endDate_edit.setDate(datedate.addDays(1))
+            self.eventInfoPopulated = True
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText('There is not a valid event in the Event Tab')
+            msg.setWindowTitle('oops...')
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
 
     # def setEvent(self, event):
     #     self.currentEvent = event
