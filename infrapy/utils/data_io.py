@@ -13,8 +13,8 @@ from obspy.clients.fdsn import Client
 from obspy import read as obspy_read
 from obspy import UTCDateTime, read_inventory
 
-from infrapy.propagation import likelihoods as lklhds
-
+from ..propagation import likelihoods as lklhds
+from . import database
 
 blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, 'depmen': None, 'b': 0.0, 'e': None, 'stla': None, 'stlo': None, 
                   'nzyear': None, 'nzjday': None, 'nzhour': None, 'nzmin': None, 'nzsec': None, 'nzmsec': None, 'kstnm': None, 'kcmpnm': None, 'knetwk': None}
@@ -23,25 +23,52 @@ blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, '
 ##     Data Ingestion     ##
 ##         Methods        ##
 ############################
-def wvfrms_from_db(db_url, network, station, location, channel, starttime, endtime):
+
+def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, endtime):
     """
-    connect to a database to do database things...
+    connect to an FDSN server to pull data
 
     Parameters
     ----------
-    url: str
-        Properly formed string containing the connection url for the database
+    fsdn_opt: str
+        FDSN option (e.g., IRIS); None if using another source
+    network: str
+        Network for FDSN and database options
+    station: str
+        Station for the FDSN and database options
+    location: str
+        Location for the FDSN and database options
+    channel: str
+        Channel for the FDSN and database options
+    starttime: str
+        Start time for the FDSN and database options; formatted to be compatible with obspy.UTCDateTime
+    endtime: str
+        End time for the FDSN and database options; formatted to be compatible with obspy.UTCDateTime
 
     Returns
     -------
-    session : bound SQLAlchemy session instance
+    stream : obspy.core.stream.Stream
+        Obspy stream containing specified waveform data
+    latlon: 2darray
+        Iterable with latitude and longitude info for each trace of the returned stream
+
     """
 
-    # Need Jonathan or Christine to set this up...will be util.database eventually
-    return None, None
+    client = Client(fdsn_opt)
+    stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime), attach_response = True)
+    stream.remove_response()  
+
+    inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
+    latlon = []
+    for network in inventory:
+        for station in network:
+            latlon = latlon + [[station.latitude, station.longitude]]
+
+    return stream, latlon
 
 
-def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location=None, channel=None, starttime=None, endtime=None, local_latlon=None):
+
+def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, location=None, channel=None, starttime=None, endtime=None, local_latlon=None):
     """
     Define an ObsPy stream from a specified local, FDSN, or database source.
     1) if specifying local data, use obspy.read to set up the stream
@@ -54,7 +81,7 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
         Local waveform files (must be readable by obspy.read); None is using another source
     fsdn_opt: str
         FDSN option (e.g., IRIS); None if using another source
-    db_opt: str
+    db_info: str
         Database info to pull data; None if using another source
     network: str
         Network for FDSN and database options
@@ -82,7 +109,7 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
     """
 
     # check that only one option is selected and issue warning if multiple data sources are specified
-    if np.sum(np.array([val is not None for val in [local_opt, fdsn_opt, db_opt]])) > 1:
+    if np.sum(np.array([val is not None for val in [local_opt, fdsn_opt, db_info]])) > 1:
         msg = '\n' + "Multiple data sources specified. Unexpected behavior is possible." + '\n' + "Priority order is [local > FDSN > DB]"
         warnings.warn(msg)
 
@@ -93,23 +120,15 @@ def set_stream(local_opt, fdsn_opt, db_opt, network=None, station=None, location
         if local_latlon:
             latlon = np.load(local_latlon)
         else:
-            latlon = None
+            latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in stream]
 
     elif fdsn_opt is not None:
         print('\n' + "Loading data from FDSN (" + fdsn_opt + ")...")
-        client = Client(fdsn_opt)
-        stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime), attach_response = True)
-        stream.remove_response()  
+        stream, latlon = wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, endtime)
 
-        inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
-        latlon = []
-        for network in inventory:
-            for station in network:
-                latlon = latlon + [[station.latitude, station.longitude]]
-
-    elif db_opt is not None:
-        print('\n' + "Loading data from database (methods not set up yet, so returning None's)...")
-        stream, latlon = wvfrms_from_db(db_opt, network, station, location, channel, starttime, endtime)
+    elif db_info is not None:
+        print('\n' + "Loading data from database (" + db_info['url'] + ")...")
+        stream, latlon = database.wvfrms_from_db(db_info, station, channel, starttime, endtime)
 
     else:
         msg = "Warning: No waveform data source specified."

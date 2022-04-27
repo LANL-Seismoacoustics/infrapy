@@ -7,6 +7,8 @@ import pisces as ps
 import pisces.schema.kbcore as kb
 import pandas as pd
 
+from obspy import Stream, UTCDateTime
+
 DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
 
 def db_connect_url(url):
@@ -96,3 +98,43 @@ def query_db(session, start_time, end_time, sta="%", loc="%", cha="%", return_ty
         return ps.request.get_wfdisc_rows(session, Wfdisc, sta=sta, t1=start_time, t2=end_time)
     else:
         return None
+
+def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
+    # Set up db connection and table info
+    session = ps.db_connect( db_info['url'])
+
+    class Site(kb.Site):
+        __tablename__ = db_info['site']
+
+    class Wfdisc(kb.Wfdisc):
+        __tablename__ = db_info['wfdisc']
+
+    # get station info
+    if type(stations) is str:
+        stations = stations.replace('*','%')
+
+    if "%" in stations:
+        sta_list = session.query(Site).filter(Site.sta.contains(stations))
+    elif ',' in stations:
+        sta_list = ps.request.get_stations(session, Site, stations=stations.strip(' ()[]').split(','))
+    else:
+        sta_list = ps.request.get_stations(session, Site, stations=stations)
+
+    # pull data into the stream and set the latlon info
+    st = Stream()
+    latlon = []
+    for sta_n in sta_list:
+        temp = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, channel=channel, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
+
+        temp[0].stats.network = "__"
+        temp[0].stats.station = sta_n.sta
+        temp[0].stats.location = ""
+        temp[0].stats.channel = channel
+
+        sac_dict = {'stla': sta_n.lat, 'stlo': sta_n.lon, 'knetwk': 'IM', 'kstnm': sta_n.sta}
+        temp[0].stats.sac = sac_dict
+
+        st.append(temp[0])
+        latlon = latlon + [[sta_n.lat, sta_n.lon]]
+    
+    return st, latlon
