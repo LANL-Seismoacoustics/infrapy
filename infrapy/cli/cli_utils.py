@@ -38,7 +38,7 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
     click.echo("")
     click.echo("#################################")
     click.echo("##                             ##")
-    click.echo("##           InfraPy           ##")
+    click.echo("##      InfraPy Utilities      ##")
     click.echo("##        arrivals2json        ##")
     click.echo("##                             ##")
     click.echo("#################################")
@@ -71,8 +71,8 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
 @click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
 @click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
 @click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
-@click.option("--rcvr-lat", help="Source latitude", default=None, prompt="Enter receiver latitude: ")
-@click.option("--rcvr-lon", help="Source longitude", default=None, prompt="Enter receiver longitude: ")
+@click.option("--rcvr-lat", help="Receiver latitude", default=None, prompt="Enter receiver latitude: ")
+@click.option("--rcvr-lon", help="Receiver longitude", default=None, prompt="Enter receiver longitude: ")
 @click.option("--celerity-min", help="Minimum celerity", default=0.24)
 @click.option("--celerity-max", help="Maximum celerity", default=0.35)
 def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, celerity_max):
@@ -87,7 +87,7 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, c
     click.echo("")
     click.echo("#################################")
     click.echo("##                             ##")
-    click.echo("##           InfraPy           ##")
+    click.echo("##      InfraPy Utilities      ##")
     click.echo("##         arrival-time        ##")
     click.echo("##                             ##")
     click.echo("#################################")
@@ -106,12 +106,57 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, c
     rng = temp[2] / 1000.0
 
     click.echo("")
-    click.echo("  Propagation Range: " + str(np.round(rng,2)) + " km")
-    click.echo("  Propagation Azimuth: " + str(np.round(az, 2)) + " degrees")
-    click.echo("  Estimted arrival time range:")
+    click.echo("  Propagation range: " + str(np.round(rng,2)) + " km")
+    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees")
+    click.echo("  Estimated arrival time range:")
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_max, 0))[:-8])
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_min, 0))[:-8] + '\n')
 
+
+
+@click.command('calc-celerity', short_help="Compute the celerity for an arrival from a known source")
+@click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
+@click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
+@click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
+@click.option("--arrival-lat", help="Arrival latitude", default=None, prompt="Enter arrival latitude: ")
+@click.option("--arrival-lon", help="Arrival longitude", default=None, prompt="Enter arrival longitude: ")
+@click.option("--arrival-time", help="Arrival time", default=None, prompt="Enter arrival time: ")
+def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_time):
+    '''
+    Compute the range of possible arrivals times for a source-receiver pair given a range of celerity values
+    
+    \b
+    Example usage (requires InfraGA/GeoAc arrival output):
+    \tinfrapy utils calc-celerity --src-lat 30.0 --src-lon -110.0 --src-time "2020-12-25T00:00:00" --arrival-lat 40.0 --arrival-lon -110.0 --arrival-time "2020-12-25T01:03:50"
+
+    '''
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##        calc-celerity        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+    
+    click.echo("  Source Time: " + src_time)
+    click.echo("  Source Location: (" + str(src_lat) + ", " + str(src_lon) + ")")
+
+    click.echo('\n' + "  Arrival Time: " + arrival_time)
+    click.echo("  Arrival Location: (" + str(arrival_lat) + ", " + str(arrival_lon) + ")")
+
+    dt = UTCDateTime(arrival_time) - UTCDateTime(src_time)
+
+    sph_proj = Geod(ellps='sphere')
+    temp = sph_proj.inv(src_lon, src_lat, arrival_lon, arrival_lat, radians=False)
+    az = temp[0]
+    rng = temp[2]
+
+    click.echo("")
+    click.echo("  Propagation time: " + str(np.round(dt, 2)) + " s")
+    click.echo("  Propagation range: " + str(np.round(rng / 1000.0, 2)) + " km")
+    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees")
+    click.echo("  Arrival celerity: " + str(np.round(rng / dt, 1)) + " m/s" + '\n')
 
 
 

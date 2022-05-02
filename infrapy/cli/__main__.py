@@ -56,6 +56,7 @@ plot.add_command(cli_visualization.origin_time)
 # Utilities
 utils.add_command(cli_utils.arrivals2json)
 utils.add_command(cli_utils.arrival_time)
+utils.add_command(cli_utils.calc_celerity)
 
 
 if __name__ == '__main__':
