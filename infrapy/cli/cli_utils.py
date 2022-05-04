@@ -234,8 +234,9 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
+    click.echo('\nLocation info:')    
     for line in latlon:
-        print(line[0], '\t', line[1])
+        click.echo(str(line[0]) + '\t' +  str(line[1]))
 
 
 
