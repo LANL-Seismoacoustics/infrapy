@@ -21,7 +21,7 @@ def main():
 @click.group('plot', short_help="Visualize infrapy analysis results", context_settings={'help_option_names': ['-h', '--help']})
 def plot():
     '''
-    infrapy plot - Visualization methods for analysis results
+    infrapy plot - visualization methods for analysis results
     
     '''
     pass 
@@ -30,7 +30,7 @@ def plot():
 @click.group('utils', short_help="Various utility functions for infrapy analysis", context_settings={'help_option_names': ['-h', '--help']})
 def utils():
     '''
-    infrapy utils - various utility functions for infrapy analysis
+    infrapy utils - various utility functions for infrapy usage
     
     '''
     pass 
@@ -57,6 +57,7 @@ plot.add_command(cli_visualization.origin_time)
 utils.add_command(cli_utils.arrivals2json)
 utils.add_command(cli_utils.arrival_time)
 utils.add_command(cli_utils.calc_celerity)
+utils.add_command(cli_utils.check_db_wvfrm)
 
 
 if __name__ == '__main__':

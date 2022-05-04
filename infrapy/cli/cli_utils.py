@@ -7,6 +7,8 @@ Utility methods accessible in the command line interface (CLI) of infrapy
 Author: pblom@lanl.gov    
 """
 
+import configparser as cnfg
+
 from pickletools import read_long1
 import click
 
@@ -17,7 +19,7 @@ from obspy import UTCDateTime
 from pyproj import Geod
 
 from infrapy.propagation import likelihoods as lklhds
-from infrapy.utils import data_io
+from infrapy.utils import config, data_io
 
 @click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file")
 @click.option("--arrivals-file", help="InfraGA/GeoAc arrivals file", default=None)
@@ -160,7 +162,80 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
 
 
 
+@click.command('check_db_wvfrms', short_help="Check waveform pull from database")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--db-url", help="Database URL for waveform data files", default=None)
+@click.option("--db-site", help="Database site table for waveform data files", default=None)
+@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
 
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, location, channel, starttime, endtime):
+    '''
+    Test database pull of waveform data for beamforming (fk or fdk) analysis
+
+    \b
+    Example usage (detection_db.config will be unique to your database pull):
+    \tinfrapy run_fk --config-file config/detection_db.config
+
+    '''
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       check_db_wvfrms       ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")    
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    # Database and data IO parameters   
+    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
+    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
+    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+
+    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+
+    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+
+    click.echo('\n' + "Data parameters:")
+    click.echo("  db_url: " + str(db_url))
+    click.echo("  db_site: " + str(db_site))
+    click.echo("  db_wfdisc: " + str(db_wfdisc))
+    click.echo("  network: " + str(network))
+    click.echo("  station: " + str(station))
+    click.echo("  location: " + str(location))
+    click.echo("  channel: " + str(channel))
+    click.echo("  starttime: " + str(starttime))
+    click.echo("  endtime: " + str(endtime))
+
+
+    # Check data option and populate obspy Stream
+    db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
+    stream, latlon = data_io.set_stream(None, None, db_info, network, station, location, channel, starttime, endtime, None)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    for line in latlon:
+        print(line[0], '\t', line[1])
 
 
 

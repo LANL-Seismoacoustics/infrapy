@@ -112,10 +112,14 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     class Wfdisc(kb.Wfdisc):
         __tablename__ = db_info['wfdisc']
 
-    # get station info
+    # convert station wildcards to SQL and check that channel is not None
     if type(stations) is str:
         stations = stations.replace('*','%')
 
+    if channel is None:
+        channel = "*"
+
+    # get station info
     if "%" in stations:
         sta_list = session.query(Site).filter(Site.sta.contains(stations))
     elif ',' in stations:
@@ -130,6 +134,7 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
         temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
 
         for tr in temp_st:
+
             if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
                 tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
                 if len(tr.stats.network) == 0:
