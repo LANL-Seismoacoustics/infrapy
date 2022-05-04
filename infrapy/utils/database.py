@@ -3,6 +3,8 @@
   generic db functions ONLY.  No LANL specific code at all
 """
 
+import fnmatch 
+
 import pisces as ps
 import pisces.schema.kbcore as kb
 import pandas as pd
@@ -99,6 +101,7 @@ def query_db(session, start_time, end_time, sta="%", loc="%", cha="%", return_ty
     else:
         return None
 
+
 def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     # Set up db connection and table info
     session = ps.db_connect( db_info['url'])
@@ -124,17 +127,15 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     st = Stream()
     latlon = []
     for sta_n in sta_list:
-        temp = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, channel=channel, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
+        temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
 
-        temp[0].stats.network = "__"
-        temp[0].stats.station = sta_n.sta
-        temp[0].stats.location = ""
-        temp[0].stats.channel = channel
+        for tr in temp_st:
+            if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
+                tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
+                if len(tr.stats.network) == 0:
+                    tr.stats.network = "__"
+                st.append(tr)
 
-        sac_dict = {'stla': sta_n.lat, 'stlo': sta_n.lon, 'knetwk': 'IM', 'kstnm': sta_n.sta}
-        temp[0].stats.sac = sac_dict
-
-        st.append(temp[0])
-        latlon = latlon + [[sta_n.lat, sta_n.lon]]
+                latlon = latlon + [[sta_n.lat, sta_n.lon]]
     
     return st, latlon
