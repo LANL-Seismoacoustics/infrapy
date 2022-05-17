@@ -77,9 +77,13 @@ class Site(kb.Site):
 
 class Wfdisc(kb.Wfdisc):
     __tablename__ = 'global.wfdisc_raw'
+    
+
+class Affiliation(kb.Affiliation):
+    __tablename__ = 'global.affiliation'
 
 
-def query_db(session, start_time, end_time, sta="%", loc="%", cha="%", return_type='dataframe'):
+def query_db(session, start_time, end_time, evid="", sta="%", cha="%", return_type='dataframe'):
     """
     function to query a database using an existing session.  
 

@@ -1,22 +1,16 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QAction, QCheckBox, QComboBox, QLabel, QSplitter, QToolBar)
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QComboBox, QLabel, QSplitter)
+from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 import urllib
-import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import cartopy.mpl as cmpl
-import cartopy.mpl.geoaxes as cgeoaxes
 
 from pyproj import Geod
-
-from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
 import numpy as np
 

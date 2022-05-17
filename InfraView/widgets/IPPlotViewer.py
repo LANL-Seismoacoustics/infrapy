@@ -2,18 +2,15 @@ import pyqtgraph as pg
 import numpy as np
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint
-from PyQt5.QtGui import QCursor
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
                              QLabel, QMessageBox,
                              QHBoxLayout, QVBoxLayout,
-                             QScrollArea, QSplitter, QStackedWidget)
+                             QScrollArea, QSplitter)
 
-from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPWaveformSelectorWidget
 
-import obspy
 from obspy.core import UTCDateTime
 from obspy.core.stream import Stream
 

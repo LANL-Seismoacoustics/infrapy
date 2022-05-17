@@ -1,12 +1,8 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import (QDialog, QPushButton, QButtonGroup, QWidget, QHBoxLayout, QVBoxLayout,
-                             QFormLayout, QCheckBox, QComboBox, QDialogButtonBox,
-                             QGroupBox, QLabel, QLineEdit)
+from PyQt5.QtWidgets import (QDialog, QPushButton, QButtonGroup, QHBoxLayout, QVBoxLayout,
+                             QFormLayout, QCheckBox, QDialogButtonBox, QGroupBox, QLabel, QLineEdit)
 
-from PyQt5.QtCore import Qt, QRegExp
-from PyQt5.QtGui import QRegExpValidator
-
-import string
+from PyQt5.QtCore import Qt
 
 class IPNewDetectionsDialog(QDialog):
 

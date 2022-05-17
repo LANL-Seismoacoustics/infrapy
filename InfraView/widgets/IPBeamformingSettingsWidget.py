@@ -1,8 +1,6 @@
-from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
-                             QHBoxLayout, QFormLayout, QGroupBox, QFrame)
+from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
+                             QHBoxLayout, QFormLayout, QFrame)
 from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSignal, QSettings, Qt
-import sys
 
 
 class IPBeamformingSettingsWidget(QWidget):

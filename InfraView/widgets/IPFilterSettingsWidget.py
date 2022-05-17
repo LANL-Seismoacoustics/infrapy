@@ -1,11 +1,8 @@
-from PyQt5.QtWidgets import (QWidget, QApplication, QCheckBox,
-                             QComboBox, QLabel, QDoubleSpinBox,
+from PyQt5.QtWidgets import (QWidget, QCheckBox, QComboBox, QLabel, QDoubleSpinBox,
                              QSpinBox, QGridLayout, QGroupBox, QPushButton,
-                             QVBoxLayout, QHBoxLayout, QGroupBox,
-                             QButtonGroup)
+                             QVBoxLayout, QGroupBox)
 
 from PyQt5.QtCore import pyqtSignal, QSettings, Qt
-import sys
 
 
 class IPFilterSettingsWidget(QWidget):

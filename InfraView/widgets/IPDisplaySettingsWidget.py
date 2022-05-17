@@ -1,11 +1,7 @@
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSignal, QSettings, QSize, QPoint, QDir
-from PyQt5.QtWidgets import (QFileDialog, QTabWidget, QSplitter, QGridLayout,
-                             QInputDialog, QTableWidgetItem, QMessageBox, QWidget)
 
-import pyqtgraph as pg
-import pyqtgraph.parametertree.parameterTypes as pTypes
-from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
+from PyQt5.QtWidgets import QGridLayout, QWidget
+
+from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class IPDisplaySettingsWidget(QWidget):

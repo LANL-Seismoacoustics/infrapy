@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget, QAbstractItemView
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget, QAbstractItemView, QFrame, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
-import pandas as pd
 
 from obspy.core import read as obsRead
 
@@ -100,18 +99,23 @@ class IPPandasModel(QAbstractTableModel):
         return QVariant()
 
 
-class IPDatabaseQueryResultsTable(QWidget):
+class IPDatabaseQueryResultsTable(QFrame):
     """
     Table widget to view results from an sql query
     """
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.data = None
         self.model = None
         self.parent = parent
         self.buildUI()
 
     def buildUI(self):
+        
+        title_label = QLabel("\tDatabase Query Results")
+        title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
+
         self.tableView = QTableView(self)
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
@@ -128,6 +132,7 @@ class IPDatabaseQueryResultsTable(QWidget):
         button_layout.addStretch()
 
         main_layout = QVBoxLayout()
+        main_layout.addWidget(title_label)
         main_layout.addLayout(button_layout)
         main_layout.addWidget(self.tableView)
         self.setLayout(main_layout)
@@ -152,7 +157,8 @@ class IPDatabaseQueryResultsTable(QWidget):
 
     def clearTable(self):
         # maybe do some additional clean-up here?
-        self.model.deleteLater()
+        if self.model:
+            self.model.deleteLater()
 
     def selectAll(self):
         self.tableView.selectAll()
@@ -164,6 +170,8 @@ class IPDatabaseQueryResultsTable(QWidget):
         # if nothing is selected, then selectionModel() will return None
         if self.tableView.selectionModel():
             rows = self.tableView.selectionModel().selectedRows()
+        else:
+            return None
 
         selected_rows = []
         for row in rows:
@@ -176,3 +184,38 @@ class IPDatabaseQueryResultsTable(QWidget):
 
         print("selected wfdisc length = {}".format(len(selected_wds)))
 
+
+class IPEventQueryResultsTable(QFrame):
+    """
+    Table widget to view results from an sql event query (evid or name)
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.size_policy = self.sizePolicy()
+        self.size_policy.setHorizontalPolicy(QSizePolicy.Expanding)
+        self.setSizePolicy(self.size_policy)
+        self.data = None
+        self.model = None
+        self.parent = parent
+        self.buildUI()
+
+    def buildUI(self):
+        
+        title_label = QLabel("\tEvent Query Results")
+        title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
+
+        self.clear_button = QPushButton("Clear Table")
+
+        self.tableView = QTableView(self)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+        horiz_layout_0 = QHBoxLayout()
+        horiz_layout_0.addWidget(self.clear_button)
+        horiz_layout_0.addStretch()
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(title_label)
+        main_layout.addLayout(horiz_layout_0)
+        main_layout.addWidget(self.tableView)
+        self.setLayout(main_layout)

@@ -10,18 +10,23 @@ class IPDatabaseWidget(QWidget):
         self.ipdatabase_connect_widget = None
         self.ipdatabase_query_widget = None
         self.ipdatabase_query_results_table = None
+        self.ipevent_query_widget = None
+        self.ipevent_query_results_table = None
 
         self.buildUI()
 
     def buildUI(self):
         self.ipdatabase_connect_widget = IPDatabaseConnectWidget.IPDatabaseConnectWidget(self)
         self.ipdatabase_query_widget = IPDatabaseQueryWidget.IPDatabaseQueryWidget(self)
+        self.ipevent_query_widget = IPDatabaseQueryWidget.IPEventQueryWidget(self)
         self.ipdatabase_query_results_table = IPDatabaseQueryResultsTable.IPDatabaseQueryResultsTable(self)
-        
+        self.ipevent_query_results_table = IPDatabaseQueryResultsTable.IPEventQueryResultsTable(self)
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.ipdatabase_connect_widget)
         hlayout.addWidget(self.ipdatabase_query_widget)
-        hlayout.addStretch()
+        hlayout.addWidget(self.ipevent_query_widget)
+        hlayout.addWidget(self.ipevent_query_results_table)
+        # hlayout.addStretch()
 
         vlayout = QVBoxLayout()
         vlayout.addLayout(hlayout)

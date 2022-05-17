@@ -1,5 +1,4 @@
 import pyqtgraph as pg
-from pyqtgraph import Point
 
 from pyqtgraph.graphicsItems.InfiniteLine import InfLineLabel
 from pyqtgraph import LinearRegionItem

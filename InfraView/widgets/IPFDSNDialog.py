@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox
 from PyQt5.QtCore import Qt
+
 from InfraView.widgets import IPFDSNWidget
 
 

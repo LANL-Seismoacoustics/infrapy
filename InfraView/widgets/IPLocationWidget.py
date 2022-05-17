@@ -1,43 +1,27 @@
 import sys
 import matplotlib
-import imp
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QColorDialog, QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
-                             QVBoxLayout, QGridLayout, QDoubleSpinBox, QSpinBox,
+from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
+                             QVBoxLayout, QDoubleSpinBox, QSpinBox,
                              QFormLayout, QFrame, QMessageBox, QPushButton,
                              QSplitter, QTextEdit, QComboBox)
 
-from PyQt5.QtCore import Qt, QObject, QSize, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot
 
 import numpy as np
-from pyproj import Geod
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.widgets import RectangleSelector
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
 
-from scipy.cluster.hierarchy import dendrogram, linkage, cophenet, fcluster, set_link_color_palette
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, set_link_color_palette
 from scipy.spatial.distance import pdist, squareform
 
-import pathos.multiprocessing as mp
-from multiprocessing import cpu_count
-
-import cartopy
-import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import cartopy.mpl as cmpl
-import cartopy.mpl.geoaxes as cgeoaxes
 
 from infrapy.location import bisl
 from infrapy.association import hjl
-from infrapy.propagation import likelihoods as lklhds
-from infrapy.propagation import infrasound as infsnd
-from infrapy.propagation.likelihoods import InfrasoundDetection
 
-from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPMapWidget
 
 import pyqtgraph as pg

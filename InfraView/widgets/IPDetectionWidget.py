@@ -5,10 +5,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
                              QLabel, QGridLayout, QHBoxLayout,
                              QVBoxLayout, QLayout, QMessageBox)
-from PyQt5 import QtCore
-from PyQt5.QtCore import QDir, pyqtSignal, pyqtSlot
 
-import pyqtgraph as pg
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 import pandas as pd
 

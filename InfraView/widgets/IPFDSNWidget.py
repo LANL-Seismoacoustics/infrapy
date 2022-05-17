@@ -1,4 +1,3 @@
-import sys
 import obspy
 from obspy.clients.fdsn import Client
 from obspy.core import UTCDateTime
@@ -6,17 +5,13 @@ from obspy.clients.fdsn.header import URL_MAPPINGS
 
 import numpy as np
 
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import (QWidget, QApplication,
-                             QAbstractItemView, QLineEdit, QGridLayout,
-                             QComboBox, QLabel,
-                             QVBoxLayout, QHBoxLayout,
-                             QGroupBox, QPushButton,
-                             QDateEdit, QTimeEdit,
-                             QSpinBox, QMessageBox,
-                             QListWidget)
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import (QWidget, QAbstractItemView, QLineEdit, QGridLayout,
+                             QComboBox, QLabel, QVBoxLayout, QHBoxLayout,
+                             QGroupBox, QPushButton, QDateEdit, QTimeEdit,
+                             QSpinBox, QMessageBox, QListWidget)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate, QTime
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate
 
 from InfraView.widgets import IPStationBrowser
 

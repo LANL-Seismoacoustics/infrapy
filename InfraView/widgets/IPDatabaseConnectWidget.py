@@ -1,8 +1,8 @@
 import urllib.parse
 import configparser
 
-from PyQt5.QtWidgets import (QWidget, QComboBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, 
-                             QPushButton, QVBoxLayout)
+from PyQt5.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
+                             QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QSizePolicy)
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer
 from infrapy.utils import database
@@ -12,13 +12,16 @@ class IPDatabaseConnectWidget(QFrame):
     def __init__(self, parent):
         super().__init__()
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(QSizePolicy.Fixed)
+        self.setSizePolicy(size_policy)
         self.parent = parent  # reference to the IPBeamformingWidget to which this belongs
         self.session = None
+        self.config_filename = ""
         self.buildUI()
 
     def buildUI(self):
-        self.form_layout = QFormLayout()
-
+        
         self.title_label = QLabel("\tDatabase Connection")
         self.title_label.setStyleSheet("QLabel {font-weight: bold; color: white; background-color: black}")
 
@@ -28,6 +31,10 @@ class IPDatabaseConnectWidget(QFrame):
         self.save_current_button = QPushButton("Save Config File...")
         self.save_current_button.setMaximumWidth(200)
         self.save_current_button.setEnabled(False)
+
+        self.schema_type_combo = QComboBox()
+        self.schema_type_combo.addItem("KBCore")
+        self.schema_type_combo.addItem("CSS3")
 
         self.hostname_edit = QLineEdit()
         self.hostname_edit.setMaximumWidth(400)
@@ -60,21 +67,26 @@ class IPDatabaseConnectWidget(QFrame):
         self.create_session_button = QPushButton("Create Session")
         self.create_session_button.setMaximumWidth(200)
 
-        self.close_session_button = QPushButton("Close Session")
+        self.close_session_button = QPushButton("Clear Session")
         self.close_session_button.setMaximumWidth(200)
 
         self.test_connection_button = QPushButton("Test Connection")
 
-        self.form_layout.addWidget(self.load_config_button)
-        self.form_layout.addWidget(self.save_current_button)
-        self.form_layout.addRow("Hostname: ", self.hostname_edit)
-        self.form_layout.addRow("Username: ", self.username_edit)
-        self.form_layout.addRow("Password: ", self.password_edit)
-        self.form_layout.addRow("Dialect: ", self.dialect_combo)
-        self.form_layout.addRow("Driver: ", self.driver_edit)
-        self.form_layout.addRow("Database Name: ", self.database_name)
-        self.form_layout.addRow("Port Number: ", self.portnum_edit)
-        self.form_layout.addRow("URL: ", self.url_label)
+        horiz_layout_0 = QHBoxLayout()
+        horiz_layout_0.addWidget(self.load_config_button)
+        horiz_layout_0.addWidget(self.save_current_button)
+        horiz_layout_0.addStretch()
+        
+        form_layout = QFormLayout()
+        form_layout.addRow("Schema: ", self.schema_type_combo)
+        form_layout.addRow("Hostname: ", self.hostname_edit)
+        form_layout.addRow("Username: ", self.username_edit)
+        form_layout.addRow("Password: ", self.password_edit)
+        form_layout.addRow("Dialect: ", self.dialect_combo)
+        form_layout.addRow("Driver: ", self.driver_edit)
+        form_layout.addRow("Database Name: ", self.database_name)
+        form_layout.addRow("Port Number: ", self.portnum_edit)
+        form_layout.addRow("URL: ", self.url_label)
 
         horiz_layout_1 = QHBoxLayout()
         horiz_layout_1.addStretch()
@@ -84,11 +96,12 @@ class IPDatabaseConnectWidget(QFrame):
         horiz_layout_1.addStretch()
 
         horiz_layout_2 = QHBoxLayout()
-        horiz_layout_2.addLayout(self.form_layout)
+        horiz_layout_2.addLayout(form_layout)
         horiz_layout_2.addStretch()
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.title_label)
+        main_layout.addLayout(horiz_layout_0)
         main_layout.addLayout(horiz_layout_2)
         main_layout.addStretch()
         main_layout.addLayout(horiz_layout_1)
@@ -105,6 +118,7 @@ class IPDatabaseConnectWidget(QFrame):
         self.username_edit.textEdited.connect(self.update_url)
         self.password_edit.textEdited.connect(self.update_url)
         self.dialect_combo.currentIndexChanged.connect(self.update_url)
+        self.schema_type_combo.currentIndexChanged.connect(self.update_url)
 
         self.driver_edit.textEdited.connect(self.update_url)
         self.database_name.textEdited.connect(self.update_url)
@@ -189,10 +203,11 @@ class IPDatabaseConnectWidget(QFrame):
 
     def load_config_file(self):
         if self.config_file_dialog.exec_():
-            config_filename = self.config_file_dialog.selectedFiles()[0]
+            self.config_filename = self.config_file_dialog.selectedFiles()[0]
             try:
                 config = configparser.ConfigParser()
-                config.read(config_filename)
+                config.read(self.config_filename)
+                self.schema_type_combo.setCurrentText(config['DATABASE']['schema'])
                 self.hostname_edit.setText(config['DATABASE']['hostname'])
                 self.username_edit.setText(config['DATABASE']['username'])
                 self.password_edit.setText("")
@@ -211,6 +226,7 @@ class IPDatabaseConnectWidget(QFrame):
             try:
                 config = configparser.ConfigParser()
                 config['DATABASE'] = {}
+                config['DATABASE']['schema'] = self.schema_type_combo.currentText()
                 config['DATABASE']['hostname'] = self.hostname_edit.text()
                 config['DATABASE']['username'] = self.username_edit.text()
                 config['DATABASE']['database_name'] = self.database_name.text()

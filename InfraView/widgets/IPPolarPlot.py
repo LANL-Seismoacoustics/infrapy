@@ -2,11 +2,6 @@ import numpy as np
 import math
 
 import pyqtgraph as pg
-from pyqtgraph import LinearRegionItem
-
-import PyQt5
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, pyqtSignal
 
 
 class IPPolarPlot(pg.PlotItem):

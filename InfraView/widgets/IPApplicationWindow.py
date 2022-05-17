@@ -1,14 +1,11 @@
 import pyqtgraph as pg
 import platform
 import os, sys
-import pdb
-from pathlib import Path, PurePath
+from pathlib import Path
 
 import numpy as np
-import copy
 
 # obspy includes
-import obspy
 from obspy.core import read as obsRead
 from obspy.core import UTCDateTime
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
@@ -19,25 +16,16 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSettings, QSize, QPoint, QDir
 from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLayout,
-                             QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QTableWidgetItem, QMessageBox, QWidget,
-                             QApplication, QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
-
-# Infrapy includes
+                             QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QMessageBox, QWidget,
+                             QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
 
 # Application includes
-from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPDisplaySettingsWidget
 from InfraView.widgets import IPBeamformingWidget
-from InfraView.widgets import IPPSDWidget
-from InfraView.widgets import IPFilterSettingsWidget
 from InfraView.widgets import IPProject
-from InfraView.widgets import IPStream
-from InfraView.widgets import IPStationView
-from InfraView.widgets import IPStatsView
 from InfraView.widgets import IPFDSNDialog
 from InfraView.widgets import IPLocationWidget
 from InfraView.widgets import IPSaveAllDialog
-from InfraView.widgets import IPSimpleLegend
 from InfraView.widgets import IPWaveformWidget
 from InfraView.widgets import IPDatabaseWidget
 

@@ -1,10 +1,7 @@
-from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QAbstractSpinBox, QDoubleSpinBox, QSpinBox,
-                             QFormLayout, QGridLayout,
-                             QVBoxLayout, QHBoxLayout, QGroupBox,
-                             QButtonGroup, QFrame)
-from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSettings, Qt
-import sys
+from PyQt5.QtWidgets import (QWidget, QCheckBox, QDoubleSpinBox, QSpinBox,
+                             QFormLayout, QHBoxLayout, QButtonGroup)
+
+from PyQt5.QtCore import pyqtSlot
 
 
 class IPDetectorSettingsWidget(QWidget):
