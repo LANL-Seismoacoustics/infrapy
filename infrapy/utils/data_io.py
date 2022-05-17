@@ -416,10 +416,10 @@ def write_locs(bisl_results, local_loc_label):
 
     if ".loc.json" in local_loc_label:
         with open(local_loc_label, 'w') as of:
-            json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
+            json.dump(bisl_results, of, indent=4, cls=Infrapy_Encoder)
     else:
         with open(local_loc_label + ".loc.json", 'w') as of:
-            json.dump(bisl_results, of, indent=4, cls=lklhds.Infrapy_Encoder)
+            json.dump(bisl_results, of, indent=4, cls=Infrapy_Encoder)
 
 
 def read_locs(local_loc_label):
