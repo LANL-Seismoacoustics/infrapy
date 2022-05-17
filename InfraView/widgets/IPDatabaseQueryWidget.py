@@ -181,7 +181,7 @@ class IPDatabaseQueryWidget(QFrame):
         else:
             cha = self.cha_edit.text()
 
-        wfs = database.query_db(session, evid=evid, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
+        wfs = database.query_db(session, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
         self.parent.ipdatabase_query_results_table.setData(wfs)
 
     #def update_query_string(self):
