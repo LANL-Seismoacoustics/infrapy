@@ -176,11 +176,6 @@ class IPDatabaseQueryWidget(QFrame):
         else:
             sta = self.sta_edit.text()
 
-        if self.evid_edit.text() in ['*', '']:
-            evid = '%'
-        else:
-            evid = self.evid_edit.text()
-
         if self.cha_edit.text() in ['*', '']:
             cha = '%'
         else:
