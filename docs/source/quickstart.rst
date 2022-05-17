@@ -52,6 +52,7 @@ Array-Level Analyses
           sub_window_len: None
           window_step: 5.0
           multithread: False
+          write_wvfrms: False
 
         Loading local data from data/YJ.BRP*.SAC
 
@@ -64,7 +65,7 @@ Array-Level Analyses
         Running fk analysis...
 	        Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
 
-        Writing results to specified output...
+        Writing results into data/YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat
 
 - Once completed, this analysis produces an output file containing the beamforming results, :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat`, that has header information summarizing the analysis parameter settings.
 
@@ -128,8 +129,6 @@ Array-Level Analyses
 
         infrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
-    The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as :code:`--local-fk-label example`.
-
 - In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Create a text file called :code:`BRP_analysis.config` and enter the following:
 
     .. code-block:: none
@@ -159,7 +158,7 @@ Array-Level Analyses
 
         infrapy run_fk --config-file BRP_analysis.config --freq-max 10.0
 
-    If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the :code:`fk_results` output file header.
+    If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.
 
 - From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.
 
@@ -220,13 +219,13 @@ Array-Level Analyses
             }, ...
 
 
-- Once detections are identified in the data record, they can be visualized similarly to the :code:`plot_fk` option via :code:`plot_fd`.
+- Once detections are identified in the data record, they can be visualized similarly to the :code:`plot fk` option via :code:`plot fd`.
 
     .. code-block:: bash
 
         infrapy plot fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
-    This plot has the same format as the above :code:`plot_fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
+    This plot has the same format as the above :code:`plot fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
 
     .. image:: _static/_images/plot_fd.png
         :width: 1200px
@@ -331,7 +330,7 @@ Network-Level Analyses
 
     The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`local_event_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
 
-- Detection sets can be visualized on a map using the :code:`plot_dets` option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,
+- Detection sets can be visualized on a map using the :code:`plot dets` option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,
 
     .. code-block:: bash
     
@@ -352,7 +351,7 @@ Network-Level Analyses
         :align: center
 
 
-- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al (2015).  This requires specifying the detection list file as well as an output location file label,
+- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015).  This requires specifying the detection list file as well as an output location file label,
 
     .. code-block:: bash
 
@@ -413,7 +412,7 @@ Network-Level Analyses
         :width: 1200px
         :align: center
 
-    For Visualization of the source region in more detail, the :code:`--zoom` option can be set to true and the map zooms in to show only the estimated source region.
+    For visualization of the source region in more detail, the :code:`--zoom` option can be set to true and the map zooms in to show only the estimated source region.
 
     .. code-block:: bash
 
@@ -427,7 +426,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot origin_time --local-loc-label GJI_example-ev0 
+        infrapy plot origin-time --local-loc-label GJI_example-ev0 
 
 
     .. image:: _static/_images/plot_origin_time.png
@@ -524,10 +523,10 @@ Scripting and Notebook-Based Analysis
     .. code-block:: python
 
         from infrapy.association import hjl
-        from infrapy.propagation import likelihoods as lklhds
+        from infrapy.utils import data_io
 
         if __name__ == '__main__':
-            det_list = lklhds.json_to_detection_list('data/example1.dets.json')
+            det_list = data_io.json_to_detection_list('data/example1.dets.json')
             clustering_threshold = 5.0
 
             labels, dists = hjl.run(det_list, clustering_threshold)
@@ -542,10 +541,10 @@ Scripting and Notebook-Based Analysis
     .. code-block:: python
 
         from infrapy.location import bisl
-        from infrapy.propagation import likelihoods as lklhds
+        from infrapy.utils import data_io
 
         if __name__ == '__main__':
-            det_list = lklhds.json_to_detection_list('data/example2.dets.json')
+            det_list = data_io.json_to_detection_list('data/example2.dets.json')
 
             result,pdf = bisl.run(det_list)
             print(bisl.summarize(result))
@@ -560,7 +559,7 @@ Scripting and Notebook-Based Analysis
 
         import matplotlib.pyplot as plt 
 
-        from infrapy.propagation import likelihoods as lklhds
+        from infrapy.utils import data_io
         from infrapy.propagation import infrasound
 
         from infrapy.characterization import spye
@@ -598,7 +597,7 @@ Scripting and Notebook-Based Analysis
             #     Define the detections     #
             #          and spectra          #
             # ############################# #
-            det_list = lklhds.json_to_detection_list(det_file)
+            det_list = data_io.json_to_detection_list(det_file)
             st_list = [0] * len(det_list)
             for j in range(len(st_list)):
                 st_list[j] = read(data_path + data_ids[j] )
