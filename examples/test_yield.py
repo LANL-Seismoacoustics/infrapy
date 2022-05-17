@@ -11,7 +11,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt 
 
-from infrapy.propagation import likelihoods as lklhds
+from infrapy.utils import data_io
 from infrapy.propagation import infrasound
 
 from infrapy.characterization import spye
@@ -32,14 +32,14 @@ if __name__ == '__main__':
     yld_rng = np.array([1.0e3, 1000.0e3])
     ref_rng = 1.0
 
-    grnd_truth=None
+    grnd_truth = None
     resol = 200
 
     # ############################# #
     #     Define the detections     #
     #          and spectra          #
     # ############################# #
-    det_list = lklhds.json_to_detection_list(det_file)
+    det_list = data_io.json_to_detection_list(det_file)
     st_list = [0] * len(det_list)
     for j in range(len(st_list)):
         st_list[j] = read(data_path + data_ids[j] )

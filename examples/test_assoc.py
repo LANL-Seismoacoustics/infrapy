@@ -10,7 +10,8 @@ import pathos.multiprocessing as mp
 from multiprocessing import cpu_count
 
 from infrapy.association import hjl
-from infrapy.propagation import likelihoods as lklhds
+from infrapy.utils import data_io
+
 from multiprocess import Pool
 
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     #########################
 
     # Read in detections from file
-    det_list = lklhds.json_to_detection_list('data/example1.dets.json')
+    det_list = data_io.json_to_detection_list('data/example1.dets.json')
 
     # define joint-likelihood calculation parameters
     width = 10.0
