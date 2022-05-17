@@ -58,6 +58,8 @@ utils.add_command(cli_utils.arrivals2json)
 utils.add_command(cli_utils.arrival_time)
 utils.add_command(cli_utils.calc_celerity)
 utils.add_command(cli_utils.check_db_wvfrm)
+utils.add_command(cli_utils.write_wvfrms)
+utils.add_command(cli_utils.best_beam)
 
 
 if __name__ == '__main__':

@@ -32,7 +32,7 @@ from infrapy.detection import beamforming_new as fkd
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 
-@click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
+@click.option("--local-fk-label", help="Label for local output of fk results", default=None)
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--back-az-min", help="Minimum back azimuth (default: " + config.defaults['FK']['back_az_min'] + " [deg])", default=None, type=float)
@@ -286,8 +286,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
 
 @click.command('run_fd', short_help="Identify detections from beamforming results")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-fk-label", help="Local beamforming (fk) results files", default=None)
-@click.option("--local-detect-label", help="Local detectuion (fd) data file prefix", default=None)
+@click.option("--local-fk-label", help="Local beamforming (fk) results label", default=None)
+@click.option("--local-detect-label", help="Label for local detection (fd) results", default=None)
 @click.option("--window-len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['FD']['p_value'] + ")", default=None, type=float)
 @click.option("--min-duration", help="Minimum detection duration (default: " + config.defaults['FD']['min_duration'] + " [s])", default=None, type=float)
@@ -410,8 +410,8 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 
-@click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
-@click.option("--local-detect-label", help="Local detectuion (fd) data file prefix", default=None)
+@click.option("--local-fk-label", help="Label for local output of fk results", default=None)
+@click.option("--local-detect-label", help="Label for local detection (fd) results", default=None)
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
