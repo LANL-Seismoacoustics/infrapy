@@ -5,8 +5,13 @@
 
 import fnmatch 
 
+import sqlalchemy as sa
+from sqlalchemy.ext.declarative import declarative_base
+
 import pisces as ps
 import pisces.schema.kbcore as kb
+import pisces.tables.css3 as css_tables
+import pisces.tables.kbcore as kb_tables
 import pandas as pd
 
 from obspy import Stream, UTCDateTime
@@ -148,3 +153,36 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
                 latlon = latlon + [[sta_n.lat, sta_n.lon]]
     
     return st, latlon
+
+
+def make_tables_from_dict(tables=None, schema=None, owner=None):
+    # first handle the bailout conditions
+    if tables is None and schema is None:
+        msg = "Not enough information to generate tables"
+        raise ValueError(msg)
+        return
+    if schema.lower() not in ['kbcore', 'css3']:
+        msg = "Unsupported schema: {}".format(schema)
+        raise ValueError(msg)
+        return
+
+    if schema.lower() == 'kbcore':
+        CORETABLES = kb_tables.CORETABLES
+    elif schema.lower() == 'css3':
+        CORETABLES = css_tables.CORETABLES
+
+    if tables is None:
+        tables = dict(zip(CORETABLES.keys(), CORETABLES.keys()))
+
+    if owner:
+        parents = (declarative_base(metadata=sa.MetaData(schema=owner)),)
+    else:
+        parents = ()
+
+    dict_of_classes = {}
+    for table, tablename in tables.items():
+        prototype = CORETABLES[table.lower()].prototype
+        dict_of_classes[table] = type(tablename, parents + (prototype,), {'__tablename__': tablename})
+    
+    print(dict_of_classes)
+    return dict_of_classes

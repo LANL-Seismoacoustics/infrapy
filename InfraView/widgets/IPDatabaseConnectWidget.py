@@ -20,6 +20,9 @@ class IPDatabaseConnectWidget(QFrame):
         self.config_filename = ""
         self.buildUI()
 
+        table_classes = database.make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
+        print(table_classes['Wfdisc'].__tablename__)
+        
     def buildUI(self):
         
         self.title_label = QLabel("\tDatabase Connection")
