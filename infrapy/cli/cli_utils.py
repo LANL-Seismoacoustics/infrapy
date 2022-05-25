@@ -113,12 +113,19 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, c
 
     sph_proj = Geod(ellps='sphere')
     temp = sph_proj.inv(src_lon, src_lat, rcvr_lon, rcvr_lat, radians=False)
-    az = temp[0]
+    az, back_az = temp[0], temp[1]
     rng = temp[2] / 1000.0
+
+    if back_az > 180.0:
+        back_az = back_az - 360.0
+    elif back_az < -180.0:
+        back_az = back_az + 360.0
 
     click.echo("")
     click.echo("  Propagation range: " + str(np.round(rng,2)) + " km")
-    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees")
+    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees" + '\n')
+
+    click.echo("  Estimated arrival back azimuth: " + str(np.round(back_az, 2)) + " degrees")
     click.echo("  Estimated arrival time range:")
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_max, 0))[:-8])
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_min, 0))[:-8] + '\n')
@@ -415,6 +422,9 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
+    # Local fk file
+    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
+
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
         click.echo("  local_wvfrms: " + str(local_wvfrms))
@@ -469,7 +479,6 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     click.echo('\n' + "Data summary:")
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
-
 
     if local_fk_label is None:
         local_fk_label = ""
@@ -560,7 +569,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
         window_step = (beam_times[1] - beam_times[0]).astype(float) / 1.0e6
         for n, tn in enumerate((beam_times - t0).astype(float) / 1.0e6):
-            if tn >= window_step and tn <= (t[-1] - t[0]):
+            if tn >= 0.0 and tn <= (t[-1] - t[0]):
                 X, _, f = beamforming_new.fft_array_data(x, t, window=[tn - window_step, tn + window_step], fft_window="boxcar")
 
                 sig_est, residual = beamforming_new.extract_signal(X, f, beam_results[n, :2], geom)
@@ -598,7 +607,9 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     plt.plot(plot_times, best_beam, '-k', linewidth=1.0)
     for nM in range(len(residuals)):
         plt.plot(plot_times, residuals[nM], '-r', linewidth=0.25)
-    plt.show()
+    plt.show(block=False)
+    plt.pause(5.0)
+    plt.close()
 
 
 
