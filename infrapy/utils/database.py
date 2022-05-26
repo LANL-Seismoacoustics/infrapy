@@ -3,6 +3,7 @@
   generic db functions ONLY.  No LANL specific code at all
 """
 
+import numpy as np
 import fnmatch 
 
 import pisces as ps
@@ -146,5 +147,16 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
                 st.append(tr)
 
                 latlon = latlon + [[sta_n.lat, sta_n.lon]]
-    
+
+    # Merge streams if necessary and return unique latlon info (np.unique applies a sorting, so need to do a custom return)
+    st.merge()
+    if len(latlon) > len(st):
+        latlon = np.array(latlon)
+        lat_indices = np.unique(latlon[:, 0], return_index=True)[1]
+        lon_indices = np.unique(latlon[:, 1], return_index=True)[1]
+
+        uniq_lats =  [latlon[:, 0][index] for index in sorted(lat_indices)]
+        uniq_lons =  [latlon[:, 1][index] for index in sorted(lon_indices)]
+        latlon = np.vstack((uniq_lats, uniq_lons)).T.tolist()
+ 
     return st, latlon
