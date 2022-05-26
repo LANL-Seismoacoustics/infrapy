@@ -373,9 +373,11 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
 @click.option("--signal-start", help="Start of signal window", default=None)
 @click.option("--signal-end", help="End of signal window", default=None)
 
+@click.option("--hold-figure", help="Hold figure open", default=False)
+
 
 def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
-    back_az, trace_vel, signal_start, signal_end):
+    back_az, trace_vel, signal_start, signal_end, hold_figure):
     '''
     Shift and stack the array data to compute the best beam.  Can be run adaptively using the fk_results.dat file or along a specific beam.
 
@@ -480,7 +482,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
-    if local_fk_label is None:
+    if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = ""
         if local_wvfrms is not None:
             if "/" in local_wvfrms:
@@ -607,9 +609,13 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     plt.plot(plot_times, best_beam, '-k', linewidth=1.0)
     for nM in range(len(residuals)):
         plt.plot(plot_times, residuals[nM], '-r', linewidth=0.25)
-    plt.show(block=False)
-    plt.pause(5.0)
-    plt.close()
+
+    if hold_figure:
+        plt.show()
+    else:
+        plt.show(block=False)
+        plt.pause(5.0)
+        plt.close()
 
 
 
