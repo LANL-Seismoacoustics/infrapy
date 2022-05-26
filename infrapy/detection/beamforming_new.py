@@ -82,13 +82,13 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
     dxdy = np.zeros((len(stream), 2))
     if latlon is None:
         for m, tr in enumerate(stream):
-            temp = wgs84_proj.inv(tr.stats.sac['stlo'], tr.stats.sac['stla'], stream[0].stats.sac['stlo'], stream[0].stats.sac['stla'])
+            temp = wgs84_proj.inv(stream[0].stats.sac['stlo'], stream[0].stats.sac['stla'], tr.stats.sac['stlo'], tr.stats.sac['stla'])
             dxdy[m] = np.array((temp[2] * np.sin(np.radians(temp[0])), temp[2] * np.cos(np.radians(temp[0]))))
         # Or using 'Coordinate' from stats
         # ...
     else:
         for m in range(0, len(stream)):
-            temp = wgs84_proj.inv(latlon[m][1], latlon[m][0], latlon[0][1], latlon[0][0])
+            temp = wgs84_proj.inv(latlon[0][1], latlon[0][0], latlon[m][1], latlon[m][0])
             dxdy[m] = np.array((temp[2] * np.sin(np.radians(temp[0])), temp[2] * np.cos(np.radians(temp[0]))))
 
     return x, t, t0, dxdy
@@ -574,22 +574,22 @@ def run(X, S, f, dxdy, delays, freq_band, method="bartlett", ns_covar_inv=None, 
     f_cnt = f_msk.shape[0]
     if pool:
         if method == "bartlett_covar" or method == "capon" or method == "music":
-            args = [(S_msk[:, :, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
+            args = [(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
         else:
             if ns_covar_inv is not None:
-                args = [(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)]
+                args = [(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)]
             else:
-                args = [(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
+                args = [(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
         beam_power = np.array(pool.map(compute_beam_power_wrapper, args))
 
     else:
         if method == "bartlett_covar" or method == "capon" or method == "music":
-            beam_power = np.array([compute_beam_power(S_msk[:, :, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
+            beam_power = np.array([compute_beam_power(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
         else:
             if ns_covar_inv is not None:
-                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)])
+                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)])
             else:
-                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
+                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
 
     if normalize_beam:
         if method == "bartlett" or method == "gls" or method == "bartlett_covar":
@@ -834,7 +834,7 @@ def extract_signal(X, f, slowness, dxdy):
     sig_estimate = np.empty_like(X[0])
     residual = np.empty_like(X)
     for nf in range(len(f)):
-        steering = np.exp(-2.0j * np.pi * f[nf] * delays)
+        steering = np.exp(2.0j * np.pi * f[nf] * delays)
         sig_estimate[nf] = np.vdot(steering, X[:, nf]) / np.vdot(steering, steering)
         residual[:, nf] = X[:, nf] - sig_estimate[nf] * steering
 
