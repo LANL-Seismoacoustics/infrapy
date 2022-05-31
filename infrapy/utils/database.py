@@ -126,37 +126,28 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
 
     # get station info
     if "%" in stations:
+        # Load data specified with a while card (e.g., 'I26H*') via a Site table query
         sta_list = session.query(Site).filter(Site.sta.contains(stations))
     elif ',' in stations:
+        # Load data specified by a string list of stations (e.g., 'I26H1, I26H2, I26H3, I26H4') with get_stations
         sta_list = ps.request.get_stations(session, Site, stations=stations.strip(' ()[]').split(','))
     else:
+        # Load data specified by a Python list of strings (e.g., ['I26H1', 'I26H2', 'I26H3', 'I26H4']) with get_stations
         sta_list = ps.request.get_stations(session, Site, stations=stations)
 
-    # pull data into the stream and set the latlon info
+    # pull data into the stream and merge to combine time segments
     st = Stream()
-    latlon = []
     for sta_n in sta_list:
         temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
-
         for tr in temp_st:
-
             if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
                 tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
                 if len(tr.stats.network) == 0:
                     tr.stats.network = "__"
                 st.append(tr)
-
-                latlon = latlon + [[sta_n.lat, sta_n.lon]]
-
-    # Merge streams if necessary and return unique latlon info (np.unique applies a sorting, so need to do a custom return)
     st.merge()
-    if len(latlon) > len(st):
-        latlon = np.array(latlon)
-        lat_indices = np.unique(latlon[:, 0], return_index=True)[1]
-        lon_indices = np.unique(latlon[:, 1], return_index=True)[1]
 
-        uniq_lats =  [latlon[:, 0][index] for index in sorted(lat_indices)]
-        uniq_lons =  [latlon[:, 1][index] for index in sorted(lon_indices)]
-        latlon = np.vstack((uniq_lats, uniq_lons)).T.tolist()
- 
+    # Set the latlon info
+    latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in st]
+
     return st, latlon
