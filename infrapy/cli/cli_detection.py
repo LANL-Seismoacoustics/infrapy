@@ -77,8 +77,12 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -315,8 +319,12 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -467,8 +475,12 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 

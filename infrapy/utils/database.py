@@ -146,7 +146,8 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
                     tr.stats.network = "__"
                 st.append(tr)
     st.merge()
-
+    st.split()
+    
     # Set the latlon info
     latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in st]
 

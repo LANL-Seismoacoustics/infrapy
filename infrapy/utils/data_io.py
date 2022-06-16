@@ -56,7 +56,7 @@ def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, e
 
     client = Client(fdsn_opt)
     stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime), attach_response = True)
-    stream.remove_response()  
+    stream.remove_response()
 
     inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
     latlon = []

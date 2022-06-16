@@ -212,8 +212,12 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -286,10 +290,15 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
     click.echo("##                             ##")
     click.echo("#################################")
     click.echo("")   
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -397,10 +406,15 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     click.echo("##                             ##")
     click.echo("#################################")
     click.echo("")   
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
