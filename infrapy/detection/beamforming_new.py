@@ -965,7 +965,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     return beam_times, beam_peaks
 
 
-def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
+def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, thresh_ceil=None, return_thresh=False):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -998,6 +998,9 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
         fixed_thresh: float
             A fixed detection threshold for fstat values (overrides adaptive 
                 threshold calculation)
+        thresh_ceil: float
+            A custom detection threshold ceiling value. When used, it modifies the 
+                detection criterion: fstat > min(thresh_ceil, adaptive_thresh)
         return_thresh: boolean
             Flag to output the adaptive detection threshold computed across times
 
@@ -1038,8 +1041,13 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             win_mask = np.logical_and(t1 <= times, times <= t2)
             thresh = calc_det_thresh(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
 
-            thresh_vals[n] = thresh
-            det_mask[n] = fstat_vals[n] >= thresh
+            if thresh_ceil:
+                thresh_vals[n] = min(thresh, thresh_ceil)
+                det_mask[n] = fstat_vals[n] >= min(thresh, thresh_ceil)        
+            else:
+                thresh_vals[n] = thresh
+                det_mask[n] = fstat_vals[n] >= thresh
+
 
     # Check for detections shorter than the minimum sequence 
     #   length and with too large of back azimuth deviations
