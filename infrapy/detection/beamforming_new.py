@@ -306,12 +306,10 @@ def compute_delays(dxdy, param_grid, param_opt='planar', sph_vel=340.0, sph_src_
             K x M of time delays across the array for each slowness
     """
 
-    delays = np.zeros((dxdy.shape[0], param_grid.shape[0]))
-    for m in range(dxdy.shape[0]):
-        if param_opt == 'planar':
-            delays[m] = np.array([np.dot(param_grid[k], dxdy[m]) for k in range(param_grid.shape[0])])
-        else:
-            delays[m] = np.array([np.sqrt(np.linalg.norm(param_grid[k] - dxdy[m])**2 + sph_src_ht**2) / sph_vel for k in range(param_grid.shape[0])])
+    if param_opt == 'planar':
+        delays = np.array([[(param_grid[k][0] * dxdy[m][0] + param_grid[k][1] * dxdy[m][1]) for k in range(param_grid.shape[0])] for m in range(dxdy.shape[0])])
+    else:
+        delays = np.array([[np.sqrt(np.linalg.norm(param_grid[k] - dxdy[m])**2 + sph_src_ht**2) / sph_vel for k in range(param_grid.shape[0])] for m in range(dxdy.shape[0])])
 
     return delays.T
 
