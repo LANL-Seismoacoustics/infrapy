@@ -1089,25 +1089,29 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
     if merge_dets:
         print("Merging detections...")
-        for j in range(len(dets) - 1):
-            back_az_diff = abs(dets[j][3] - dets[j + 1][3])
-            if back_az_diff > 180.0:
-                back_az_diff = abs(back_az_diff - 360.0)
+        for scan_cnt in range(len(dets)):
+            for j in range(len(dets) - 1):
+                back_az_diff = abs(dets[j][3] - dets[j + 1][3])
+                if back_az_diff > 180.0:
+                    back_az_diff = abs(back_az_diff - 360.0)
 
-            if back_az_diff < back_az_lim: 
-                t1 = dets[j][0] + np.timedelta64(int(dets[j][2] * 1e3), 'ms')
-                t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
-                dt = (t2 - t1).astype('m8[s]').astype(float)
+                if back_az_diff < back_az_lim: 
+                    t1 = dets[j][0] + np.timedelta64(int(dets[j][2] * 1e3), 'ms')
+                    t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
+                    dt = (t2 - t1).astype('m8[s]').astype(float)
 
-                if dt < max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
-                    if dets[j][5] >= dets[j + 1][5]:
-                        dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
-                        dets[j + 1] = dets[j]
-                        dets[j] = None
-                    else:
-                        dets[j + 1][1] = dets[j + 1][1] - (dt + (dets[j][2] - dets[j][1]))
-                        dets[j] = None
-        dets = [det for det in dets if det is not None]                    
+                    if dt < 1.5 * max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
+                        if dets[j][5] >= dets[j + 1][5]:
+                            dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
+                            dets[j + 1] = dets[j]
+                            dets[j] = None
+                        else:
+                            dets[j + 1][1] = dets[j + 1][1] - (dt + (dets[j][2] - dets[j][1]))
+                            dets[j] = None
+
+            if dets.count(None) == 0:
+                break
+            dets = [det for det in dets if det is not None]                    
 
     if return_thresh:
         return dets, thresh_vals
