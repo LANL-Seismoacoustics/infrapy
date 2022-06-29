@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from heapq import merge
 import os 
 import click
 import warnings
@@ -289,7 +290,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
-def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh):
+@click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
+def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
     Run fd analysis to identify detections in beamforming results
 
@@ -342,6 +344,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     fixed_thresh = config.set_param(user_config, 'FD', 'fixed_thresh', fixed_thresh, 'float')
     thresh_ceil = config.set_param(user_config, 'FD', 'thresh_ceil', thresh_ceil, 'float')
     return_thresh = config.set_param(user_config, 'FD', 'return_thresh', return_thresh, 'bool')
+    merge_dets = config.set_param(user_config, 'FD', 'merge_dets', merge_dets, 'bool')
 
     click.echo('\n' + "Algorithm parameters:")
     click.echo("  window_len: " + str(window_len))
@@ -351,6 +354,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     click.echo("  fixed_thresh: " + str(fixed_thresh))
     click.echo("  thresh_ceil: " + str(thresh_ceil))
     click.echo("  return_thresh: " + str(return_thresh))
+    click.echo("  merge_dets: " + str(merge_dets))
 
     print('\n' + "Running fd...")
 
@@ -383,7 +387,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     TB_prod = (freq_max - freq_min) * fk_window_len
     min_seq = max(2, int(min_duration / fk_window_len))
 
-    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, window_len, TB_prod, channel_cnt, p_value, min_seq, back_az_width, fixed_thresh, thresh_ceil, True)
+    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, window_len, TB_prod, channel_cnt, p_value, min_seq, back_az_width, fixed_thresh, thresh_ceil, True, merge_dets)
 
     det_list = []
     for det_info in dets:
@@ -440,10 +444,11 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
+@click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
 def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method,  signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, multithread, cpu_cnt, fd_window_len, p_value, min_duration, 
-    back_az_width, fixed_thresh, thresh_ceil, return_thresh):
+    back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
     Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
     
@@ -559,6 +564,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     fixed_thresh = config.set_param(user_config, 'FD', 'fixed_thresh', fixed_thresh, 'float')
     thresh_ceil = config.set_param(user_config, 'FD', 'thresh_ceil', thresh_ceil, 'float')
     return_thresh = config.set_param(user_config, 'FD', 'return_thresh', return_thresh, 'bool')
+    merge_dets = config.set_param(user_config, 'FD', 'merge_dets', merge_dets, 'bool')
 
     click.echo('\n' + "Algorithm parameters:")
     click.echo("  freq_min: " + str(freq_min))
@@ -593,6 +599,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     click.echo("  fixed_thresh: " + str(fixed_thresh))
     click.echo("  thresh_ceil: " + str(thresh_ceil))
     click.echo("  return_thresh: " + str(return_thresh))
+    click.echo("  merge_dets: " + str(merge_dets))
 
     # Check data option and populate obspy Stream
     if db_url is not None:
@@ -657,7 +664,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     print("Running adaptive f-detector..." + '\n')
     TB_prod = (freq_max - freq_min) * fk_window_len
     min_seq = max(2, int(min_duration / fk_window_len))
-    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, fd_window_len, TB_prod, len(stream), p_value, min_seq, back_az_width, fixed_thresh, thresh_ceil, True)
+    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, fd_window_len, TB_prod, len(stream), p_value, min_seq, back_az_width, fixed_thresh, thresh_ceil, True, merge_dets)
 
     if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = output_id
@@ -690,7 +697,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
 
     if return_thresh:
-        np.save(local_detect_label + ".thresholds", thresh_vals)
+        np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
     if pl is not None:
         pl.terminate()

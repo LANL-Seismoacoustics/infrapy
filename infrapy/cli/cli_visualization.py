@@ -322,11 +322,22 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
         
         # Read in detection list
-        det_list = data_io.set_det_list(local_fk_label + ".dets.json", merge=True)
+        if local_detect_label is None or local_detect_label == 'auto':
+            local_detect_label = local_fk_label
+
+        det_list = data_io.set_det_list(local_detect_label + ".dets.json", merge=True)
         if len(det_list) == 0:
             click.echo("Note: no detections found in analysis.")
 
-        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out)
+        if os.path.isfile(local_detect_label + ".fd_thresholds.dat"):
+            temp = np.loadtxt(local_detect_label + ".fd_thresholds.dat")
+            thresh_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+            det_thresh = [thresh_times, temp[:, 1]]
+
+        else:
+            det_thresh = None
+
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out, det_thresh=det_thresh)
     else:
         if os.path.isfile(local_fk_label + ".fk_times.npy"):
             temp = np.loadtxt(local_fk_label + ".fk_results.dat")

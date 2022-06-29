@@ -963,7 +963,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     return beam_times, beam_peaks
 
 
-def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, thresh_ceil=None, return_thresh=False):
+def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, thresh_ceil=None, return_thresh=False, merge_dets=False):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -1086,6 +1086,28 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             n += det_len
         else:
             n += 1
+
+    if merge_dets:
+        print("Merging detections...")
+        for j in range(len(dets) - 1):
+            back_az_diff = abs(dets[j][3] - dets[j + 1][3])
+            if back_az_diff > 180.0:
+                back_az_diff = abs(back_az_diff - 360.0)
+
+            if back_az_diff < back_az_lim: 
+                t1 = dets[j][0] + np.timedelta64(int(dets[j][2] * 1e3), 'ms')
+                t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
+                dt = (t2 - t1).astype('m8[s]').astype(float)
+
+                if dt < max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
+                    if dets[j][5] >= dets[j + 1][5]:
+                        dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
+                        dets[j + 1] = dets[j]
+                        dets[j] = None
+                    else:
+                        dets[j + 1][1] = dets[j + 1][1] - (dt + (dets[j][2] - dets[j][1]))
+                        dets[j] = None
+        dets = [det for det in dets if det is not None]                    
 
     if return_thresh:
         return dets, thresh_vals
