@@ -1,7 +1,7 @@
 import os, json
 
 from PyQt5.QtWidgets import (QDateEdit, QPushButton, QLabel, QLineEdit, QFileDialog, QHBoxLayout,
-                             QFormLayout, QDoubleSpinBox, QSpinBox, QVBoxLayout, QTimeEdit, QWidget,
+                             QFormLayout, QDoubleSpinBox, QVBoxLayout, QTimeEdit, QWidget,
                              QCheckBox)
 from PyQt5.QtCore import QDir, QTime, QDate, QSettings, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -35,92 +35,54 @@ class IPEventWidget(QWidget):
 
         formLayout = QFormLayout()
 
-        self.displayEvent_cb = QCheckBox(self.tr('Show Event on waveform plots'))
+        self.displayEvent_cb = QCheckBox(self.tr('Show event line on waveform plots'))
         self.displayEvent_cb.setChecked(False)
         self.displayEvent_cb.stateChanged.connect(self.eventChanged)
 
-        self.displayArrivals_cb = QCheckBox(self.tr('Show Arrival estimations on waveform plots'))
+        self.displayArrivals_cb = QCheckBox(self.tr('Show arrival estimations on waveform plots'))
         self.displayArrivals_cb.setChecked(False)
         self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
         self.displayArrivals_cb.stateChanged.connect(self.eventChanged)
-        #self.displayArrivals_cb.stateChanged.connect(self.displayArrivalsChanged)
 
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
-        self.event_name_edit.setMaximumWidth(150)
+        self.event_name_edit.setFixedWidth(150)
         self.event_name_edit.textChanged.connect(self.eventChanged)
 
-        label_latitude = QLabel(self.tr('Latitude'))
+        label_latitude = QLabel(self.tr('Latitude (deg)'))
         self.event_lat_edit = QDoubleSpinBox()
-        self.event_lat_edit.setMaximumWidth(150)
+        self.event_lat_edit.setFixedWidth(150)
         self.event_lat_edit.setRange(-90.1,90.0)
         self.event_lat_edit.setDecimals(8)
-        self.event_lat_edit.setSpecialValueText('--')
         self.event_lat_edit.setSingleStep(0.1)
-        self.event_lat_edit.setValue(self.event_lat_edit.minimum())
+        self.event_lat_edit.setValue(0.0)
         self.event_lat_edit.valueChanged.connect(self.eventChanged)
 
-        label_longitude = QLabel(self.tr('Longitude'))
+        label_longitude = QLabel(self.tr('Longitude (deg)'))
         self.event_lon_edit = QDoubleSpinBox()
-        self.event_lon_edit.setMaximumWidth(150)
-        self.event_lon_edit.setRange(-180.1, 180.0)
+        self.event_lon_edit.setFixedWidth(150)
+        self.event_lon_edit.setRange(-180.0, 180.0)
         self.event_lon_edit.setDecimals(8)
-        self.event_lon_edit.setSpecialValueText('--')
         self.event_lon_edit.setSingleStep(0.1)
-        self.event_lon_edit.setValue(self.event_lon_edit.minimum())
+        self.event_lon_edit.setValue(0.0)
         self.event_lon_edit.valueChanged.connect(self.eventChanged)
 
         label_event_date = QLabel(self.tr('Date (UTC):'))
         self.event_date_edit = QDateEdit()
-        self.event_date_edit.setMaximumWidth(150)
+        self.event_date_edit.setFixedWidth(125)
         self.event_date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.event_date_edit.setDate(self.event_date_edit.minimumDate())
-        self.event_date_edit.setSpecialValueText("yyyy-MM-dd")
         self.event_date_edit.dateChanged.connect(self.eventChanged)
 
         label_event_time = QLabel(self.tr('Time (UTC):'))
         self.event_time_edit = QTimeEdit()
-        self.event_time_edit.setMaximumWidth(150)
-        self.event_time_edit.setDisplayFormat('HH:mm:ss.zzz')
-        self.event_time_edit.setTime(self.event_time_edit.minimumTime())
-        self.event_time_edit.setSpecialValueText('HH:mm:ss.zzz')
+        self.event_time_edit.setFixedWidth(125)
+        self.event_time_edit.setDisplayFormat('HH:mm:ss.zzz')        
         self.event_time_edit.timeChanged.connect(self.eventChanged)
-
-        label_event_elev = QLabel(self.tr('Elevation'))
-        self.event_elev_edit = QSpinBox()
-        self.event_elev_edit.setMaximumWidth(150)
-        self.event_elev_edit.setRange(-1000000, 1000000)
-        self.event_elev_edit.setSpecialValueText('--')
-        self.event_elev_edit.setValue(self.event_elev_edit.minimum())
-        self.event_elev_edit.setSuffix(' m')
-        self.event_elev_edit.valueChanged.connect(self.eventChanged)
-
-        label_event_depth = QLabel(self.tr('Depth'))
-        self.event_depth_edit = QSpinBox()
-        self.event_depth_edit.setMaximumWidth(150)
-        self.event_depth_edit.setRange(-1000000, 1000000)
-        self.event_depth_edit.setSpecialValueText('--')
-        self.event_depth_edit.setValue(self.event_depth_edit.minimum())
-        self.event_depth_edit.setSuffix(' m')
-        self.event_depth_edit.valueChanged.connect(self.eventChanged)
-
-        label_event_mag = QLabel(self.tr('Magnitude'))
-        self.event_mag_edit = QDoubleSpinBox()
-        self.event_mag_edit.setMaximumWidth(150)
-        self.event_mag_edit.setRange(0.0, 1000.0)
-        self.event_mag_edit.setSpecialValueText('--')
-        self.event_mag_edit.setSingleStep(0.1)
-        self.event_mag_edit.setValue(self.event_mag_edit.minimum())
-        self.event_mag_edit.valueChanged.connect(self.eventChanged)
 
         self.load_button = QPushButton(self.tr(' Load Event...'))
         self.load_button.setMaximumWidth(100)
         self.load_button.clicked.connect(self.loadEvent)
         self.load_button.setIcon(self.openIcon)
-
-        self.update_button = QPushButton(self.tr('Update'))
-        self.update_button.setMaximumWidth(100)
-        self.update_button.clicked.connect(self.eventChanged)
 
         self.save_button = QPushButton(self.tr(' Save Event...'))
         self.save_button.setMaximumWidth(100)
@@ -149,15 +111,8 @@ class IPEventWidget(QWidget):
         formLayout.addRow(label_event_name, self.event_name_edit)
         formLayout.addRow(label_longitude, self.event_lon_edit)
         formLayout.addRow(label_latitude, self.event_lat_edit)
-        formLayout.addRow(label_event_date, self.event_date_edit)            ##################################################################################
-            #  Now we can initialize the background colors of the plots
-            #
-            # we want to highlight the active plot, so set the background color here
-            # if idx == self.active_plot:
-            #     new_plot.setBackgroundColor(255, 255, 255)
-            # else:
-            #     new_plot.setBackgroundColor(200, 200, 200)
-        formLayout.addRow(label_event_mag, self.event_mag_edit)
+        formLayout.addRow(label_event_time, self.event_time_edit)
+        formLayout.addRow(label_event_date, self.event_date_edit)           
         
         form_hbox = QHBoxLayout()
         form_hbox.addStretch()
@@ -169,7 +124,6 @@ class IPEventWidget(QWidget):
         buttonLayout.addWidget(self.load_button)
         buttonLayout.addWidget(self.save_button)
         buttonLayout.addWidget(self.clear_button)
-        buttonLayout.addWidget(self.update_button)
         buttonLayout.addStretch()
 
         browseLayout = QHBoxLayout()
@@ -205,15 +159,6 @@ class IPEventWidget(QWidget):
     def getLon(self):
         return self.event_lon_edit.value()
 
-    def getDepth(self):
-        return self.event_depth_edit.value()
-
-    def getElevation(self):
-        return self.event_elev_edit.value()
-
-    def getMag(self):
-        return self.event_mag_edit.value()
-
     def getUTCDateTimeString(self):
         date = self.event_date_edit.date().toPyDate()
         time = self.event_time_edit.time().toPyTime()
@@ -238,44 +183,21 @@ class IPEventWidget(QWidget):
 
     def eventChanged(self):
         # whenever any widget changes, this signal is emitted with the new event dictionary
-        self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
+        #self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
         self.sigEventWidgetChanged.emit(self.Dict())
 
     def Dict(self):
         # Returns a dictionary representation of the data in the widget
-        if self.event_lat_edit.value() == self.event_lat_edit.minimum():
-            lat = None
-        else:
-            lat = self.event_lat_edit.value()
+        lat = self.event_lat_edit.value()
 
-        if self.event_lon_edit.value() == self.event_lon_edit.minimum():
-            lon = None
-        else:
-            lon = self.event_lon_edit.value()
-
-        if self.event_elev_edit.value() == self.event_elev_edit.minimum():
-            elev = None
-        else:
-            elev = self.event_elev_edit.value()
-
-        if self.event_depth_edit.value() == self.event_depth_edit.minimum():
-            depth = None
-        else:
-            depth = self.event_depth_edit.value()
-
-        if self.event_mag_edit.value() == self.event_mag_edit.minimum():
-            mag = None
-        else:
-            mag = self.event_mag_edit.value()
+        lon = self.event_lon_edit.value()
 
         eventdict = {'Name':self.event_name_edit.text(), 
                     'UTC Date':str(self.event_date_edit.date().toPyDate()), 
                     'UTC Time':str(self.event_time_edit.time().toPyTime()), 
                     'Longitude':lon, 
-                    'Latitude':lat, 
-                    'Elevation':elev, 
-                    'Depth':depth,
-                    'Magnitude':mag }
+                    'Latitude':lat}
+
         return eventdict
 
     def saveEventAs(self):
@@ -323,16 +245,6 @@ class IPEventWidget(QWidget):
             else:
                 self.event_lat_edit.setValue(self.event_lat_edit.minimum())
 
-            if new_event['Elevation'] is not None:
-                self.event_elev_edit.setValue(int(new_event['Elevation']))
-            else:
-                self.event_elev_edit.setValue(self.event_elev_edit.minimum())
-
-            if new_event['Depth'] is not None:
-                self.event_depth_edit.setValue(int(new_event['Depth']))
-            else:
-                self.event_depth_edit.setValue(self.event_depth_edit.minimum())
-
             if new_event['UTC Time'] is not None:
                 if len(new_event['UTC Time']) == 8:
                     self.event_time_edit.setTime(QTime.fromString(new_event['UTC Time'][0:8], "hh:mm:ss"))
@@ -345,9 +257,6 @@ class IPEventWidget(QWidget):
                 self.event_date_edit.setDate(QDate.fromString(new_event['UTC Date'], 'yyyy-MM-dd'))
             else:
                 self.event_date_edit.setDate(self.event_date_edit.minimumDate())
-
-            if new_event['Magnitude'] is not None:
-                self.event_mag_edit.setValue(float(new_event['Magnitude']))
 
             if self.parent.getProject() is None:
                 # if there is no open project, update the global settings 
@@ -385,21 +294,14 @@ class IPEventWidget(QWidget):
             self.event_name_edit.setText(event['Name'])
             self.event_lon_edit.setValue(event['Longitude'])
             self.event_lat_edit.setValue(event['Latitude'])
-            self.event_depth_edit.setValue(event['Depth'])
-            self.event_elev_edit.setValue(event['Elevation'])
-            self.event_mag_edit.setValue(event['Magnitude'])
             self.event_date_edit.setDate(QDate.fromString(event['UTC Date'], 'yyyy-MM-dd'))
             self.event_time_edit.setTime(QTime.fromString(event['UTC Time'], 'hh:mm:ss.zzz'))
             self.sigEventWidgetLoaded.emit()
 
     def clear(self):
         self.event_name_edit.setText('')
-        self.event_lon_edit.setValue(self.event_lon_edit.minimum())
-        self.event_lat_edit.setValue(self.event_lat_edit.minimum())
-        self.event_depth_edit.setValue(self.event_depth_edit.minimum())
-        self.event_elev_edit.setValue(self.event_elev_edit.minimum())
-        self.event_mag_edit.setValue(self.event_mag_edit.minimum())
-        self.event_date_edit.setDate(self.event_date_edit.minimumDate())
-        self.event_time_edit.setTime(self.event_time_edit.minimumTime())
+        self.event_lon_edit.setValue(0.0)
+        self.event_lat_edit.setValue(0.0)
+        self.event_date_edit.setDate(QDate(2000,1,1))
+        self.event_time_edit.setTime(QTime(00,00,00))
         self.sigEventCleared.emit()
-        #self.event_time_edit.

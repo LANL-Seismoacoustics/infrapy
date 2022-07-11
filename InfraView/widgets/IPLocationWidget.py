@@ -194,7 +194,7 @@ class IPLocationWidget(QWidget):
             for detection in new_detections:
                 self._detections.append(detection)
 
-        self.mapWidget.update_detections(self._detections, self.bislSettings.rng_max_edit.value() * 1000.0)
+        self.mapWidget.update_detections(self._detections)
 
         if recalc_assoc:
             self.calc_distance_matrix()
@@ -211,9 +211,7 @@ class IPLocationWidget(QWidget):
             self._trimmed_detections.append(self._detections[index])
             self._trimmed_detections[-1].index = index
 
-        self.mapWidget.update_detections(self._trimmed_detections,
-                                         self.bislSettings.rng_max_edit.value() * 1000.,
-                                         linecolor=linecolor)
+        self.mapWidget.update_detections(self._trimmed_detections, linecolor=linecolor)
 
     def run_bisl(self):
 
