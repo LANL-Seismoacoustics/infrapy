@@ -1089,7 +1089,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
     if merge_dets:
         print("Merging detections...")
-        for scan_cnt in range(len(dets)):
+        while True:
             for j in range(len(dets) - 1):
                 back_az_diff = abs(dets[j][3] - dets[j + 1][3])
                 if back_az_diff > 180.0:
@@ -1100,7 +1100,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                     t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
                     dt = (t2 - t1).astype('m8[s]').astype(float)
 
-                    if dt < 1.5 * max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
+                    if dt < max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
                         if dets[j][5] >= dets[j + 1][5]:
                             dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
                             dets[j + 1] = dets[j]
@@ -1111,6 +1111,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
             if dets.count(None) == 0:
                 break
+            
             dets = [det for det in dets if det is not None]                    
 
     if return_thresh:
