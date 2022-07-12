@@ -8,6 +8,9 @@ Author: pblom@lanl.gov
 """
 
 import os
+import pickle
+import imp 
+
 from threading import local 
 
 import warnings
@@ -82,17 +85,20 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
 @click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
 @click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
 @click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
-@click.option("--rcvr-lat", help="Receiver latitude", default=None, prompt="Enter receiver latitude: ")
-@click.option("--rcvr-lon", help="Receiver longitude", default=None, prompt="Enter receiver longitude: ")
+@click.option("--rcvr-lat", help="Receiver latitude", default=None)
+@click.option("--rcvr-lon", help="Receiver longitude", default=None)
+@click.option("--rcvr", help="Reference IMS station (e.g., 'I53')", default=None)
 @click.option("--celerity-min", help="Minimum celerity", default=0.24)
 @click.option("--celerity-max", help="Maximum celerity", default=0.35)
-def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, celerity_max):
+def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, rcvr, celerity_min, celerity_max):
     '''
-    Compute the range of possible arrivals times for a source-receiver pair given a range of celerity values
+    Compute the range of possible arrivals times for a source-receiver pair given a range of celerity values.
+    Can use a receiver latitude/longitude or reference from a list (currently only IMS stations)
     
     \b
     Example usage (requires InfraGA/GeoAc arrival output):
     \tinfrapy utils arrival-time --src-lat 30.0 --src-lon -110.0 --src-time "2020-12-25T00:00:00" --rcvr-lat 40.0 --rcvr-lon -110.0
+    \tinfrapy utils arrival-time --src-lat 30.0 --src-lon -110.0 --src-time "2020-12-25T00:00:00" --rcvr I57US
 
     '''
     click.echo("")
@@ -106,7 +112,27 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, c
     
     click.echo("  Source Time: " + src_time)
     click.echo("  Source Location: (" + str(src_lat) + ", " + str(src_lon) + ")")
-    click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+    if rcvr is not None:
+        click.echo('\n' + "  User specified reference receiver: " + str(rcvr))
+
+        IMS_info = pickle.load(open(imp.find_module('infrapy')[1] + '/resources/IMS_infrasound_locs.pkl', 'rb'), encoding='latin1')
+        for line in IMS_info:
+            if rcvr in line[0]:
+                click.echo("  Reference IMS station match: " + line[0])
+                rcvr_lat, rcvr_lon = line[1][:2]
+                click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+                break
+        if rcvr_lat is None:
+            warning_message = "Specified reference receiver (" + rcvr + ") not found in IMS info."
+            warnings.warn((warning_message))
+            return 0
+
+    elif rcvr_lat is not None and rcvr_lon is not None:
+        click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+    else:
+        warning_message = "Method requires either a reference receiver or user defined latitude and longitude"
+        warnings.warn((warning_message))
+        return 0
 
     click.echo("")
     click.echo("  Celerity Range: (" + str(celerity_min) + ", " + str(celerity_max) + ")")
