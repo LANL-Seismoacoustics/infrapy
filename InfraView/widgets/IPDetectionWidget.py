@@ -27,9 +27,9 @@ class IPDetectionWidget(QWidget):
     _moving_detection = None
 
     def __init__(self, parent):
-        super().__init__()
+        super().__init__(parent)
 
-        self._parent = parent
+        self.parent = parent
 
         self.buildUI() 
 
@@ -258,7 +258,7 @@ class IPDetectionWidget(QWidget):
     @pyqtSlot()
     def update_plots(self):
         # TODO
-        # self._parent.plotViewer.plot_detection_lines(self.get_data())
+        # self.parent.plotViewer.plot_detection_lines(self.get_data())
         pass
 
     def saveDetections(self):
@@ -274,7 +274,7 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self._parent.settings.setValue("last_detectionfile_directory", path)
+                self.parent.settings.setValue("last_detectionfile_directory", path)
                 fileText = 'savefile: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty display
@@ -290,13 +290,13 @@ class IPDetectionWidget(QWidget):
             self.errorPopup('No Detections to Save')
             return
 
-        if self._parent.getProject() is None:
+        if self.parent.getProject() is None:
             # force a new filename...
             default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-            previous_directory = self._parent.settings.value("last_detectionsfile_directory", default_data_dir)
+            previous_directory = self.parent.settings.value("last_detectionsfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previous_directory = str(self._parent.getProject().get_detectionsPath())
+            previous_directory = str(self.parent.getProject().get_detectionsPath())
 
         self._savefile = QFileDialog.getSaveFileName(self, 'Save File', previous_directory)
 
@@ -307,7 +307,7 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self._parent.settings.setValue("last_detectionfile_directory", path)
+                self.parent.settings.setValue("last_detectionfile_directory", path)
                 fileText = 'file: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty displayß
@@ -317,13 +317,13 @@ class IPDetectionWidget(QWidget):
 
     def loadDetections(self):
         # open a file and load the picks
-        if self._parent.getProject() is None:
+        if self.parent.getProject() is None:
             # force a new filename...
             default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-            previous_directory = self._parent.settings.value("last_detectionfile_directory", default_data_dir)
+            previous_directory = self.parent.settings.value("last_detectionfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previous_directory = str(self._parent.getProject().get_detectionsPath())
+            previous_directory = str(self.parent.getProject().get_detectionsPath())
 
         self._openfile, _ = QFileDialog.getOpenFileName(self, 'Open File', previous_directory)
 
@@ -331,7 +331,7 @@ class IPDetectionWidget(QWidget):
             return
 
         with open(self._openfile, 'r') as infile:
-            self._parent.settings.setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
+            self.parent.settings.setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
             try:
                 newdata = json.load(infile)
             except json.decoder.JSONDecodeError:
@@ -377,7 +377,7 @@ class IPDetectionWidget(QWidget):
         1. update the detection table with the new time
         2. assign a detection to the _moving_detection variable so that detectionLineMoved will know what to update (this might be superfluous)
         """
-        est = UTCDateTime(self._parent.get_earliest_start_time())
+        est = UTCDateTime(self.parent.get_earliest_start_time())
         for detection in self._detections:
             if detection.getAssociatedPickLine() is detectionLine:
                 detection.set_peakF_UTCtime(est + pos)
@@ -391,7 +391,7 @@ class IPDetectionWidget(QWidget):
             This slot will update the table when it receives a signal that the detection
             line was moved.
         """
-        newUTCtime = UTCDateTime(self._parent.get_earliest_start_time()) + EndingPos
+        newUTCtime = UTCDateTime(self.parent.get_earliest_start_time()) + EndingPos
         self._moving_detection.set_peakF_UTCtime(newUTCtime)
         self._moving_detection.set_peakF_value(fstat)
         self._moving_detection.set_back_azimuth(backaz)
@@ -422,7 +422,7 @@ class IPDetectionWidget(QWidget):
             if detection.getAssociatedPickLine() is detectionline:
                 # we found the correct pickline, lets figure out the 'default' start/end based on
                 # the width of the plots
-                viewRange = self._parent.fstatPlot.viewRange()
+                viewRange = self.parent.fstatPlot.viewRange()
                 t_span = viewRange[0][1] - viewRange[0][0]
                 start_end = [-t_span / 50., t_span / 50.]   # +/- 1 percent of the visable range
 

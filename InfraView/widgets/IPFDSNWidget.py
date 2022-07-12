@@ -144,7 +144,7 @@ class IPFDSNWidget(QWidget):
         self.setLayout(vertlayout)
 
         # create stationdialog here so that you only create it once, from here on you just run exec_() to make it pop up
-        self.stationDialog = IPStationBrowser.IPStationDialog()
+        self.stationDialog = IPStationBrowser.IPStationDialog(self)
 
     def onClicked_browserButton(self):
 

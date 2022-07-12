@@ -3,6 +3,10 @@ import numpy as np
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
                              QLabel, QMessageBox,
                              QHBoxLayout, QVBoxLayout,
@@ -10,10 +14,12 @@ from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
 
 from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPWaveformSelectorWidget
+from InfraView.widgets import IPEventLine
 
 from obspy.core import UTCDateTime
 from obspy.core.stream import Stream
 
+import pyproj
 
 class IPPlotViewer(QSplitter):
 
@@ -92,7 +98,9 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     h_lines = []
     position_labels = []
 
-    pick_line_list = []  # array to hold the references to pick lines
+    pick_line_list = []     # list to hold the references to pick lines
+    event_line_list = []    # list to hold the references to event lines
+    arrival_line_list = []  # list to hold the arrival lines
 
     active_plot = 0
     last_range = []
@@ -210,15 +218,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_plot.getNoiseRegion().sigRegionChanged.connect(self._parent._parent.update_noise_PSD)
             new_plot.getSignalRegion().sigRegionChanged.connect(self._parent._parent.update_signal_PSD)
 
-            ##################################################################################
-            #  Now we can initialize the background colors of the plots
-            #
-            # we want to highlight the active plot, so set the background color here
-            # if idx == self.active_plot:
-            #     new_plot.setBackgroundColor(255, 255, 255)
-            # else:
-            #     new_plot.setBackgroundColor(200, 200, 200)
-
             # cluge because setting background color covers axis for some reason
             new_plot.getAxis("top").setZValue(0)
             new_plot.getAxis("bottom").setZValue(0)
@@ -257,6 +256,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.draw_plots()
         # and finally draw the data lines on the plots
         self.draw_plot_lines(current_filter_display_settings)
+        # if selected, draw event and arrival lines
+        self.plotEventLines()
         # updateAxes currently only links the x-axes
         self.updateAxes()
         # signal to the psd viewer that the plots are loaded and to draw the initial psd
@@ -334,6 +335,157 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     def update_filtered_line_data(self, filtered_streams):
         for idx, trace in enumerate(filtered_streams):
             self.filtered_plot_lines[idx].setData(self.t[idx], trace.data)
+
+    # --------------------------------------------------
+    # Event line routines...
+    @QtCore.pyqtSlot()
+    def plotEventLines(self):
+
+        eventWidget = self.window().eventWidget       # reference for convenience
+
+        if eventWidget.hasValidEvent():
+            self.clearEventLines()
+
+            utcEventTime = UTCDateTime(eventWidget.getUTCDateTimeString())
+            for idx, plot in enumerate(self.plot_list):
+
+                position = utcEventTime - UTCDateTime(self.earliest_start_time)
+
+                self.event_line_list.append(IPEventLine.IPEventLine(position, eventID=eventWidget.getID()))
+                plot.addItem(self.event_line_list[idx])
+
+                # set visibility appropriately
+                self.event_line_list[idx].setVisible(eventWidget.displayEvent_cb.isChecked())
+
+                # connect line so that if moved, the event widget will update
+                """ self.event_line_list[idx].sigEventLineMoving.connect(self.updateEventWidget) """
+
+                # need to connect the moveline events so they all move together
+                """ if idx > 0:
+                    for jdx in range(0, idx):
+                        self.event_line_list[jdx].sigEventLineMoving.connect(self.event_line_list[idx].setValue)
+                        self.event_line_list[idx].sigEventLineMoving.connect(self.event_line_list[jdx].setValue) """
+
+        self.plotArrivalLines()
+
+    def plotArrivalLines(self):
+        self.clearArrivalLines()
+        
+        #reference for convenience
+        eventWidget = self.window().eventWidget
+        if eventWidget.hasValidEvent():     # only continue if there is a valid event with location and time
+
+            # now if the user has selected the display arrivals checkbox, proceed
+            if eventWidget.displayArrivals_cb.isEnabled() and eventWidget.displayArrivals_cb.isChecked():
+                
+                #reference for convenience
+                waveformWidget = self.window().waveformWidget
+
+                # we need the current inventory for the receiver locations
+                inv = waveformWidget.get_inventory()
+                # I think it's enought to use the average latlon of the array for the arrival estimation...maybe not?
+                array_lat = 0
+                array_lon = 0
+                cnt = 0
+                for network in inv.networks:
+                    for station in network.stations:
+                        cnt += 1
+                        array_lat += station.latitude
+                        array_lon += station.longitude
+                array_lat = array_lat/cnt
+                array_lon = array_lon/cnt
+
+                event_dict = eventWidget.Dict()
+                event_time = UTCDateTime(str(event_dict['UTC Date']) + 'T' + str(event_dict['UTC Time']))
+
+                g = pyproj.Geod(ellps='WGS84')
+                _, _, distance = g.inv(event_dict['Longitude'], event_dict['Latitude'], array_lon, array_lat)
+
+                idx = 0
+                for plot in self.plot_list:
+                    # for each plot, generate the three arrival lines
+                    # tropospheric  340 m/s
+                    travel_time = distance/340.0
+                    print('-----------------')
+                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    print(position)
+                    self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Tropospheric'))
+                    plot.addItem(self.arrival_line_list[idx])
+                    self.arrival_line_list[idx].setVisible(eventWidget.displayArrivals_cb.isChecked())
+
+                    # thermospheric 250 m/s
+                    travel_time = distance/250.0
+                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    print(position)
+                    self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Thermospheric'))
+                    plot.addItem(self.arrival_line_list[idx+1])
+                    self.arrival_line_list[idx+1].setVisible(eventWidget.displayArrivals_cb.isChecked())
+
+                    # stratospheric 290 m/s
+                    travel_time = distance/290.0
+                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    print(position)
+                    self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Stratospheric'))
+                    plot.addItem(self.arrival_line_list[idx+2])
+                    self.arrival_line_list[idx+2].setVisible(eventWidget.displayArrivals_cb.isChecked())
+
+                    idx+=3
+
+            else:
+                for line in self.arrival_line_list:
+                    line.setVisible(False)
+
+
+    # This will be called whenever a signal is emitted from the eventwidget
+    # saying something has changed
+    @QtCore.pyqtSlot()
+    def updateEventLines(self):
+        eventWidget = self.window().eventWidget       # reference for convenience
+        waveformWidget = self.window().waveformWidget
+
+        if eventWidget.hasValidEvent():
+            if not self.event_line_list:
+                return
+
+            for idx, eline in enumerate(self.event_line_list):
+
+                eline.setVisible(eventWidget.displayEvent_cb.isChecked())
+
+                utc_event_time = UTCDateTime(eventWidget.getUTCDateTimeString())
+                eline.setPos(utc_event_time - UTCDateTime(waveformWidget._sts[idx].stats.starttime))
+                eline.setID(eventWidget.getID())
+
+        self.plotArrivalLines()
+
+    @QtCore.pyqtSlot()
+    def updateEventWidget(self):
+        eventWidget = self.window().eventWidget       # reference for convenience
+
+        sender = self.sender()
+        if isinstance(sender, IPEventLine.IPEventLine):
+            new_UTC_event_time = self.sts[0].stats.starttime + self.event_line_list[0].pos().x()
+            eventWidget.setUTCDateTime(new_UTC_event_time)
+
+    @QtCore.pyqtSlot()
+    def clearEventLines(self):
+        for plot in self.plot_list:
+            for item in reversed(plot.items):
+                if isinstance(item, IPEventLine.IPEventLine):
+                    plot.removeItem(item)
+                    del item
+        self.event_line_list = []
+        self.clearArrivalLines()
+
+    def clearArrivalLines(self):
+        for plot in self.plot_list:
+            for item in reversed(plot.items):
+                if isinstance(item, IPEventLine.IPArrivalLine):
+                    plot.removeItem(item)
+                    del item
+        self.arrival_line_list = []
+
+    # end Event line routines
+    # --------------------------------------------------------------
 
     def updateAxes(self):
         # This little bit links the axes of the newly created plot to those of the first one
@@ -583,11 +735,11 @@ class IPLinearRegionSettingsWidget(QWidget):
         nrange = regionItem.getRegion()
 
         # All of the regions are linked, so pull off the values of the first one
-        if type(regionItem) is IPPlotWidget.IPLinearRegionItem_Noise:
+        if isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Noise):
             self.noiseStartSpin.setValue(nrange[0])
             self.noiseDurationSpin.setValue(nrange[1] - nrange[0])
 
-        elif type(regionItem) is IPPlotWidget.IPLinearRegionItem_Signal:
+        elif isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Signal):
             self.signalStartSpin.setValue(nrange[0])
             self.signalDurationSpin.setValue(nrange[1] - nrange[0])
 

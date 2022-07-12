@@ -19,6 +19,8 @@ from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLay
                              QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QMessageBox, QWidget,
                              QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
 
+# Infrapy includes
+
 # Application includes
 from InfraView.widgets import IPDisplaySettingsWidget
 from InfraView.widgets import IPBeamformingWidget
@@ -28,6 +30,7 @@ from InfraView.widgets import IPLocationWidget
 from InfraView.widgets import IPSaveAllDialog
 from InfraView.widgets import IPWaveformWidget
 from InfraView.widgets import IPDatabaseWidget
+from InfraView.widgets import IPEventWidget
 
 # multiprocessing modules
 import pathos.multiprocessing as mp
@@ -90,6 +93,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.waveformWidget = IPWaveformWidget.IPWaveformWidget(self, self.mp_pool)
         self.databaseWidget = IPDatabaseWidget.IPDatabaseWidget(self)
+        self.eventWidget = IPEventWidget.IPEventWidget(self)
 
         # add the main widgets to the application tabs
         self.mainTabs = QTabWidget()
@@ -97,6 +101,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mainTabs.addTab(self.beamformingWidget, 'Beamforming')
         self.mainTabs.addTab(self.locationWidget, 'Location')
         self.mainTabs.addTab(self.databaseWidget, 'Database')
+        self.mainTabs.addTab(self.eventWidget, 'Event/Ground Truth')
 
         mainLayout.addWidget(self.mainTabs)
 
@@ -170,10 +175,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
 
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
+        self.eventWidget.sigEventWidgetChanged.connect(self.locationWidget.showgroundtruth.eventChanged)
+        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
+        self.eventWidget.sigEventWidgetChanged.connect(self.waveformssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCHPMSykr1ohmUuR+yOpJAk7KDPk/1I6RQrLzbmeQSJU0n6obRi6G8ksGAmo+oCE/B94MTuyDLj+rWkNXx1dDWPAyP8qZrxjqpcQ0D65Rrv6ppbFhJc2ZA9DP6b1edDSxupUNDQloZoMbSzLovgpQ3JlKZSkGDqayhXnbvZCQLjm+oJcK/d8P+kaUk+uW63ryIsyf6+3r0qvDY24c5ym7X0uRthtQV3+I01UC5yb6IMj+YRu/Nr8qikWfegQfwi+lrZbddw8lOZYR3rBKApUMYz418YzeKufXul5+AfVAc4wSQGchKekQfXFxyiu+ezzuZrkWYyO/wW04VBXOwQJqmF1FQezVzPxq3NtDk8zqOrg6+aVdQtgwCpeIBBxG7t1v7mKKvm7lC8/JZlh91G60zwhPBB61xB6uVE+GMQnSnqNUK0Yb0P8QoRX15UFzit5lu8TOk4QaEY5But2sMop6b7xQkiHmmWinf3TxXsEnQQqKJcb0PSLVSCHAV2p/klYJs= jwebster@mastermind.lanl.gov
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
@@ -182,15 +186,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def filemenu_NewProject(self):
         self._project = IPProject.IPProject()
-        if self._project.makeNewProject():
-            self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
-            self.setStatus(self._project.get_projectName() + ' successfully created', 5000)
-            self.settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
-            self.settings.setValue('last_project_directory', str(self._project.get_projectPath))
-
-    def filemenu_LoadProject(self):
-        newProject = IPProject.IPProject()
-        if newProject.loadProject():
+        if self._project.makeNewProjessh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCHPMSykr1ohmUuR+yOpJAk7KDPk/1I6RQrLzbmeQSJU0n6obRi6G8ksGAmo+oCE/B94MTuyDLj+rWkNXx1dDWPAyP8qZrxjqpcQ0D65Rrv6ppbFhJc2ZA9DP6b1edDSxupUNDQloZoMbSzLovgpQ3JlKZSkGDqayhXnbvZCQLjm+oJcK/d8P+kaUk+uW63ryIsyf6+3r0qvDY24c5ym7X0uRthtQV3+I01UC5yb6IMj+YRu/Nr8qikWfegQfwi+lrZbddw8lOZYR3rBKApUMYz418YzeKufXul5+AfVAc4wSQGchKekQfXFxyiu+ezzuZrkWYyO/wW04VBXOwQJqmF1FQezVzPxq3NtDk8zqOrg6+aVdQtgwCpeIBBxG7t1v7mKKvm7lC8/JZlh91G60zwhPBB61xB6uVE+GMQnSnqNUK0Yb0P8QoRX15UFzit5lu8TOk4QaEY5But2sMop6b7xQkiHmmWinf3TxXsEnQQqKJcb0PSLVSCHAV2p/klYJs= jwebster@mastermind.lanl.gov
             self._project = newProject
             self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
             self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
@@ -390,10 +386,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         lon = 0.0
         ele = -1.0
 
-        _network = trace.stats['network'] 
-        _station = trace.stats['station']
-        _channel = trace.stats['channel']
-        _location = trace.stats['location']
+        network = trace.stats['network'] 
+        station = trace.stats['station']
+        channel = trace.stats['channel']
+        location = trace.stats['location']
 
         # if the trace is from a sac file, the sac header might have some inventory information
         if trace.stats['_format'] == 'SAC':
@@ -409,20 +405,19 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             else:
                 ele = 0.333
 
-        if _network == 'LARSA' and _station == '121':
-            print("WOOHOOO")
-            if _channel == 'ai0':
+        if network == 'LARSA' and station == '121':
+            if channel == 'ai0':
                 lat = 35.8492497
                 lon = -106.2705465
-            elif _channel == 'ai1':
+            elif channel == 'ai1':
                 lat = 35.84924682
                 lon = -106.2705505
-            elif _channel == 'ai2':
+            elif channel == 'ai2':
                 lat = 35.84925165
                 lon = -106.2705516
 
         if lat == 0.0 or lon == 0.0 or ele < 0:
-            if self.fill_sta_info_dialog.exec_(_network, _station, _location, _channel, lat, lon, ele):
+            if self.fill_sta_info_dialog.exec_(network, station, location, channel, lat, lon, ele):
                 
                 edited_values = self.fill_sta_info_dialog.get_values()
                 
@@ -430,23 +425,23 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 lon = edited_values['lon']
                 ele = edited_values['ele']
 
-                _network = edited_values['net'] 
-                _station = edited_values['sta']
-                _location = edited_values['loc']
-                _channel = edited_values['cha']
+                network = edited_values['net'] 
+                station = edited_values['sta']
+                location = edited_values['loc']
+                channel = edited_values['cha']
 
                 # (re)populate sac headers where possible
                 if trace.stats['_format'] == 'SAC':
                     trace.stats['sac']['stla'] = lat
                     trace.stats['sac']['stlo'] = lon
                     trace.stats['sac']['stel'] = ele
-                    trace.stats['sac']['knetwk'] = _network
-                    trace.stats['sac']['kstnm'] = _station
+                    trace.stats['sac']['knetwk'] = network
+                    trace.stats['sac']['kstnm'] = station
                 # (re)populate trace stats where possible
-                trace.stats['network'] = _network
-                trace.stats['station'] = _station
-                trace.stats['location'] = _location
-                trace.stats['channel'] = _channel
+                trace.stats['network'] = network
+                trace.stats['station'] = station
+                trace.stats['location'] = location
+                trace.stats['channel'] = channel
         try:            
             new_inventory = Inventory(
                 # We'll add networks later.
@@ -456,11 +451,11 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             
             net = Network(
                 # This is the network code according to the SEED standard.
-                code=_network,
+                code=network,
                 # A list of stations. We'll add one later.
                 stations=[],
                 # Description isn't something that's in the trace stats or SAC header, so lets set it to the network cod
-                description=_network,
+                description=network,
                 # Start-and end dates are optional.
 
                 # Start and end dates for the network are not stored in the sac header so lets set it to 1/1/1900
@@ -468,19 +463,19 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
             sta = Station(
                 # This is the station code according to the SEED standard.
-                code=_station,
+                code=station,
                 latitude=lat,
                 longitude=lon,
                 elevation=ele,
                 # Creation_date is not saved in the trace stats or sac header
                 creation_date=UTCDateTime(1900, 1, 1),
                 # Site name is not in the trace stats or sac header, so set it to the site code
-                site=Site(name=_station))
+                site=Site(name=station))
 
             # This is the channel code according to the SEED standard.
-            cha = Channel(code=_channel,
+            cha = Channel(code=channel,
                         # This is the location code according to the SEED standard.
-                        location_code=_location,
+                        location_code=location,
                         # Note that these coordinates can differ from the station coordinates.
                         latitude=lat,
                         longitude=lon,
@@ -501,7 +496,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 bad_values = bad_values + "\tlon = " + str(lon) + "\n"
             if lat < -90 or lat > 90:
                 bad_values = bad_values + "\tlat = " + str(lat)
-            self.errorPopup("There seems to be a value error in "+ _network + "." + _station + "." + _channel + "\nPossible bad value(s) are:\n" + bad_values)
+            self.errorPopup("There seems to be a value error in "+ network + "." + station + "." + channel + "\nPossible bad value(s) are:\n" + bad_values)
     # ------------------------------------------------------------------------------
     # Settings methods
 
@@ -530,13 +525,17 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     # -------------------------------------------------------
     # Clean up
 
-    def closeEvent(self, ce):
+    def closeEvent(self, event):
         self.saveWindowGeometrySettings()
+        event.accept()
 
+    # -------------------------------------------------------
     # Obligatory about
+
     def about(self):
         self.aboutDialog.exec_()
         #QtWidgets.QMessageBox.about(self, "About", self.progname + "   " + self.progversion + "\n" + "Copyright 2018\nLos Alamos National Laboratory")
+
 
 class IPAboutDialog(QDialog):
     def __init__(self, progname, progversion):

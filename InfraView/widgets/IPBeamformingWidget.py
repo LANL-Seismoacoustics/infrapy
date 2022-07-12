@@ -1,6 +1,7 @@
 
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
-                             QMessageBox, QSplitter, QTabWidget, QAction,
+                             QMessageBox, 
+                             QSplitter, QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication
@@ -15,17 +16,14 @@ import warnings
 import numpy as np
 from pathlib import Path
 
-
 # import infraview widgets here
 from InfraView.widgets import IPDetectionWidget
 from InfraView.widgets import IPDetectorSettingsWidget
 from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
-from InfraView.widgets import IPPickItem
 from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
-from InfraView.widgets import IPLine
 from InfraView.widgets import IPSaveBeamformingResultsDialog
 
 # import infrapy modules here
@@ -33,11 +31,7 @@ from infrapy.detection import beamforming_new
 from infrapy.utils import data_io
 
 # import obspy modules here
-from obspy.core import UTCDateTime, read
-
-# multiprocessing modules
-import pathos.multiprocessing as mp
-from multiprocessing import cpu_count
+from obspy.core import UTCDateTime
 
 
 class IPBeamformingWidget(QWidget):
@@ -546,7 +540,7 @@ class IPBeamformingWidget(QWidget):
         #        if idx == 0:
         #            self.position_label.setVisible(True)
         #            self.value_label.setVisible(True)
-       #             self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
+        #            self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_y))
 
                 # myRange = my_plot.viewRange()
                 # vb = my_plot.getViewBox()
@@ -1278,6 +1272,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
+        self.signal_reset_beamformer.emit()
 
     @staticmethod
     def window_beamforming_map_wrapper(args):
@@ -1290,6 +1285,13 @@ class BeamformingWorkerObject(QtCore.QObject):
     #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
     #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
+    @pyqtSlot(str, str)
+    def errorPopup(self, message, title="Oops..."):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()
 
     @pyqtSlot()
     def run(self):
@@ -1362,7 +1364,14 @@ class BeamformingWorkerObject(QtCore.QObject):
                                         self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
                                         self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
 
-                beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:,0,:]
+                try:
+                    beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:, 0, :]
+                except IndexError:
+                    self.errorPopup('Index Error...This usually occurs because the width \n'
+                                    'of your noise window is less than the length of your \n'
+                                    'beamforming window.  Correct that and try rerunning.')
+                    self.stop()
+                    return
 
             else:
                 beam_results = []
@@ -1487,3 +1496,5 @@ def window_beamforming_map(x,
                                      normalize_beam=norm_beam)
        
     return beamforming_new.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)
+
+    

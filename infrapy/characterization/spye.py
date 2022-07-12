@@ -22,33 +22,33 @@ from scipy.special import gamma
 ##   Kinney & Graham   ## 
 ##   Blastwave Model   ##
 #########################
-def kg_op(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
+def kg_op(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """
         Kinney & Graham scaling law peak overpressure model
                 
         Parameters
         ----------
-        W : float
+        W: float
             Explosive yield of the source [kg eq. TNT]
-        r : float
+        r: float
             Propagation distance [km]
-        p_amb : float
+        p_amb: float
             Ambient atmospheric pressure [kPa]
-        T_amb : float
+        T_amb: float
             Ambient atmospheric temperature [deg K]
-        type : string
+        exp_type: string
             Type of explosion modeled, options are "chemical" or "nuclear"
         
         Returns
         -------
-        p0 : float
+        p0: float
             Peak overpressure [Pa]    
     """
     
     fd = (p_amb / 101.325)**(1.0 / 3.0) * (T_amb / 288.15)**(1.0 / 3.0)
     sc_rng = fd / W**(1.0 / 3.0) * r * 1000.0
     
-    if type=="chemical":
+    if exp_type=="chemical":
         term1 = 1.0 + (sc_rng / 4.5)**2
         term2 = np.sqrt(1.0 + (sc_rng / 0.048)**2)
         term3 = np.sqrt(1.0 + (sc_rng / 0.32)**2)
@@ -64,7 +64,7 @@ def kg_op(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
     return p_amb * 1.0e3 * result
 
 
-def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
+def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """
         Kinney & Graham scaling law positive phase duration model
                 
@@ -78,7 +78,7 @@ def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
             Ambient atmospheric pressure [kPa]
         T_amb : float
             Ambient atmospheric temperature [deg K]
-        type : string
+        exp_type : string
             Type of explosion modeled, options are "chemical" or "nuclear"
             
         Returns
@@ -90,7 +90,7 @@ def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
     fd = (p_amb / 101.325)**(1.0 / 3.0) * (T_amb / 288.15)**(1.0 / 3.0)
     sc_rng = fd / W**(1.0 / 3.0) * r * 1000.0
     
-    if type=="chemical":
+    if exp_type=="chemical":
         term1 = 1.0 + (sc_rng / 0.54)**10
         term2 = 1.0 + (sc_rng / 0.02)**3
         term3 = 1.0 + (sc_rng / 0.74)**6
@@ -108,7 +108,7 @@ def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, type="chemical"):
     return result * W**(1.0 / 3.0) / 1e3
 
 
-def blastwave(t, p0, t0, alpha=0.0):
+def blastwave(t, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping_param=0.0):
     """ 
         Acoustic blastwave that can be used as a source
             for surface explosions out to several scale
@@ -119,43 +119,52 @@ def blastwave(t, p0, t0, alpha=0.0):
         
         Parameters
         ----------
-        t : float
+        t: float
             Time [s]
-        p0 : float
-            Peak overpressure
-        t0 : float
-            Time scale [s]
-        alpha : float
-            Shaping parameter (positive)
+        W: float
+            Explosive yield of the source [kg eq. TNT]
+        r: float
+            Propagation distance [km]
+        p_amb: float
+            Ambient atmospheric pressure [kPa]
+        T_amb: float
+            Ambient atmospheric temperature [deg K]
+        exp_type: string
+            Type of explosion modeled, options are "chemical" or "nuclear"
+        shaping_param: float
+            Shaping parameter for waveform that controls high frequency trend (set to 0 for original Friedlander blastwave)
 
         Returns
         -------
         p : float
             Overpressure at time t            
     """
+
+    p0 = kg_op(W, r, p_amb, T_amb, exp_type)
+    t0 = kg_ppd(W, r, p_amb, T_amb, exp_type)
     
-    x = t / t0 + (1.0 + alpha)
-    x0 = (1.0 + alpha) - np.sqrt(1.0 + alpha)
-    norm = x0**alpha * (1.0 - x0 / (1.0 + alpha)) * np.exp(-x0)
+    x = t / t0 + (1.0 + shaping_param)
+    x0 = (1.0 + shaping_param) - np.sqrt(1.0 + shaping_param)
+    norm = x0**shaping_param * (1.0 - x0 / (1.0 + shaping_param)) * np.exp(-x0)
     
     result = np.empty_like(x)
     if len(np.atleast_1d(result)) == 1:
         if x >= 0.0:
-            return p0 / norm * x**alpha * (1.0 - x / (1.0 + alpha)) * np.exp(-x)
+            return p0 / norm * x**shaping_param * (1.0 - x / (1.0 + shaping_param)) * np.exp(-x)
         else:
             return 0.0
     else:
-        result[x >= 0.0] = p0 / norm * x[x >= 0.0]**alpha * (1.0 - x[x >= 0.0] / (1.0 + alpha)) * np.exp(-x[x >= 0.0])
+        result[x >= 0.0] = p0 / norm * x[x >= 0.0]**shaping_param * (1.0 - x[x >= 0.0] / (1.0 + shaping_param)) * np.exp(-x[x >= 0.0])
         result[x <  0.0] = 0.0
         return result
 
 
-def blastwave_spectrum(f, p0, t0, alpha=0.0):
+def blastwave_spectrum(f, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping_param=0.0):
     """ 
         Fourier transform amplitude for the acoustic
             blastwave in sasm.acoustic.blastwave().
         
-        Note: alpha = 0 produces the Friedlander
+        Note: shaping_param = 0 produces the Friedlander
         blastwave model.
         
         Note: the peak of the spectrum occurs at
@@ -165,14 +174,20 @@ def blastwave_spectrum(f, p0, t0, alpha=0.0):
         
         Parameters
         ----------
-        f : float
+        f: float
             Frequency [Hz]
-        p0 : float
-            Peak overpressure
-        t0 : float
-            Time scale [s]
-        alpha : float
-            Shaping parameter (positive)
+        W: float
+            Explosive yield of the source [kg eq. TNT]
+        r: float
+            Propagation distance [km]
+        p_amb: float
+            Ambient atmospheric pressure [kPa]
+        T_amb: float
+            Ambient atmospheric temperature [deg K]
+        exp_type: string
+            Type of explosion modeled, options are "chemical" or "nuclear"
+        shaping_param: float
+            Shaping parameter for waveform that controls high frequency trend (set to 0 for original Friedlander blastwave)
         
         Returns
         -------
@@ -180,11 +195,14 @@ def blastwave_spectrum(f, p0, t0, alpha=0.0):
             Spectral value at frequency f
     """
 
+    p0 = kg_op(W, r, p_amb, T_amb, exp_type)
+    t0 = kg_ppd(W, r, p_amb, T_amb, exp_type)
+
     omega = 2.0 * np.pi * f
-    x0 = (1.0 + alpha) - np.sqrt(1.0 + alpha)
-    norm = x0**alpha * (1.0 - x0 / (1.0 + alpha)) * np.exp(-x0)
+    x0 = (1.0 + shaping_param) - np.sqrt(1.0 + shaping_param)
+    norm = x0**shaping_param * (1.0 - x0 / (1.0 + shaping_param)) * np.exp(-x0)
     
-    return p0 / norm * t0 * gamma(alpha + 1.0) * (omega * t0) / (1.0 + (omega**2 * t0**2))**(alpha / 2.0 + 1.0)
+    return p0 / norm * t0 * gamma(shaping_param + 1.0) * (omega * t0) / (1.0 + (omega**2 * t0**2))**(shaping_param / 2.0 + 1.0)
 
 
 #################################
@@ -256,40 +274,47 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
     return smn_spec
 
 
-def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True):
+def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """ 
         Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield
         
         Parameters
         ----------
-        det_list : :obj:`list` of :obj:`InfrasoundDetection`
+        det_list: :obj:`list` of :obj:`InfrasoundDetection`
             Iterable of detections with defined start and end times
-        smn_spec : ndarray
+        smn_spec: ndarray
             Spectral amplitude of the signal-minus-noise  
-        freq_band : iterable
+        freq_band: iterable
             List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])
-        tloss_models : list of frequencies and infrapy.propagation.TLossModel instances
+        tloss_models: list of frequencies and infrapy.propagation.TLossModel instances
             Propagation transmission loss model list with reference frequencies (see
-                test/test_yield.py for construction example)
-        resol : int
+            test/test_yield.py for construction example)
+        resol: int
             Resolution used in analysis
-        yld_rng : iterable
+        yld_rng: iterable
             List or tuple with minimum and maximum yields (e.g., [yld_min, yld_max])
-        ref_src_rng : float
+        ref_src_rng: float
             Standoff distance used to define source model distance
-        grnd_brst : boolean
+        grnd_brst: boolean
             Boolean declaring whether the source is a ground burst (interaction with source
-                doubles the effective yield for a ground burst vs. air burst)
+            doubles the effective yield for a ground burst vs. air burst)
+        p_amb: float
+            Ambient atmospheric pressure [kPa]
+        T_amb: float
+            Ambient atmospheric temperature [deg K]
+        exp_type: string
+            Type of explosion modeled, options are "chemical" or "nuclear"
 
         Returns
         -------
         yld_vals: 
             Values of explosive yield for the PDF                    
-        yld_pdf : 
+        yld_pdf: 
             Probability of the observed source having a given yield                    
-        conf_bnds : ndarray
+        conf_bnds: ndarray
             Limits for the 68% and 95% confidence bounds on yield            
     """
+
     print("Estimating yield using spectral amplitudes...")
     det_cnt = len(det_list)
     
@@ -301,7 +326,7 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
 
     # Compute the combined near-source spectral amplitude   
     for j in range(det_cnt):
-        f_grid, spec_grid, pdf[j] = det_list[j].src_spec_pdf(src_loc[0], src_loc[1], freqs, src_spec_vals, smn_spec[j], tloss_models)
+        _, _, pdf[j] = det_list[j].src_spec_pdf(src_loc[0], src_loc[1], freqs, src_spec_vals, smn_spec[j], tloss_models)
         
     psd_fit = interp2d(freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), np.product(pdf, axis=0).reshape((resol, resol)))
     yld_vals = np.logspace(np.log10(yld_rng[0]), np.log10(yld_rng[1]), resol)
@@ -309,15 +334,12 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
 
     for n in range(len(yld_vals)):
         if grnd_brst:
-            p0 = kg_op(yld_vals[n] * 2.0, ref_src_rng)
-            t0 = kg_ppd(yld_vals[n] * 2.0, ref_src_rng)
+            def temp(f):
+                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 2.0, ref_src_rng, p_amb, T_amb, exp_type))) / f
         else:
-            p0 = kg_op(yld_vals[n], ref_src_rng)
-            t0 = kg_ppd(yld_vals[n], ref_src_rng)
+            def temp(f):
+                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 1.0, ref_src_rng, p_amb, T_amb, exp_type))) / f
 
-        def temp(f):
-            # scale by 1/f to weight for log-space integration
-            return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, p0, t0, 0.0))) / f
         yld_pdf[n] = quad(temp, freqs[0], freqs[-1], limit=250, epsrel=5.0e-3)[0]
 
     yld_interp = interp1d(yld_vals, yld_pdf)

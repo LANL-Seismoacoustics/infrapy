@@ -135,7 +135,7 @@ class IPLocationWidget(QWidget):
 
     def connectSignalsAndSlots(self):
 
-        self.showgroundtruth.sig_groundtruth_changed.connect(self.mapWidget.plot_ground_truth)
+        self.showgroundtruth.sig_event_changed.connect(self.mapWidget.plot_ground_truth)
         self.showgroundtruth.showGT_cb.toggled.connect(self.mapWidget.show_hide_ground_truth)
 
         self.bislSettings.run_bisl_button.clicked.connect(self.run_bisl)
@@ -178,7 +178,7 @@ class IPLocationWidget(QWidget):
             for detection in new_detections:
                 self._detections.append(detection)
 
-        self.mapWidget.update_detections(self._detections, self.bislSettings.rng_max_edit.value() * 1000.0)
+        self.mapWidget.update_detections(self._detections)
 
         if recalc_assoc:
             self.calc_distance_matrix()
@@ -195,9 +195,7 @@ class IPLocationWidget(QWidget):
             self._trimmed_detections.append(self._detections[index])
             self._trimmed_detections[-1].index = index
 
-        self.mapWidget.update_detections(self._trimmed_detections,
-                                         self.bislSettings.rng_max_edit.value() * 1000.,
-                                         linecolor=linecolor)
+        self.mapWidget.update_detections(self._trimmed_detections, linecolor=linecolor)
 
     def run_bisl(self):
 
@@ -482,7 +480,7 @@ class BISLSettings(QFrame):
 
 class ShowGroundTruth(QFrame):
 
-    sig_groundtruth_changed = pyqtSignal(float, float)
+    sig_event_changed = pyqtSignal(float, float)
 
     def __init__(self, parent):
         super().__init__()
@@ -492,25 +490,14 @@ class ShowGroundTruth(QFrame):
 
     def buildUI(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        self.showGT_cb = QCheckBox("Show Ground Truth")
+        self.showGT_cb = QCheckBox("Show Event/Ground Truth")
 
-        self.lat_spinbox = QDoubleSpinBox()
-        self.lat_spinbox.setMinimum(-90)
-        self.lat_spinbox.setMaximum(90)
-        self.lat_spinbox.setSuffix(' deg')
-        self.lat_spinbox.setEnabled(False)
-        self.lat_spinbox.valueChanged.connect(self.groundTruthChanged)
-
-        self.lon_spinbox = QDoubleSpinBox()
-        self.lon_spinbox.setMinimum(-180)
-        self.lon_spinbox.setMaximum(180)
-        self.lon_spinbox.setSuffix(' deg')
-        self.lon_spinbox.setEnabled(False)
-        self.lon_spinbox.valueChanged.connect(self.groundTruthChanged)
+        self.lat_label = QLabel()
+        self.lon_label = QLabel()
 
         formlayout = QFormLayout()
-        formlayout.addRow('Lon: ', self.lon_spinbox)
-        formlayout.addRow('Lat: ', self.lat_spinbox)
+        formlayout.addRow('Lon: ', self.lon_label)
+        formlayout.addRow('Lat: ', self.lat_label)
 
         layout = QVBoxLayout()
         layout.addWidget(self.showGT_cb)
@@ -519,17 +506,22 @@ class ShowGroundTruth(QFrame):
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
+    
+    @pyqtSlot(dict)
+    def eventChanged(self, event_dict):
+        if event_dict['Latitude']:
+            self.lat_label.setText("{:.5f}".format(event_dict['Latitude']))
+        else:
+            self.lat_label.setText("0.0")
+        if event_dict['Longitude']:
+            self.lon_label.setText("{:.5f}".format(event_dict['Longitude']))
+        else:
+            self.lon_label.setText("0.0")
+        
+        self.sig_event_changed.emit(float(self.lon_label.text()), float(self.lat_label.text()))
 
-        self.showGT_cb.toggled.connect(self.enableSpins)
-
-    @pyqtSlot(bool)
-    def enableSpins(self, enabled):
-        # this will enable or disable to ground truth lat lons
-        self.lat_spinbox.setEnabled(enabled)
-        self.lon_spinbox.setEnabled(enabled)
-
-    def groundTruthChanged(self):
-        self.sig_groundtruth_changed.emit(self.lon_spinbox.value(), self.lat_spinbox.value())
+    def show_gt(self):
+        return self.showGT_cb.isChecked()
 
 
 class IPDistanceMatrixWidget(QWidget):
