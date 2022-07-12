@@ -13,7 +13,7 @@ from matplotlib import cm
 from . import beamforming_new
 
 
-def plot_fk1(stream, latlon, times, peaks, detections=None, title=None, output_path=None, show_fig=True):
+def plot_fk1(stream, latlon, times, peaks, detections=None, title=None, output_path=None, show_fig=True, det_thresh=None):
     '''
     Visualize beamforming (fk) results with waveform data included
 
@@ -38,6 +38,9 @@ def plot_fk1(stream, latlon, times, peaks, detections=None, title=None, output_p
             t2 = det.peakF_UTCtime + np.timedelta64(int(det.end * 1000.0), 'ms')
             for n in range(4):
                 a[n].axvspan(t1, t2, color="steelblue")
+
+    if det_thresh is not None:
+        a[0].plot(det_thresh[0], det_thresh[1], '--k', linewidth=0.5)
 
     if title:
         a[0].set_title(title)

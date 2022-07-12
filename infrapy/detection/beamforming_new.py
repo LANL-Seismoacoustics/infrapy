@@ -82,13 +82,13 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
     dxdy = np.zeros((len(stream), 2))
     if latlon is None:
         for m, tr in enumerate(stream):
-            temp = wgs84_proj.inv(tr.stats.sac['stlo'], tr.stats.sac['stla'], stream[0].stats.sac['stlo'], stream[0].stats.sac['stla'])
+            temp = wgs84_proj.inv(stream[0].stats.sac['stlo'], stream[0].stats.sac['stla'], tr.stats.sac['stlo'], tr.stats.sac['stla'])
             dxdy[m] = np.array((temp[2] * np.sin(np.radians(temp[0])), temp[2] * np.cos(np.radians(temp[0]))))
         # Or using 'Coordinate' from stats
         # ...
     else:
         for m in range(0, len(stream)):
-            temp = wgs84_proj.inv(latlon[m][1], latlon[m][0], latlon[0][1], latlon[0][0])
+            temp = wgs84_proj.inv(latlon[0][1], latlon[0][0], latlon[m][1], latlon[m][0])
             dxdy[m] = np.array((temp[2] * np.sin(np.radians(temp[0])), temp[2] * np.cos(np.radians(temp[0]))))
 
     return x, t, t0, dxdy
@@ -306,12 +306,10 @@ def compute_delays(dxdy, param_grid, param_opt='planar', sph_vel=340.0, sph_src_
             K x M of time delays across the array for each slowness
     """
 
-    delays = np.zeros((dxdy.shape[0], param_grid.shape[0]))
-    for m in range(dxdy.shape[0]):
-        if param_opt == 'planar':
-            delays[m] = np.array([np.dot(param_grid[k], dxdy[m]) for k in range(param_grid.shape[0])])
-        else:
-            delays[m] = np.array([np.sqrt(np.linalg.norm(param_grid[k] - dxdy[m])**2 + sph_src_ht**2) / sph_vel for k in range(param_grid.shape[0])])
+    if param_opt == 'planar':
+        delays = np.array([[(param_grid[k][0] * dxdy[m][0] + param_grid[k][1] * dxdy[m][1]) for k in range(param_grid.shape[0])] for m in range(dxdy.shape[0])])
+    else:
+        delays = np.array([[np.sqrt(np.linalg.norm(param_grid[k] - dxdy[m])**2 + sph_src_ht**2) / sph_vel for k in range(param_grid.shape[0])] for m in range(dxdy.shape[0])])
 
     return delays.T
 
@@ -574,22 +572,22 @@ def run(X, S, f, dxdy, delays, freq_band, method="bartlett", ns_covar_inv=None, 
     f_cnt = f_msk.shape[0]
     if pool:
         if method == "bartlett_covar" or method == "capon" or method == "music":
-            args = [(S_msk[:, :, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
+            args = [(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
         else:
             if ns_covar_inv is not None:
-                args = [(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)]
+                args = [(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)]
             else:
-                args = [(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
+                args = [(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
         beam_power = np.array(pool.map(compute_beam_power_wrapper, args))
 
     else:
         if method == "bartlett_covar" or method == "capon" or method == "music":
-            beam_power = np.array([compute_beam_power(S_msk[:, :, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
+            beam_power = np.array([compute_beam_power(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
         else:
             if ns_covar_inv is not None:
-                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)])
+                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, (ns_covar_inv[:, :, band_mask])[:, :, nf], signal_cnt) for nf in range(f_cnt)])
             else:
-                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(-2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
+                beam_power = np.array([compute_beam_power(X_msk[:, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
 
     if normalize_beam:
         if method == "bartlett" or method == "gls" or method == "bartlett_covar":
@@ -834,7 +832,7 @@ def extract_signal(X, f, slowness, dxdy):
     sig_estimate = np.empty_like(X[0])
     residual = np.empty_like(X)
     for nf in range(len(f)):
-        steering = np.exp(-2.0j * np.pi * f[nf] * delays)
+        steering = np.exp(2.0j * np.pi * f[nf] * delays)
         sig_estimate[nf] = np.vdot(steering, X[:, nf]) / np.vdot(steering, steering)
         residual[:, nf] = X[:, nf] - sig_estimate[nf] * steering
 
@@ -965,7 +963,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     return beam_times, beam_peaks
 
 
-def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
+def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, thresh_ceil=None, return_thresh=False, merge_dets=False):
     """Identify detections with beamforming results
 
         Identify detection in the beamforming results using either Kernel Density
@@ -998,6 +996,9 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
         fixed_thresh: float
             A fixed detection threshold for fstat values (overrides adaptive 
                 threshold calculation)
+        thresh_ceil: float
+            A custom detection threshold ceiling value. When used, it modifies the 
+                detection criterion: fstat > min(thresh_ceil, adaptive_thresh)
         return_thresh: boolean
             Flag to output the adaptive detection threshold computed across times
 
@@ -1038,8 +1039,13 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             win_mask = np.logical_and(t1 <= times, times <= t2)
             thresh = calc_det_thresh(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
 
-            thresh_vals[n] = thresh
-            det_mask[n] = fstat_vals[n] >= thresh
+            if thresh_ceil:
+                thresh_vals[n] = min(thresh, thresh_ceil)
+                det_mask[n] = fstat_vals[n] >= min(thresh, thresh_ceil)        
+            else:
+                thresh_vals[n] = thresh
+                det_mask[n] = fstat_vals[n] >= thresh
+
 
     # Check for detections shorter than the minimum sequence 
     #   length and with too large of back azimuth deviations
@@ -1080,6 +1086,32 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             n += det_len
         else:
             n += 1
+
+    if merge_dets:
+        print("Merging detections...")
+        for scan_cnt in range(len(dets)):
+            for j in range(len(dets) - 1):
+                back_az_diff = abs(dets[j][3] - dets[j + 1][3])
+                if back_az_diff > 180.0:
+                    back_az_diff = abs(back_az_diff - 360.0)
+
+                if back_az_diff < back_az_lim: 
+                    t1 = dets[j][0] + np.timedelta64(int(dets[j][2] * 1e3), 'ms')
+                    t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
+                    dt = (t2 - t1).astype('m8[s]').astype(float)
+
+                    if dt < 1.5 * max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
+                        if dets[j][5] >= dets[j + 1][5]:
+                            dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
+                            dets[j + 1] = dets[j]
+                            dets[j] = None
+                        else:
+                            dets[j + 1][1] = dets[j + 1][1] - (dt + (dets[j][2] - dets[j][1]))
+                            dets[j] = None
+
+            if dets.count(None) == 0:
+                break
+            dets = [det for det in dets if det is not None]                    
 
     if return_thresh:
         return dets, thresh_vals

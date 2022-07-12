@@ -8,6 +8,9 @@ Author: pblom@lanl.gov
 """
 
 import os
+import pickle
+import imp 
+
 from threading import local 
 
 import warnings
@@ -82,17 +85,20 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
 @click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
 @click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
 @click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
-@click.option("--rcvr-lat", help="Receiver latitude", default=None, prompt="Enter receiver latitude: ")
-@click.option("--rcvr-lon", help="Receiver longitude", default=None, prompt="Enter receiver longitude: ")
+@click.option("--rcvr-lat", help="Receiver latitude", default=None)
+@click.option("--rcvr-lon", help="Receiver longitude", default=None)
+@click.option("--rcvr", help="Reference IMS station (e.g., 'I53')", default=None)
 @click.option("--celerity-min", help="Minimum celerity", default=0.24)
 @click.option("--celerity-max", help="Maximum celerity", default=0.35)
-def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, celerity_max):
+def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, rcvr, celerity_min, celerity_max):
     '''
-    Compute the range of possible arrivals times for a source-receiver pair given a range of celerity values
+    Compute the range of possible arrivals times for a source-receiver pair given a range of celerity values.
+    Can use a receiver latitude/longitude or reference from a list (currently only IMS stations)
     
     \b
     Example usage (requires InfraGA/GeoAc arrival output):
     \tinfrapy utils arrival-time --src-lat 30.0 --src-lon -110.0 --src-time "2020-12-25T00:00:00" --rcvr-lat 40.0 --rcvr-lon -110.0
+    \tinfrapy utils arrival-time --src-lat 30.0 --src-lon -110.0 --src-time "2020-12-25T00:00:00" --rcvr I57US
 
     '''
     click.echo("")
@@ -106,19 +112,46 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, celerity_min, c
     
     click.echo("  Source Time: " + src_time)
     click.echo("  Source Location: (" + str(src_lat) + ", " + str(src_lon) + ")")
-    click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+    if rcvr is not None:
+        click.echo('\n' + "  User specified reference receiver: " + str(rcvr))
+
+        IMS_info = pickle.load(open(imp.find_module('infrapy')[1] + '/resources/IMS_infrasound_locs.pkl', 'rb'), encoding='latin1')
+        for line in IMS_info:
+            if rcvr in line[0]:
+                click.echo("  Reference IMS station match: " + line[0])
+                rcvr_lat, rcvr_lon = line[1][:2]
+                click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+                break
+        if rcvr_lat is None:
+            warning_message = "Specified reference receiver (" + rcvr + ") not found in IMS info."
+            warnings.warn((warning_message))
+            return 0
+
+    elif rcvr_lat is not None and rcvr_lon is not None:
+        click.echo("  Receiver Location: (" + str(rcvr_lat) + ", " + str(rcvr_lon) + ")")
+    else:
+        warning_message = "Method requires either a reference receiver or user defined latitude and longitude"
+        warnings.warn((warning_message))
+        return 0
 
     click.echo("")
     click.echo("  Celerity Range: (" + str(celerity_min) + ", " + str(celerity_max) + ")")
 
     sph_proj = Geod(ellps='sphere')
     temp = sph_proj.inv(src_lon, src_lat, rcvr_lon, rcvr_lat, radians=False)
-    az = temp[0]
+    az, back_az = temp[0], temp[1]
     rng = temp[2] / 1000.0
+
+    if back_az > 180.0:
+        back_az = back_az - 360.0
+    elif back_az < -180.0:
+        back_az = back_az + 360.0
 
     click.echo("")
     click.echo("  Propagation range: " + str(np.round(rng,2)) + " km")
-    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees")
+    click.echo("  Propagation azimuth: " + str(np.round(az, 2)) + " degrees" + '\n')
+
+    click.echo("  Estimated arrival back azimuth: " + str(np.round(back_az, 2)) + " degrees")
     click.echo("  Estimated arrival time range:")
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_max, 0))[:-8])
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_min, 0))[:-8] + '\n')
@@ -205,8 +238,12 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
 
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -279,10 +316,15 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
     click.echo("##                             ##")
     click.echo("#################################")
     click.echo("")   
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -366,9 +408,11 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
 @click.option("--signal-start", help="Start of signal window", default=None)
 @click.option("--signal-end", help="End of signal window", default=None)
 
+@click.option("--hold-figure", help="Hold figure open", default=False)
+
 
 def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
-    back_az, trace_vel, signal_start, signal_end):
+    back_az, trace_vel, signal_start, signal_end, hold_figure):
     '''
     Shift and stack the array data to compute the best beam.  Can be run adaptively using the fk_results.dat file or along a specific beam.
 
@@ -388,10 +432,15 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     click.echo("##                             ##")
     click.echo("#################################")
     click.echo("")   
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
@@ -414,6 +463,9 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     # Trimming times
     starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+
+    # Local fk file
+    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -470,8 +522,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     for tr in stream:
         click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
-
-    if local_fk_label is None:
+    if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = ""
         if local_wvfrms is not None:
             if "/" in local_wvfrms:
@@ -560,7 +611,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
         window_step = (beam_times[1] - beam_times[0]).astype(float) / 1.0e6
         for n, tn in enumerate((beam_times - t0).astype(float) / 1.0e6):
-            if tn >= window_step and tn <= (t[-1] - t[0]):
+            if tn >= 0.0 and tn <= (t[-1] - t[0]):
                 X, _, f = beamforming_new.fft_array_data(x, t, window=[tn - window_step, tn + window_step], fft_window="boxcar")
 
                 sig_est, residual = beamforming_new.extract_signal(X, f, beam_results[n, :2], geom)
@@ -598,7 +649,13 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     plt.plot(plot_times, best_beam, '-k', linewidth=1.0)
     for nM in range(len(residuals)):
         plt.plot(plot_times, residuals[nM], '-r', linewidth=0.25)
-    plt.show()
+
+    if hold_figure:
+        plt.show()
+    else:
+        plt.show(block=False)
+        plt.pause(5.0)
+        plt.close()
 
 
 

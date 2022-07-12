@@ -67,10 +67,9 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'database', 'url', db_url, 'string')
-    db_site = config.set_param(user_config, 'database', 'site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'database', 'wfdisc', db_wfdisc, 'string')
-    db_origin = config.set_param(user_config, 'database', 'origin', db_origin, 'string')
+    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
+    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
+    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -128,7 +127,12 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         click.echo("  figure_out: " + figure_out)
 
     # Extract times and peaks from fk results
-    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime, local_latlon)
+    if db_url is not None:
+        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
+    else:
+        db_info = None
+
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
     # Check if waveform data is specified and populate obspy Stream
     if stream is not None:
@@ -228,10 +232,9 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'database', 'url', db_url, 'string')
-    db_site = config.set_param(user_config, 'database', 'site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'database', 'wfdisc', db_wfdisc, 'string')
-    db_origin = config.set_param(user_config, 'database', 'origin', db_origin, 'string')
+    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
+    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
+    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -284,7 +287,11 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         click.echo("  figure_out: " + figure_out)
 
     # Extract times and peaks from fk results
-    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_url, network, station, location, channel, starttime, endtime, local_latlon)
+    if db_url is not None:
+        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
+    else:
+        db_info = None
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
     # Check if waveform data is specified and populate obspy Stream
     if stream is not None:
@@ -315,11 +322,22 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
         
         # Read in detection list
-        det_list = data_io.set_det_list(local_fk_label + ".dets.json", merge=True)
+        if local_detect_label is None or local_detect_label == 'auto':
+            local_detect_label = local_fk_label
+
+        det_list = data_io.set_det_list(local_detect_label + ".dets.json", merge=True)
         if len(det_list) == 0:
             click.echo("Note: no detections found in analysis.")
 
-        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out)
+        if os.path.isfile(local_detect_label + ".fd_thresholds.dat"):
+            temp = np.loadtxt(local_detect_label + ".fd_thresholds.dat")
+            thresh_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+            det_thresh = [thresh_times, temp[:, 1]]
+
+        else:
+            det_thresh = None
+
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out, det_thresh=det_thresh)
     else:
         if os.path.isfile(local_fk_label + ".fk_times.npy"):
             temp = np.loadtxt(local_fk_label + ".fk_results.dat")

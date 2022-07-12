@@ -42,9 +42,13 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
     click.echo("")    
 
     if config_file:
-        click.echo("Loading configuration info from: " + config_file)
-        user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
     else:
         user_config = None
 
