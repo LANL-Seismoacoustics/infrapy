@@ -42,7 +42,8 @@ class IPEventWidget(QWidget):
         self.displayArrivals_cb = QCheckBox(self.tr('Show arrival estimations on waveform plots'))
         self.displayArrivals_cb.setChecked(False)
         self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
-        self.displayArrivals_cb.stateChanged.connect(self.eventChanged)
+        
+        self.displayEvent_cb.stateChanged.connect(self.displayArrivals_cb.setEnabled)
 
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
@@ -286,10 +287,10 @@ class IPEventWidget(QWidget):
             return None
 
     def browse(self):
-        self.eventDialog = IPEventBrowser.IPEventDialog()
-
-        if self.eventDialog.exec_():
-            event = self.eventDialog.getEvent()
+        #self.eventDialog = IPEventBrowser.IPEventDialog()
+        
+        if self.eventBrowser.exec_():
+            event = self.eventBrowser.getEvent()
 
             self.event_name_edit.setText(event['Name'])
             self.event_lon_edit.setValue(event['Longitude'])

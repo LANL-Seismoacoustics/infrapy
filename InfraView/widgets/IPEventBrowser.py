@@ -424,7 +424,7 @@ class IPEventBrowser(QWidget):
             event['Latitude'] = float(self.resultsTable.item(row, 2).text())
             event['Longitude'] = float(self.resultsTable.item(row, 3).text())
             event['Depth'] = float(self.resultsTable.item(row, 4).text())
-            event['Name'] = 'Fred'
+            event['Name'] = self.resultsTable.item(row, 5).text().split('=')[-1]
             event['Elevation'] = 0.0
         return event
 
