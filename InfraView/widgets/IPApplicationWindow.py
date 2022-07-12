@@ -177,7 +177,12 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.eventWidget.sigEventWidgetChanged.connect(self.locationWidget.showgroundtruth.eventChanged)
         self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
-        self.eventWidget.sigEventWidgetChanged.connect(self.waveformssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCHPMSykr1ohmUuR+yOpJAk7KDPk/1I6RQrLzbmeQSJU0n6obRi6G8ksGAmo+oCE/B94MTuyDLj+rWkNXx1dDWPAyP8qZrxjqpcQ0D65Rrv6ppbFhJc2ZA9DP6b1edDSxupUNDQloZoMbSzLovgpQ3JlKZSkGDqayhXnbvZCQLjm+oJcK/d8P+kaUk+uW63ryIsyf6+3r0qvDY24c5ym7X0uRthtQV3+I01UC5yb6IMj+YRu/Nr8qikWfegQfwi+lrZbddw8lOZYR3rBKApUMYz418YzeKufXul5+AfVAc4wSQGchKekQfXFxyiu+ezzuZrkWYyO/wW04VBXOwQJqmF1FQezVzPxq3NtDk8zqOrg6+aVdQtgwCpeIBBxG7t1v7mKKvm7lC8/JZlh91G60zwhPBB61xB6uVE+GMQnSnqNUK0Yb0P8QoRX15UFzit5lu8TOk4QaEY5But2sMop6b7xQkiHmmWinf3TxXsEnQQqKJcb0PSLVSCHAV2p/klYJs= jwebster@mastermind.lanl.gov
+        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.plotEventLines)
+
+    def errorPopup(self, message):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
         msgBox.setWindowTitle("Oops...")
         msgBox.exec_()
 
@@ -186,7 +191,15 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def filemenu_NewProject(self):
         self._project = IPProject.IPProject()
-        if self._project.makeNewProjessh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCHPMSykr1ohmUuR+yOpJAk7KDPk/1I6RQrLzbmeQSJU0n6obRi6G8ksGAmo+oCE/B94MTuyDLj+rWkNXx1dDWPAyP8qZrxjqpcQ0D65Rrv6ppbFhJc2ZA9DP6b1edDSxupUNDQloZoMbSzLovgpQ3JlKZSkGDqayhXnbvZCQLjm+oJcK/d8P+kaUk+uW63ryIsyf6+3r0qvDY24c5ym7X0uRthtQV3+I01UC5yb6IMj+YRu/Nr8qikWfegQfwi+lrZbddw8lOZYR3rBKApUMYz418YzeKufXul5+AfVAc4wSQGchKekQfXFxyiu+ezzuZrkWYyO/wW04VBXOwQJqmF1FQezVzPxq3NtDk8zqOrg6+aVdQtgwCpeIBBxG7t1v7mKKvm7lC8/JZlh91G60zwhPBB61xB6uVE+GMQnSnqNUK0Yb0P8QoRX15UFzit5lu8TOk4QaEY5But2sMop6b7xQkiHmmWinf3TxXsEnQQqKJcb0PSLVSCHAV2p/klYJs= jwebster@mastermind.lanl.gov
+        if self._project.makeNewProject():
+            self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
+            self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
+            self.settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
+            self.settings.setValue('last_project_directory', str(self._project.get_projectPath))
+
+    def filemenu_LoadProject(self):
+        newProject = IPProject.IPProject()
+        if newProject.loadProject():
             self._project = newProject
             self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
             self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)

@@ -3,10 +3,6 @@ import numpy as np
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-<<<<<<< HEAD
-=======
-
->>>>>>> master
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox,
                              QLabel, QMessageBox,
                              QHBoxLayout, QVBoxLayout,
