@@ -4,6 +4,7 @@ from heapq import merge
 import os 
 import click
 import warnings
+import re 
 
 import configparser as cnfg
 import numpy as np
@@ -326,6 +327,12 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
+    if ".fk_results.dat" in local_fk_label:
+        local_fk_label = local_fk_label[:-15]
+
+    if local_detect_label is None or local_detect_label == "auto":
+        local_detect_label = local_fk_label
+
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
     click.echo("  local_detect_label: " + local_detect_label)
@@ -350,18 +357,13 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     click.echo("  return_thresh: " + str(return_thresh))
     click.echo("  merge_dets: " + str(merge_dets))
 
-    if ".fk_results.dat" in local_fk_label:
-        local_fk_label = local_fk_label[:-15]
-
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = local_fk_label
-
     print('\n' + "Running fd...")
     if local_fk_label is not None:
         temp = np.loadtxt(local_fk_label + ".fk_results.dat")
         dt, beam_peaks = temp[:, 0], temp[:, 1:]
 
         temp = open(local_fk_label + ".fk_results.dat", 'r')
+        data_info = []
         for line in temp:
             if "t0:" in line:
                 t0 = np.datetime64(line.split(' ')[-1][:-1])
@@ -377,8 +379,11 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
                 array_lat = float(line.split(' ')[-1])
             elif "longitude" in line:
                 array_lon = float(line.split(' ')[-1])
+            elif re.search(r'([\d]{4}-[\d]{2}-[\d]{2})',line) is not None and "t0" not in line:
+                data_info.append(line[6:].split('\t')[0])
 
         beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
+        stream_info = [os.path.commonprefix([info.split('.')[j] for info in data_info]) for j in [0,1,3]]
     else:
         print("Non-local data not yet set up...")
         return 0
@@ -392,8 +397,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
     print("Writing detections to " + local_detect_label + ".dets.json")
-    stream_info = 
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
 
     if return_thresh:
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
@@ -694,7 +698,10 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
         local_detect_label = output_id
 
     click.echo("Writing detection results using label: " + local_detect_label)
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream)
+    stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
+                   os.path.commonprefix([tr.stats.station for tr in stream]),
+                   os.path.commonprefix([tr.stats.channel for tr in stream])]
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
 
     if return_thresh:
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)

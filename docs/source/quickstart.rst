@@ -122,6 +122,12 @@ Array-Level Analyses
         :width: 1200px
         :align: center
 
+    The default behavior of the plotting methods in InfraPy are to generate a :code:`matplotlib` window and print the image to screen.  This can be overwritten by specifying an output file and turning the print to screen off:
+
+    .. code-block:: bash
+
+        infrapy plot fk --local-wvfrms 'data/YJ.BRP*.SAC' --figure-out "fk_result.png" --show-figure false
+
 - The default beamforming parameters in :code:`run_fk` are useful, but in many cases the frequency band for a signal of interest or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorithm as summarized in the :code:`--help` information.  For example, the analysis of data from BRP can be completed using a modified frequency band via:
 
     .. code-block:: bash
@@ -235,24 +241,25 @@ Array-Level Analyses
             {
                 "Name": "",
                 "Time (UTC)": "2012-04-09T18:07:05.008300",
-                "F Stat.": 30.5537,
-                "Trace Vel. (m/s)": 371.52,
-                "Back Azimuth": -41.77,
-                "Latitude": 39.4727,
-                "Longitude": -110.741,
+                "F Stat.": 31.9058,
+                "Trace Vel. (m/s)": 370.97,
+                "Back Azimuth": -41.84,
+                "Latitude": 39.47269821166992,
+                "Longitude": -110.74089813232422,
                 "Elevation (m)": null,
                 "Start": 0.0,
                 "End": 5.0,
                 "Freq Range": [
-                    0.5,
+                    1.0,
                     5.0
                 ],
                 "Array Dim.": 4,
                 "Method": "",
                 "Event": "",
-                "Note": "InfraPy CLI detection"
-                "Network": "YJ"
-                "Station": "BRP"
+                "Note": "InfraPy CLI detection",
+                "Network": "YJ",
+                "Station": "BRP",
+                "Channel": "EDF"
             },...
 
 
@@ -260,7 +267,7 @@ Array-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot fd --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
+        infrapy plot fd --config-file config/detection_local.config
 
     This plot has the same format as the above :code:`plot fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
 
@@ -268,7 +275,22 @@ Array-Level Analyses
         :width: 1200px
         :align: center
 
-- In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the :code:`run_fd` is useful in such scenarios.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the :code:`run_fkd` option.  
+
+- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with merge detections turn on and comparing the results:
+
+
+    .. code-block:: bash
+        
+        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+
+        infrapy plot fd --config-file config/detection_local.config
+
+    .. image:: _static/_images/plot_fd2.png
+        :width: 1200px
+        :align: center
+
+
+- In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the :code:`run_fd` is useful in such scenarios to avoid repeatedly running the fk analysis.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the :code:`run_fkd` option.  
 
     .. code-block:: bash
     
@@ -276,7 +298,7 @@ Array-Level Analyses
 
     This option essentially combines the :code:`run_fk` and :code:`run_fd` options into a single analysis run.
 
-- In addition to analysis of local data, InfraPy's use of :code:`obspy.clients.fdsn` methods enables analysis of data available on IRIS and similar FDSNs.  Instead of specifying local waveform files, this requires defining the FDSN (e.g., IRIS, USGS) as well as the network, station, channel, and location information of the array.  Lastly, the start and end time are also needed to identify the segment of data to download for analysis.  This information can be entered on the command line, but it's easier to simply write up a config file in most cases (recall that individual parameters can be overwritten on the command line, so the station or start/end times can be modified as needed).  An example analysis from the IMS I53US array can be specified as:
+- In addition to analysis of local data, InfraPy's use of :code:`obspy.clients.fdsn` methods enables analysis of data available on IRIS and similar FDSNs.  Instead of specifying local waveform files, this requires defining the FDSN (e.g., IRIS, USGS) as well as the network, station, channel, and location information of the array.  Lastly, the start and end time are also needed to identify the segment of data to download for analysis.  This information can be entered on the command line, but it's easier to simply write up a config file in most cases (recall that individual parameters can be overwritten on the command line, so the station or start/end times can be modified as needed).  An example analysis from the IMS I53US array is included in :code:`examples/config/detection_fdsn.config`:
 
     .. code-block:: none
 
@@ -290,8 +312,16 @@ Array-Level Analyses
         endtime = 2018-12-19T03:00:00
 
         [DETECTION IO]
-        local_fk_label = I53US_analysis
-        local_detect_label = I53US_analysis
+        local_fk_label = auto
+        local_detect_label = auto
+
+    Running this analysis will pull 2 hours of data from the International Monitoring System (IMS) I53US infrasound station from December 19th, 2018 that includes a signal produced by a bolide.  Visualization can be slightly slower as the data is re-downloaded from IRIS with each use of the command line calls.  This can be avoided using the :code:`write-wvfrms` :ref:`utilities` function.  Due to the emergent nature of the signal, :code:`--merge-dets` needs to be activated to obtain a useful result as seen below.
+
+
+    .. image:: _static/_images/plot_fd-fdsn.png
+        :width: 1200px
+        :align: center
+
 
     Although not currently included in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
 

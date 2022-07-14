@@ -23,6 +23,7 @@ _____________________________________
     authorship
     installation
     quickstart
+    utilities
     infraview
     pisces
     algorithms
