@@ -326,12 +326,6 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
-    if ".fk_results.dat" in local_fk_label:
-        local_fk_label = local_fk_label[:-15]
-
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = local_fk_label
-
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
     click.echo("  local_detect_label: " + local_detect_label)
@@ -356,8 +350,13 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     click.echo("  return_thresh: " + str(return_thresh))
     click.echo("  merge_dets: " + str(merge_dets))
 
-    print('\n' + "Running fd...")
+    if ".fk_results.dat" in local_fk_label:
+        local_fk_label = local_fk_label[:-15]
 
+    if local_detect_label is None or local_detect_label == "auto":
+        local_detect_label = local_fk_label
+
+    print('\n' + "Running fd...")
     if local_fk_label is not None:
         temp = np.loadtxt(local_fk_label + ".fk_results.dat")
         dt, beam_peaks = temp[:, 0], temp[:, 1:]
@@ -393,6 +392,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
     print("Writing detections to " + local_detect_label + ".dets.json")
+    stream_info = 
     data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
 
     if return_thresh:
@@ -694,7 +694,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
         local_detect_label = output_id
 
     click.echo("Writing detection results using label: " + local_detect_label)
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream)
 
     if return_thresh:
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)

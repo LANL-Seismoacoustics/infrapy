@@ -52,7 +52,6 @@ Array-Level Analyses
           sub_window_len: None
           window_step: 5.0
           multithread: False
-          write_wvfrms: False
 
         Loading local data from data/YJ.BRP*.SAC
 
@@ -67,7 +66,7 @@ Array-Level Analyses
 
         Writing results into data/YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat
 
-- Once completed, this analysis produces an output file containing the beamforming results, :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat`, that has header information summarizing the analysis parameter settings.
+- Once completed, this analysis produces an output file containing the beamforming results, :code:`data/YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat`, that has header information summarizing the analysis parameter settings.
 
     .. code-block:: none 
 
@@ -129,7 +128,7 @@ Array-Level Analyses
 
         infrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0
 
-- In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Create a text file called :code:`BRP_analysis.config` and enter the following:
+- In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Within the :code:`examples/config` directory are several example configuration files.  The :code:`detection_local.config` file has a configuration to run detection (fk and fd) analysis on local waveform data:
 
     .. code-block:: none
 
@@ -137,34 +136,68 @@ Array-Level Analyses
         local_wvfrms = data/YJ.BRP*.SAC
 
         [DETECTION IO]
-        local_fk_label = data/BRP_analysis
+        local_fk_label = auto 
+        local_detect_label = auto
 
         [FK]
         freq_min = 1.0
-        freq_max = 8.0
-        window_len = 5.0
-        window_step = 2.5
-        cpu_cnt = 8
+        freq_max = 5.0
+        window_len = 10.0
+        window_step = 5.0
 
-    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:
+        [FD]
+        p_value = 0.95
+        min_duration = 20.0
 
-    .. code-block:: bash
-
-        infrapy run_fk --config-file BRP_analysis.config
-
-    When using a config file for analysis, any additional parameters set on the command line will overwrite the values from the config file.  For example, to run the analysis with a maximum frequency of 10 Hz instead of 8 Hz, one can simply run:
+    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  The analysis can now be completed by simply running:
 
     .. code-block:: bash
 
-        infrapy run_fk --config-file BRP_analysis.config --freq-max 10.0
+        infrapy run_fk --config-file config/detection_local.config
+
+    The analysis steps are the same as the above; however, you'll notice that when the fk results are being written there's a warning message that existing results are present so that a new file name is used.  
+
+    .. code-block:: none
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##    Beamforming (fk) Analysis    ##
+        ##                                 ##
+        #####################################
+
+        Data parameters:
+          local_wvfrms: data/YJ.BRP*.SAC
+          local_latlon: None
+          local_fk_label: None
+
+        ...
+
+        Running fk analysis...
+	        Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+
+        WARNING!  fk results file(s) already exist.
+        Writing a new version: data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0.fk_results.dat
+
+    This is to avoid overwriting existing results from previous runs and to make comparisons of varied frequeny bands, window lengths, and other parameters more efficient.  The visualization methods can be pointed to any fk results file as: 
+    
+    .. code-block:: bash
+        
+        infrapy plot fk --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0
+
+    When using a config file for analysis, any additional parameters set on the command line will overwrite the values from the config file.  For example, to run the analysis with a maximum frequency of 10 Hz instead of 5 Hz, one can simply run:
+
+    .. code-block:: bash
+
+        infrapy run_fk --config-file BRP_analysis.config --freq-max 10
 
     If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.
 
-- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.
+- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified.
 
     .. code-block:: bash
 
-        infrapy run_fd --local-fk-label data/BRP_analysis
+        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
 
     Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:
 
@@ -178,19 +211,21 @@ Array-Level Analyses
         #####################################
 
         Data parameters:
-          local_fk_label: data/BRP_analysis
-          local_detect_label: data/BRP_analysis
+          local_fk_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+          local_detect_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
 
         Algorithm parameters:
           window_len: 3600.0
-          p_value: 0.99
-          min_duration: 10.0
+          p_value: 0.95
+          min_duration: 20.0
           back_az_width: 15.0
           fixed_thresh: None
+          thresh_ceil: None
           return_thresh: False
+          merge_dets: False
 
         Running fd...
-        Writing detections to data/BRP_analysis.dets.json
+        Writing detections to data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json
 
     As noted in the output, a new file named :code:`BRP_analysis.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
 
@@ -198,25 +233,27 @@ Array-Level Analyses
 
         [
             {
-            "Name": "",
-                "Time (UTC)": "2012-04-09T18:10:17.008300",
-                "F Stat.": 13.4034,
-                "Trace Vel. (m/s)": 335.08,
-                "Back Azimuth": -111.3,
+                "Name": "",
+                "Time (UTC)": "2012-04-09T18:07:05.008300",
+                "F Stat.": 30.5537,
+                "Trace Vel. (m/s)": 371.52,
+                "Back Azimuth": -41.77,
                 "Latitude": 39.4727,
                 "Longitude": -110.741,
                 "Elevation (m)": null,
                 "Start": 0.0,
-                "End": 15.0,
+                "End": 5.0,
                 "Freq Range": [
-                    1.0,
-                    10.0
+                    0.5,
+                    5.0
                 ],
                 "Array Dim.": 4,
                 "Method": "",
                 "Event": "",
                 "Note": "InfraPy CLI detection"
-            }, ...
+                "Network": "YJ"
+                "Station": "BRP"
+            },...
 
 
 - Once detections are identified in the data record, they can be visualized similarly to the :code:`plot fk` option via :code:`plot fd`.

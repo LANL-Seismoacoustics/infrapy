@@ -10,7 +10,7 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from infrapy.location import bisl, visualization
+from infrapy.location import bisl
 
 from infrapy.utils import config
 from infrapy.utils import data_io
@@ -149,10 +149,13 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
 
-        temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        if ".fk_results.dat" not in local_fk_label:
+            local_fk_label = local_fk_label + ".fk_results.dat"
+
+        temp = np.loadtxt(local_fk_label)
         dt, beam_peaks = temp[:, 0], temp[:, 1:]
 
-        temp = open(local_fk_label + ".fk_results.dat", 'r')
+        temp = open(local_fk_label, 'r')
         for line in temp:
             if "t0:" in line:
                 t0 = np.datetime64(line.split(' ')[-1][:-1])
@@ -164,11 +167,11 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
         det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, title=local_fk_label, output_path=figure_out, show_fig=show_figure)
     else:
-        if os.path.isfile(local_fk_label + ".fk_results.dat"):
-            temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        if os.path.isfile(local_fk_label):
+            temp = np.loadtxt(local_fk_label)
             dt, beam_peaks = temp[:, 0], temp[:, 1:]
 
-            temp = open(local_fk_label + ".fk_results.dat", 'r')
+            temp = open(local_fk_label, 'r')
             for line in temp:
                 if "t0:" in line:
                     t0 = np.datetime64(line.split(' ')[-1][:-1])
@@ -180,7 +183,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
             beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
             det_vis.plot_fk2(beam_times, beam_peaks, output_path=figure_out, show_fig=show_figure)
         else:
-            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_results.dat"
+            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label
             warnings.warn(msg)
 
 
