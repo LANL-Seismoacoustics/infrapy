@@ -4,6 +4,9 @@
 Interfacing with Pisces
 =====================================
 
+**NOTE: THIS INFO IS OUT OF DATE AND NEEDS TO BE UPDATED**
+
+
 Infrapy leverages pisces to connect with and process data in either local sqlite databases or oracle databases. More information about pisces can be found at https://jkmacc-lanl.github.io/pisces/.
 
 -------------------------------------

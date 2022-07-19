@@ -23,11 +23,11 @@ _____________________________________
     authorship
     installation
     quickstart
-    utilities
     infraview
     pisces
+    utilities
     algorithms
-    processing_model
-    tutorial
-    schema
-    infrapy
+    .. processing_model
+    .. tutorial
+    .. schema
+    .. infrapy
