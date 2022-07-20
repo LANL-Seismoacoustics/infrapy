@@ -388,29 +388,21 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
 @click.option("--db-url", help="Database URL for waveform data files", default=None)
 @click.option("--db-site", help="Database site table for waveform data files", default=None)
 @click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
-
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
-
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-
 @click.option("--local-fk-label", help="Label for local output of fk results", default=None)
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
-
 @click.option("--back-az", help="Back azimuth of user specified beam (degrees)", default=None, type=float)
 @click.option("--trace-vel", help="Trace velocity of user specified beam (m/s))", default=None, type=float)
-
 @click.option("--signal-start", help="Start of signal window", default=None)
 @click.option("--signal-end", help="End of signal window", default=None)
-
-@click.option("--hold-figure", help="Hold figure open", default=False)
-
-
+@click.option("--hold-figure", help="Hold figure open", default=True)
 def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
     back_az, trace_vel, signal_start, signal_end, hold_figure):
     '''
@@ -575,7 +567,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
     else:
         click.echo('\n' + "Computing adaptive best beam...")
-        click.echo('\t' + "fk results file: " + local_fk_label + ".fk_results.dat data...")
+        click.echo('\t' + "fk results file: " + local_fk_label + ".fk_results.dat")
 
         def _envelope(t0, t1, t2, sigma):
             X1 = np.exp(-(t0 - t1) / sigma)

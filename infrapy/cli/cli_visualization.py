@@ -10,7 +10,7 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from infrapy.location import bisl, visualization
+from infrapy.location import bisl
 
 from infrapy.utils import config
 from infrapy.utils import data_io
@@ -37,15 +37,16 @@ from infrapy.location import visualization as loc_vis
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Print figure to screen", default=True)
 def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, 
-    channel, starttime, endtime, freq_min, freq_max, local_fk_label, figure_out):
+    channel, starttime, endtime, freq_min, freq_max, local_fk_label, figure_out, show_figure):
     '''
     Visualize beamforming (fk) results
 
     \b
     Example usage (run from infrapy/examples directory after running the run_fk examples):
     \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_beam.png
-    \tinfrapy plot fk --config-file config/fk_example2.config
+    \tinfrapy plot fk --config-file config/fk_example2.config --figure-out test.png --show-figure False
 
     '''
 
@@ -92,7 +93,6 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
 
     # Result IO
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    figure_out = config.set_param(user_config, 'VISUALIZATION', 'figure_out', figure_out, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -149,10 +149,13 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
             local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
             local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
 
-        temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        if ".fk_results.dat" not in local_fk_label:
+            local_fk_label = local_fk_label + ".fk_results.dat"
+
+        temp = np.loadtxt(local_fk_label)
         dt, beam_peaks = temp[:, 0], temp[:, 1:]
 
-        temp = open(local_fk_label + ".fk_results.dat", 'r')
+        temp = open(local_fk_label, 'r')
         for line in temp:
             if "t0:" in line:
                 t0 = np.datetime64(line.split(' ')[-1][:-1])
@@ -162,13 +165,13 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
                 freq_max = float(line.split(' ')[-1])
 
         beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
-        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, title=local_fk_label, output_path=figure_out)
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, title=local_fk_label, output_path=figure_out, show_fig=show_figure)
     else:
-        if os.path.isfile(local_fk_label + ".fk_results.dat"):
-            temp = np.loadtxt(local_fk_label + ".fk_results.dat")
+        if os.path.isfile(local_fk_label):
+            temp = np.loadtxt(local_fk_label)
             dt, beam_peaks = temp[:, 0], temp[:, 1:]
 
-            temp = open(local_fk_label + ".fk_results.dat", 'r')
+            temp = open(local_fk_label, 'r')
             for line in temp:
                 if "t0:" in line:
                     t0 = np.datetime64(line.split(' ')[-1][:-1])
@@ -178,9 +181,9 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
                     freq_max = float(line.split(' ')[-1])
 
             beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
-            det_vis.plot_fk2(beam_times, beam_peaks, output_path=figure_out)
+            det_vis.plot_fk2(beam_times, beam_peaks, output_path=figure_out, show_fig=show_figure)
         else:
-            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_results.dat"
+            msg = "Beamforming (fk) results not found.  No file: " + local_fk_label
             warnings.warn(msg)
 
 
@@ -202,15 +205,16 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--local-detect-label", help="Local detection data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Print figure to screen", default=True)
 def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
-    local_fk_label, local_detect_label, figure_out):
+    local_fk_label, local_detect_label, figure_out, show_figure):
     '''
     Visualize detection (fd) results
 
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy plot_fd --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_detections.png
-    \tinfrapy plot_fd --config-file config/fk_example2.config
+    \tinfrapy plot_fd --config-file config/fk_example2.config --figure-out test.png --show-figure False
 
     '''
 
@@ -254,7 +258,6 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
     # Result IO
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
-    figure_out = config.set_param(user_config, 'VISUALIZATION', 'figure_out', figure_out, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -337,7 +340,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         else:
             det_thresh = None
 
-        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out, det_thresh=det_thresh)
+        det_vis.plot_fk1(stream, latlon, beam_times, beam_peaks, detections=det_list, title=local_fk_label, output_path=figure_out, det_thresh=det_thresh, show_fig=show_figure)
     else:
         if os.path.isfile(local_fk_label + ".fk_times.npy"):
             temp = np.loadtxt(local_fk_label + ".fk_results.dat")
@@ -360,7 +363,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
             if len(det_list) == 0:
                 click.echo("Note: no detections found in analysis.")
 
-            det_vis.plot_fk2(beam_times, beam_peaks, detections=det_list, output_path=figure_out)
+            det_vis.plot_fk2(beam_times, beam_peaks, detections=det_list, output_path=figure_out, show_fig=show_figure)
         else:
             msg = "Beamforming (fk) results not found.  No file: " + local_fk_label + ".fk_times.npy"
             warnings.warn(msg)

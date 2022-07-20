@@ -20,9 +20,9 @@ def plot_fk1(stream, latlon, times, peaks, detections=None, title=None, output_p
     '''   
     x, t, t0, _ = beamforming_new.stream_to_array_data(stream, latlon)
 
-    f, a = plt.subplots(4, sharex=True)
+    f, a = plt.subplots(4, figsize=(10, 6), sharex=True)
     a[3].set_xlabel("Time")
-    a[0].set_ylabel("log10(F-value)")    
+    a[0].set_ylabel("F-stat")    
     a[1].set_ylabel("Tr. Vel. [m/s]")
     a[2].set_ylabel("Back Az. [deg.]")
     a[3].set_ylabel("Pr. [Pa]")
@@ -56,9 +56,9 @@ def plot_fk2(times, peaks, detections=None, title=None, output_path=None, show_f
     Visualize beamforming (fk) results without waveform data
     '''
 
-    f, a = plt.subplots(3, sharex=True)
+    f, a = plt.subplots(3, figsize=(10, 6), sharex=True)
     a[2].set_xlabel("Time")
-    a[0].set_ylabel("log10(F-value)")    
+    a[0].set_ylabel("F-stat")    
     a[1].set_ylabel("Tr. Vel. [m/s]")
     a[2].set_ylabel("Back Az. [deg.]")
 
