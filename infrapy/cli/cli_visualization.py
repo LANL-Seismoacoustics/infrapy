@@ -23,10 +23,7 @@ from infrapy.location import visualization as loc_vis
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
-@click.option("--db-origin", help="Database origin table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
@@ -38,7 +35,7 @@ from infrapy.location import visualization as loc_vis
 @click.option("--local-fk-label", help="Local beamforming (fk) data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, 
+def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, station, location, 
     channel, starttime, endtime, freq_min, freq_max, local_fk_label, figure_out, show_figure):
     '''
     Visualize beamforming (fk) results
@@ -67,10 +64,9 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
     else:
         user_config = None
 
-    # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    # Database configuration and info   
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -106,11 +102,10 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
-    elif db_url is not None:
-        click.echo("  db_url: " + str(db_url))
-        click.echo("  db_site: " + str(db_site))
-        click.echo("  db_wfdisc: " + str(db_wfdisc))
-        click.echo("  db_origin: " + str(db_origin))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+        click.echo("  db_config: " + str(db_config))
         click.echo("  network: " + str(network))
         click.echo("  station: " + str(station))
         click.echo("  location: " + str(location))
@@ -125,12 +120,6 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
     click.echo("  freq_max: " + str(freq_max))
     if figure_out:
         click.echo("  figure_out: " + figure_out)
-
-    # Extract times and peaks from fk results
-    if db_url is not None:
-        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
-    else:
-        db_info = None
 
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
@@ -192,10 +181,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
-@click.option("--db-origin", help="Database origin table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
@@ -206,7 +192,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
 @click.option("--local-detect-label", help="Local detection data files", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc, db_origin, network, station, location, channel, starttime, endtime,
+def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, station, location, channel, starttime, endtime,
     local_fk_label, local_detect_label, figure_out, show_figure):
     '''
     Visualize detection (fd) results
@@ -235,10 +221,9 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
     else:
         user_config = None
 
-    # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    # Database configuration and info   
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -271,11 +256,10 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
-    elif db_url is not None:
-        click.echo("  db_url: " + str(db_url))
-        click.echo("  db_site: " + str(db_site))
-        click.echo("  db_wfdisc: " + str(db_wfdisc))
-        click.echo("  db_origin: " + str(db_origin))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+        click.echo("  db_config: " + str(db_config))
         click.echo("  network: " + str(network))
         click.echo("  station: " + str(station))
         click.echo("  location: " + str(location))
@@ -289,11 +273,6 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_url, db_site, db_wfdisc
     if figure_out:
         click.echo("  figure_out: " + figure_out)
 
-    # Extract times and peaks from fk results
-    if db_url is not None:
-        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
-    else:
-        db_info = None
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
     # Check if waveform data is specified and populate obspy Stream

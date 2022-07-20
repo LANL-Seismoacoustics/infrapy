@@ -206,9 +206,7 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
 
 @click.command('check-db-wvfrms', short_help="Check waveform pull from database")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
@@ -217,7 +215,7 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
 
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, location, channel, starttime, endtime):
+def check_db_wvfrm(config_file, db_config, network, station, location, channel, starttime, endtime):
     '''
     Test database pull of waveform data for beamforming (fk or fdk) analysis
 
@@ -248,9 +246,8 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
     station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
@@ -261,9 +258,7 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
     click.echo('\n' + "Data parameters:")
-    click.echo("  db_url: " + str(db_url))
-    click.echo("  db_site: " + str(db_site))
-    click.echo("  db_wfdisc: " + str(db_wfdisc))
+    click.echo("  db_config: " + str(db_config))
     click.echo("  network: " + str(network))
     click.echo("  station: " + str(station))
     click.echo("  location: " + str(location))
@@ -272,7 +267,9 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
     click.echo("  endtime: " + str(endtime))
 
     # Check data option and populate obspy Stream
-    db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
     stream, latlon = data_io.set_stream(None, None, db_info, network, station, location, channel, starttime, endtime, None)
 
     click.echo('\n' + "Data summary:")
@@ -286,9 +283,7 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
 
 @click.command('write-wvfrms', short_help="Save waveforms from FDSN or database")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 
 @click.option("--network", help="Network code for FDSN and database", default=None)
@@ -298,7 +293,7 @@ def check_db_wvfrm(config_file, db_url, db_site, db_wfdisc, network, station, lo
 
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station, location, channel, starttime, endtime):
+def write_wvfrms(config_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
     '''
     Write waveform data from an FDSN or database pull into local SAC files
 
@@ -329,9 +324,8 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     # FDSN waveform IO parameters
     fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
@@ -353,10 +347,11 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
-    elif db_url is not None:
-        click.echo("  db_url: " + str(db_url))
-        click.echo("  db_site: " + str(db_site))
-        click.echo("  db_wfdisc: " + str(db_wfdisc))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+
+        click.echo("  db_url: " + str(db_config))
         click.echo("  network: " + str(network))
         click.echo("  station: " + str(station))
         click.echo("  location: " + str(location))
@@ -366,11 +361,6 @@ def write_wvfrms(config_file, db_url, db_site, db_wfdisc, fdsn, network, station
     else:
         click.echo("Invalid data parameters.  Requires fdsn or db info.")
 
-    # Check data option and populate obspy Stream
-    if db_url is not None:
-        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
-    else:
-        db_info = None
     stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
 
     click.echo('\n' + "Data summary:")

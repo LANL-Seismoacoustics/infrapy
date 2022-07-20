@@ -65,6 +65,28 @@ def assemble_db_url(dialect, hostname, db_name, port=None, username="", password
     return dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
  
 
+def db_connect2(db_info):
+    dialect = db_info['DATABASE']['dialect']
+    hostname = db_info['DATABASE']['hostname']
+    db_name = db_info['DATABASE']['database_name']
+    port = db_info['DATABASE']['port']
+
+    try:
+        username = db_info['DATABASE']['username']
+    except:
+        username = ''
+
+    try:
+        password = db_info['DATABASE']['password']
+    except:
+        password = ''
+
+    try:
+        driver = db_info['DATABASE']['driver']
+    except:
+        driver = ''
+
+    return ps.db_connect(assemble_db_url(dialect, hostname, db_name, port, username, password, driver))
 
 def check_connection(session):
     """
@@ -126,11 +148,13 @@ def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataf
 
 def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     # Set up db connection and table info
-    session = ps.db_connect( db_info['url'])
+    # session = ps.db_connect( db_info['url'])
+    session = db_connect2(db_info)
+    
+    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
 
-    db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
-    Site = db_tables['Site']
-    Wfdisc = db_tables['Wfdisc']
+    Site = db_tables['site']
+    Wfdisc = db_tables['wfdisc']
 
     # convert station wildcards to SQL and check that channel is not None
     if type(stations) is str:

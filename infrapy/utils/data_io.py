@@ -127,7 +127,7 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
         stream, latlon = wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, endtime)
 
     elif db_info is not None:
-        print('\n' + "Loading data from database (" + db_info['url'] + ")...")
+        print('\n' + "Loading data from database...")
         stream, latlon = database.wvfrms_from_db(db_info, station, channel, starttime, endtime)
 
     else:

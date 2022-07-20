@@ -22,9 +22,7 @@ from infrapy.detection import beamforming_new as fkd
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
@@ -53,7 +51,7 @@ from infrapy.detection import beamforming_new as fkd
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--multithread", help="Use multithreading (default: " + config.defaults['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime,
+def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
     '''
@@ -87,10 +85,9 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
     else:
         user_config = None
 
-    # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    # Database configuration and info   
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -122,16 +119,17 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
-    elif db_url is not None:
-        click.echo("  db_url: " + str(db_url))
-        click.echo("  db_site: " + str(db_site))
-        click.echo("  db_wfdisc: " + str(db_wfdisc))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+        click.echo("  db_config: " + str(db_config))
         click.echo("  network: " + str(network))
         click.echo("  station: " + str(station))
         click.echo("  location: " + str(location))
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
+
     else:
         click.echo("Invalid data parameters.  Config file requires 1 of:")
         click.echo("  local_wvfrms")
@@ -185,11 +183,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_la
     else:
         pl = None
 
-    # Check data option and populate obspy Stream
-    if db_url is not None:
-        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
-    else:
-        db_info = None
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
     click.echo('\n' + "Data summary:")
@@ -407,9 +400,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-@click.option("--db-url", help="Database URL for waveform data files", default=None)
-@click.option("--db-site", help="Database site table for waveform data files", default=None)
-@click.option("--db-wfdisc", help="Database wfdisc table for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
 
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
@@ -449,7 +440,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime,
+def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method,  signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, multithread, cpu_cnt, fd_window_len, p_value, min_duration, 
     back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
@@ -486,10 +477,9 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     else:
         user_config = None
 
-    # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    # Database configuration and info   
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
 
     # Local waveform IO parameters
     local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
@@ -522,10 +512,10 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
         click.echo("  channel: " + str(channel))
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
-    elif db_url is not None:
-        click.echo("  db_url: " + str(db_url))
-        click.echo("  db_site: " + str(db_site))
-        click.echo("  db_wfdisc: " + str(db_wfdisc))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+        click.echo("  db_config: " + str(db_config))
         click.echo("  network: " + str(network))
         click.echo("  station: " + str(station))
         click.echo("  location: " + str(location))
@@ -605,11 +595,6 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_l
     click.echo("  return_thresh: " + str(return_thresh))
     click.echo("  merge_dets: " + str(merge_dets))
 
-    # Check data option and populate obspy Stream
-    if db_url is not None:
-        db_info = {'url': db_url, 'site': db_site, 'wfdisc': db_wfdisc}
-    else:
-        db_info = None
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
     click.echo('\n' + "Data summary:")
