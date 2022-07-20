@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QDateEdit, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, 
+from PyQt5.QtWidgets import (QDateEdit, QDateTimeEdit, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, 
                              QMessageBox, QPushButton, QSpinBox, QTimeEdit, QVBoxLayout,
                              QPlainTextEdit, QSizePolicy)
 from PyQt5.QtCore import QDate, pyqtSlot
@@ -31,13 +31,44 @@ class IPEventQueryWidget(QFrame):
         self.evid_edit.setMaximumWidth(150)
         self.evid_edit.setToolTip('')
 
-        self.event_name_edit = QLineEdit()
-        self.event_name_edit.setMaximumWidth(150)
-        self.event_name_edit.setToolTip("Wildcards ok, case sensitive")
+        self.startDateTime_edit = QDateTimeEdit()
+        self.startDateTime_edit.setDisplayFormat('yyyy-MM-ddTHH:mm:ss.zzz')
+        #self.startDateTime_edit.setDateTime(self.startDateTime_edit.minimumDateTime())
+
+        self.endDateTime_edit = QDateTimeEdit()
+        self.endDateTime_edit.setDisplayFormat('yyyy-MM-ddTHH:mm:ss.zzz')
+        #self.endDateTime_edit.setDateTime(self.endDateTime_edit.minimumDateTime())
+
+        self.lat_edit = QDoubleSpinBox()
+        self.lat_edit.setRange(-90.1,90.0)  # the -90.1 is used as the "unset" value 
+        self.lat_edit.setDecimals(2)
+        self.lat_edit.setMaximumWidth(80)
+        self.lat_edit.setSpecialValueText('deg')
+        self.lat_edit.setValue(self.lat_edit.minimum())
+
+        self.lon_edit = QDoubleSpinBox()
+        self.lon_edit.setRange(-180.1, 180.0)
+        self.lon_edit.setDecimals(2)
+        self.lon_edit.setMaximumWidth(80)
+        self.lon_edit.setSpecialValueText('deg')
+        self.lon_edit.setValue(self.lon_edit.minimum())
+
+        self.radius_edit = QSpinBox()
+        self.radius_edit.setMinimum(0)
+        self.radius_edit.setMaximumWidth(80)
+        self.radius_edit.setValue(0)
+        self.radius_edit.setSpecialValueText('km')
+
+        #latlon_layout = QHBoxLayout()
+        #latlon_layout.addWidget
 
         form_layout1 = QFormLayout()
         form_layout1.addRow("EVID: ", self.evid_edit)
-        form_layout1.addRow("Event Name: ", self.event_name_edit)
+        form_layout1.addRow("Start Day/Time: ", self.startDateTime_edit)
+        form_layout1.addRow("End Day/Time: ", self.endDateTime_edit)
+        form_layout1.addRow("Lat: ", self.lat_edit)
+        form_layout1.addRow("Lon: ", self.lon_edit)
+        form_layout1.addRow("Radius: ", self.radius_edit)
 
         self.query_textEdit = QPlainTextEdit()
         self.query_textEdit.setMaximumHeight(120)
@@ -45,6 +76,7 @@ class IPEventQueryWidget(QFrame):
 
         self.clear_button = QPushButton("Clear")
         self.query_button = QPushButton("Query Events")
+        self.query_button.clicked.connect(self.query_database)
 
         # this bit centers the query button...
         horiz_layout = QHBoxLayout()
@@ -61,6 +93,29 @@ class IPEventQueryWidget(QFrame):
         main_layout.addLayout(horiz_layout)
         self.setLayout(main_layout)
 
+    def get_current_session(self):
+        return self.parent.ipdatabase_connect_widget.session
+
+    def query_database(self):
+
+        session = self.get_current_session()
+        if session is None:
+            self.errorPopup("No current active session")
+            return
+
+        # first thing to do is assemble the info for the query
+
+
+        # this doesn't exist yet...
+        database.eventID_query(session, self.evid_edit.text())
+
+    @pyqtSlot(str, str)
+    def errorPopup(self, message, title="Oops..."):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText(message)
+        msgBox.setWindowTitle(title)
+        msgBox.exec_()
 
 class IPDatabaseQueryWidget(QFrame):
 
@@ -114,7 +169,7 @@ class IPDatabaseQueryWidget(QFrame):
         self.duration_edit.setValue(600)
 
         form_layout1 = QFormLayout()
-        form_layout1.addRow("Network: ", self.net_edit)
+        # form_layout1.addRow("Network: ", self.net_edit)
         form_layout1.addRow("Station: ", self.sta_edit)
         form_layout1.addRow("Channel: ", self.cha_edit)
         form_layout1.addRow("Start date: ", self.start_date_edit)
@@ -182,7 +237,10 @@ class IPDatabaseQueryWidget(QFrame):
             cha = self.cha_edit.text()
 
         wfs = database.query_db(session, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
-        self.parent.ipdatabase_query_results_table.setData(wfs)
+        if len(wfs) > 0:
+            self.parent.ipdatabase_query_results_table.setData(wfs)
+        else:
+            self.errorPopup("No results found")
 
     #def update_query_string(self):
 

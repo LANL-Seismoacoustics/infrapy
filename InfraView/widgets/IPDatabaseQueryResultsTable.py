@@ -11,6 +11,7 @@ class IPWfdiscModel(QAbstractTableModel):
 
     def __init__(self, wfs, parent=None):
         super().__init__()
+
         self.wfs = wfs
         self.col_headers = [c.name for c in self.wfs[0].__table__.columns]
 
@@ -185,6 +186,53 @@ class IPDatabaseQueryResultsTable(QFrame):
         print("selected wfdisc length = {}".format(len(selected_wds)))
 
 
+
+class IPEventsModel(QAbstractTableModel):
+    """
+    class to populate a tableview with rows of event results
+    """
+
+    def __init__(self, evs, parent=None):
+        super().__init__()
+
+        self.evs = evs
+        self.col_headers = [c.name for c in self.evs[0].__table__.columns]
+
+    def rowCount(self, parent=None):
+        return len(self.evs)
+
+    def columnCount(self, parent=None):
+        return len(self.evs[0])
+
+    def data(self, index, role):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return str(self.evs[index.row()][index.column()])
+            elif role == Qt.EditRole:
+                return str(self.evs[index.row()][index.column()])
+        return None
+
+    def setData(self, index, value, role):
+        if index.isValid():
+            if role == Qt.EditRole:
+                self.evs[index.row()][index.column()] = value
+                self.editCompleted.emit(value)
+                return True
+            return False
+        return False
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return self.col_headers[section]
+            elif orientation == Qt.Vertical:
+                return section
+        return QVariant()
+
+
 class IPEventQueryResultsTable(QFrame):
     """
     Table widget to view results from an sql event query (evid or name)
@@ -206,6 +254,7 @@ class IPEventQueryResultsTable(QFrame):
         title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
 
         self.clear_button = QPushButton("Clear Table")
+        self.clear_button.clicked.connect(self.clearTable)
 
         self.tableView = QTableView(self)
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -219,3 +268,16 @@ class IPEventQueryResultsTable(QFrame):
         main_layout.addLayout(horiz_layout_0)
         main_layout.addWidget(self.tableView)
         self.setLayout(main_layout)
+
+    def setData(self, data):
+        '''This takes Wfdisc rows, and converts it for display in our tableView'''
+
+        self.data = data
+        self.model = IPEventsModel(data)
+        self.tableView.setModel(self.model)
+        self.tableView.reset()
+
+    def clearTable(self):
+        # maybe do some additional clean-up here?
+        if self.model:
+            self.model.deleteLater()

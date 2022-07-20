@@ -20,8 +20,13 @@ class IPDatabaseConnectWidget(QFrame):
         self.config_filename = ""
         self.buildUI()
 
-        table_classes = database.make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
-        print(table_classes['Wfdisc'].__tablename__)
+        table_classes = database.make_tables_from_dict(tables={'Wfdisc':'frank', 'Site': 'billy'}, schema='kbcore', owner='global')
+        
+        print(table_classes)
+
+        for key, value in table_classes.items():
+            print(key, value)
+            print("  " + table_classes[key].__tablename__)
         
     def buildUI(self):
         

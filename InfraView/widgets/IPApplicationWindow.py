@@ -418,17 +418,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             else:
                 ele = 0.333
 
-        if network == 'LARSA' and station == '121':
-            if channel == 'ai0':
-                lat = 35.8492497
-                lon = -106.2705465
-            elif channel == 'ai1':
-                lat = 35.84924682
-                lon = -106.2705505
-            elif channel == 'ai2':
-                lat = 35.84925165
-                lon = -106.2705516
-
         if lat == 0.0 or lon == 0.0 or ele < 0:
             if self.fill_sta_info_dialog.exec_(network, station, location, channel, lat, lon, ele):
                 

@@ -37,30 +37,33 @@ def db_connect_url(url):
 
 
 def db_connect(dialect, hostname, db_name, port=None, username="", password="", driver=""):
-    """
-    Connect to a database to do database things...
+    '''
+        Connect to a database to do database things...
 
-    Parameters
-    ----------
-    dialect: str
-        Type of database.   (examples: oracle, mysql)
-    hostname : str
-        The url of the database. (example: mydb.home.org)local branch
+        Parameters
+        ----------
+        dialect: str
+            Type of database.   (examples: oracle, mysql)
+        hostname : str
+            The url of the database. (example: mydb.home.org)local branch
 
-    Returns
-    -------
-    session : bound SQLAlchemy session instance
+        Returns
+        -------
+        session : bound SQLAlchemy session instance
 
-    """
+    '''
+    return ps.db_connect(assemble_db_url(dialect, hostname, db_name, port, username, password, driver))
 
+
+def assemble_db_url(dialect, hostname, db_name, port=None, username="", password="", driver=""):
+    '''
+        Assemble a database connection url given the supplied parts.
+        All inputs are strings
+    '''
     if driver:
         driver = '+' + driver
-
-    connect_str = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
-
-    session = ps.db_connect(connect_str)
-
-    return session
+    return dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
+ 
 
 
 def check_connection(session):
@@ -76,51 +79,58 @@ def check_connection(session):
         print(e)
         return False
 
-
-class Site(kb.Site):
-    __tablename__ = 'global.site'
-
-
-class Wfdisc(kb.Wfdisc):
-    __tablename__ = 'global.wfdisc_raw'
-    
-
-class Affiliation(kb.Affiliation):
-    __tablename__ = 'global.affiliation'
+'''
+    class Site(kb.Site):
+        __tablename__ = 'global.site'
 
 
-def query_db(session, start_time, end_time, evid="", sta="%", cha="%", return_type='dataframe'):
+    class Wfdisc(kb.Wfdisc):
+        __tablename__ = 'global.wfdisc_raw'
+        
+
+    class Affiliation(kb.Affiliation):
+        __tablename__ = 'global.affiliation'
+
+    class Origin(kb.Origin):
+        __tablename__ = 'global.origin'
+
+    class Event(kb.Event):
+        __tablename__ = 'global.event'
+'''
+
+def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataframe'):
     """
     function to query a database using an existing session.  
 
     return_type values can be 'dataframe' for a pandas dataframe, or 'wfdisc_rows' for wfdisc rows
     """
+    db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
+
+    # db_tables['Site'].__table__
 
     if session is None:
         return None
-
-    my_query = session.query(Wfdisc).filter(Wfdisc.sta == sta)\
-                                    .filter(Wfdisc.time < end_time.timestamp)\
-                                    .filter(Wfdisc.endtime > start_time.timestamp)\
-                                    .filter(Wfdisc.chan.like(cha))
-
+    
+    print("return type = {}".format(return_type))
     if return_type == 'dataframe':
+        my_query = session.query(db_tables['Wfdisc']).filter(db_tables['Wfdisc'].sta == sta)\
+                                        .filter(db_tables['Wfdisc'].time < end_time.timestamp)\
+                                        .filter(db_tables['Wfdisc'].endtime > start_time.timestamp)\
+                                        .filter(db_tables['Wfdisc'].chan.like(cha))
+
         return pd.read_sql(my_query.statement, session.bind)
     elif return_type == 'wfdisc_rows':
-        return ps.request.get_wfdisc_rows(session, Wfdisc, sta=sta, t1=start_time, t2=end_time)
+        return ps.request.get_wfdisc_rows(session, db_tables['Wfdisc'], sta=sta, t1=start_time, t2=end_time)
     else:
         return None
-
 
 def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     # Set up db connection and table info
     session = ps.db_connect( db_info['url'])
 
-    class Site(kb.Site):
-        __tablename__ = db_info['site']
-
-    class Wfdisc(kb.Wfdisc):
-        __tablename__ = db_info['wfdisc']
+    db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
+    Site = db_tables['Site']
+    Wfdisc = db_tables['Wfdisc']
 
     # convert station wildcards to SQL and check that channel is not None
     if type(stations) is str:
@@ -171,22 +181,29 @@ def make_tables_from_dict(tables=None, schema=None, owner=None):
         return
 
     if schema.lower() == 'kbcore':
-        CORETABLES = kb_tables.CORETABLES
-    elif schema.lower() == 'css3':
-        CORETABLES = css_tables.CORETABLES
-
-    if tables is None:
-        tables = dict(zip(CORETABLES.keys(), CORETABLES.keys()))
-
-    if owner:
-        parents = (declarative_base(metadata=sa.MetaData(schema=owner)),)
-    else:
-        parents = ()
-
-    dict_of_classes = {}
-    for table, tablename in tables.items():
-        prototype = CORETABLES[table.lower()].prototype
-        dict_of_classes[table] = type(tablename, parents + (prototype,), {'__tablename__': tablename})
+        core_tables = kb_tables.CORETABLES
+    elif schema.lower() == 'css3' or schema.lower() == 'css':
+        core_tables = css_tables.CORETABLES
     
-    print(dict_of_classes)
+    if tables is None:
+        return core_tables
+    else:
+        if owner:
+            for key, value in tables.items():
+                tables[key] = owner + "." + value
+
+        dict_of_classes = {}
+        for table, tablename in tables.items():
+            prototype = core_tables[table.lower()].prototype
+            dict_of_classes[table] = type(table, (prototype,), {'__tablename__': tablename})
+    
     return dict_of_classes
+
+
+def eventID_query(session, eventID):
+    print("Querying for event id: {}".format(eventID))
+    events = ps.request.get_events(session, Origin, Event, eventID)
+    if events:
+        print(events)
+    else:
+        print("no event found")
