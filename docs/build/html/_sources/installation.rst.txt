@@ -75,17 +75,13 @@ The usage information should be displayed:
       -h, --help  Show this message and exit.
 
     Commands:
-      arrivals2json     Convert infraGA/GeoAc arrivals to detection file
-      plot_dets         Plot detections on a map
-      plot_fd           Visualize detections from beamforming results
-      plot_fk           Visualize beamforming (fk) results
-      plot_loc          Plot location estimate on a map
-      plot_origin_time  Visualize origin time estimate
+      dets              Visualize infrapy analysis results
       run_assoc         Associate detections into events
       run_fd            Identify detections from beamforming results
       run_fk            Run beamforming methods on waveform data
       run_fkd           Run beamforming and detection methods in sequence
       run_loc           Estimate source locations and times for events
+      utils             Various utility functions for infrapy analysis
 
 Each of the individual methods have usage information (e.g., :code:`infrapy run_fk --help`) that will be discussed in the :ref:`quickstart`
 

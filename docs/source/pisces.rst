@@ -1,105 +1,117 @@
 .. _pisces:
 
-=====================================
-Interfacing with Pisces
-=====================================
-
-**NOTE: THIS INFO IS OUT OF DATE AND NEEDS TO BE UPDATED**
+====================
+Database Interfacing
+====================
 
 
-Infrapy leverages pisces to connect with and process data in either local sqlite databases or oracle databases. More information about pisces can be found at https://jkmacc-lanl.github.io/pisces/.
+Infrapy leverages pisces to connect with and process data in databases. More information about pisces can be found at https://jkmacc-lanl.github.io/pisces/.  The methods described here are still in active development; therefore, if something doesn't work please contact both the infrapy POCs as well as the pisces POCs for assistance and clarification.
 
--------------------------------------
-Converting Data into Sqlite Databases
--------------------------------------
-Data in miniseed or sac formats can be loaded into a sqlite database for pipeline processing using commands from pisces.
+---------------------------------
+Defining Database Connection Info
+---------------------------------
 
-1. mseed to database (ms2db.py)
+- In order to connect and pull data from a database, the pisces methods need to establish a database session and perform a number of table queries.  The information needed to connect and perform these queries is defined within a separate configuation file specifically for the database that can be defined either on the command line using :code:`--db-config` or in a general infrapy configuration file as below:
 
-.. code-block:: python
+    .. code-block:: none
 
-    >> ms2db.py sqlite:///example.sqlite mslist.txt
+        [WAVEFORM IO]
+        db_config = /path/to/database_info.config
 
-2. sac to database (sac2db)
+        station = I53*
+        channel = *DF
+        starttime = 2018-12-19T01:00:00
+        endtime = 2018-12-19T03:00:00
 
+        ...
 
-.. code-block:: python
+- The database configuration file includes information about the database itself (e.g., schema, dialect, hostname) as well as a list of database table names that will be queried and used in analysis.  An example database configuration file contents is below:
 
-    >> pisces sac2db sqlite:///example.sqlite *.sac
+    .. code-block:: none
 
-As infrapy is an array processing tool, after your sqlite database is created, you will need to update the REFSTA for each array using update_refsta.py
+        [DATABASE]
+        schema = KBCore
+        dialect = oracle
+        hostname = my_host.com
+        database_name = my_db
+        port = 1234
+        driver = 
+        username = 
+        password =  
+        owner = my_account
 
-.. code-block:: python
+        [DBTABLES]
+        wfdisc = wfdisc
+        site = site
 
-    >> update_refsta.py sqlite:///example.sqlite <array name>
+    - Note that the driver, username, and password fields are optional and if accessing your database doesn't require them they can be left out of the config file or simply left blank as in the above
 
-You can update the calibration for each array using update_calib.py
+    - The owner information is used in combination with the database table list to define the actual table names (e.g., the above would define the site table reference as :code:`my_account.site`).
 
-.. code-block:: python
+    - Add notes about other fields?
 
-    >> update_calib.py sqlite:///example.sqlite <array name> <calibration>
+-----------------------------------------
+Accessing Waveform Data from the Database
+-----------------------------------------
 
--------------------------------------
-Connecting to a SQL Database
--------------------------------------
+- The utility function, :code:`infrapy utils check-db-wvfrms`, can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:
 
-Infrapy employs two main methods for connecting to either Oracle or sqlite databases.  Example files to facilitate these connections are found in tutorials/.
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Defining Schema Specific Tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Pipeline processing in infrapy utilizes information from CSS3.0 Site and Wfdisc tables.  If your database schema differs from the CSS3.0 schema in any way, you can define the differences using a _global.py file.  An example _global.py file is found in tutorial/ .
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Connection within pipeline processing configuration file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first three lines of your configuration file define the database you will connect to:
-
-**Example Configuration File for Sqlite Processing (Sqlite_Config.txt)**
-
-.. code-block:: none
-
-    [database] # required
-    # url to database where you have the pointers to data and metadata
-    url = sqlite:///example.sqlite
-    # schema specific tables for your site and wfdisc files.  If you are processing in a sqlite database, these variables will refer to schema specified in pisces. If you are processing in an oracle database, these variables will refer to schema specified in your global_.py file
-    site = pisces.tables.css3:Site
-    wfdisc = pisces.tables.css3:Wfdisc
+    .. code-block:: none
 
 
-**Example Configuration File for Oracle DB Processing (Oracle_Config.txt)**
+        #################################
+        ##                             ##
+        ##      InfraPy Utilities      ##
+        ##       check_db_wvfrms       ##
+        ##                             ##
+        #################################
 
-.. code-block:: none
 
-    [database] # required
-    url = oracle://<database name>:<port>
-    site = global_:Site
-    wfdisc = global_:Wfdisc_raw
+        Loading configuration info from: my_configuration.config
 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Connection with a db.cfg file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        Data parameters:
+          db_config: /path/to/database_info.config
+          network: None
+          station: I53*
+          location: None
+          channel: *DF
+          starttime: 2018-12-19T01:00:00
+          endtime: 2018-12-19T03:00:00
 
-Some modules in infrapy (db2sac) require a .cfg file to establish connection with a database.  Examples are found in tutorial/ . More information can be found in the pisces documentation.
+        Loading data from database...
 
-**Example Configuration File for Oracle DB Processing (oracle_connection.cfg)**
+        Data summary:
+        __.I53H1..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H2..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H3..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H4..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H5..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H6..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H7..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        __.I53H8..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
 
-.. code-block:: none
+        Location info:
+        64.87500	-147.86114
+        64.87236	-147.83828
+        64.86208	-147.84281
+        64.85914	-147.86615
+        64.86805	-147.87858
+        64.86722	-147.86120
+        64.86617	-147.85670
+        64.86541	-147.85990
+        
+    - Note that all 8 channels of the I53 station are found in the database and the displayed start and end times indicate that the requested 2 hours of data are able to be pulled.  The latitude and longitude of the various station elements are summarized for completeness.
 
-    [database] # required
-    url = oracle://<db name>:<db port>
-    site = global_:Site
-    wfdisc = global_:Wfdisc_raw
-    origin = global_:Origin
+    - Also, pulling waveform data from a database requires only the :code:`site` table to identify station information and :code:`wfdisc` to access waveform data.  Additional tables will be required for attaching response information (currently data is returned in counts and not physical units) and other advances in accessing waveform data.
 
-**Example Configuration File for Sqlite Processing (sqlite_connection.cfg)**
+- Running and visualizing beamforming analysis with this data can now be done using the same :code:`my_configuration.config` file with parameter modifications and other details as discussed in the :ref:`quickstart`.  Essentially, when pulling waveform data for analysis, our aim is to be able to point the infrapy methods to a database via pisces and a :code:`database_info.config` file as easily as pointing it at an FDSN.
 
-.. code-block:: none
+------------------------------------------
+Writing Analysis Results into the Database
+------------------------------------------
 
-    [database] # required
-    url = sqlite:///example.sqlite
-    site = pisces.tables.css3:Site
-    wfdisc = pisces.tables.css3:Wfdisc
-    origin = pisces.tables.css3:Origin
+- Currently, analysis results using waveform data pulled from a database are written into [...].fk_results.dat and [...].dets.json files as discussed in the :ref:`quickstart`.  In future developments, methods to write those results back into database tables will be implemented.  
+  
+- The current plan is to implement such functionality as part of the :ref:`utilities` methods and include methods to both write detection results into the appropriate tables as well as pull detections from a database for event ID and similar analysis.  
+
+

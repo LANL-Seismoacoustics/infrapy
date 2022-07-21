@@ -45,11 +45,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1"><a class="reference internal" href="infrapy.html">API</a></li>
 </ul>
 
         </div>
@@ -130,12 +127,12 @@ YJ.BRP4..EDF    2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
 Running fk analysis...
         Progress: [&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;]
 
-Writing results to specified output...
+Writing results into data/YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p>Once completed, this analysis produces an output file containing the beamforming results, <code class="code docutils literal notranslate"><span class="pre">YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat</span></code>, that has header information summarizing the analysis parameter settings.</p>
+<li><p>Once completed, this analysis produces an output file containing the beamforming results, <code class="code docutils literal notranslate"><span class="pre">data/YJ.BRP_2012.04.09_18.00.00-18.19.59.fk_results.dat</span></code>, that has header information summarizing the analysis parameter settings.</p>
 <blockquote>
 <div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span># InfraPy Beamforming (fk) Results
 #
@@ -178,13 +175,17 @@ Writing results to specified output...
 <p>The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the <code class="code docutils literal notranslate"><span class="pre">--local-fk-label</span></code> parameter.</p>
 </div></blockquote>
 </li>
-<li><p>The beamforming results from the <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">run_fk</span></code> analysis can be visualized using:</p>
+<li><p>The beamforming results from the <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">run_fk</span></code> analysis can be visualized using the <code class="code docutils literal notranslate"><span class="pre">fk</span></code> option in <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">plot</span></code>:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span>
 </pre></div>
 </div>
 <p>The resulting plot of the included example data set is shown below for comparison:</p>
 <a class="reference internal image-reference" href="_images/plot_fk.png"><img alt="_images/plot_fk.png" class="align-center" src="_images/plot_fk.png" style="width: 1200px;" /></a>
+<p>The default behavior of the plotting methods in InfraPy are to generate a <code class="code docutils literal notranslate"><span class="pre">matplotlib</span></code> window and print the image to screen.  This can be overwritten by specifying an output file and turning the print to screen off:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span> --figure-out <span class="s2">&quot;fk_result.png&quot;</span> --show-figure <span class="nb">false</span>
+</pre></div>
+</div>
 </div></blockquote>
 </li>
 <li><p>The default beamforming parameters in <code class="code docutils literal notranslate"><span class="pre">run_fk</span></code> are useful, but in many cases the frequency band for a signal of interest or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorithm as summarized in the <code class="code docutils literal notranslate"><span class="pre">--help</span></code> information.  For example, the analysis of data from BRP can be completed using a modified frequency band via:</p>
@@ -192,39 +193,68 @@ Writing results to specified output...
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span> --freq-min <span class="m">1</span>.0 --freq-max <span class="m">8</span>.0
 </pre></div>
 </div>
-<p>The fk output files are automatically named from the data file (network and station codes plus start and end times), but a label can be specified as <code class="code docutils literal notranslate"><span class="pre">--local-fk-label</span> <span class="pre">example</span></code>.</p>
 </div></blockquote>
 </li>
-<li><p>In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Create a text file called <code class="code docutils literal notranslate"><span class="pre">BRP_analysis.config</span></code> and enter the following:</p>
+<li><p>In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Within the <code class="code docutils literal notranslate"><span class="pre">examples/config</span></code> directory are several example configuration files.  The <code class="code docutils literal notranslate"><span class="pre">detection_local.config</span></code> file has a configuration to run detection (fk and fd) analysis on local waveform data:</p>
 <blockquote>
 <div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[WAVEFORM IO]
 local_wvfrms = data/YJ.BRP*.SAC
 
 [DETECTION IO]
-local_fk_label = data/BRP_analysis
+local_fk_label = auto
+local_detect_label = auto
 
 [FK]
 freq_min = 1.0
-freq_max = 8.0
-window_len = 5.0
-window_step = 2.5
-cpu_cnt = 8
+freq_max = 5.0
+window_len = 10.0
+window_step = 5.0
+
+[FD]
+p_value = 0.95
+min_duration = 20.0
 </pre></div>
 </div>
-<p>Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., <code class="code docutils literal notranslate"><span class="pre">--local-fk-label`</span></code> vs. <code class="code docutils literal notranslate"><span class="pre">local_fk_label`</span></code>).  Adjust the CPU count value to whatever number of available threads you have on your machine.  The analysis can now be completed by simply running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file BRP_analysis.config
+<p>Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., <code class="code docutils literal notranslate"><span class="pre">--local-fk-label`</span></code> vs. <code class="code docutils literal notranslate"><span class="pre">local_fk_label`</span></code>).  The analysis can now be completed by simply running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file config/detection_local.config
 </pre></div>
 </div>
-<p>When using a config file for analysis, any additional parameters set on the command line will overwrite the values from the config file.  For example, to run the analysis with a maximum frequency of 10 Hz instead of 8 Hz, one can simply run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file BRP_analysis.config --freq-max <span class="m">10</span>.0
+<p>The analysis steps are the same as the above; however, you’ll notice that when the fk results are being written there’s a warning message that existing results are present so that a new file name is used.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#####################################
+##                                 ##
+##             InfraPy             ##
+##    Beamforming (fk) Analysis    ##
+##                                 ##
+#####################################
+
+Data parameters:
+  local_wvfrms: data/YJ.BRP*.SAC
+  local_latlon: None
+  local_fk_label: None
+
+...
+
+Running fk analysis...
+        Progress: [&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;]
+
+WARNING!  fk results file(s) already exist.
+Writing a new version: data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0.fk_results.dat
 </pre></div>
 </div>
-<p>If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the <code class="code docutils literal notranslate"><span class="pre">fk_results</span></code> output file header.</p>
+<p>This is to avoid overwriting existing results from previous runs and to make comparisons of varied frequeny bands, window lengths, and other parameters more efficient.  The visualization methods can be pointed to any fk results file as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot fk --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0
+</pre></div>
+</div>
+<p>When using a config file for analysis, any additional parameters set on the command line will overwrite the values from the config file.  For example, to run the analysis with a maximum frequency of 10 Hz instead of 5 Hz, one can simply run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fk --config-file BRP_analysis.config --freq-max <span class="m">10</span>
+</pre></div>
+</div>
+<p>If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.</p>
 </div></blockquote>
 </li>
-<li><p>From the beamforming results, detection analysis can be conducted via the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> method.  This analysis requires the fk output label and can use a custom detection label or automatically use the fk label if none is specified.</p>
+<li><p>From the beamforming results, detection analysis can be conducted via the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified.</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --local-fk-label data/BRP_analysis
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
 </pre></div>
 </div>
 <p>Similarly to the <code class="code docutils literal notranslate"><span class="pre">run_fk</span></code> methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:</p>
@@ -236,57 +266,72 @@ cpu_cnt = 8
 #####################################
 
 Data parameters:
-  local_fk_label: data/BRP_analysis
-  local_detect_label: data/BRP_analysis
+  local_fk_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+  local_detect_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
 
 Algorithm parameters:
   window_len: 3600.0
-  p_value: 0.99
-  min_duration: 10.0
+  p_value: 0.95
+  min_duration: 20.0
   back_az_width: 15.0
   fixed_thresh: None
+  thresh_ceil: None
   return_thresh: False
+  merge_dets: False
 
 Running fd...
-Writing detections to data/BRP_analysis.dets.json
+Writing detections to data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json
 </pre></div>
 </div>
 <p>As noted in the output, a new file named <code class="code docutils literal notranslate"><span class="pre">BRP_analysis.dets.json</span></code> is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the <a class="reference internal" href="infraview.html#infraview"><span class="std std-ref">InfraView</span></a> GUI.  The first detection from this analysis of the included BRP data is shown below:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[
     {
-    &quot;Name&quot;: &quot;&quot;,
-        &quot;Time (UTC)&quot;: &quot;2012-04-09T18:10:17.008300&quot;,
-        &quot;F Stat.&quot;: 13.4034,
-        &quot;Trace Vel. (m/s)&quot;: 335.08,
-        &quot;Back Azimuth&quot;: -111.3,
-        &quot;Latitude&quot;: 39.4727,
-        &quot;Longitude&quot;: -110.741,
+        &quot;Name&quot;: &quot;&quot;,
+        &quot;Time (UTC)&quot;: &quot;2012-04-09T18:07:05.008300&quot;,
+        &quot;F Stat.&quot;: 31.9058,
+        &quot;Trace Vel. (m/s)&quot;: 370.97,
+        &quot;Back Azimuth&quot;: -41.84,
+        &quot;Latitude&quot;: 39.47269821166992,
+        &quot;Longitude&quot;: -110.74089813232422,
         &quot;Elevation (m)&quot;: null,
         &quot;Start&quot;: 0.0,
-        &quot;End&quot;: 15.0,
+        &quot;End&quot;: 5.0,
         &quot;Freq Range&quot;: [
             1.0,
-            10.0
+            5.0
         ],
         &quot;Array Dim.&quot;: 4,
         &quot;Method&quot;: &quot;&quot;,
         &quot;Event&quot;: &quot;&quot;,
-        &quot;Note&quot;: &quot;InfraPy CLI detection&quot;
-    }, ...
+        &quot;Note&quot;: &quot;InfraPy CLI detection&quot;,
+        &quot;Network&quot;: &quot;YJ&quot;,
+        &quot;Station&quot;: &quot;BRP&quot;,
+        &quot;Channel&quot;: &quot;EDF&quot;
+    },...
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p>Once detections are identified in the data record, they can be visualized similarly to the <code class="code docutils literal notranslate"><span class="pre">plot_fk</span></code> option via <code class="code docutils literal notranslate"><span class="pre">plot_fd</span></code>.</p>
+<li><p>Once detections are identified in the data record, they can be visualized similarly to the <code class="code docutils literal notranslate"><span class="pre">plot</span> <span class="pre">fk</span></code> option via <code class="code docutils literal notranslate"><span class="pre">plot</span> <span class="pre">fd</span></code>.</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_fd --local-wvfrms <span class="s1">&#39;data/YJ.BRP*.SAC&#39;</span> --freq-min <span class="m">1</span>.0 --freq-max <span class="m">8</span>.0
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot fd --config-file config/detection_local.config
 </pre></div>
 </div>
-<p>This plot has the same format as the above <code class="code docutils literal notranslate"><span class="pre">plot_fk</span></code> output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.</p>
+<p>This plot has the same format as the above <code class="code docutils literal notranslate"><span class="pre">plot</span> <span class="pre">fk</span></code> output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.</p>
 <a class="reference internal image-reference" href="_images/plot_fd.png"><img alt="_images/plot_fd.png" class="align-center" src="_images/plot_fd.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
-<li><p>In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> is useful in such scenarios.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the <code class="code docutils literal notranslate"><span class="pre">run_fkd</span></code> option.</p>
+<li><p>One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting <code class="code docutils literal notranslate"><span class="pre">--merge-dets</span> <span class="pre">True</span></code> on the command line or <code class="code docutils literal notranslate"><span class="pre">merge_dets</span> <span class="pre">=</span> <span class="pre">True</span></code> in the configuration file, any detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with merge detections turn on and comparing the results:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+
+infrapy plot fd --config-file config/detection_local.config
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/plot_fd2.png"><img alt="_images/plot_fd2.png" class="align-center" src="_images/plot_fd2.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> is useful in such scenarios to avoid repeatedly running the fk analysis.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the <code class="code docutils literal notranslate"><span class="pre">run_fkd</span></code> option.</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fkd --config-file BRP_analysis.config
 </pre></div>
@@ -294,7 +339,7 @@ Writing detections to data/BRP_analysis.dets.json
 <p>This option essentially combines the <code class="code docutils literal notranslate"><span class="pre">run_fk</span></code> and <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> options into a single analysis run.</p>
 </div></blockquote>
 </li>
-<li><p>In addition to analysis of local data, InfraPy’s use of <code class="code docutils literal notranslate"><span class="pre">obspy.clients.fdsn</span></code> methods enables analysis of data available on IRIS and similar FDSNs.  Instead of specifying local waveform files, this requires defining the FDSN (e.g., IRIS, USGS) as well as the network, station, channel, and location information of the array.  Lastly, the start and end time are also needed to identify the segment of data to download for analysis.  This information can be entered on the command line, but it’s easier to simply write up a config file in most cases (recall that individual parameters can be overwritten on the command line, so the station or start/end times can be modified as needed).  An example analysis from the IMS I53US array can be specified as:</p>
+<li><p>In addition to analysis of local data, InfraPy’s use of <code class="code docutils literal notranslate"><span class="pre">obspy.clients.fdsn</span></code> methods enables analysis of data available on IRIS and similar FDSNs.  Instead of specifying local waveform files, this requires defining the FDSN (e.g., IRIS, USGS) as well as the network, station, channel, and location information of the array.  Lastly, the start and end time are also needed to identify the segment of data to download for analysis.  This information can be entered on the command line, but it’s easier to simply write up a config file in most cases (recall that individual parameters can be overwritten on the command line, so the station or start/end times can be modified as needed).  An example analysis from the IMS I53US array is included in <code class="code docutils literal notranslate"><span class="pre">examples/config/detection_fdsn.config</span></code>:</p>
 <blockquote>
 <div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[WAVEFORM IO]
 fdsn = IRIS
@@ -306,10 +351,12 @@ starttime = 2018-12-19T01:00:00
 endtime = 2018-12-19T03:00:00
 
 [DETECTION IO]
-local_fk_label = I53US_analysis
-local_detect_label = I53US_analysis
+local_fk_label = auto
+local_detect_label = auto
 </pre></div>
 </div>
+<p>Running this analysis will pull 2 hours of data from the International Monitoring System (IMS) I53US infrasound station from December 19th, 2018 that includes a signal produced by a bolide.  Visualization can be slightly slower as the data is re-downloaded from IRIS with each use of the command line calls.  This can be avoided using the <code class="code docutils literal notranslate"><span class="pre">write-wvfrms</span></code> <a class="reference internal" href="utilities.html#utilities"><span class="std std-ref">Utility Functions</span></a> function.  Due to the emergent nature of the signal, <code class="code docutils literal notranslate"><span class="pre">--merge-dets</span></code> needs to be activated to obtain a useful result as seen below.</p>
+<a class="reference internal image-reference" href="_images/plot_fd-fdsn.png"><img alt="_images/plot_fd-fdsn.png" class="align-center" src="_images/plot_fd-fdsn.png" style="width: 1200px;" /></a>
 <p>Although not currently included in the CLI methods, an FDSN station browser is available in the <a class="reference internal" href="infraview.html#infraview"><span class="std std-ref">InfraView</span></a> GUI to search for available data given a reference location, radius, and time bounds.</p>
 </div></blockquote>
 </li>
@@ -383,20 +430,20 @@ Cleaning up and merging clusters...
 <p>The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is <code class="code docutils literal notranslate"><span class="pre">local_event_label_ev-#.dets.json</span></code> and the example analysis here should have identified 3 events.</p>
 </div></blockquote>
 </li>
-<li><p>Detection sets can be visualized on a map using the <code class="code docutils literal notranslate"><span class="pre">plot_dets</span></code> option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,</p>
+<li><p>Detection sets can be visualized on a map using the <code class="code docutils literal notranslate"><span class="pre">plot</span> <span class="pre">dets</span></code> option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot dets --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_dets1.png"><img alt="_images/plot_dets1.png" class="align-center" src="_images/plot_dets1.png" style="width: 1200px;" /></a>
 <p>This result is rather busy, but plotting each individual event’s detections shows that the association algorithm correctly identified the events,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_dets --local-detect-label <span class="s1">&#39;GJI_example-ev0.dets.json&#39;</span>  --range-max <span class="m">1000</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot dets --local-detect-label <span class="s1">&#39;GJI_example-ev0.dets.json&#39;</span>  --range-max <span class="m">1000</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_dets2.png"><img alt="_images/plot_dets2.png" class="align-center" src="_images/plot_dets2.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
-<li><p>Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al (2015).  This requires specifying the detection list file as well as an output location file label,</p>
+<li><p>Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015).  This requires specifying the detection list file as well as an output location file label,</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
 </pre></div>
@@ -448,17 +495,17 @@ Writing localization result into GJI_example-ev0.loc.json
 </li>
 <li><p>The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max <span class="m">1200</span>.0
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max <span class="m">1200</span>.0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc1.png"><img alt="_images/plot_loc1.png" class="align-center" src="_images/plot_loc1.png" style="width: 1200px;" /></a>
-<p>For Visualization of the source region in more detail, the <code class="code docutils literal notranslate"><span class="pre">--zoom</span></code> option can be set to true and the map zooms in to show only the estimated source region.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom <span class="nb">true</span>
+<p>For visualization of the source region in more detail, the <code class="code docutils literal notranslate"><span class="pre">--zoom</span></code> option can be set to true and the map zooms in to show only the estimated source region.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom <span class="nb">true</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc2.png"><img alt="_images/plot_loc2.png" class="align-center" src="_images/plot_loc2.png" style="width: 900px;" /></a>
 <p>Lastly, the origin time is estimated as part of the BISL analysis and can be visualized as,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot_origin_time --local-loc-label GJI_example-ev0
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot origin-time --local-loc-label GJI_example-ev0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_origin_time.png"><img alt="_images/plot_origin_time.png" class="align-center" src="_images/plot_origin_time.png" style="width: 1200px;" /></a>
@@ -563,10 +610,10 @@ Writing localization result into GJI_example-ev0.loc.json
 <li><p>The association methods require ingesting a detection list and defining a clustering threshold for the hierarchical linkage cut off.  The likelihood methods include a function to read in a .json format file as output in the CLI detection analysis.</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">infrapy.association</span> <span class="kn">import</span> <span class="n">hjl</span>
-<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+<span class="kn">from</span> <span class="nn">infrapy.utils</span> <span class="kn">import</span> <span class="n">data_io</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example1.dets.json&#39;</span><span class="p">)</span>
+    <span class="n">det_list</span> <span class="o">=</span> <span class="n">data_io</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example1.dets.json&#39;</span><span class="p">)</span>
     <span class="n">clustering_threshold</span> <span class="o">=</span> <span class="mf">5.0</span>
 
     <span class="n">labels</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">hjl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">clustering_threshold</span><span class="p">)</span>
@@ -581,10 +628,10 @@ Writing localization result into GJI_example-ev0.loc.json
 <li><p>Similar to the association methods, localization requires just a detection set from an event:</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">infrapy.location</span> <span class="kn">import</span> <span class="n">bisl</span>
-<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+<span class="kn">from</span> <span class="nn">infrapy.utils</span> <span class="kn">import</span> <span class="n">data_io</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example2.dets.json&#39;</span><span class="p">)</span>
+    <span class="n">det_list</span> <span class="o">=</span> <span class="n">data_io</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="s1">&#39;data/example2.dets.json&#39;</span><span class="p">)</span>
 
     <span class="n">result</span><span class="p">,</span><span class="n">pdf</span> <span class="o">=</span> <span class="n">bisl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">bisl</span><span class="o">.</span><span class="n">summarize</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
@@ -600,7 +647,7 @@ Writing localization result into GJI_example-ev0.loc.json
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">likelihoods</span> <span class="k">as</span> <span class="n">lklhds</span>
+<span class="kn">from</span> <span class="nn">infrapy.utils</span> <span class="kn">import</span> <span class="n">data_io</span>
 <span class="kn">from</span> <span class="nn">infrapy.propagation</span> <span class="kn">import</span> <span class="n">infrasound</span>
 
 <span class="kn">from</span> <span class="nn">infrapy.characterization</span> <span class="kn">import</span> <span class="n">spye</span>
@@ -634,7 +681,7 @@ Writing localization result into GJI_example-ev0.loc.json
 <span class="c1">#     Define the detections     #</span>
 <span class="c1">#          and spectra          #</span>
 <span class="c1"># ############################# #</span>
-<span class="n">det_list</span> <span class="o">=</span> <span class="n">lklhds</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="n">det_file</span><span class="p">)</span>
+<span class="n">det_list</span> <span class="o">=</span> <span class="n">data_io</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="n">det_file</span><span class="p">)</span>
 <span class="n">st_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">det_list</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st_list</span><span class="p">)):</span>
     <span class="n">st_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">data_path</span> <span class="o">+</span> <span class="n">data_ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">)</span>

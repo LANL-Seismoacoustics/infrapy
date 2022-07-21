@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interfacing with Pisces &mdash; Infrapy 1.0 documentation</title>
+  <title>Database Interfacing &mdash; Infrapy 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -18,7 +18,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Algorithms" href="algorithms.html" />
+    <link rel="next" title="Utility Functions" href="utilities.html" />
     <link rel="prev" title="InfraView" href="infraview.html" /> 
 </head>
 
@@ -44,12 +44,9 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Interfacing with Pisces</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Database Interfacing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1"><a class="reference internal" href="infrapy.html">API</a></li>
 </ul>
 
         </div>
@@ -66,7 +63,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Interfacing with Pisces</li>
+      <li>Database Interfacing</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/pisces.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -76,80 +73,116 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="interfacing-with-pisces">
-<span id="pisces"></span><h1>Interfacing with Pisces<a class="headerlink" href="#interfacing-with-pisces" title="Permalink to this headline"></a></h1>
-<p>Infrapy leverages pisces to connect with and process data in either local sqlite databases or oracle databases. More information about pisces can be found at <a class="reference external" href="https://jkmacc-lanl.github.io/pisces/">https://jkmacc-lanl.github.io/pisces/</a>.</p>
-<section id="converting-data-into-sqlite-databases">
-<h2>Converting Data into Sqlite Databases<a class="headerlink" href="#converting-data-into-sqlite-databases" title="Permalink to this headline"></a></h2>
-<p>Data in miniseed or sac formats can be loaded into a sqlite database for pipeline processing using commands from pisces.</p>
-<ol class="arabic simple">
-<li><p>mseed to database (ms2db.py)</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">ms2db</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="n">mslist</span><span class="o">.</span><span class="n">txt</span>
+  <section id="database-interfacing">
+<span id="pisces"></span><h1>Database Interfacing<a class="headerlink" href="#database-interfacing" title="Permalink to this headline"></a></h1>
+<p>Infrapy leverages pisces to connect with and process data in databases. More information about pisces can be found at <a class="reference external" href="https://jkmacc-lanl.github.io/pisces/">https://jkmacc-lanl.github.io/pisces/</a>.  The methods described here are still in active development; therefore, if something doesn’t work please contact both the infrapy POCs as well as the pisces POCs for assistance and clarification.</p>
+<section id="defining-database-connection-info">
+<h2>Defining Database Connection Info<a class="headerlink" href="#defining-database-connection-info" title="Permalink to this headline"></a></h2>
+<ul>
+<li><p>In order to connect and pull data from a database, the pisces methods need to establish a database session and perform a number of table queries.  The information needed to connect and perform these queries is defined within a separate configuation file specifically for the database that can be defined either on the command line using <code class="code docutils literal notranslate"><span class="pre">--db-config</span></code> or in a general infrapy configuration file as below:</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[WAVEFORM IO]
+db_config = /path/to/database_info.config
+
+station = I53*
+channel = *DF
+starttime = 2018-12-19T01:00:00
+endtime = 2018-12-19T03:00:00
+
+...
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
-<li><p>sac to database (sac2db)</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">pisces</span> <span class="n">sac2db</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">*.</span><span class="n">sac</span>
+</div></blockquote>
+</li>
+<li><p>The database configuration file includes information about the database itself (e.g., schema, dialect, hostname) as well as a list of database table names that will be queried and used in analysis.  An example database configuration file contents is below:</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[DATABASE]
+schema = KBCore
+dialect = oracle
+hostname = my_host.com
+database_name = my_db
+port = 1234
+driver =
+username =
+password =
+owner = my_account
+
+[DBTABLES]
+wfdisc = wfdisc
+site = site
 </pre></div>
 </div>
-<p>As infrapy is an array processing tool, after your sqlite database is created, you will need to update the REFSTA for each array using update_refsta.py</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">update_refsta</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">&lt;</span><span class="n">array</span> <span class="n">name</span><span class="o">&gt;</span>
-</pre></div>
-</div>
-<p>You can update the calibration for each array using update_calib.py</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">update_calib</span><span class="o">.</span><span class="n">py</span> <span class="n">sqlite</span><span class="p">:</span><span class="o">///</span><span class="n">example</span><span class="o">.</span><span class="n">sqlite</span> <span class="o">&lt;</span><span class="n">array</span> <span class="n">name</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">calibration</span><span class="o">&gt;</span>
-</pre></div>
-</div>
+<ul class="simple">
+<li><p>Note that the driver, username, and password fields are optional and if accessing your database doesn’t require them they can be left out of the config file or simply left blank as in the above</p></li>
+<li><p>The owner information is used in combination with the database table list to define the actual table names (e.g., the above would define the site table reference as <code class="code docutils literal notranslate"><span class="pre">my_account.site</span></code>).</p></li>
+<li><p>Add notes about other fields?</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
 </section>
-<section id="connecting-to-a-sql-database">
-<h2>Connecting to a SQL Database<a class="headerlink" href="#connecting-to-a-sql-database" title="Permalink to this headline"></a></h2>
-<p>Infrapy employs two main methods for connecting to either Oracle or sqlite databases.  Example files to facilitate these connections are found in tutorials/.</p>
-<section id="defining-schema-specific-tables">
-<h3>Defining Schema Specific Tables<a class="headerlink" href="#defining-schema-specific-tables" title="Permalink to this headline"></a></h3>
-<p>Pipeline processing in infrapy utilizes information from CSS3.0 Site and Wfdisc tables.  If your database schema differs from the CSS3.0 schema in any way, you can define the differences using a _global.py file.  An example _global.py file is found in tutorial/ .</p>
+<section id="accessing-waveform-data-from-the-database">
+<h2>Accessing Waveform Data from the Database<a class="headerlink" href="#accessing-waveform-data-from-the-database" title="Permalink to this headline"></a></h2>
+<ul>
+<li><p>The utility function, <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">check-db-wvfrms</span></code>, can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#################################
+##                             ##
+##      InfraPy Utilities      ##
+##       check_db_wvfrms       ##
+##                             ##
+#################################
+
+
+Loading configuration info from: my_configuration.config
+
+Data parameters:
+  db_config: /path/to/database_info.config
+  network: None
+  station: I53*
+  location: None
+  channel: *DF
+  starttime: 2018-12-19T01:00:00
+  endtime: 2018-12-19T03:00:00
+
+Loading data from database...
+
+Data summary:
+__.I53H1..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H2..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H3..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H4..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H5..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H6..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H7..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+__.I53H8..BDF   2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+
+Location info:
+64.87500        -147.86114
+64.87236        -147.83828
+64.86208        -147.84281
+64.85914        -147.86615
+64.86805        -147.87858
+64.86722        -147.86120
+64.86617        -147.85670
+64.86541        -147.85990
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Note that all 8 channels of the I53 station are found in the database and the displayed start and end times indicate that the requested 2 hours of data are able to be pulled.  The latitude and longitude of the various station elements are summarized for completeness.</p></li>
+<li><p>Also, pulling waveform data from a database requires only the <code class="code docutils literal notranslate"><span class="pre">site</span></code> table to identify station information and <code class="code docutils literal notranslate"><span class="pre">wfdisc</span></code> to access waveform data.  Additional tables will be required for attaching response information (currently data is returned in counts and not physical units) and other advances in accessing waveform data.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Running and visualizing beamforming analysis with this data can now be done using the same <code class="code docutils literal notranslate"><span class="pre">my_configuration.config</span></code> file with parameter modifications and other details as discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.  Essentially, when pulling waveform data for analysis, our aim is to be able to point the infrapy methods to a database via pisces and a <code class="code docutils literal notranslate"><span class="pre">database_info.config</span></code> file as easily as pointing it at an FDSN.</p></li>
+</ul>
 </section>
-<section id="connection-within-pipeline-processing-configuration-file">
-<h3>Connection within pipeline processing configuration file<a class="headerlink" href="#connection-within-pipeline-processing-configuration-file" title="Permalink to this headline"></a></h3>
-<p>The first three lines of your configuration file define the database you will connect to:</p>
-<p><strong>Example Configuration File for Sqlite Processing (Sqlite_Config.txt)</strong></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
-# url to database where you have the pointers to data and metadata
-url = sqlite:///example.sqlite
-# schema specific tables for your site and wfdisc files.  If you are processing in a sqlite database, these variables will refer to schema specified in pisces. If you are processing in an oracle database, these variables will refer to schema specified in your global_.py file
-site = pisces.tables.css3:Site
-wfdisc = pisces.tables.css3:Wfdisc
-</pre></div>
-</div>
-<p><strong>Example Configuration File for Oracle DB Processing (Oracle_Config.txt)</strong></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
-url = oracle://&lt;database name&gt;:&lt;port&gt;
-site = global_:Site
-wfdisc = global_:Wfdisc_raw
-</pre></div>
-</div>
-</section>
-<section id="connection-with-a-db-cfg-file">
-<h3>Connection with a db.cfg file<a class="headerlink" href="#connection-with-a-db-cfg-file" title="Permalink to this headline"></a></h3>
-<p>Some modules in infrapy (db2sac) require a .cfg file to establish connection with a database.  Examples are found in tutorial/ . More information can be found in the pisces documentation.</p>
-<p><strong>Example Configuration File for Oracle DB Processing (oracle_connection.cfg)</strong></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
-url = oracle://&lt;db name&gt;:&lt;db port&gt;
-site = global_:Site
-wfdisc = global_:Wfdisc_raw
-origin = global_:Origin
-</pre></div>
-</div>
-<p><strong>Example Configuration File for Sqlite Processing (sqlite_connection.cfg)</strong></p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[database] # required
-url = sqlite:///example.sqlite
-site = pisces.tables.css3:Site
-wfdisc = pisces.tables.css3:Wfdisc
-origin = pisces.tables.css3:Origin
-</pre></div>
-</div>
-</section>
+<section id="writing-analysis-results-into-the-database">
+<h2>Writing Analysis Results into the Database<a class="headerlink" href="#writing-analysis-results-into-the-database" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p>Currently, analysis results using waveform data pulled from a database are written into […].fk_results.dat and […].dets.json files as discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.  In future developments, methods to write those results back into database tables will be implemented.</p></li>
+<li><p>The current plan is to implement such functionality as part of the <a class="reference internal" href="utilities.html#utilities"><span class="std std-ref">Utility Functions</span></a> methods and include methods to both write detection results into the appropriate tables as well as pull detections from a database for event ID and similar analysis.</p></li>
+</ul>
 </section>
 </section>
 
@@ -158,7 +191,7 @@ origin = pisces.tables.css3:Origin
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="infraview.html" class="btn btn-neutral float-left" title="InfraView" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="algorithms.html" class="btn btn-neutral float-right" title="Algorithms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utility Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
