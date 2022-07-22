@@ -93,32 +93,12 @@ def check_connection(session):
     Simple function to check that there is a valid connection by 
     calling engine.connect() to see if it returns true
     """
-    engine = session.get_bind()
     try:
-        engine.connect()
+        session.get_bind().connect()
         return True
     except Exception as e:
-        print(e)
         return False
 
-'''
-    class Site(kb.Site):
-        __tablename__ = 'global.site'
-
-
-    class Wfdisc(kb.Wfdisc):
-        __tablename__ = 'global.wfdisc_raw'
-        
-
-    class Affiliation(kb.Affiliation):
-        __tablename__ = 'global.affiliation'
-
-    class Origin(kb.Origin):
-        __tablename__ = 'global.origin'
-
-    class Event(kb.Event):
-        __tablename__ = 'global.event'
-'''
 
 def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataframe'):
     """
@@ -127,8 +107,6 @@ def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataf
     return_type values can be 'dataframe' for a pandas dataframe, or 'wfdisc_rows' for wfdisc rows
     """
     db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
-
-    # db_tables['Site'].__table__
 
     if session is None:
         return None
@@ -150,7 +128,7 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     # Set up db connection and table info
     # session = ps.db_connect( db_info['url'])
     session = db_connect2(db_info)
-    
+
     db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
 
     Site = db_tables['site']
@@ -192,7 +170,6 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
 
     return st, latlon
 
-
 def make_tables_from_dict(tables=None, schema=None, owner=None):
     # first handle the bailout conditions
     if tables is None and schema is None:
@@ -223,10 +200,11 @@ def make_tables_from_dict(tables=None, schema=None, owner=None):
     
     return dict_of_classes
 
-
 def eventID_query(session, eventID):
-    print("Querying for event id: {}".format(eventID))
-    events = ps.request.get_events(session, Origin, Event, eventID)
+    evIDs = [int(eventID)]
+    print("Querying for event id: {}".format(evIDs))
+    db_tables = make_tables_from_dict({'Origin': 'origin', 'Event': 'event'}, schema='kbcore', owner='global')
+    events = ps.request.get_events(session, db_tables['Origin'], db_tables['Event'], evIDs)
     if events:
         print(events)
     else:
