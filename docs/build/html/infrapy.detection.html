@@ -17,9 +17,7 @@
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Location" href="infrapy.location.html" />
-    <link rel="prev" title="Database Processing Taskbase" href="infrapy.database.taskbase.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,27 +36,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.characterization.html">Characterization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.database.html">Database Processing</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Beamforming/Detection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -75,7 +61,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="infrapy.html">API</a> &raquo;</li>
       <li>Beamforming/Detection</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/infrapy.detection.rst.txt" rel="nofollow"> View page source</a>
@@ -587,7 +572,7 @@ in parallel.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.detection.beamforming_new.run_fd">
-<span class="sig-prename descclassname"><span class="pre">infrapy.detection.beamforming_new.</span></span><span class="sig-name descname"><span class="pre">run_fd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_peaks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">TB_prod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_cnt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_p_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">back_az_lim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.run_fd" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.detection.beamforming_new.</span></span><span class="sig-name descname"><span class="pre">run_fd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_peaks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">TB_prod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_cnt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_p_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">back_az_lim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresh_ceil</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_dets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.detection.beamforming_new.run_fd" title="Permalink to this definition"></a></dt>
 <dd><p>Identify detections with beamforming results</p>
 <p>Identify detection in the beamforming results using either Kernel Density
 Estimate (KDE) fits to the f-statistic distribution or the adaptive
@@ -616,6 +601,11 @@ in order to declare a detection</p>
 </dd>
 <dt>fixed_thresh: float</dt><dd><dl class="simple">
 <dt>A fixed detection threshold for fstat values (overrides adaptive </dt><dd><p>threshold calculation)</p>
+</dd>
+</dl>
+</dd>
+<dt>thresh_ceil: float</dt><dd><dl class="simple">
+<dt>A custom detection threshold ceiling value. When used, it modifies the </dt><dd><p>detection criterion: fstat &gt; min(thresh_ceil, adaptive_thresh)</p>
 </dd>
 </dl>
 </dd>
@@ -703,10 +693,7 @@ also extracted to enable beamforming analysis.</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="infrapy.database.taskbase.html" class="btn btn-neutral float-left" title="Database Processing Taskbase" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="infrapy.location.html" class="btn btn-neutral float-right" title="Location" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

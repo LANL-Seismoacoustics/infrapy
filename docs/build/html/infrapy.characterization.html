@@ -17,9 +17,7 @@
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Database Processing" href="infrapy.database.html" />
-    <link rel="prev" title="Association" href="infrapy.association.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,27 +36,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Characterization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.database.html">Database Processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.detection.html">Beamforming/Detection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.propagation.html">Propagation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -75,7 +61,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="infrapy.html">API</a> &raquo;</li>
       <li>Characterization</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/infrapy.characterization.rst.txt" rel="nofollow"> View page source</a>
@@ -92,7 +77,7 @@
 <span id="spye"></span><h2>SPYE<a class="headerlink" href="#module-infrapy.characterization.spye" title="Permalink to this headline"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.characterization.spye.blastwave">
-<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">blastwave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">blastwave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shaping_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave" title="Permalink to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Acoustic blastwave that can be used as a source</dt><dd><p>for surface explosions out to several scale
 kilometers.</p>
@@ -101,13 +86,19 @@ kilometers.</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>t<span class="classifier">float</span></dt><dd><p>Time [s]</p>
+<dt>t: float</dt><dd><p>Time [s]</p>
 </dd>
-<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure</p>
+<dt>W: float</dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
 </dd>
-<dt>t0<span class="classifier">float</span></dt><dd><p>Time scale [s]</p>
+<dt>r: float</dt><dd><p>Propagation distance [km]</p>
 </dd>
-<dt>alpha<span class="classifier">float</span></dt><dd><p>Shaping parameter (positive)</p>
+<dt>p_amb: float</dt><dd><p>Ambient atmospheric pressure [kPa]</p>
+</dd>
+<dt>T_amb: float</dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+</dd>
+<dt>exp_type: string</dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+</dd>
+<dt>shaping_param: float</dt><dd><p>Shaping parameter for waveform that controls high frequency trend (set to 0 for original Friedlander blastwave)</p>
 </dd>
 </dl>
 <dl class="simple">
@@ -118,13 +109,13 @@ kilometers.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.characterization.spye.blastwave_spectrum">
-<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">blastwave_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave_spectrum" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">blastwave_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shaping_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.blastwave_spectrum" title="Permalink to this definition"></a></dt>
 <dd><blockquote>
 <div><dl class="simple">
 <dt>Fourier transform amplitude for the acoustic</dt><dd><p>blastwave in sasm.acoustic.blastwave().</p>
 </dd>
 </dl>
-<p>Note: alpha = 0 produces the Friedlander
+<p>Note: shaping_param = 0 produces the Friedlander
 blastwave model.</p>
 <p>Note: the peak of the spectrum occurs at
 f_0 =</p>
@@ -139,13 +130,19 @@ t_0 =</p>
 rac{1}{sqrt{lpha + 1}</p>
 <blockquote>
 <div><dl class="simple">
-<dt>f<span class="classifier">float</span></dt><dd><p>Frequency [Hz]</p>
+<dt>f: float</dt><dd><p>Frequency [Hz]</p>
 </dd>
-<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure</p>
+<dt>W: float</dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
 </dd>
-<dt>t0<span class="classifier">float</span></dt><dd><p>Time scale [s]</p>
+<dt>r: float</dt><dd><p>Propagation distance [km]</p>
 </dd>
-<dt>alpha<span class="classifier">float</span></dt><dd><p>Shaping parameter (positive)</p>
+<dt>p_amb: float</dt><dd><p>Ambient atmospheric pressure [kPa]</p>
+</dd>
+<dt>T_amb: float</dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+</dd>
+<dt>exp_type: string</dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+</dd>
+<dt>shaping_param: float</dt><dd><p>Shaping parameter for waveform that controls high frequency trend (set to 0 for original Friedlander blastwave)</p>
 </dd>
 </dl>
 <dl class="simple">
@@ -187,29 +184,29 @@ window option</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.characterization.spye.kg_op">
-<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">kg_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_op" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">kg_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_op" title="Permalink to this definition"></a></dt>
 <dd><p>Kinney &amp; Graham scaling law peak overpressure model</p>
 <dl class="simple">
-<dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
+<dt>W: float</dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
 </dd>
-<dt>r<span class="classifier">float</span></dt><dd><p>Propagation distance [km]</p>
+<dt>r: float</dt><dd><p>Propagation distance [km]</p>
 </dd>
-<dt>p_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric pressure [kPa]</p>
+<dt>p_amb: float</dt><dd><p>Ambient atmospheric pressure [kPa]</p>
 </dd>
-<dt>T_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+<dt>T_amb: float</dt><dd><p>Ambient atmospheric temperature [deg K]</p>
 </dd>
-<dt>type<span class="classifier">string</span></dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+<dt>exp_type: string</dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>p0<span class="classifier">float</span></dt><dd><p>Peak overpressure [Pa]</p>
+<dt>p0: float</dt><dd><p>Peak overpressure [Pa]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.characterization.spye.kg_ppd">
-<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">kg_ppd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_ppd" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">kg_ppd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.kg_ppd" title="Permalink to this definition"></a></dt>
 <dd><p>Kinney &amp; Graham scaling law positive phase duration model</p>
 <dl class="simple">
 <dt>W<span class="classifier">float</span></dt><dd><p>Explosive yield of the source [kg eq. TNT]</p>
@@ -220,7 +217,7 @@ window option</p>
 </dd>
 <dt>T_amb<span class="classifier">float</span></dt><dd><p>Ambient atmospheric temperature [deg K]</p>
 </dd>
-<dt>type<span class="classifier">string</span></dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
+<dt>exp_type<span class="classifier">string</span></dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
 </dd>
 </dl>
 <dl class="simple">
@@ -231,38 +228,40 @@ window option</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.characterization.spye.run">
-<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">det_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smn_spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_band</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tloss_models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yld_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([10.,</span> <span class="pre">10000.])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_src_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grnd_brst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.run" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">infrapy.characterization.spye.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">det_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smn_spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_band</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tloss_models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yld_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([10.,</span> <span class="pre">10000.])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_src_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grnd_brst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101.325</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_amb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">288.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'chemical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.characterization.spye.run" title="Permalink to this definition"></a></dt>
 <dd><p>Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield</p>
-<dl>
-<dt>det_list<span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></span></dt><dd><p>Iterable of detections with defined start and end times</p>
+<dl class="simple">
+<dt>det_list: <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">InfrasoundDetection</span></code></dt><dd><p>Iterable of detections with defined start and end times</p>
 </dd>
-<dt>smn_spec<span class="classifier">ndarray</span></dt><dd><p>Spectral amplitude of the signal-minus-noise</p>
+<dt>smn_spec: ndarray</dt><dd><p>Spectral amplitude of the signal-minus-noise</p>
 </dd>
-<dt>freq_band<span class="classifier">iterable</span></dt><dd><p>List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])</p>
+<dt>freq_band: iterable</dt><dd><p>List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])</p>
 </dd>
-<dt>tloss_models<span class="classifier">list of frequencies and infrapy.propagation.TLossModel instances</span></dt><dd><dl class="simple">
-<dt>Propagation transmission loss model list with reference frequencies (see</dt><dd><p>test/test_yield.py for construction example)</p>
+<dt>tloss_models: list of frequencies and infrapy.propagation.TLossModel instances</dt><dd><p>Propagation transmission loss model list with reference frequencies (see
+test/test_yield.py for construction example)</p>
 </dd>
-</dl>
+<dt>resol: int</dt><dd><p>Resolution used in analysis</p>
 </dd>
-<dt>resol<span class="classifier">int</span></dt><dd><p>Resolution used in analysis</p>
+<dt>yld_rng: iterable</dt><dd><p>List or tuple with minimum and maximum yields (e.g., [yld_min, yld_max])</p>
 </dd>
-<dt>yld_rng<span class="classifier">iterable</span></dt><dd><p>List or tuple with minimum and maximum yields (e.g., [yld_min, yld_max])</p>
+<dt>ref_src_rng: float</dt><dd><p>Standoff distance used to define source model distance</p>
 </dd>
-<dt>ref_src_rng<span class="classifier">float</span></dt><dd><p>Standoff distance used to define source model distance</p>
+<dt>grnd_brst: boolean</dt><dd><p>Boolean declaring whether the source is a ground burst (interaction with source
+doubles the effective yield for a ground burst vs. air burst)</p>
 </dd>
-<dt>grnd_brst<span class="classifier">boolean</span></dt><dd><dl class="simple">
-<dt>Boolean declaring whether the source is a ground burst (interaction with source</dt><dd><p>doubles the effective yield for a ground burst vs. air burst)</p>
+<dt>p_amb: float</dt><dd><p>Ambient atmospheric pressure [kPa]</p>
 </dd>
-</dl>
+<dt>T_amb: float</dt><dd><p>Ambient atmospheric temperature [deg K]</p>
+</dd>
+<dt>exp_type: string</dt><dd><p>Type of explosion modeled, options are “chemical” or “nuclear”</p>
 </dd>
 </dl>
 <dl class="simple">
 <dt>yld_vals: </dt><dd><p>Values of explosive yield for the PDF</p>
 </dd>
-<dt>yld_pdf<span class="classifier"></span></dt><dd><p>Probability of the observed source having a given yield</p>
+<dt>yld_pdf: </dt><dd><p>Probability of the observed source having a given yield</p>
 </dd>
-<dt>conf_bnds<span class="classifier">ndarray</span></dt><dd><p>Limits for the 68% and 95% confidence bounds on yield</p>
+<dt>conf_bnds: ndarray</dt><dd><p>Limits for the 68% and 95% confidence bounds on yield</p>
 </dd>
 </dl>
 </dd></dl>
@@ -273,10 +272,7 @@ window option</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="infrapy.association.html" class="btn btn-neutral float-left" title="Association" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="infrapy.database.html" class="btn btn-neutral float-right" title="Database Processing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

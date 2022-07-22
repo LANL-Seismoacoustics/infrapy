@@ -45,11 +45,8 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1"><a class="reference internal" href="infrapy.html">API</a></li>
 </ul>
 
         </div>
@@ -78,7 +75,7 @@
              
   <section id="infraview">
 <span id="id1"></span><h1>InfraView<a class="headerlink" href="#infraview" title="Permalink to this headline"></a></h1>
-<p>Background on InfraView…</p>
+<p>InfraPy includes an interactive graphical user interface (GUI) called InfraView.  This interface includes waveform analysis methods, beamforming and detection tools, and event identification and localization capabilities.  The InfraView GUI can be accessed from the command line by simply running,</p>
 <blockquote>
 <div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; infraview
 </pre></div>
@@ -87,22 +84,23 @@
 <section id="array-level-analyses">
 <h2>Array-Level Analyses<a class="headerlink" href="#array-level-analyses" title="Permalink to this headline"></a></h2>
 <ul>
-<li><p>The starting point is the waveform viewer…</p>
+<li><p>The newly opened InfraView GUI defaults to the waveform analysis tab as shown below. This part of the interface includes a waveform viewer (top left), data summary (bottom left), spectral viewer (top right), and filter controls (bottom right).</p>
 <blockquote>
 <div><a class="reference internal image-reference" href="_images/wvfrms1.png"><img alt="_images/wvfrms1.png" class="align-center" src="_images/wvfrms1.png" style="width: 900px;" /></a>
 </div></blockquote>
 </li>
-<li><p>Load data…</p>
+<li><p>Local waveform data can be ingested from <code class="code docutils literal notranslate"><span class="pre">File</span> <span class="pre">&gt;</span> <span class="pre">Load</span> <span class="pre">Waveform(s)...</span></code>, and selecting the files in the system viewer.  Locate the infrapy installation directory and load the 4 <code class="code docutils literal notranslate"><span class="pre">examples/data/YJ.BRP*.SAC</span></code> files.  This will populate the data info in the bottom left window, visualize the waveform data in the upper left, and show the power spectral density in the upper right.  You can scroll to read through the trace and station info in the bottom left.</p>
 <blockquote>
 <div><a class="reference internal image-reference" href="_images/wvfrms2.png"><img alt="_images/wvfrms2.png" class="align-center" src="_images/wvfrms2.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
-<li><p>Select analysis and noise windows…</p>
+<li><p>The blue and red windows in the waveform viewer can be moved and re-sized to identify some reference/noise segment (red) and an analysis segment of interest (blue).  The power spectral density (PSD) for each segment is shown in the upper right panel in red and blue, respectively.</p></li>
+<li><p>Re-size the blue window to include all three high amplitude packets in the waveform set and set the red reference window either before or after to example the spectral content of the high amplitude arrivals.  Select the <code class="code docutils literal notranslate"><span class="pre">Apply</span> <span class="pre">Filter?</span></code> option on the right and adjust the gray window in the PSD to cover the frequencies where the blue line is notably above the red.  Then, click on the <code class="code docutils literal notranslate"><span class="pre">&lt;--</span> <span class="pre">Set</span> <span class="pre">Filter</span> <span class="pre">to</span> <span class="pre">--&gt;</span></code> button to automatically adjust the filter frequencies.</p>
 <blockquote>
 <div><a class="reference internal image-reference" href="_images/wvfrms3.png"><img alt="_images/wvfrms3.png" class="align-center" src="_images/wvfrms3.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
-<li><p>Switch tabs and select beamforming parameters…</p>
+<li><p>Once the analysis window and frequency range of interest are identified, switch to the Beamforming tab on the top of the GUI.</p>
 <blockquote>
 <div><a class="reference internal image-reference" href="_images/beam1.png"><img alt="_images/beam1.png" class="align-center" src="_images/beam1.png" style="width: 1200px;" /></a>
 </div></blockquote>

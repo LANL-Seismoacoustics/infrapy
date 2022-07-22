@@ -17,9 +17,7 @@
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utils" href="infrapy.utils.html" />
-    <link rel="prev" title="Location" href="infrapy.location.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,27 +36,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing_model.html">Data Processing Flow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="infrapy.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="infrapy.association.html">Association</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.characterization.html">Characterization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.database.html">Database Processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.detection.html">Beamforming/Detection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.location.html">Location</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Propagation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="infrapy.utils.html">Utils</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -75,7 +61,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="infrapy.html">API</a> &raquo;</li>
       <li>Propagation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/infrapy.propagation.rst.txt" rel="nofollow"> View page source</a>
@@ -258,35 +243,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.Infrapy_Encoder">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">Infrapy_Encoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipkeys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_ascii</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_circular</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">json.encoder.JSONEncoder</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.Infrapy_Encoder.default">
-<span class="sig-name descname"><span class="pre">default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.Infrapy_Encoder.default" title="Permalink to this definition"></a></dt>
-<dd><p>Implement this method in a subclass such that it returns
-a serializable object for <code class="docutils literal notranslate"><span class="pre">o</span></code>, or calls the base implementation
-(to raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>).</p>
-<p>For example, to support arbitrary iterators, you could
-implement default like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
-    <span class="c1"># Let the base class default method raise the TypeError</span>
-    <span class="k">return</span> <span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">InfrasoundDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array_d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">InfrasoundDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array_d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traceV</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py property">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.array_dim">
@@ -325,7 +283,7 @@ implement default like this:</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.event_id">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_id</span></span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.event_id" title="Permalink to this definition"></a></dt>
-<dd><p>Optional id of the event</p>
+<dd><p>(optional) ID of the event</p>
 </dd></dl>
 
 <dl class="py method">
@@ -415,6 +373,11 @@ implement default like this:</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.get_startend">
+<span class="sig-name descname"><span class="pre">get_startend</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_startend" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.get_trace_velocity">
 <span class="sig-name descname"><span class="pre">get_trace_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.get_trace_velocity" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -445,13 +408,13 @@ implement default like this:</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.name">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.name" title="Permalink to this definition"></a></dt>
-<dd><p>Optional name of the detection</p>
+<dd><p>(optional) Name of the detection</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.note">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">note</span></span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.note" title="Permalink to this definition"></a></dt>
-<dd><p>Optional note regarding the detection</p>
+<dd><p>(optional) Note regarding the detection</p>
 </dd></dl>
 
 <dl class="py method">
@@ -547,6 +510,11 @@ implement default like this:</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.set_startend">
+<span class="sig-name descname"><span class="pre">set_startend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_startend" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.set_trace_velocity">
 <span class="sig-name descname"><span class="pre">set_trace_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tv</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.set_trace_velocity" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -589,6 +557,12 @@ a transmission loss model</p>
 </dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.start_end">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">start_end</span></span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.start_end" title="Permalink to this definition"></a></dt>
+<dd><p>(tuple) starting and ending values for the detection</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">trace_velocity</span></span><a class="headerlink" href="#infrapy.propagation.likelihoods.InfrasoundDetection.trace_velocity" title="Permalink to this definition"></a></dt>
 <dd><p>Trace velocity of the detection</p>
@@ -618,21 +592,6 @@ a transmission loss model</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.db2dets">
-<span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">db2dets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.db2dets" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.detection_list_to_json">
-<span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">detection_list_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detections</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.detection_list_to_json" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.file2dets">
-<span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">file2dets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.file2dets" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.joint_pdf">
 <span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">joint_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_geo_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -640,11 +599,6 @@ a transmission loss model</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="infrapy.propagation.likelihoods.joint_pdf_wrapper">
 <span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">joint_pdf_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.joint_pdf_wrapper" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="infrapy.propagation.likelihoods.json_to_detection_list">
-<span class="sig-prename descclassname"><span class="pre">infrapy.propagation.likelihoods.</span></span><span class="sig-name descname"><span class="pre">json_to_detection_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.propagation.likelihoods.json_to_detection_list" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -676,10 +630,7 @@ a transmission loss model</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="infrapy.location.html" class="btn btn-neutral float-left" title="Location" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="infrapy.utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 
