@@ -1,12 +1,71 @@
 import urllib.parse
 import configparser
 
-from PyQt5.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
-                             QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QSizePolicy)
+from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
+                             QLabel, QLineEdit, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QSizePolicy)
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer
+from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer, Qt
 from infrapy.utils import database
 
+class IPTableDialog(QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.buildUI()
+    
+    def buildUI(self):
+        self.setWindowTitle("InfraView: Table Editor")
+        self.tables_textEdit = QTextEdit()
+
+        # OK and Cancel buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        vlayout = QVBoxLayout()
+        vlayout.addWidget(self.tables_textEdit)
+        vlayout.addWidget(buttons)
+
+        self.setLayout(vlayout)
+
+    def exec_(self):
+        self.initial_text = self.tables_textEdit.toPlainText().rstrip()       
+        return super().exec_()
+
+    def reset(self):
+        self.tables_textEdit.setText(self.initial_text)
+    
+    def set_text_from_table_dict(self, tables, owner=None):
+        # set the text of the table editor from a dictionary of tables
+        text = ""
+        for key, value in tables.items():
+            if owner:
+                text += key + ': ' + owner + '.' + value + '\n'
+            else:
+                text += key + ': ' + value + '\n'
+
+        self.tables_textEdit.setText(text.rstrip())
+
+    def get_tables_from_text(self):
+        text = self.tables_textEdit.toPlainText().rstrip()      # the rstrip removes trailing newlines etc
+        lines = text.split("\n")
+        table_dict = {}
+        for line in lines:
+            key_val = line.split(':')
+            key = key_val[0]
+            val = key_val[1].split('.')
+            if len(val) > 1:
+                # there is an owner...
+                owner = val[0].strip()
+                table_dict[key] = val[1]
+            else:
+                # no owner, value is val
+                table_dict[key] = val
+
+        return table_dict, owner
+
+    def reject(self):
+        self.reset()
+        super().reject()
 
 class IPDatabaseConnectWidget(QFrame):
     def __init__(self, parent):
@@ -19,14 +78,6 @@ class IPDatabaseConnectWidget(QFrame):
         self.session = None
         self.config_filename = ""
         self.buildUI()
-
-        table_classes = database.make_tables_from_dict(tables={'Wfdisc':'frank', 'Site': 'billy'}, schema='kbcore', owner='global')
-        
-        print(table_classes)
-
-        for key, value in table_classes.items():
-            print(key, value)
-            print("  " + table_classes[key].__tablename__)
         
     def buildUI(self):
         
@@ -39,6 +90,9 @@ class IPDatabaseConnectWidget(QFrame):
         self.save_current_button = QPushButton("Save Config File...")
         self.save_current_button.setMaximumWidth(200)
         self.save_current_button.setEnabled(False)
+
+        self.table_dialog = IPTableDialog(self)
+        self.show_tables_button = QPushButton("Tables...")
 
         self.schema_type_combo = QComboBox()
         self.schema_type_combo.addItem("KBCore")
@@ -83,6 +137,7 @@ class IPDatabaseConnectWidget(QFrame):
         horiz_layout_0 = QHBoxLayout()
         horiz_layout_0.addWidget(self.load_config_button)
         horiz_layout_0.addWidget(self.save_current_button)
+        horiz_layout_0.addWidget(self.show_tables_button)
         horiz_layout_0.addStretch()
         
         form_layout = QFormLayout()
@@ -134,10 +189,15 @@ class IPDatabaseConnectWidget(QFrame):
 
         self.load_config_button.pressed.connect(self.load_config_file)
         self.save_current_button.pressed.connect(self.save_current_config)
+        self.show_tables_button.clicked.connect(self.show_tables_dialog)
         self.create_session_button.pressed.connect(self.create_session)
         self.close_session_button.pressed.connect(self.close_session)
 
         self.test_connection_button.pressed.connect(self.check_connection)
+
+    def show_tables_dialog(self):
+        if self.table_dialog.exec_():
+            self.save_current_button.setEnabled(True)
 
     def update_url(self):
         self.url_label.setStyleSheet("QLabel {color:black}")
@@ -164,8 +224,8 @@ class IPDatabaseConnectWidget(QFrame):
         # now proceed as usual
         dialect = self.dialect_combo.currentText()
         driver = self.driver_edit.text()
-        if driver:
-            driver = '+' + driver
+        #if driver:
+        #    driver = '+' + driver
         username = self.username_edit.text()
         # special characters in the password need to be correctly parsed into url strings
         password = urllib.parse.quote_plus(self.password_edit.text())
@@ -176,7 +236,14 @@ class IPDatabaseConnectWidget(QFrame):
         url = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
 
         try:
-            self.session = database.db_connect_url(url)
+            #self.session = database.db_connect_url(url)
+            self.session = database.db_connect(dialect=dialect, 
+                                               hostname=hostname, 
+                                               db_name=db_name, 
+                                               port=port, 
+                                               username=username, 
+                                               password=password, 
+                                               driver=driver)
             self.url_label.setStyleSheet("QLabel {color: green}")
         except Exception as e:
             self.url_label.setStyleSheet("QLabel {color: red}")
@@ -224,6 +291,10 @@ class IPDatabaseConnectWidget(QFrame):
                 self.driver_edit.setText(config['DATABASE']['driver'])
                 self.dialect_combo.setCurrentText(config['DATABASE']['dialect'])
                 self.update_url()
+                if config['DATABASE']['owner']:
+                    self.table_dialog.set_text_from_table_dict(config['DBTABLES'], owner=config['DATABASE']['owner'])
+                else:
+                    self.table_dialog.set_text_from_table_dict(config['DBTABLES'])
                 self.save_current_button.setEnabled(False)
             except Exception as e:
                 self.errorPopup("Error reading config file \n{}".format(e))
@@ -241,6 +312,11 @@ class IPDatabaseConnectWidget(QFrame):
                 config['DATABASE']['port'] = self.portnum_edit.text()
                 config['DATABASE']['driver'] = self.driver_edit.text()
                 config['DATABASE']['dialect'] = self.dialect_combo.currentText()
+                
+                table_dict, owner = self.table_dialog.get_tables_from_text()
+                config['DBTABLES'] = table_dict
+                config['DATABASE']['owner'] = owner
+
                 with open(save_filename, 'w') as config_file:
                     config.write(config_file)
 

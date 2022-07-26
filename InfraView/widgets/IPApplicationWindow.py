@@ -179,6 +179,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
         self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.plotEventLines)
 
+        self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
+
     def errorPopup(self, message):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
@@ -260,7 +262,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                     self._project.set_dataPath(ipath)
                 try:
                     new_stream = obsRead(ifile)
-                    # do our best to generate new inventory from the new stream
+                    
                     for trace in new_stream:
                         trace_name = self.getTraceName(trace)
                         if trace_name in current_trace_names:
@@ -276,7 +278,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                                 #so remove the trace from new_stream, and continue to the next trace
                                 new_stream.remove(trace)
                                 continue
-
+                        # do our best to generate new inventory from the new stream
                         if new_inventory is None:
                             new_inventory = self.trace_to_inventory(trace)
                         else:
@@ -300,7 +302,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             # No files were chosen to open
             return
 
-        # it's possible, if the open failed, that self.waveformWidget._sts is still None, so if it is, bail out
+        # it's possible that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
         if self.waveformWidget._sts is not None:
             self.beamformingWidget.setStreams(self.waveformWidget._sts)
@@ -312,12 +314,59 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
             self.mainTabs.setCurrentIndex(0)
 
-            self.setStatus("Ready", 5000)
         else:
             return
 
     def filemenu_import(self):
         if self.fdsnDialog.exec_():
+            self.mainTabs.setCurrentIndex(0)
+
+    @pyqtSlot(Stream, bool)
+    def database_add_streams(self, new_stream, append):
+        current_trace_names = []
+        new_inventory = None
+        if self.waveformWidget._sts:
+            for trace in self.waveformWidget._sts:
+                current_trace_names.append(self.getTraceName(trace))
+        for trace in new_stream:
+            trace_name = self.getTraceName(trace)
+            if trace_name in current_trace_names:
+                # redundant trace!
+                netid, staid, locid, chaid = self.parseTraceName(trace_name)
+                self.redundant_trace_dialog.exec_(trace_name)
+
+                if  self.redundant_trace_dialog.get_result():
+                    # if accepted, they want to use the new trace so first remove the old one
+                    self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
+                else:
+                    # if rejected, they want to keep the old trace, and ignore this one
+                    #so remove the trace from new_stream, and continue to the next trace
+                    new_stream.remove(trace)
+                    continue
+            # do our best to generate new inventory from the new stream
+            if new_inventory is None:
+                new_inventory = self.trace_to_inventory(trace)
+            else:
+                new_inventory += self.trace_to_inventory(trace)
+
+            # for now we will remove dc offset when loading the file.  Maybe should be an option?
+            trace.data = trace.data - np.mean(trace.data)
+        
+        if self.waveformWidget._sts is not None:   
+            self.waveformWidget._sts += new_stream
+        else:
+            self.waveformWidget._sts = new_stream
+        
+        # it's possible that self.waveformWidget._sts is still None, so if it is, bail out
+        # if not populate the trace stats viewer and plot the traces
+        if self.waveformWidget._sts is not None:
+            self.beamformingWidget.setStreams(self.waveformWidget._sts)
+                
+            self.sig_stream_changed.emit(self.waveformWidget._sts)
+
+            if new_inventory is not None:
+                self.sig_inventory_changed.emit(new_inventory)
+
             self.mainTabs.setCurrentIndex(0)
 
     def getTraceName(self, trace):
@@ -545,7 +594,7 @@ class IPAboutDialog(QDialog):
         self.buildUI(progname, progversion)
 
     def buildUI(self, name, version):
-        self.setWindowTitle("Infraview - About")
+        self.setWindowTitle("InfraView: About")
         
         info_label = QLabel(name + '\nVersion: ' + version + '\nCopyright 2018 Los Alamos National Laboratory\n')
         label_font = info_label.font()

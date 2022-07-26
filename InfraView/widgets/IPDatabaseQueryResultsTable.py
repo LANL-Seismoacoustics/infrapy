@@ -1,7 +1,10 @@
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QWidget, QAbstractItemView, QFrame, QLabel, QSizePolicy
-from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
+from PyQt5.QtWidgets import QHBoxLayout, QMessageBox, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
+from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal
 
 from obspy.core import read as obsRead
+from obspy.core.stream import Stream
+
+from infrapy.utils import database
 
 
 class IPWfdiscModel(QAbstractTableModel):
@@ -104,6 +107,9 @@ class IPDatabaseQueryResultsTable(QFrame):
     """
     Table widget to view results from an sql query
     """
+
+    signal_new_stream_from_db = pyqtSignal(Stream, bool)      
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
@@ -174,6 +180,10 @@ class IPDatabaseQueryResultsTable(QFrame):
         else:
             return None
 
+        if len(rows) == 0:
+            self.errorPopup("No stations selected")
+            return
+
         selected_rows = []
         for row in rows:
             selected_rows.append(row.row())
@@ -183,9 +193,41 @@ class IPDatabaseQueryResultsTable(QFrame):
             if idx in selected_rows:
                 selected_wds.append(wd)
 
-        print("selected wfdisc length = {}".format(len(selected_wds)))
+        # now assemble the output stream
+        st = Stream(traces=None)
+        starttime, stoptime = self.parent.ipdatabase_query_widget.get_startstop_times()
+        tables, owner = self.get_tables()
 
+        db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema(), owner=owner)
 
+        for wd in selected_wds:
+
+            new_stream, lat_lon = database.gui_wvfrms_from_db(self.get_session(), 
+                                              starttime=starttime, 
+                                              endtime=stoptime, 
+                                              channel=wd[1], 
+                                              stations=[wd[0]], 
+                                              db_tables=db_tables)
+            st += new_stream
+        # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
+        self.signal_new_stream_from_db.emit(st, True)
+
+    def get_session(self):
+        return self.parent.ipdatabase_connect_widget.session
+    
+    def get_schema(self):
+        return self.parent.ipdatabase_connect_widget.schema_type_combo.currentText()
+
+    def get_tables(self):
+        table_dictionary, owner = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
+        return table_dictionary, owner
+
+    def errorPopup(self, message, title="Oops..."):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(message)
+        msg_box.setWindowTitle(title)
+        msg_box.exec_()
 
 class IPEventsModel(QAbstractTableModel):
     """

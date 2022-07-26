@@ -434,7 +434,7 @@ class IPEventDialog(QDialog):
     def __init__(self, parent=None):
         super(IPEventDialog, self).__init__(parent)
 
-        self.setWindowTitle('Event Browser')
+        self.setWindowTitle('InfraView: Event Browser')
         self.eventBrowser = IPEventBrowser()
         layout = QVBoxLayout()
         layout.addWidget(self.eventBrowser)

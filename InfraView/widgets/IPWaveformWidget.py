@@ -147,7 +147,7 @@ class IPWaveformWidget(QWidget):
         self.stationViewer.setInventory(self._inv)
 
     def remove_from_inventory(self, net, sta, loc, cha):
-        self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
+        new_inventory = self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
         self.update_inventory(new_inventory)
 
     def get_streams(self):

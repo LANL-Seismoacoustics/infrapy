@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (QDateEdit, QDateTimeEdit, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, 
                              QMessageBox, QPushButton, QSpinBox, QTimeEdit, QVBoxLayout,
                              QPlainTextEdit, QSizePolicy)
-from PyQt5.QtCore import QDate, pyqtSlot
+from PyQt5.QtCore import QDate, pyqtSlot, Qt
 
 from obspy.core.utcdatetime import UTCDateTime
 
@@ -205,6 +205,12 @@ class IPDatabaseQueryWidget(QFrame):
 
     def get_current_session(self):
         return self.parent.ipdatabase_connect_widget.session
+
+    def get_startstop_times(self):
+        # returns iso format string of the start and stop times
+        starttime = self.start_date_edit.date().toString(Qt.ISODate) + "T" + self.start_time_edit.time().toString(Qt.ISODate)
+        stoptime = (UTCDateTime(starttime) + self.duration_edit.value()).isoformat()
+        return starttime, stoptime
 
     def query_database(self):
 
