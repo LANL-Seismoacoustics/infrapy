@@ -1,6 +1,6 @@
 """
-  put database related functions here
-  generic db functions ONLY.  No LANL specific code at all
+    put database related functions here
+    generic db functions ONLY.  No LANL specific code at all
 """
 
 
@@ -52,21 +52,21 @@ def db_connect(dialect="", hostname="", db_name="", port="", username="", passwo
         session : bound SQLAlchemy session instance
 
     '''
-    my_dialect = dialect + "://"
-    url = sa.engine.url.make_url(my_dialect)
-    print(url)
-    url.username = username
-    # url.drivername = driver
-    url.password = password
-    url.host = hostname
-    url.port = port
-    url.database = db_name
+    # my_dialect = dialect + "://"
+    # url = sa.engine.url.make_url(my_dialect)
+    # print(url)
+    # url.username = username
+    # # url.drivername = driver
+    # url.password = password
+    # url.host = hostname
+    # url.port = port
+    # url.database = db_name
 
-    print(url)
-    engine = sa.create_engine(url)
-    return Session(bind=engine)
+    # print(url)
+    # engine = sa.create_engine(url)
+    # return Session(bind=engine)
 
-
+    return ps.db_connect(assemble_db_url(dialect, hostname, db_name=db_name, port=port, username=username, password=password, driver=driver))
 
 
 def assemble_db_url(dialect, hostname, db_name, port=None, username="", password="", driver=""):
@@ -104,8 +104,8 @@ def db_connect2(db_info):
 
 def check_connection(session):
     """
-    Simple function to check that there is a valid connection by 
-    calling engine.connect() to see if it returns true
+        Simple function to check that there is a valid connection by 
+        calling engine.connect() to see if it returns true
     """
     try:
         session.get_bind().connect()
@@ -115,11 +115,7 @@ def check_connection(session):
 
 
 def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataframe'):
-    """
-    function to query a database using an existing session.  
 
-    return_type values can be 'dataframe' for a pandas dataframe, or 'wfdisc_rows' for wfdisc rows
-    """
     db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
 
     if session is None:
@@ -128,19 +124,24 @@ def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataf
     print("STA = {}".format(sta))
     
     if return_type == 'dataframe':
-        my_query = session.query(db_tables['Wfdisc']).filter(db_tables['Wfdisc'].sta == sta)\
+        my_query = session.query(db_tables['Wfdisc']).filter(db_tables['Wfdisc'].sta.like(sta)\
                                         .filter(db_tables['Wfdisc'].time < end_time.timestamp)\
                                         .filter(db_tables['Wfdisc'].endtime > start_time.timestamp)\
-                                        .filter(db_tables['Wfdisc'].chan == cha)
+                                        .filter(db_tables['Wfdisc'].chan.like(cha)))
 
         return pd.read_sql(my_query.statement, session.bind)
+
     elif return_type == 'wfdisc_rows':
-        return ps.request.get_wfdisc_rows(session, db_tables['Wfdisc'], sta=sta, chan=cha, t1=start_time, t2=end_time)
+        my_query =  ps.request.get_wfdisc_rows(session, db_tables['Wfdisc'], chan=cha, t1=start_time, t2=end_time, asquery=True)
+        my_query = my_query.filter(db_tables['Wfdisc'].sta.like(sta))
+        return my_query.all()
+
     else:
         return None
 
 def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
-    ''' function to pull obspy streams from the database.  
+    ''' 
+        function to pull obspy streams from the database.  
         stations: str
         channel: str
         starttime: DateTime 
@@ -230,16 +231,12 @@ def gui_wvfrms_from_db(session, stations, channel, starttime, endtime, db_tables
             if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
                 tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
                 if len(tr.stats.network) == 0:
-                    tr.stats.network = ""
+                    tr.stats.network = "__"
                 st.append(tr)
     
     st.merge(fill_value=0)
 
-
-    # Set the latlon info
-    latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in st]
-
-    return st, latlon
+    return st
 
 def make_tables_from_dict(tables=None, schema=None, owner=None):
     # first handle the bailout conditions
@@ -270,12 +267,19 @@ def make_tables_from_dict(tables=None, schema=None, owner=None):
     
     return dict_of_classes
 
-def eventID_query(session, eventID):
+def eventID_query(session, eventID, db_tables):
     evIDs = [int(eventID)]
     print("Querying for event id: {}".format(evIDs))
-    db_tables = make_tables_from_dict({'Origin': 'origin', 'Event': 'event'}, schema='kbcore', owner='global')
     events = ps.request.get_events(session, db_tables['Origin'], db_tables['Event'], evIDs)
+
     if events:
         print(events)
     else:
         print("no event found")
+
+def event_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
+
+    if 'Origin' not in db_tables or 'Event' not in db_tables:
+        raise KeyError
+    
+    events = ps.request.get_events(session, db_tables['Origin'], db_tables['Events'], km=(center_lat, center_lon, minr, maxr), etime=(startt, endt))

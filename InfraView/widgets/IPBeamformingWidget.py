@@ -1321,12 +1321,17 @@ class BeamformingWorkerObject(QtCore.QObject):
                 id_bits[1] = '###'
             stream_station_id = id_bits[0] + '.' + id_bits[1]
 
-            for network in self._inv.networks:
-                for station in network.stations:
-                    station_id = network.code + '.' + station.code
-                    if station_id == stream_station_id:
-                        latlon.append([station.latitude, station.longitude])
-                        location_count += 1
+            print(self._inv.networks)
+            if len(self._inv.networks) > 0:
+                for network in self._inv.networks:
+                    for station in network.stations:
+                        station_id = network.code + '.' + station.code
+                        if station_id == stream_station_id:
+                            latlon.append([station.latitude, station.longitude])
+                            location_count += 1
+            else:
+                print("hi mom")
+            
 
         #if location_count != len(self.streams):
         #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")

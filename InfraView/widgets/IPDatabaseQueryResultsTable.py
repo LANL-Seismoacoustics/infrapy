@@ -202,7 +202,7 @@ class IPDatabaseQueryResultsTable(QFrame):
 
         for wd in selected_wds:
 
-            new_stream, lat_lon = database.gui_wvfrms_from_db(self.get_session(), 
+            new_stream = database.gui_wvfrms_from_db(self.get_session(), 
                                               starttime=starttime, 
                                               endtime=stoptime, 
                                               channel=wd[1], 
