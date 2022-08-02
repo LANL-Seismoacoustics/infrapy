@@ -132,11 +132,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
                 local_fk_label = os.path.dirname(local_wvfrms) + "/"
             else:
                 local_fk_label = ""
-
-            local_fk_label = local_fk_label + stream[-1].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
-            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
-            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
-            local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
+            local_fk_label = local_fk_label + data_io.stream_label(stream)
 
         if ".fk_results.dat" not in local_fk_label:
             local_fk_label = local_fk_label + ".fk_results.dat"
@@ -282,12 +278,8 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
                 local_fk_label = os.path.dirname(local_wvfrms) + "/"
             else:
                 local_fk_label = ""
-
-            local_fk_label = local_fk_label + stream[-1].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
-            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.year + ".%02d" % stream[-1].stats.starttime.month + ".%02d" % stream[-1].stats.starttime.day
-            local_fk_label = local_fk_label + '_' + "%02d" % stream[-1].stats.starttime.hour + "." + "%02d" % stream[-1].stats.starttime.minute + "." + "%02d" % stream[-1].stats.starttime.second
-            local_fk_label = local_fk_label + '-' + "%02d" % stream[-1].stats.endtime.hour + "." + "%02d" % stream[-1].stats.endtime.minute + "." + "%02d" % stream[-1].stats.endtime.second
-
+            local_fk_label = local_fk_label + data_io.stream_label(stream)
+            
         temp = np.loadtxt(local_fk_label + ".fk_results.dat")
         dt, beam_peaks = temp[:, 0], temp[:, 1:]
 

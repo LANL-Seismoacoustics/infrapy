@@ -194,11 +194,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
             local_fk_label = os.path.dirname(local_wvfrms) + "/"
         else:
             local_fk_label = ""
-
-        local_fk_label = local_fk_label + stream[0].stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
-        local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.year + ".%02d" % stream[0].stats.starttime.month + ".%02d" % stream[0].stats.starttime.day
-        local_fk_label = local_fk_label + '_' + "%02d" % stream[0].stats.starttime.hour + "." + "%02d" % stream[0].stats.starttime.minute + "." + "%02d" % stream[0].stats.starttime.second
-        local_fk_label = local_fk_label + '-' + "%02d" % stream[0].stats.endtime.hour + "." + "%02d" % stream[0].stats.endtime.minute + "." + "%02d" % stream[0].stats.endtime.second
+        local_fk_label = local_fk_label + data_io.stream_label(stream)
 
     # Define DOA values
     back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
@@ -610,11 +606,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         output_id = os.path.dirname(local_wvfrms) + "/"
     else:
         output_id = ""
-
-    output_id = output_id + tr.stats.network + "." + os.path.commonprefix([tr.stats.station for tr in stream])
-    output_id = output_id + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
-    output_id = output_id + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
-    output_id = output_id + '-' + "%02d" % tr.stats.endtime.hour + "." + "%02d" % tr.stats.endtime.minute + "." + "%02d" % tr.stats.endtime.second
+    output_id = output_id + data_io.stream_label(stream)
 
     # Check if using a signal window
     if signal_start is not None:
@@ -624,7 +616,6 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         click.echo('\n' + "Trimming data to signal analysis window...")
         click.echo('\t' + "start time: " + str(t1))
         click.echo('\t' + "end time: " + str(t2))
-
 
         warning_message = "signal_start and signal_end values poorly defined."
         if t1 > t2:

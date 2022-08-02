@@ -19,6 +19,14 @@ from . import database
 blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, 'depmen': None, 'b': 0.0, 'e': None, 'stla': None, 'stlo': None, 
                   'nzyear': None, 'nzjday': None, 'nzhour': None, 'nzmin': None, 'nzsec': None, 'nzmsec': None, 'kstnm': None, 'kcmpnm': None, 'knetwk': None}
 
+def stream_label(st):
+    label = os.path.commonprefix([tr.stats.network for tr in st])
+    label = label + "." + os.path.commonprefix([tr.stats.station for tr in st])
+    label = label + '_' + st[0].stats.starttime.strftime('%Y.%m.%d_%H.%M.%S')
+    label = label + '-' + st[0].stats.endtime.strftime('%H.%M.%S')
+
+    return label
+
 ############################
 ##     Data Ingestion     ##
 ##         Methods        ##
@@ -241,9 +249,7 @@ def write_stream_to_sac(stream, latlon):
         
         tr.stats.sac = sac_info[m]
 
-        label = tr.stats.network + "." + tr.stats.station
-        label = label + '_' + "%02d" % tr.stats.starttime.year + ".%02d" % tr.stats.starttime.month + ".%02d" % tr.stats.starttime.day
-        label = label + '_' + "%02d" % tr.stats.starttime.hour + "." + "%02d" % tr.stats.starttime.minute + "." + "%02d" % tr.stats.starttime.second
+        label = tr.stats.network + "." + tr.stats.station + tr.stats.starttime.strftime('_%Y.%m.%d_%H.%M.%S')
 
         tr.write(label + ".sac", format='SAC') 
 
