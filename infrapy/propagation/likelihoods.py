@@ -78,6 +78,8 @@ class InfrasoundDetection(object):
     __name = ''             # string used to identify the detection (maybe only used in the GUI)
     __event_id = ''         # string containing the event id the detection is associated with
     __note = ''             # optional note that can be added for a reminder etc...
+    __network = ''          # network code for the detecting array
+    __station = ''          # station code for the detecting array
 
     # minimum and maximum measured beam widths
     __min_wdth = np.radians(4.0)
@@ -86,7 +88,7 @@ class InfrasoundDetection(object):
     # increase in beam width for propagation effects
     __prop_width = np.radians(4.0)  
 
-    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None, f_range=None, start_end=None, note=None, traceV=None):
+    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None, f_range=None, start_end=None, note=None, traceV=None, network=None, station=None):
 
         self.set_lat(lat_loc)
         self.set_lon(lon_loc)
@@ -463,6 +465,23 @@ class InfrasoundDetection(object):
 
     peakF_value = property(get_peakF_value, set_peakF_value, doc="Peak F values")
 
+    def set_network(self, network):
+        self.__network = network
+
+    def get_network(self):
+        return self.__network
+
+    network = property(get_network, set_network, doc="(optional) Network code")
+
+    def set_station(self, station):
+        self.__station = station
+
+    def get_station(self):
+        return self.__station
+
+    station = property(get_station, set_station, doc="(optional) Station code")
+
+
     # #### End Accessor methods #################
 
     def generateDict(self):
@@ -480,7 +499,9 @@ class InfrasoundDetection(object):
                          'Array Dim.': self.__array_dim,
                          'Method': self.__method,
                          'Event': self.__event_id,
-                         'Note': self.__note}
+                         'Note': self.__note,
+                         'Network': self.__network,
+                         'Station': self.__station}
         return detectionDict
 
     def fillFromDict(self, dict):
@@ -530,6 +551,10 @@ class InfrasoundDetection(object):
             self.set_array_dim(dict['Array Dim.'])
         if 'Method' in dict:
             self.set_method(dict['Method'])
+        if 'Network' in dict:
+            self.set_note(dict['Network'])
+        if 'Station' in dict:
+            self.set_note(dict['Station'])
 
         # At this point, the array_dim, and peakF_value have probably changed, so we need to recalculate
         # some of the variables...
