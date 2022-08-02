@@ -201,13 +201,22 @@ class IPDatabaseQueryResultsTable(QFrame):
         db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema(), owner=owner)
 
         for wd in selected_wds:
-
+            '''
             new_stream = database.gui_wvfrms_from_db(self.get_session(), 
                                               starttime=starttime, 
                                               endtime=stoptime, 
                                               channel=wd[1], 
                                               stations=[wd[0]], 
                                               db_tables=db_tables)
+            '''
+            new_stream, _ = database.wvfrms_from_db(self.get_session(),
+                                                    db_tables=db_tables,
+                                                    stations=[wd[0]],
+                                                    channel=wd[1],
+                                                    starttime=starttime,
+                                                    endtime=stoptime)
+
+
             st += new_stream
         # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
         self.signal_new_stream_from_db.emit(st, True)

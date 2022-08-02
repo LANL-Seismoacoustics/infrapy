@@ -139,19 +139,31 @@ def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataf
     else:
         return None
 
-def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
+def prep_session(db_info, check_connection=False):
+    if 'url' in db_info.keys():
+        session = ps.db_connect( db_info['url'])
+    else:
+        session = db_connect2(db_info)
+
+    if check_connection:
+        try:
+            session.get_bind().connect()
+            print("Database connection check passed")
+        except Exception as e:
+            print("Database connection check failed")
+        
+    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
+
+    return session, db_tables
+
+
+def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
     ''' 
         function to pull obspy streams from the database.  
         stations: str
         channel: str
         starttime: DateTime 
     '''
-
-    # Set up db connection and table info
-    # session = ps.db_connect( db_info['url'])
-    session = db_connect2(db_info)
-
-    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
 
     Site = db_tables['site']
     Wfdisc = db_tables['wfdisc']
@@ -179,6 +191,8 @@ def wvfrms_from_db(db_info, stations, channel, starttime, endtime):
     for sta_n in sta_list:
         temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
         for tr in temp_st:
+            tr.data = tr.data - np.mean(tr.data)
+            tr.stats['_format'] = 'SAC'
             if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
                 tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
                 if len(tr.stats.network) == 0:
