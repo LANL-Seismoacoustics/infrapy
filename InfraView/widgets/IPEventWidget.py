@@ -219,6 +219,17 @@ class IPEventWidget(QWidget):
                     # if there is no open project, update the global settings 
                     self.settings.setValue("last_eventfile_directory", os.path.dirname(self.savefile[0]))
 
+    def setEvent(self, event):
+        # event is a dictionary containing the relevant information
+        self.event_name_edit.setText(str(event['Name']))
+        d = QDate(event['UTC Date'].year, event['UTC Date'].month, event['UTC Date'].day)
+        self.event_date_edit.setDate(d)
+        t = QTime(event['UTC Time'].hour, event['UTC Time'].minute, event['UTC Time'].second)
+        self.event_time_edit.setTime(t)
+        self.event_lat_edit.setValue(event['Latitude'])
+        self.event_lon_edit.setValue(event['Longitude'])
+        self.sigEventWidgetChanged.emit(event)
+
     def loadEvent(self):
         if self.parent.getProject() is None:
             loadPath=self.settings.value("last_eventfile_directory", QDir.homePath())

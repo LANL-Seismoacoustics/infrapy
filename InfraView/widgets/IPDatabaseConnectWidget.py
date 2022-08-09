@@ -42,7 +42,6 @@ class IPTableDialog(QDialog):
     def set_text_from_table_dict(self, tables):
         # set the text of the table editor from a dictionary of tables
         text = ""
-        print(tables)
         for key, value in tables.items():
             text += key + ':' + value + '\n'
 

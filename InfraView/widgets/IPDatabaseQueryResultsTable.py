@@ -345,18 +345,14 @@ class IPEventQueryResultsTable(QFrame):
         lon = selected[1]
         datetime = UTCDateTime(selected[3])
         date = datetime.date
-        obstime = datetime.time
+        time = datetime.time
         evid = selected[5]
-        print("time = {}".format(datetime))
 
-        time2 = time.gmtime(selected[3])
-        print("time2 = {}".format(time2))
+        event = {'Name': evid, 'UTC Date': date, 'UTC Time': time, 'Latitude': lat, 'Longitude':lon}
+        self.parent.parent.eventWidget.setEvent(event)
 
-        time3 = datetime.datetime.fromtimestamp(selected[3])
-        print("time3 = {}".format(time3))
+        self.parent.parent.mainTabs.setCurrentIndex(4)
 
-        time4 = datetime.datetime.utcfromtimestamp(selected[3])
-        print("time4 = {}".format(time4))
 
 
 

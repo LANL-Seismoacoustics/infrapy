@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (QDateEdit, QDateTimeEdit, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, 
                              QMessageBox, QPushButton, QSpinBox, QTimeEdit, QVBoxLayout,
                              QPlainTextEdit, QSizePolicy)
-from PyQt5.QtCore import QDate, pyqtSlot, Qt
+from PyQt5.QtCore import QDate, QTime, pyqtSlot, Qt
 
 from obspy.core.utcdatetime import UTCDateTime
 
@@ -95,8 +95,13 @@ class IPEventQueryWidget(QFrame):
         self.connect_signals_and_slots()
 
     def connect_signals_and_slots(self):
+        self.clear_button.clicked.connect(self.clear_form)
         self.evid_edit.textEdited.connect(self.update_query_text)
         self.query_button.clicked.connect(self.query_database)
+
+    def clear_form(self):
+        self.evid_edit.setText("")
+        self.query_textEdit.setPlainText("")
 
     def update_query_text(self):
         q = self.query_database(asquery=True)
@@ -214,12 +219,21 @@ class IPDatabaseQueryWidget(QFrame):
         self.connect_signals_and_slots()
 
     def connect_signals_and_slots(self):
-        self.query_button.pressed.connect(self.query_database)
+        self.clear_button.clicked.connect(self.clear_form)
+        self.query_button.clicked.connect(self.query_database)
         self.sta_edit.textEdited.connect(self.update_query_string)
         self.cha_edit.textEdited.connect(self.update_query_string)
         self.start_date_edit.dateChanged.connect(self.update_query_string)
         self.start_time_edit.timeChanged.connect(self.update_query_string)
         self.duration_edit.valueChanged.connect(self.update_query_string)
+
+    def clear_form(self):
+        self.sta_edit.setText("")
+        self.cha_edit.setText("")
+        self.start_date_edit.setDate(self.start_date_edit.minimumDate())
+        self.start_time_edit.setTime(QTime(00,00,00))
+        self.duration_edit.setValue(600)
+        self.query_textEdit.setPlainText("")
 
     def update_query_string(self):
         session = self.get_current_session()
