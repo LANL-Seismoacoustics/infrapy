@@ -221,13 +221,11 @@ class IPLocationWidget(QWidget):
 
         # start the thread
         self.consoleBox.setText("...Calculating...")
-        print('starting bislthread')
         self.bislThread.start()
         self.signal_start_BISL_calc.emit()
 
     @pyqtSlot(dict)
     def bisl_run_finished(self, result):
-        print('bisl run finished')
         self._bisl_result = result
 
         self.consoleBox.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))

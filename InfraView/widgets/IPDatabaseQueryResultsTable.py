@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import QHBoxLayout, QMessageBox, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal
 
-from obspy.core import read as obsRead
 from obspy.core.stream import Stream
+from obspy.core import UTCDateTime
+import time
+import datetime
 
 from infrapy.utils import database
 
@@ -175,6 +177,8 @@ class IPDatabaseQueryResultsTable(QFrame):
 
     def getSelected(self):
         # if nothing is selected, then selectionModel() will return None
+        # maybe this should be in the EventQueryWidget?
+
         if self.tableView.selectionModel():
             rows = self.tableView.selectionModel().selectedRows()
         else:
@@ -196,26 +200,17 @@ class IPDatabaseQueryResultsTable(QFrame):
         # now assemble the output stream
         st = Stream(traces=None)
         starttime, stoptime = self.parent.ipdatabase_query_widget.get_startstop_times()
-        tables, owner = self.get_tables()
+        tables= self.get_tables()
 
-        db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema(), owner=owner)
+        db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema())
 
         for wd in selected_wds:
-            '''
-            new_stream = database.gui_wvfrms_from_db(self.get_session(), 
-                                              starttime=starttime, 
-                                              endtime=stoptime, 
-                                              channel=wd[1], 
-                                              stations=[wd[0]], 
-                                              db_tables=db_tables)
-            '''
             new_stream, _ = database.wvfrms_from_db(self.get_session(),
                                                     db_tables=db_tables,
                                                     stations=[wd[0]],
                                                     channel=wd[1],
                                                     starttime=starttime,
                                                     endtime=stoptime)
-
 
             st += new_stream
         # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
@@ -228,8 +223,8 @@ class IPDatabaseQueryResultsTable(QFrame):
         return self.parent.ipdatabase_connect_widget.schema_type_combo.currentText()
 
     def get_tables(self):
-        table_dictionary, owner = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
-        return table_dictionary, owner
+        table_dictionary = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
+        return table_dictionary
 
     def errorPopup(self, message, title="Oops..."):
         msg_box = QMessageBox()
@@ -239,38 +234,39 @@ class IPDatabaseQueryResultsTable(QFrame):
         msg_box.exec_()
 
 class IPEventsModel(QAbstractTableModel):
-    """
-    class to populate a tableview with rows of event results
-    """
 
-    def __init__(self, evs, parent=None):
+    def __init__(self, origins, parent=None):
         super().__init__()
 
-        self.evs = evs
-        self.col_headers = [c.name for c in self.evs[0].__table__.columns]
+        self.origins = origins
+        self.col_headers = [c.name for c in self.origins[0].__table__.columns]
 
     def rowCount(self, parent=None):
-        return len(self.evs)
+        return len(self.origins)
 
     def columnCount(self, parent=None):
-        return len(self.evs[0])
+        return len(self.origins[0])
 
     def data(self, index, role):
         if index.isValid():
             if role == Qt.DisplayRole:
-                return str(self.evs[index.row()][index.column()])
+                return str(self.origins[index.row()][index.column()])
             elif role == Qt.EditRole:
-                return str(self.evs[index.row()][index.column()])
+                return str(self.origins[index.row()][index.column()])
+
         return None
 
     def setData(self, index, value, role):
         if index.isValid():
             if role == Qt.EditRole:
-                self.evs[index.row()][index.column()] = value
+                self.origins[index.row()][index.column()] = value
                 self.editCompleted.emit(value)
                 return True
             return False
         return False
+
+    def get_data(self):
+        return self.origins
 
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled
@@ -294,7 +290,6 @@ class IPEventQueryResultsTable(QFrame):
         self.size_policy = self.sizePolicy()
         self.size_policy.setHorizontalPolicy(QSizePolicy.Expanding)
         self.setSizePolicy(self.size_policy)
-        self.data = None
         self.model = None
         self.parent = parent
         self.buildUI()
@@ -304,14 +299,16 @@ class IPEventQueryResultsTable(QFrame):
         title_label = QLabel("\tEvent Query Results")
         title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
 
+        self.use_selected_button = QPushButton("Get Selected")
         self.clear_button = QPushButton("Clear Table")
-        self.clear_button.clicked.connect(self.clearTable)
 
         self.tableView = QTableView(self)
+        self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         horiz_layout_0 = QHBoxLayout()
         horiz_layout_0.addWidget(self.clear_button)
+        horiz_layout_0.addWidget(self.use_selected_button)
         horiz_layout_0.addStretch()
 
         main_layout = QVBoxLayout()
@@ -319,11 +316,15 @@ class IPEventQueryResultsTable(QFrame):
         main_layout.addLayout(horiz_layout_0)
         main_layout.addWidget(self.tableView)
         self.setLayout(main_layout)
+        
+        self.connect_signals_and_slots()
+
+    def connect_signals_and_slots(self):
+        self.clear_button.clicked.connect(self.clearTable)
+        self.use_selected_button.clicked.connect(self.useSelected)
 
     def setData(self, data):
         '''This takes Wfdisc rows, and converts it for display in our tableView'''
-
-        self.data = data
         self.model = IPEventsModel(data)
         self.tableView.setModel(self.model)
         self.tableView.reset()
@@ -332,3 +333,30 @@ class IPEventQueryResultsTable(QFrame):
         # maybe do some additional clean-up here?
         if self.model:
             self.model.deleteLater()
+
+    def useSelected(self):
+        if self.tableView.selectionModel():
+            row = self.tableView.selectionModel().selectedRows()[0]
+        else:
+            return None
+
+        selected = self.model.get_data()[row.row()]
+        lat = selected[0]
+        lon = selected[1]
+        datetime = UTCDateTime(selected[3])
+        date = datetime.date
+        obstime = datetime.time
+        evid = selected[5]
+        print("time = {}".format(datetime))
+
+        time2 = time.gmtime(selected[3])
+        print("time2 = {}".format(time2))
+
+        time3 = datetime.datetime.fromtimestamp(selected[3])
+        print("time3 = {}".format(time3))
+
+        time4 = datetime.datetime.utcfromtimestamp(selected[3])
+        print("time4 = {}".format(time4))
+
+
+

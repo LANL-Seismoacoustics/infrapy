@@ -26,7 +26,6 @@ class IPProject:
 
     def __init__(self):
         self.__globalSettings = QSettings('LANL', 'InfraView')
-        # print(self.__globalSettings)
 
     def makeNewProject(self):
         newDialog = IPNewProjectDialog(self)

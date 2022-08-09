@@ -1321,7 +1321,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                 id_bits[1] = '###'
             stream_station_id = id_bits[0] + '.' + id_bits[1]
 
-            print(self._inv.networks)
             if len(self._inv.networks) > 0:
                 for network in self._inv.networks:
                     for station in network.stations:
@@ -1329,8 +1328,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                         if station_id == stream_station_id:
                             latlon.append([station.latitude, station.longitude])
                             location_count += 1
-            else:
-                print("hi mom")
             
 
         #if location_count != len(self.streams):

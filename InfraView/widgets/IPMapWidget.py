@@ -139,9 +139,14 @@ class IPMapWidget(QWidget):
         try:
             self.fig.canvas.draw()  # update matlabplot
         except urllib.error.URLError:
-            print('problem with download...')
+            self.errorPopup('problem with feature download. Proxie issue?')
 
-
+    def errorPopup(self, message, title="Oops..."):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(message)
+        msg_box.setWindowTitle(title)
+        msg_box.exec_()
 
     def update_detections(self, ip_detections=None, linecolor='gray', autoscale=True):
         self.clear_plot(reset_zoom=False)

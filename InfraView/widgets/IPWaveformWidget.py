@@ -313,7 +313,7 @@ class IPWaveformWidget(QWidget):
                 self._inv = self.inv_remove(self._inv, network=net_id, station=station_id)
 
             except AttributeError as e:
-                print(e)
+                self.errorPopup(str(e))
 
             self.stationViewer.setInventory(self._inv)
 

@@ -402,9 +402,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                     # for each plot, generate the three arrival lines
                     # tropospheric  340 m/s
                     travel_time = distance/340.0
-                    print('-----------------')
                     position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
-                    print(position)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Tropospheric'))
                     plot.addItem(self.arrival_line_list[idx])
                     self.arrival_line_list[idx].setVisible(eventWidget.displayArrivals_cb.isChecked())
@@ -412,7 +410,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                     # thermospheric 250 m/s
                     travel_time = distance/250.0
                     position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
-                    print(position)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Thermospheric'))
                     plot.addItem(self.arrival_line_list[idx+1])
                     self.arrival_line_list[idx+1].setVisible(eventWidget.displayArrivals_cb.isChecked())
@@ -420,7 +417,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                     # stratospheric 290 m/s
                     travel_time = distance/290.0
                     position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
-                    print(position)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Stratospheric'))
                     plot.addItem(self.arrival_line_list[idx+2])
                     self.arrival_line_list[idx+2].setVisible(eventWidget.displayArrivals_cb.isChecked())

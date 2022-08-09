@@ -1,3 +1,5 @@
+from ssl import OP_NO_RENEGOTIATION
+from tkinter import N
 import urllib.parse
 import configparser
 
@@ -16,6 +18,8 @@ class IPTableDialog(QDialog):
         self.setWindowTitle("InfraView: Table Editor")
         self.tables_textEdit = QTextEdit()
 
+        descriptor_label = QLabel('''The format for the tables should look something like...\nsite: global.site\nwfdisc: global.wfdisc_raw\norigin: myorigin.origin\nevent: myevent.event''')
+        
         # OK and Cancel buttons
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         buttons.accepted.connect(self.accept)
@@ -23,6 +27,7 @@ class IPTableDialog(QDialog):
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.tables_textEdit)
+        vlayout.addWidget(descriptor_label)
         vlayout.addWidget(buttons)
 
         self.setLayout(vlayout)
@@ -34,14 +39,12 @@ class IPTableDialog(QDialog):
     def reset(self):
         self.tables_textEdit.setText(self.initial_text)
     
-    def set_text_from_table_dict(self, tables, owner=None):
+    def set_text_from_table_dict(self, tables):
         # set the text of the table editor from a dictionary of tables
         text = ""
+        print(tables)
         for key, value in tables.items():
-            if owner:
-                text += key + ': ' + owner + '.' + value + '\n'
-            else:
-                text += key + ': ' + value + '\n'
+            text += key + ':' + value + '\n'
 
         self.tables_textEdit.setText(text.rstrip())
 
@@ -51,17 +54,8 @@ class IPTableDialog(QDialog):
         table_dict = {}
         for line in lines:
             key_val = line.split(':')
-            key = key_val[0]
-            val = key_val[1].split('.')
-            if len(val) > 1:
-                # there is an owner...
-                owner = val[0].strip()
-                table_dict[key] = val[1]
-            else:
-                # no owner, value is val
-                table_dict[key] = val
-
-        return table_dict, owner
+            table_dict[key_val[0]] = key_val[1]
+        return table_dict
 
     def reject(self):
         self.reset()
@@ -124,7 +118,9 @@ class IPDatabaseConnectWidget(QFrame):
         self.portnum_edit.setValidator(rxv)
         self.portnum_edit.setMaximumWidth(100)
 
-        self.url_label = QLabel("")
+        self.url_edit = QLineEdit()
+        self.url_edit.setPlaceholderText("URL")
+        self.url_edit.setToolTip("You may edit this by hand if the url generated from the pieces doesn't work")
 
         self.create_session_button = QPushButton("Create Session")
         self.create_session_button.setMaximumWidth(200)
@@ -149,7 +145,6 @@ class IPDatabaseConnectWidget(QFrame):
         form_layout.addRow("Driver: ", self.driver_edit)
         form_layout.addRow("Database Name: ", self.database_name)
         form_layout.addRow("Port Number: ", self.portnum_edit)
-        form_layout.addRow("URL: ", self.url_label)
 
         horiz_layout_1 = QHBoxLayout()
         horiz_layout_1.addStretch()
@@ -166,6 +161,7 @@ class IPDatabaseConnectWidget(QFrame):
         main_layout.addWidget(self.title_label)
         main_layout.addLayout(horiz_layout_0)
         main_layout.addLayout(horiz_layout_2)
+        main_layout.addWidget(self.url_edit)
         main_layout.addStretch()
         main_layout.addLayout(horiz_layout_1)
         self.setLayout(main_layout)
@@ -182,6 +178,8 @@ class IPDatabaseConnectWidget(QFrame):
         self.password_edit.textEdited.connect(self.update_url)
         self.dialect_combo.currentIndexChanged.connect(self.update_url)
         self.schema_type_combo.currentIndexChanged.connect(self.update_url)
+
+        self.url_edit.textEdited.connect(self.url_manually_edited)
 
         self.driver_edit.textEdited.connect(self.update_url)
         self.database_name.textEdited.connect(self.update_url)
@@ -200,7 +198,7 @@ class IPDatabaseConnectWidget(QFrame):
             self.save_current_button.setEnabled(True)
 
     def update_url(self):
-        self.url_label.setStyleSheet("QLabel {color:black}")
+        
         dialect = self.dialect_combo.currentText()
         driver = self.driver_edit.text()
         if driver:
@@ -212,9 +210,12 @@ class IPDatabaseConnectWidget(QFrame):
         port = self.portnum_edit.text()
         db_name = self.database_name.text()
 
-        self.url_label.setText(dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name)
+        self.url_edit.setText(dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name)
 
         # if the url changes... so has some of the information.  This might need to be saved, so activate the save_current button
+        self.save_current_button.setEnabled(True)
+
+    def url_manually_edited(self):
         self.save_current_button.setEnabled(True)
 
     def create_session(self):
@@ -224,8 +225,7 @@ class IPDatabaseConnectWidget(QFrame):
         # now proceed as usual
         dialect = self.dialect_combo.currentText()
         driver = self.driver_edit.text()
-        #if driver:
-        #    driver = '+' + driver
+
         username = self.username_edit.text()
         # special characters in the password need to be correctly parsed into url strings
         password = urllib.parse.quote_plus(self.password_edit.text())
@@ -233,7 +233,7 @@ class IPDatabaseConnectWidget(QFrame):
         port = self.portnum_edit.text()
         db_name = self.database_name.text()
 
-        url = dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
+        url = self.url_edit.text()
 
         try:
             #self.session = database.db_connect_url(url)
@@ -244,15 +244,15 @@ class IPDatabaseConnectWidget(QFrame):
                                                username=username, 
                                                password=password, 
                                                driver=driver)
-            self.url_label.setStyleSheet("QLabel {color: green}")
+            self.url_edit.setStyleSheet("color: green")
         except Exception as e:
-            self.url_label.setStyleSheet("QLabel {color: red}")
+            self.url_edit.setStyleSheet("color: red")
             self.errorPopup("Error connecting to url:\n{}\n{}".format(url, e))
     
     def close_session(self):
         if self.session is not None:
             self.session.close()
-            self.url_label.setStyleSheet("QLabel {color: black}")
+            self.url_edit.setStyleSheet("color: black")
             self.session = None
 
     def check_connection(self):
@@ -290,14 +290,24 @@ class IPDatabaseConnectWidget(QFrame):
                 self.portnum_edit.setText(config['DATABASE']['port'])
                 self.driver_edit.setText(config['DATABASE']['driver'])
                 self.dialect_combo.setCurrentText(config['DATABASE']['dialect'])
-                self.update_url()
-                if config['DATABASE']['owner']:
-                    self.table_dialog.set_text_from_table_dict(config['DBTABLES'], owner=config['DATABASE']['owner'])
+                if config.has_option('DATABASE', 'url'):
+                    self.url_edit.setText(config['DATABASE']['url'])
                 else:
-                    self.table_dialog.set_text_from_table_dict(config['DBTABLES'])
+                    my_url = database.assemble_db_url(self.dialect_combo.currentText(), 
+                                                      self.hostname_edit.text(), 
+                                                      self.database_name.text(), 
+                                                      self.portnum_edit.text(), 
+                                                      self.username_edit.text(),
+                                                      self.password_edit.text(),
+                                                      self.driver_edit.text())
+                    self.url_edit.setText(my_url)
+
+                self.table_dialog.set_text_from_table_dict(config['DBTABLES'])
+
                 self.save_current_button.setEnabled(False)
+
             except Exception as e:
-                self.errorPopup("Error reading config file \n{}".format(e))
+                self.errorPopup("Error reading config file \n{}".format(str(e)))
 
     def save_current_config(self):
         save_filename = QFileDialog.getSaveFileName(self, "Save db configuration", "/home/jwebster/IPProjects", "(*.ini)")[0]
@@ -312,10 +322,10 @@ class IPDatabaseConnectWidget(QFrame):
                 config['DATABASE']['port'] = self.portnum_edit.text()
                 config['DATABASE']['driver'] = self.driver_edit.text()
                 config['DATABASE']['dialect'] = self.dialect_combo.currentText()
+                config['DATABASE']['url'] = self.url_edit.text()
                 
-                table_dict, owner = self.table_dialog.get_tables_from_text()
+                table_dict = self.table_dialog.get_tables_from_text()
                 config['DBTABLES'] = table_dict
-                config['DATABASE']['owner'] = owner
 
                 with open(save_filename, 'w') as config_file:
                     config.write(config_file)
