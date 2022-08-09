@@ -152,7 +152,7 @@ def prep_session(db_info, check_connection=False):
         except Exception as e:
             print("Database connection check failed")
         
-    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
+    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'])
 
     return session, db_tables
 
