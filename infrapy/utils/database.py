@@ -114,28 +114,30 @@ def check_connection(session):
         return False
 
 
-def query_db(session, start_time, end_time, sta="%", cha="%", return_type='dataframe'):
+def query_db(session, tables, start_time, end_time, sta="%", cha="%", return_type='dataframe', asquery=False):
 
-    db_tables = make_tables_from_dict(tables={'Wfdisc':'wfdisc_raw', 'Site': 'site'}, schema='kbcore', owner='global')
+    db_tables = make_tables_from_dict(tables=tables, schema='kbcore')
 
     if session is None:
         return None
-
-    print("STA = {}".format(sta))
     
     if return_type == 'dataframe':
-        my_query = session.query(db_tables['Wfdisc']).filter(db_tables['Wfdisc'].sta.like(sta)\
-                                        .filter(db_tables['Wfdisc'].time < end_time.timestamp)\
-                                        .filter(db_tables['Wfdisc'].endtime > start_time.timestamp)\
-                                        .filter(db_tables['Wfdisc'].chan.like(cha)))
-
-        return pd.read_sql(my_query.statement, session.bind)
+        my_query = session.query(db_tables['wfdisc']).filter(db_tables['wfdisc'].sta.like(sta)\
+                                        .filter(db_tables['wfdisc'].time < end_time.timestamp)\
+                                        .filter(db_tables['wfdisc'].endtime > start_time.timestamp)\
+                                        .filter(db_tables['wfdisc'].chan.like(cha)))
+        if asquery:
+            return my_query.statement
+        else:
+            return pd.read_sql(my_query.statement, session.bind)
 
     elif return_type == 'wfdisc_rows':
-        my_query =  ps.request.get_wfdisc_rows(session, db_tables['Wfdisc'], chan=cha, t1=start_time, t2=end_time, asquery=True)
-        my_query = my_query.filter(db_tables['Wfdisc'].sta.like(sta))
-        return my_query.all()
-
+        my_query =  ps.request.get_wfdisc_rows(session, db_tables['wfdisc'], chan=cha, t1=start_time, t2=end_time, asquery=True)
+        my_query = my_query.filter(db_tables['wfdisc'].sta.like(sta))
+        if asquery:
+            return my_query
+        else:
+            return my_query.all()
     else:
         return None
 
@@ -152,7 +154,7 @@ def prep_session(db_info, check_connection=False):
         except Exception as e:
             print("Database connection check failed")
         
-    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'], owner=db_info['DATABASE']['owner'])
+    db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'])
 
     return session, db_tables
 
@@ -166,7 +168,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
     '''
 
     Site = db_tables['site']
-    Wfdisc = db_tables['wfdisc']
+    wfdisc = db_tables['wfdisc']
 
     # convert station wildcards to SQL and check that channel is not None
     if type(stations) is str:
@@ -189,7 +191,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
     # pull data into the stream and merge to combine time segments
     st = Stream()
     for sta_n in sta_list:
-        temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
+        temp_st = ps.request.get_waveforms(session, wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
         for tr in temp_st:
             tr.data = tr.data - np.mean(tr.data)
             tr.stats['_format'] = 'SAC'
@@ -206,53 +208,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
 
     return st, latlon
 
-def gui_wvfrms_from_db(session, stations, channel, starttime, endtime, db_tables):
-    ''' function to pull obspy streams from the database.  
-        This version is designed to work with the gui, which should already have session, and database tables already loaded
-        stations: str
-        channel: str
-        starttime: DateTime 
-    '''
-    Site = db_tables['site']
-    Wfdisc = db_tables['wfdisc']
-
-    # convert station wildcards to SQL and check that channel is not None
-    if type(stations) is str:
-        stations = stations.replace('*','%')
-
-    if channel is None:
-        channel = "*"
-
-    # get station info
-    if "%" in stations:
-        # Load data specified with a while card (e.g., 'I26H*') via a Site table query
-        sta_list = session.query(Site).filter(Site.sta.contains(stations))
-    elif ',' in stations:
-        # Load data specified by a string list of stations (e.g., 'I26H1, I26H2, I26H3, I26H4') with get_stations
-        sta_list = ps.request.get_stations(session, Site, stations=stations.strip(' ()[]').split(','))
-    else:
-        # Load data specified by a Python list of strings (e.g., ['I26H1', 'I26H2', 'I26H3', 'I26H4']) with get_stations
-        sta_list = ps.request.get_stations(session, Site, stations=stations)
-
-    # pull data into the stream and merge to combine time segments
-    st = Stream(traces=None)
-    for sta_n in sta_list:
-        temp_st = ps.request.get_waveforms(session, Wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
-        for tr in temp_st:
-            # for now we will remove dc offset when loading the file.  Maybe should be an option?
-            tr.data = tr.data - np.mean(tr.data)
-            tr.stats['_format'] = 'SAC'
-            if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
-                tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
-                if len(tr.stats.network) == 0:
-                    tr.stats.network = "__"
-                st.append(tr)
-    
-    st.merge(fill_value=0)
-
-    return st
-
-def make_tables_from_dict(tables=None, schema=None, owner=None):
+def make_tables_from_dict(tables=None, schema=None):
     # first handle the bailout conditions
     if tables is None and schema is None:
         msg = "Not enough information to generate tables"
@@ -270,10 +226,6 @@ def make_tables_from_dict(tables=None, schema=None, owner=None):
     if tables is None:
         return core_tables
     else:
-        if owner:
-            for key, value in tables.items():
-                tables[key] = owner + "." + value
-
         dict_of_classes = {}
         for table, tablename in tables.items():
             prototype = core_tables[table.lower()].prototype
@@ -281,19 +233,26 @@ def make_tables_from_dict(tables=None, schema=None, owner=None):
     
     return dict_of_classes
 
-def eventID_query(session, eventID, db_tables):
-    evIDs = [int(eventID)]
-    print("Querying for event id: {}".format(evIDs))
-    events = ps.request.get_events(session, db_tables['Origin'], db_tables['Event'], evIDs)
+def eventID_query(session, eventID, db_tables, asquery):
+    # session is a current active session
+    # eventID is the event id to search for
+    # db_tables is a dictionary of available mapped tables (needs to contain Event and Origin tables)
+
+    evIDs = [int(eventID)]  # for now only query one evid at a time
+    if asquery:
+        return ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs, asquery=True)
+    else:
+        events = ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs)
 
     if events:
-        print(events)
+        return events
     else:
         print("no event found")
+        return None
 
 def event_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
 
     if 'Origin' not in db_tables or 'Event' not in db_tables:
         raise KeyError
     
-    events = ps.request.get_events(session, db_tables['Origin'], db_tables['Events'], km=(center_lat, center_lon, minr, maxr), etime=(startt, endt))
+    events = ps.request.get_events(session, db_tables['origin'], db_tables['events'], km=(center_lat, center_lon, minr, maxr), etime=(startt, endt))
