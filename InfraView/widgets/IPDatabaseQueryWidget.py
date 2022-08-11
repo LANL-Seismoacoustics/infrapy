@@ -72,6 +72,7 @@ class IPEventQueryWidget(QFrame):
 
         self.query_textEdit = QPlainTextEdit()
         self.query_textEdit.setMaximumHeight(120)
+        self.query_textEdit.setReadOnly(True)
         self.query_textEdit.setPlaceholderText("Query string...")
 
         self.clear_button = QPushButton("Clear")
@@ -196,6 +197,7 @@ class IPDatabaseQueryWidget(QFrame):
 
         self.query_textEdit = QPlainTextEdit()
         self.query_textEdit.setMaximumHeight(120)
+        self.query_textEdit.setReadOnly(True)
         self.query_textEdit.setPlaceholderText("Query string...")
 
         self.clear_button = QPushButton("Clear")
@@ -260,8 +262,11 @@ class IPDatabaseQueryWidget(QFrame):
             cha = self.cha_edit.text()
 
         tables = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
-        new_query = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows', asquery=True)
-        self.query_textEdit.setPlainText(str(new_query))
+        try:
+            new_query = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows', asquery=True)
+            self.query_textEdit.setPlainText(str(new_query))
+        except KeyError as e:
+            self.errorPopup(str(e) + " is not defined.  Have you defined all your tables?")
 
     def get_current_session(self):
         return self.parent.ipdatabase_connect_widget.session
