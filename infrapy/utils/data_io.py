@@ -224,7 +224,12 @@ def write_stream_to_sac(stream, latlon):
         Iterable containing latitude and longitude info for each trace of the stream
     """
 
-    sac_info = [blank_sac_dict] * len(stream)
+    labels = [tr.stats.network + "." + tr.stats.station for tr in stream]
+    if len(np.unique(labels)) < len(stream):
+        print("Warning!  Non-unique labels.  Adding indexing...")
+        labels = [label + "-" + str(n) for n, label in enumerate(labels)]
+
+    sac_info = [blank_sac_dict] * len(stream)   
     for m, tr in enumerate(stream):
         sac_info[m]['delta'] = tr.stats.delta
         sac_info[m]['npts'] = tr.stats.npts
@@ -249,7 +254,7 @@ def write_stream_to_sac(stream, latlon):
         
         tr.stats.sac = sac_info[m]
 
-        label = tr.stats.network + "." + tr.stats.station + tr.stats.starttime.strftime('_%Y.%m.%d_%H.%M.%S')
+        label = labels[m] + tr.stats.starttime.strftime('_%Y.%m.%d_%H.%M.%S')
 
         tr.write(label + ".sac", format='SAC') 
 
