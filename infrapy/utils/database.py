@@ -6,6 +6,7 @@
 
 import numpy as np
 import fnmatch 
+import os
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
@@ -78,6 +79,11 @@ def assemble_db_url(dialect, hostname, db_name, port=None, username="", password
         driver = '+' + driver
     return dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
  
+def set_db_env_variables(env_vars):
+    # env_vars is a dictionary containing the environment variable as the key, and what to set it to as the value
+    # Note that the environment variables will only last for the duration of the session.
+    for key, value in env_vars.items():
+            os.environ[key] = value
 
 def db_connect2(db_info):
     dialect = db_info['DATABASE']['dialect']

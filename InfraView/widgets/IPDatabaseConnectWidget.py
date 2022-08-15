@@ -1,3 +1,4 @@
+from email.errors import NonPrintableDefect
 from ssl import OP_NO_RENEGOTIATION
 from tkinter import N
 import urllib.parse
@@ -305,8 +306,8 @@ class IPDatabaseConnectWidget(QFrame):
 
         # make sure any environment variables are loaded.
         env_vars = self.env_vars_dialog.get_vars_from_text()
-        for key, value in env_vars.items():
-            os.environ[key] = value
+        if env_vars:
+            database.set_db_env_variables(env_vars)
 
         # now proceed as usual
         dialect = self.dialect_combo.currentText()
