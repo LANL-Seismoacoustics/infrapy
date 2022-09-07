@@ -348,4 +348,6 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     conf_bnds[0], _, temp = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.68)
     conf_bnds[1], _, temp = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.95)
 
-    return yld_vals, yld_pdf, conf_bnds
+    result = {'yld_vals': yld_vals, 'yld_pdf' : yld_pdf, 'conf_bnds': conf_bnds}
+
+    return result 

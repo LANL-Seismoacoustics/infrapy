@@ -13,7 +13,9 @@
         "Array Dimension": 4,
         "Method": "bartlett",
         "Event": "HRR-5",
-        "Note": ""
+        "Note": "",
+        "Network": "NCPA",
+        "Station": "W220"
     },
     {
         "Name": "W240",
@@ -29,7 +31,9 @@
         "Array Dimension": 3,
         "Method": "bartlett",
         "Event": "HRR-5",
-        "Note": ""
+        "Note": "",
+        "Network": "NCPA",
+        "Station": "W240"
     },
     {
         "Name": "W340",
@@ -45,7 +49,9 @@
         "Array Dimension": 4,
         "Method": "bartlett",
         "Event": "HRR-5",
-        "Note": ""
+        "Note": "",
+        "Network": "",
+        "Station": "W340"
     },
     {
         "Name": "W420",
@@ -61,7 +67,9 @@
         "Array Dimension": 6,
         "Method": "bartlett",
         "Event": "HRR-5",
-        "Note": ""
+        "Note": "",
+        "Network": "",
+        "Station": "W420"
     },
     {
         "Name": "W460",
@@ -77,6 +85,8 @@
         "Array Dimension": 6,
         "Method": "bartlett",
         "Event": "HRR-5",
-        "Note": ""
+        "Note": "",
+        "Network": "",
+        "Station": "W460"
     }
 ]

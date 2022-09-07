@@ -338,7 +338,7 @@ Writing a new version: data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0.fk_results.da
 </li>
 <li><p>From the beamforming results, detection analysis can be conducted via the <code class="code docutils literal notranslate"><span class="pre">run_fd</span></code> method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified.</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_fd --config-file config/detection_local.config
 </pre></div>
 </div>
 <p>Similarly to the <code class="code docutils literal notranslate"><span class="pre">run_fk</span></code> methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:</p>
@@ -453,10 +453,10 @@ local_detect_label = auto
 <ul>
 <li><p>Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evaluation of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_assoc --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span> --local-event-label GJI_example
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_assoc --local-detect-label <span class="s1">&#39;data/Blom_etal2020_GJI/*&#39;</span> --local-event-label GJI_example --cpu-cnt <span class="m">4</span>
 </pre></div>
 </div>
-<p>Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it’s recommended to add on a <code class="code docutils literal notranslate"><span class="pre">--cpu-cnt</span></code> option and multithread the computation of the joint-likelihood values.  The analysis results will be summarized to the screen,</p>
+<p>Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it’s recommended to add on a <code class="code docutils literal notranslate"><span class="pre">--cpu-cnt</span></code> option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#####################################
 ##                                 ##
 ##             InfraPy             ##
@@ -510,6 +510,7 @@ Running event identification for: 2010-01-01T13:23:14.773Z - 2010-01-01T17:10:29
         Trimming poor linkages and repeating clustering analysis...
 
 Cleaning up and merging clusters...
+identified 3 events.
 </pre></div>
 </div>
 <p>The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is <code class="code docutils literal notranslate"><span class="pre">local_event_label_ev-#.dets.json</span></code> and the example analysis here should have identified 3 events.</p>
@@ -576,11 +577,8 @@ Source time analysis:
 Writing localization result into GJI_example-ev0.loc.json
 </pre></div>
 </div>
-</div></blockquote>
-</li>
-<li><p>The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max <span class="m">1200</span>.0
+<p>The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max <span class="m">1200</span>.0
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_loc1.png"><img alt="_images/plot_loc1.png" class="align-center" src="_images/plot_loc1.png" style="width: 1200px;" /></a>
@@ -594,6 +592,49 @@ Writing localization result into GJI_example-ev0.loc.json
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/plot_origin_time.png"><img alt="_images/plot_origin_time.png" class="align-center" src="_images/plot_origin_time.png" style="width: 1200px;" /></a>
+</div></blockquote>
+</li>
+<li><p>For above-ground explosive sources for which source models such as the Kinney &amp; Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy’s Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">infrapy</span> <span class="n">run_yield</span> <span class="o">--</span><span class="n">local</span><span class="o">-</span><span class="n">wvfrms</span> <span class="s1">&#39;../infrapy-data/hrr-5/*/*.sac&#39;</span> <span class="o">--</span><span class="n">local</span><span class="o">-</span><span class="n">detect</span><span class="o">-</span><span class="n">label</span> <span class="n">data</span><span class="o">/</span><span class="n">HRR</span><span class="o">-</span><span class="mf">5.</span><span class="n">dets</span><span class="o">.</span><span class="n">json</span>  <span class="o">--</span><span class="n">tlm</span><span class="o">-</span><span class="n">label</span> <span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span> <span class="o">--</span><span class="n">src</span><span class="o">-</span><span class="n">lat</span> <span class="mf">33.5377</span> <span class="o">--</span><span class="n">src</span><span class="o">-</span><span class="n">lon</span> <span class="o">-</span><span class="mf">106.333961</span>
+</pre></div>
+</div>
+<p>As with other analysis methods, parameter information will be summarized and high level results:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#####################################
+##                                 ##
+##             InfraPy             ##
+##    Yield Estimation Analysis    ##
+##                                 ##
+#####################################
+
+
+Data parameters:
+  local_detect_label: data/HRR-5.dets.json
+  local_loc_label: None
+  tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
+  local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+
+Algorithm parameters:
+  freq_min: 0.25
+  freq_max: 1.0
+  yld_min: 1.0
+  yld_max: 1000.0
+  ref_rng: 1.0
+  resolution: 200
+  src_lat: 33.5377
+  src_lon: -106.333961
+
+Loading local data from ../infrapy-data/hrr-5/*/*.sac
+Computing detection spectra...
+Estimating yield using spectral amplitudes...
+
+Results:
+    Maximum a Posteriori Yield: 45.5293507487
+    68% Confidence Bounds: [  21.  115.]
+    95% Confidence Bounds: [   3.  358.]
+</pre></div>
+</div>
+<p>The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL and extract the location from that source.  Visualization and saving these results to file are still in progress and will be added in a future update.</p>
 </div></blockquote>
 </li>
 </ul>
@@ -743,9 +784,8 @@ Writing localization result into GJI_example-ev0.loc.json
     <span class="c1"># ######################### #</span>
 
     <span class="n">det_file</span> <span class="o">=</span> <span class="s2">&quot;data/HRR-5.dets.json&quot;</span>
-    <span class="n">data_path</span> <span class="o">=</span> <span class="s2">&quot;../infrapy-data/hrr-5/&quot;</span>
-    <span class="n">data_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;W220/HR5.W220*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W240/HR5.W240*.sac&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;W340/HR5.W340*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W420/HR5.W420*.sac&quot;</span><span class="p">,</span> <span class="s2">&quot;W460/HR5.W460*.sac&quot;</span><span class="p">]</span>
+    <span class="n">wvfrm_path</span> <span class="o">=</span> <span class="s2">&quot;../infrapy-data/hrr-5/*/*.sac&quot;</span>
+    <span class="n">tloss_path</span> <span class="o">=</span> <span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span>
 </pre></div>
 </div>
 <p>The analysis parameters include a noise option (“pre” or “post” detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.</p>
@@ -767,27 +807,22 @@ Writing localization result into GJI_example-ev0.loc.json
 <span class="c1">#          and spectra          #</span>
 <span class="c1"># ############################# #</span>
 <span class="n">det_list</span> <span class="o">=</span> <span class="n">data_io</span><span class="o">.</span><span class="n">json_to_detection_list</span><span class="p">(</span><span class="n">det_file</span><span class="p">)</span>
-<span class="n">st_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">det_list</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st_list</span><span class="p">)):</span>
-    <span class="n">st_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">data_path</span> <span class="o">+</span> <span class="n">data_ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">)</span>
-<span class="n">smn_specs</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">extract_spectra</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">st_list</span><span class="p">,</span>
-                        <span class="n">win_buffer</span><span class="o">=</span><span class="n">win_buffer</span><span class="p">,</span> <span class="n">ns_opt</span><span class="o">=</span><span class="n">ns_opt</span><span class="p">)</span>
+<span class="n">st_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">Stream</span><span class="p">([</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">read</span><span class="p">(</span><span class="n">wvfrm_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">det</span><span class="o">.</span><span class="n">station</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">])</span> <span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">det_list</span><span class="p">]</span>
+<span class="n">smn_specs</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">extract_spectra</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">st_list</span><span class="p">,</span> <span class="n">win_buffer</span><span class="o">=</span><span class="n">win_buffer</span><span class="p">,</span> <span class="n">ns_opt</span><span class="o">=</span><span class="n">ns_opt</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The transmission loss model models are defined and loaded,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">.</span>
-    <span class="c1"># ######################### #</span>
-    <span class="c1">#     Load TLoss Models     #</span>
-    <span class="c1"># ######################### #</span>
-    <span class="n">tloss_f_min</span><span class="p">,</span> <span class="n">tloss_f_max</span><span class="p">,</span> <span class="n">tloss_f_cnt</span> <span class="o">=</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">25</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ######################### #</span>
+<span class="c1">#     Load TLoss Models     #</span>
+<span class="c1"># ######################### #</span>
+<span class="n">tloss_f_min</span><span class="p">,</span> <span class="n">tloss_f_max</span><span class="p">,</span> <span class="n">tloss_f_cnt</span> <span class="o">=</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">25</span>
 
-    <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
-    <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_min</span><span class="p">),</span>
-                        <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_max</span><span class="p">),</span> <span class="n">tloss_f_cnt</span><span class="p">))</span>
-    <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">tloss_f_cnt</span>
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tloss_f_cnt</span><span class="p">):</span>
-        <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">infrasound</span><span class="o">.</span><span class="n">TLossModel</span><span class="p">()</span>
-        <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;Hz.pri&quot;</span><span class="p">)</span>
+<span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+<span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_min</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tloss_f_max</span><span class="p">),</span> <span class="n">tloss_f_cnt</span><span class="p">))</span>
+<span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">tloss_f_cnt</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tloss_f_cnt</span><span class="p">):</span>
+    <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">infrasound</span><span class="o">.</span><span class="n">TLossModel</span><span class="p">()</span>
+    <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tloss_path</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;Hz.pri&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, analysis can be performed, and results printed and visualized,</p>
@@ -795,21 +830,18 @@ Writing localization result into GJI_example-ev0.loc.json
 <span class="c1">#         Run Yield        #</span>
 <span class="c1">#    Estimation Methods    #</span>
 <span class="c1"># ######################## #</span>
-<span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">conf_bnds</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">smn_specs</span><span class="p">,</span> <span class="n">src_loc</span><span class="p">,</span> <span class="n">freq_band</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span>
-                                        <span class="n">yld_rng</span><span class="o">=</span><span class="n">yld_rng</span><span class="p">,</span> <span class="n">ref_src_rng</span><span class="o">=</span><span class="n">ref_rng</span><span class="p">,</span> <span class="n">resol</span><span class="o">=</span><span class="n">resol</span><span class="p">)</span>
+<span class="n">yld_results</span> <span class="o">=</span> <span class="n">spye</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">det_list</span><span class="p">,</span> <span class="n">smn_specs</span><span class="p">,</span> <span class="n">src_loc</span><span class="p">,</span> <span class="n">freq_band</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">yld_rng</span><span class="o">=</span><span class="n">yld_rng</span><span class="p">,</span> <span class="n">ref_src_rng</span><span class="o">=</span><span class="n">ref_rng</span><span class="p">,</span> <span class="n">resol</span><span class="o">=</span><span class="n">resol</span><span class="p">)</span>
 
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Results:&#39;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;Maximum a Posteriori Yield:&quot;</span><span class="p">,</span> <span class="n">yld_vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">yld_pdf</span><span class="p">)])</span>
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;68% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;95% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;Maximum a Posteriori Yield:&quot;</span><span class="p">,</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_pdf&#39;</span><span class="p">])])</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;68% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s2">&quot;95% Confidence Bounds:&quot;</span><span class="p">,</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_vals</span> <span class="o">&lt;=</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_pdf</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_vals</span><span class="p">,</span> <span class="n">yld_vals</span> <span class="o">&lt;=</span> <span class="n">conf_bnds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">],</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_pdf&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">],</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_pdf&#39;</span><span class="p">],</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">],</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">],</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_pdf&#39;</span><span class="p">],</span> <span class="n">where</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">],</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;yld_vals&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">yld_results</span><span class="p">[</span><span class="s1">&#39;conf_bnds&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div></blockquote>

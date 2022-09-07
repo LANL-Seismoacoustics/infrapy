@@ -490,3 +490,44 @@ def origin_time(config_file, local_loc_label, figure_out):
     click.echo("Plotting origin time distribution...")
     loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
     
+
+@click.command('yield', short_help="Plot yield estimate distribution")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-yld-label", help="Yield estimate result", default=None)
+@click.option("--figure-out", help="Destination for figure", default=None)
+def yield_plot(config_file, local_yld_label, figure_out):
+
+    '''
+    Visualize the SpYE result
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy plot yield --local-yld-label HRR-5.yld.json
+
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##            Yield Plot           ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_loc_label, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  local_yld_label: " + str(local_yld_label))
+
+    click.echo('\n' + "Reading in SpYE results...")
+    spye_result = data_io.read_yld(local_yld_label)
+
+    print(spye_result)

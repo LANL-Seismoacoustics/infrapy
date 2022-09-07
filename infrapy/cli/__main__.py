@@ -45,6 +45,7 @@ main.add_command(cli_detection.run_fd)
 main.add_command(cli_detection.run_fkd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
+main.add_command(cli_loc.run_yield)
 
 # visualizations
 plot.add_command(cli_visualization.fk)

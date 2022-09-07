@@ -471,7 +471,7 @@ Network-Level Analyses
 
         Writing localization result into GJI_example-ev0.loc.json
 
-- The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
+    The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
 
     .. code-block:: bash
 
@@ -501,6 +501,54 @@ Network-Level Analyses
     .. image:: _static/_images/plot_origin_time.png
         :width: 1200px
         :align: center
+
+
+- For above-ground explosive sources for which source models such as the Kinney & Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy's Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):
+
+    .. code:: python
+
+        infrapy run_yield --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json  --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --src-lat 33.5377 --src-lon -106.333961
+
+    As with other analysis methods, parameter information will be summarized and high level results:
+
+    .. code:: none
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##    Yield Estimation Analysis    ##
+        ##                                 ##
+        #####################################
+
+
+        Data parameters:
+          local_detect_label: data/HRR-5.dets.json
+          local_loc_label: None
+          tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
+          local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+
+        Algorithm parameters:
+          freq_min: 0.25
+          freq_max: 1.0
+          yld_min: 1.0
+          yld_max: 1000.0
+          ref_rng: 1.0
+          resolution: 200
+          src_lat: 33.5377
+          src_lon: -106.333961
+
+        Loading local data from ../infrapy-data/hrr-5/*/*.sac
+        Computing detection spectra...
+        Estimating yield using spectral amplitudes...
+
+        Results:
+            Maximum a Posteriori Yield: 45.5293507487
+            68% Confidence Bounds: [  21.  115.]
+            95% Confidence Bounds: [   3.  358.]
+
+
+    The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL and extract the location from that source.  Visualization and saving these results to file are still in progress and will be added in a future update.
+    
 
 *************************************
 Scripting and Notebook-Based Analysis 
@@ -639,9 +687,8 @@ Scripting and Notebook-Based Analysis
             # ######################### #
 
             det_file = "data/HRR-5.dets.json"
-            data_path = "../infrapy-data/hrr-5/"
-            data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", 
-                        "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]
+            wvfrm_path = "../infrapy-data/hrr-5/*/*.sac"
+            tloss_path = "../infrapy/propagation/priors/tloss/2007_08-"
 
     The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
 
@@ -667,30 +714,25 @@ Scripting and Notebook-Based Analysis
             #          and spectra          #
             # ############################# #
             det_list = data_io.json_to_detection_list(det_file)
-            st_list = [0] * len(det_list)
-            for j in range(len(st_list)):
-                st_list[j] = read(data_path + data_ids[j] )
-            smn_specs = spye.extract_spectra(det_list, st_list, 
-                                    win_buffer=win_buffer, ns_opt=ns_opt)
+            st_list = [Stream([tr for tr in read(wvfrm_path) if det.station in tr.stats.station]) for det in det_list]
+            smn_specs = spye.extract_spectra(det_list, st_list, win_buffer=win_buffer, ns_opt=ns_opt)
     
 
     The transmission loss model models are defined and loaded,
 
     .. code-block:: python
-        
-        .
+
             # ######################### #
             #     Load TLoss Models     #
             # ######################### #
             tloss_f_min, tloss_f_max, tloss_f_cnt = 0.025, 2.5, 25
 
             models = [0] * 2
-            models[0] = list(np.logspace(np.log10(tloss_f_min), 
-                                np.log10(tloss_f_max), tloss_f_cnt))
+            models[0] = list(np.logspace(np.log10(tloss_f_min), np.log10(tloss_f_max), tloss_f_cnt))
             models[1] = [0] * tloss_f_cnt
             for n in range(tloss_f_cnt):
                 models[1][n] = infrasound.TLossModel()
-                models[1][n].load("../infrapy/propagation/priors/tloss/2007_08-" + "%.3f" % models[0][n] + "Hz.pri")
+                models[1][n].load(tloss_path + "%.3f" % models[0][n] + "Hz.pri")
 
     Finally, analysis can be performed, and results printed and visualized,
 
@@ -700,18 +742,15 @@ Scripting and Notebook-Based Analysis
             #         Run Yield        #
             #    Estimation Methods    #
             # ######################## #
-            yld_vals, yld_pdf, conf_bnds = spye.run(det_list, smn_specs, src_loc, freq_band, models, 
-                                                    yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
+            yld_results = spye.run(det_list, smn_specs, src_loc, freq_band, models, yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
 
             print('\nResults:')
-            print('\t' + "Maximum a Posteriori Yield:", yld_vals[np.argmax(yld_pdf)])
-            print('\t' + "68% Confidence Bounds:", conf_bnds[0])
-            print('\t' + "95% Confidence Bounds:", conf_bnds[1])
+            print('\t' + "Maximum a Posteriori Yield:", yld_results['yld_vals'][np.argmax(yld_results['yld_pdf'])])
+            print('\t' + "68% Confidence Bounds:", yld_results['conf_bnds'][0])
+            print('\t' + "95% Confidence Bounds:", yld_results['conf_bnds'][1])
 
-            plt.semilogx(yld_vals, yld_pdf)
-            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[0][0] <= yld_vals, yld_vals <= conf_bnds[0][1]), color='g', alpha=0.25)
-            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[1][0] <= yld_vals, yld_vals <= conf_bnds[1][1]), color='g', alpha=0.25)
+            plt.semilogx(yld_results['yld_vals'], yld_results['yld_pdf'])
+            plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][0][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][0][1]), color='g', alpha=0.25)
+            plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][1][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][1][1]), color='g', alpha=0.25)
 
-            plt.show(block=False)
-            plt.pause(5.0)
-            plt.close()
+            plt.show()

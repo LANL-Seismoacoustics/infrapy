@@ -552,9 +552,9 @@ class InfrasoundDetection(object):
         if 'Method' in dict:
             self.set_method(dict['Method'])
         if 'Network' in dict:
-            self.set_note(dict['Network'])
+            self.set_network(dict['Network'])
         if 'Station' in dict:
-            self.set_note(dict['Station'])
+            self.set_station(dict['Station'])
 
         # At this point, the array_dim, and peakF_value have probably changed, so we need to recalculate
         # some of the variables...
