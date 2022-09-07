@@ -105,15 +105,15 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
     x, y, z = 0.0, 0.0, 0.0
     for n in range (9):
         if not np.isnan(all_intersects[n][0]):
-            x += np.sin(np.radians(all_intersects[n][0])) * np.cos(np.radians(all_intersects[n][1]))
-            y += np.sin(np.radians(all_intersects[n][0])) * np.sin(np.radians(all_intersects[n][1]))
-            z += np.cos(np.radians(all_intersects[n][0]))
+            x += np.cos(np.radians(all_intersects[n][0])) * np.cos(np.radians(all_intersects[n][1]))
+            y += np.cos(np.radians(all_intersects[n][0])) * np.sin(np.radians(all_intersects[n][1]))
+            z += np.sin(np.radians(all_intersects[n][0]))
 
     norm = np.sqrt(x**2 + y**2 + z**2)
     x /= norm
     y /= norm
     z /= norm
-    center = [np.degrees(np.arccos(z)), np.degrees(np.arctan2(y, x))]
+    center = [np.degrees(np.arcsin(z)), np.degrees(np.arctan2(y, x))]
 
     # Compute the distance to the non-central intersections to estimate the size of the region
     # Limit the size of the possible region (diameter of 100 - 1,000 km, can't include a detecting station)
