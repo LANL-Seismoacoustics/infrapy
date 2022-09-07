@@ -189,7 +189,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
         sta_list = session.query(Site).filter(Site.sta.contains(stations))
     elif ',' in stations:
         # Load data specified by a string list of stations (e.g., 'I26H1, I26H2, I26H3, I26H4') with get_stations
-        sta_list = ps.request.get_stations(session, Site, stations=stations.strip(' ()[]').split(','))
+        sta_list = ps.request.get_stations(session, Site, stations=stations.strip('()[]').replace(" ", "").split(','))
     else:
         # Load data specified by a Python list of strings (e.g., ['I26H1', 'I26H2', 'I26H3', 'I26H4']) with get_stations
         sta_list = ps.request.get_stations(session, Site, stations=stations)
