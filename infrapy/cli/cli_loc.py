@@ -27,9 +27,8 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_loc --local-detect-label data/detection_set2.json --local-loc-label data/location2
+    \tinfrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
     \tinfrapy run_loc --local-detect-label data/detection_set2.json --local-loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
-    \tinfrapy run_loc --config-file config/loc_example.config
     '''
 
     click.echo("")

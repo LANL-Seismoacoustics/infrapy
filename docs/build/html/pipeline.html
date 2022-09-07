@@ -1,35 +1,69 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Running Pipeline Processing in Infrapy &mdash; Infrapy 1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-    <script src="_static/js/theme.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Running Pipeline Processing in Infrapy &mdash; Infrapy 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Configuration Files" href="config.html" />
-    <link rel="prev" title="Stand-Alone Processing" href="standalone.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="index.html" class="icon icon-home"> Infrapy
+          
+
+          
+            
             <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -37,63 +71,96 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Database Interfacing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="processing_model.html">Data Processing Flow</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="standalone.html">Stand-Alone Processing</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Running Pipeline Processing in Infrapy</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="config.html">Configuration Files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="fk.html">Infrapy FK Processing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="fd.html">Infrapy Detection (FD) Processing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="assoc.html">Infrapy Assoc Processing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html">Scripts</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="schema.html">Schema</a></li>
-<li class="toctree-l1"><a class="reference internal" href="infrapy.html">API</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Infrapy</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="processing_model.html">Data Processing Flow</a> &raquo;</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
       <li>Running Pipeline Processing in Infrapy</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+            
             <a href="_sources/pipeline.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
-  <section id="running-pipeline-processing-in-infrapy">
-<span id="pipeline"></span><h1>Running Pipeline Processing in Infrapy<a class="headerlink" href="#running-pipeline-processing-in-infrapy" title="Permalink to this headline"></a></h1>
+            
+  <div class="section" id="running-pipeline-processing-in-infrapy">
+<span id="pipeline"></span><h1>Running Pipeline Processing in Infrapy<a class="headerlink" href="#running-pipeline-processing-in-infrapy" title="Permalink to this headline">¶</a></h1>
 <p>The folder tutorials/cli contains all necessary data and configuration files to begin utilizing the pipeline processing methodologies in Infrapy.</p>
 <p>Once installed, the steps to run pipeline processing in Infrapy are:</p>
 <ol class="arabic simple">
-<li><p>Either load local waveform data into a sqlite database or connect to a Oracle database following instructions in <a class="reference internal" href="pisces.html#pisces"><span class="std std-ref">Interfacing with Pisces</span></a>.</p></li>
+<li><p>Either load local waveform data into a sqlite database or connect to a Oracle database following instructions in <a class="reference internal" href="pisces.html#pisces"><span class="std std-ref">Database Interfacing</span></a>.</p></li>
 <li><p>Create a configuration file. See <a class="reference internal" href="config.html#config"><span class="std std-ref">Configuration Files</span></a> for a detailed description of the parameters that need to be included. Two example configuration files, one for connecting to the provided sqlite file and one for connecting to an oracle database are provided.</p></li>
 <li><p>Run the FK analysis for a specific array:</p></li>
 </ol>
@@ -121,37 +188,46 @@
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 </ul>
 </div>
-</section>
+</div>
 
 
            </div>
+           
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="standalone.html" class="btn btn-neutral float-left" title="Stand-Alone Processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="config.html" class="btn btn-neutral float-right" title="Configuration Files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster.</p>
-  </div>
+    <p>
+        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

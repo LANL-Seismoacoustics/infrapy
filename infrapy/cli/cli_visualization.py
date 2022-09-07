@@ -42,8 +42,9 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 
     \b
     Example usage (run from infrapy/examples directory after running the run_fk examples):
-    \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_beam.png
-    \tinfrapy plot fk --config-file config/fk_example2.config --figure-out test.png --show-figure False
+    \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*'
+    \tinfrapy plot fk --config-file config/detection_local.config
+    \tinfrapy plot fk --config-file config/detection_fdsn.config --figure-out FDSN_fk-results.png --show-figure False
 
     '''
 
@@ -194,9 +195,10 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     Visualize detection (fd) results
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy plot_fd --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_detections.png
-    \tinfrapy plot_fd --config-file config/fk_example2.config --figure-out test.png --show-figure False
+    Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
+    \tinfrapy plot fd --local-wvfrms 'data/YJ.BRP*'
+    \tinfrapy plot fd --config-file config/detection_local.config
+    \tinfrapy plot fd --config-file config/detection_fdsn.config --figure-out FDSN_fd-results.png --show-figure False
 
     '''
 
@@ -350,8 +352,9 @@ def dets(config_file, range_max, local_detect_label, figure_out):
     Visualize detections on a map
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy plot dets --local-detect-label 'data/detection_set1.json' --figure-out detection_set1.png
+    Example usage (run from infrapy/examples directory after running run_assoc example):
+    \tinfrapy plot dets --local-detect-label 'data/Blom_etal2020_GJI/*'
+    \tinfrapy plot dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
 
     '''
 
@@ -402,7 +405,8 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot loc --local-event-label temp.json 
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
 
     '''
 
@@ -457,7 +461,7 @@ def origin_time(config_file, local_loc_label, figure_out):
 
     \b
     Example usage (run from infrapy/examples directory):
-    \t infrapy plot origin-time --local-loc-label data/location2.json --range-max 1000
+    \tinfrapy plot origin-time --local-loc-label GJI_example-ev0
     '''
     click.echo("")
     click.echo("#####################################")

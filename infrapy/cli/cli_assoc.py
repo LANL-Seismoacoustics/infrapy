@@ -33,17 +33,15 @@ from ..association import hjl
 @click.option("--trimming-threshold", help="Mishapen cluster threshold (default: " + config.defaults['ASSOC']['trimming_threshold'] + ")", default=None, type=float)
 @click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
 @click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
-@click.option("--multithread", help="Use multithreading (default: " + config.defaults['ASSOC']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_assoc(config_file, local_detect_label, local_event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
-                cluster_threshold, trimming_threshold, event_population_min, event_station_min, multithread, cpu_cnt):
+                cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_assoc --local-detect-label 'data/detection_set1.json' --local-event-label assoc_out
-    \tinfrapy run_assoc --config-file config/assoc_example.config
+    \tinfrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example --cpu-cnt 4
     '''
 
     click.echo("")
@@ -118,7 +116,10 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
                                     bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=(range_max / 4.0), 
                                     resol=resolution, linkage_method=cluster_linkage, trimming_thresh=trimming_threshold, 
                                     cluster_det_population=event_population_min, cluster_array_population=event_station_min, pool=pl)
+
+    click.echo("Identified " + str(len(events)) + " events." + '\n')
     data_io.write_events(events, event_qls, det_list, local_event_label)    
+
     if pl is not None:
         pl.terminate()
         pl.close()

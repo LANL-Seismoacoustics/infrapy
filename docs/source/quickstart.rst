@@ -51,7 +51,6 @@ Array-Level Analyses
           window_len: 10.0
           sub_window_len: None
           window_step: 5.0
-          multithread: False
 
         Loading local data from data/YJ.BRP*.SAC
 
@@ -199,11 +198,13 @@ Array-Level Analyses
 
     If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.
 
-- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified.
+    Lastly, large analysis runs can be accelerated by specifying a number of CPUs to utilize in analysis via :code:`--cpu-cnt`.  Multi-threading in InfraPy beamforming analysis is done by distributing individual analysis windows among available threads.   On a desktop OS X machine used for testing, a single-CPU analysis of the included BRP data requires approximately 32 seconds.  With 4 CPUs this is reduced to 14 seconds and with 10 CPUs it reduces further to approximately 10 seconds.  The limited gains for higher CPUs is due to a amount of time needed to perform background tasks such as reading and writing data that is not multi-threaded.  It should be noted that the BRP example data set includes only 20 minutes of waveform data and that longer data sets would likely benefit from higher numbers of CPUs before these background task times become notable.
 
+- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified. 
+  
     .. code-block:: bash
 
-        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+        infrapy run_fd --config-file config/detection_local.config
 
     Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:
 
@@ -233,7 +234,7 @@ Array-Level Analyses
         Running fd...
         Writing detections to data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json
 
-    As noted in the output, a new file named :code:`BRP_analysis.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
+    As noted in the output, a new file named :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
 
     .. code-block:: none
 
@@ -244,8 +245,8 @@ Array-Level Analyses
                 "F Stat.": 31.9058,
                 "Trace Vel. (m/s)": 370.97,
                 "Back Azimuth": -41.84,
-                "Latitude": 39.47269821166992,
-                "Longitude": -110.74089813232422,
+                "Latitude": 39.4727,
+                "Longitude": -110.741,
                 "Elevation (m)": null,
                 "Start": 0.0,
                 "End": 5.0,
@@ -261,7 +262,7 @@ Array-Level Analyses
                 "Station": "BRP",
                 "Channel": "EDF"
             },...
-
+        ]
 
 - Once detections are identified in the data record, they can be visualized similarly to the :code:`plot fk` option via :code:`plot fd`.
 
@@ -335,9 +336,9 @@ Network-Level Analyses
 
     .. code-block:: bash
     
-        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example
+        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example --cpu-cnt 4
 
-    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  The analysis results will be summarized to the screen,
+    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
     .. code-block:: none
 
@@ -394,6 +395,7 @@ Network-Level Analyses
 	        Trimming poor linkages and repeating clustering analysis...
 
         Cleaning up and merging clusters...
+        identified 3 events.
 
     The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`local_event_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
 
