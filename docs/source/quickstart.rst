@@ -687,7 +687,7 @@ Scripting and Notebook-Based Analysis
             result,pdf = bisl.run(det_list)
             print(bisl.summarize(result))
 
-- Yield estimation analysis is not currently available through the CLI due to the more complicated nature of the ingested data (requiring waveform data across multiple detecting arrays as well as transmission loss models for the region).  The example yield estimation provided shows how to set up the analysis and estimate yield for an above-ground explosion.  Analysis parameters include the detection file for the event, waveform data location, and strings to ingest each array's data.
+- Yield estimation analysis is a bit challenging to perform interactively or even in an automated way because analysis parameters include the detection file for the event, waveform data from the various detecting stations, transmission loss models, and a source model.  An initial version of this is implemented as part of InfraPy's command line interface as discussed above; however, it is likely a user may prefer to interact directly with the data ingestion and analysis.  
 
     .. code-block:: python
 
@@ -711,7 +711,7 @@ Scripting and Notebook-Based Analysis
             wvfrm_path = "../infrapy-data/hrr-5/*/*.sac"
             tloss_path = "../infrapy/propagation/priors/tloss/2007_08-"
 
-    The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
+    The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window by some factor (0.2 meaning a 20% increase in the window length here), a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
 
     .. code-block:: python
 
