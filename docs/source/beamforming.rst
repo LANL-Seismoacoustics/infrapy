@@ -67,7 +67,11 @@ Mathematical Details
 
 
 See the following for more references on beamforming:
-    - `Rost and Thomas, 2002 <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2000RG000100>`_
-    - `Olson and Szuberla, 2010 <https://link.springer.com/chapter/10.1007/978-0-387-30441-0_81>`_
-    - `Costley, 2013 <https://asa.scitation.org/doi/full/10.1121/1.4818940>`_
-    - `Krim and Viberg, 1996 <https://doi.org/10.1109/79.526899>`_
+
+- `Rost and Thomas, 2002 <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2000RG000100>`_
+
+- `Olson and Szuberla, 2010 <https://link.springer.com/chapter/10.1007/978-0-387-30441-0_81>`_
+
+- `Costley, 2013 <https://asa.scitation.org/doi/full/10.1121/1.4818940>`_
+
+- `Krim and Viberg, 1996 <https://doi.org/10.1109/79.526899>`_

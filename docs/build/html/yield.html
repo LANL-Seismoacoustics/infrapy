@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Localization &mdash; Infrapy 1.0 documentation</title>
+  <title>Source Characterization &mdash; Infrapy 1.0 documentation</title>
   
 
   
@@ -36,8 +36,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Source Characterization" href="yield.html" />
-    <link rel="prev" title="Association" href="association.html" /> 
+    <link rel="prev" title="Localization" href="localization.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -96,8 +95,8 @@
 <li class="toctree-l2"><a class="reference internal" href="beamforming.html">Array Processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="detection.html">Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="association.html">Association</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Localization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="yield.html">Source Characterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="localization.html">Localization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Source Characterization</a></li>
 </ul>
 </li>
 </ul>
@@ -147,13 +146,13 @@
         
           <li><a href="algorithms.html">Algorithms</a> &raquo;</li>
         
-      <li>Localization</li>
+      <li>Source Characterization</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/localization.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/yield.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -166,14 +165,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="localization">
-<span id="id1"></span><h1>Localization<a class="headerlink" href="#localization" title="Permalink to this headline">¶</a></h1>
-<p>Event analysis in InfraPy uses the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty. Preliminary analysis of the back projections can be used to define the spatial region of interest.  The analysis identifies the maximum posteriori solution and also marginalizes a subset of the parameters to produce spatial and temporal distributions for the source.  Likelihood definitions relating detection parameters to spatial and temporal source characteristics are shared between association and localization analysis for consistency.</p>
-<p>See the following for more references on BISL:</p>
+  <div class="section" id="source-characterization">
+<span id="yield"></span><h1>Source Characterization<a class="headerlink" href="#source-characterization" title="Permalink to this headline">¶</a></h1>
+<p>Source characteristization (e.g., yield estimation) can be performed using InfraPy’s Spectral Yield Estimation (SpYE) methods.  Detections are analyzed to compute the spectral amplitude (magnitude of the Fourier transform) and compare with a reference noise sample at each array defined as pre- or post-detection (InfraPy can also use the beamed signal and residuals, but that’s an in-development method and might produce unexpected results). Transmission loss statistics built external to InfraPy are utilized to estimate the infrasonic spectral amplitude at a location near the source from the various observations.  Finally, the near-source spectral amplitude estimate can be combined with a source model (currently the Kinney &amp; Graham scaling laws and Friedlander blastwave model) to map the spectral amplitude to blastwave yield</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://academic.oup.com/gji/article/181/1/399/718964">Modrak et al., 2010</a></p></li>
-<li><p><a class="reference external" href="https://academic.oup.com/gji/article/196/1/375/586767">Marcillo et al., 2013</a></p></li>
-<li><p><a class="reference external" href="https://academic.oup.com/gji/article/203/3/1682/2594791">Blom et al., 2015</a></p></li>
+<li><p>An example set of transmission loss models for summer in the western US are included in <code class="code docutils literal notranslate"><span class="pre">infrapy/propagation/priors/tloss/</span></code> for use in the example analysis for the Humming Roadrunner 5 explosion.</p></li>
+<li><p>Construction of models requires use of the <a class="reference external" href="https://github.com/chetzer-ncpa/ncpaprop-release">NCPAprop software</a> and methods in <code class="code docutils literal notranslate"><span class="pre">infrapy/propagation/infrasound.py</span></code> (a separate Python library named <code class="code docutils literal notranslate"><span class="pre">stochprop</span></code> is being developed that will provide more straight forward means of creating these models)</p></li>
+</ul>
+<p>See the following for more references on yield estimation using regional infrasound:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://doi.org/10.1098/rspa.1946.0046">Friedlander, 1946</a></p></li>
+<li><p><a class="reference external" href="https://doi.org/10.1007/978-3-642-86682-1">Kinney &amp; Graham, 1985</a></p></li>
+<li><p><a class="reference external" href="https://doi.org/10.1093/gji/ggy258">Blom et al., 2018</a></p></li>
 </ul>
 </div>
 
@@ -185,10 +188,8 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="yield.html" class="btn btn-neutral float-right" title="Source Characterization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-      
-        <a href="association.html" class="btn btn-neutral float-left" title="Association" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="localization.html" class="btn btn-neutral float-left" title="Localization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -505,9 +505,9 @@ Network-Level Analyses
 
 - For above-ground explosive sources for which source models such as the Kinney & Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy's Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):
 
-    .. code:: python
+    .. code:: bash
 
-        infrapy run_yield --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json  --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --src-lat 33.5377 --src-lon -106.333961
+        infrapy run_yield --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
 
     As with other analysis methods, parameter information will be summarized and high level results:
 
@@ -522,10 +522,12 @@ Network-Level Analyses
 
 
         Data parameters:
-          local_detect_label: data/HRR-5.dets.json
-          local_loc_label: None
-          tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
-          local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+        local_detect_label: data/HRR-5.dets.json
+        tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
+        local_loc_label: None
+          src_lat: 33.5377
+          src_lon: -106.333961
+        local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
 
         Algorithm parameters:
           freq_min: 0.25
@@ -534,21 +536,40 @@ Network-Level Analyses
           yld_max: 1000.0
           ref_rng: 1.0
           resolution: 200
-          src_lat: 33.5377
-          src_lon: -106.333961
+          noise_option: post
+          window_buffer: 0.2
+          amb_press: 101.325
+          amb_temp: 288.15
+          grnd_burst: True
+          exp_type: chemical
 
         Loading local data from ../infrapy-data/hrr-5/*/*.sac
         Computing detection spectra...
+        
+        Loading transmission loss statistics...
+        
         Estimating yield using spectral amplitudes...
+        Writing yield estimate result into HRR-5.yld.json
 
-        Results:
-            Maximum a Posteriori Yield: 45.5293507487
-            68% Confidence Bounds: [  21.  115.]
-            95% Confidence Bounds: [   3.  358.]
+        Results Summary (tons eq. TNT):
+      	    Maximum a Posteriori Yield: 45.5293507487
+	        68% Confidence Bounds: [  21.  115.]
+        	95% Confidence Bounds: [   3.  358.]
+
+    The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL (:code:`[...].loc.json`) and extract the location from that source.  The current implementation can only utilize locally saved waveform data ingested as a single large stream and sub-divided using the network and station info in the detection file.  Eventually, it is planned to allow the methods to pull from an FDSN or database, but for now analysis requires pulling waveform files (this can be done using :code:`infrapy utils write-wvfrms`).
+
+    Visualization of the SpYE analysis result can be done by referencing the output file,
+
+    .. code:: bash
+
+        infrapy plot yield --local-yld-label "HRR-5"
 
 
-    The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL and extract the location from that source.  Visualization and saving these results to file are still in progress and will be added in a future update.
-    
+    This once again prints the MaP yield and confidence bounds and produces a figure such as that shown below where the left panel shows the PDF for yield and the right panel shows the predicted spectral amplitude near the source (specifically at a stand off distance of :code:`--ref-rng`).
+
+    .. image:: _static/_images/spye_result.png
+        :width: 1200px
+        :align: center
 
 *************************************
 Scripting and Notebook-Based Analysis 

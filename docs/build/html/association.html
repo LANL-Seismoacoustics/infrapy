@@ -97,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="detection.html">Detection</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Association</a></li>
 <li class="toctree-l2"><a class="reference internal" href="localization.html">Localization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yield.html">Source Characterization</a></li>
 </ul>
 </li>
 </ul>
@@ -167,13 +168,15 @@
             
   <div class="section" id="association">
 <span id="id1"></span><h1>Association<a class="headerlink" href="#association" title="Permalink to this headline">¶</a></h1>
+<p>InfraPy uses a pair-based, joint-likelihood method to identify those detection sets with high likelihood of originating from a common source.  Events are identified using a pair-based Bayesian algorithm that defines the association between detection pairs from their joint-likelihood and identifies events via hierarchical clustering analysis</p>
 <ul class="simple">
-<li><p>Events are identified using a pair-based Bayesian algorithm that defines the association between detection pairs from their joint-likelihood and identifies events via hierarchical clustering analysis</p></li>
-<li><p>Current implementation utilizes only spatial and temporal coincidence, but additional detection information can further improve event identification</p></li>
-<li><p>Evaluation using a synthetic data set shows some mixing of spatially similar events poorly resolved by network geometry and occasional inclusion of “noise” detections in event clustering</p></li>
+<li><p>The current implementation utilizes only spatial and temporal coincidence, but additional detection information can further improve event identification</p></li>
+<li><p>Evaluation using a synthetic data set has shown some mixing of spatially similar events poorly resolved by network geometry and occasional inclusion of “noise” detections in event clustering</p></li>
 </ul>
-<p>See the following for more references on Association:
-<a class="reference external" href="https://academic.oup.com/gji/advance-article-abstract/doi/10.1093/gji/ggaa105/5800992">Blom et al., 2020</a></p>
+<p>See the following for more references on Association:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://academic.oup.com/gji/advance-article-abstract/doi/10.1093/gji/ggaa105/5800992">Blom et al., 2020</a></p></li>
+</ul>
 </div>
 
 

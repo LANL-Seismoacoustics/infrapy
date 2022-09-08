@@ -596,7 +596,7 @@ Writing localization result into GJI_example-ev0.loc.json
 </li>
 <li><p>For above-ground explosive sources for which source models such as the Kinney &amp; Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy’s Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):</p>
 <blockquote>
-<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">infrapy</span> <span class="n">run_yield</span> <span class="o">--</span><span class="n">local</span><span class="o">-</span><span class="n">wvfrms</span> <span class="s1">&#39;../infrapy-data/hrr-5/*/*.sac&#39;</span> <span class="o">--</span><span class="n">local</span><span class="o">-</span><span class="n">detect</span><span class="o">-</span><span class="n">label</span> <span class="n">data</span><span class="o">/</span><span class="n">HRR</span><span class="o">-</span><span class="mf">5.</span><span class="n">dets</span><span class="o">.</span><span class="n">json</span>  <span class="o">--</span><span class="n">tlm</span><span class="o">-</span><span class="n">label</span> <span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span> <span class="o">--</span><span class="n">src</span><span class="o">-</span><span class="n">lat</span> <span class="mf">33.5377</span> <span class="o">--</span><span class="n">src</span><span class="o">-</span><span class="n">lon</span> <span class="o">-</span><span class="mf">106.333961</span>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy run_yield --local-wvfrms <span class="s1">&#39;../infrapy-data/hrr-5/*/*.sac&#39;</span> --local-detect-label data/HRR-5.dets.json --src-lat <span class="m">33</span>.5377 --src-lon -106.333961 --tlm-label <span class="s2">&quot;../infrapy/propagation/priors/tloss/2007_08-&quot;</span> --local-yld-label <span class="s2">&quot;HRR-5&quot;</span>
 </pre></div>
 </div>
 <p>As with other analysis methods, parameter information will be summarized and high level results:</p>
@@ -609,10 +609,12 @@ Writing localization result into GJI_example-ev0.loc.json
 
 
 Data parameters:
-  local_detect_label: data/HRR-5.dets.json
-  local_loc_label: None
-  tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
-  local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+local_detect_label: data/HRR-5.dets.json
+tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
+local_loc_label: None
+  src_lat: 33.5377
+  src_lon: -106.333961
+local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
 
 Algorithm parameters:
   freq_min: 0.25
@@ -621,20 +623,34 @@ Algorithm parameters:
   yld_max: 1000.0
   ref_rng: 1.0
   resolution: 200
-  src_lat: 33.5377
-  src_lon: -106.333961
+  noise_option: post
+  window_buffer: 0.2
+  amb_press: 101.325
+  amb_temp: 288.15
+  grnd_burst: True
+  exp_type: chemical
 
 Loading local data from ../infrapy-data/hrr-5/*/*.sac
 Computing detection spectra...
-Estimating yield using spectral amplitudes...
 
-Results:
+Loading transmission loss statistics...
+
+Estimating yield using spectral amplitudes...
+Writing yield estimate result into HRR-5.yld.json
+
+Results Summary (tons eq. TNT):
     Maximum a Posteriori Yield: 45.5293507487
-    68% Confidence Bounds: [  21.  115.]
-    95% Confidence Bounds: [   3.  358.]
+        68% Confidence Bounds: [  21.  115.]
+        95% Confidence Bounds: [   3.  358.]
 </pre></div>
 </div>
-<p>The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL and extract the location from that source.  Visualization and saving these results to file are still in progress and will be added in a future update.</p>
+<p>The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL (<code class="code docutils literal notranslate"><span class="pre">[...].loc.json</span></code>) and extract the location from that source.  The current implementation can only utilize locally saved waveform data ingested as a single large stream and sub-divided using the network and station info in the detection file.  Eventually, it is planned to allow the methods to pull from an FDSN or database, but for now analysis requires pulling waveform files (this can be done using <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">write-wvfrms</span></code>).</p>
+<p>Visualization of the SpYE analysis result can be done by referencing the output file,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy plot yield --local-yld-label <span class="s2">&quot;HRR-5&quot;</span>
+</pre></div>
+</div>
+<p>This once again prints the MaP yield and confidence bounds and produces a figure such as that shown below where the left panel shows the PDF for yield and the right panel shows the predicted spectral amplitude near the source (specifically at a stand off distance of <code class="code docutils literal notranslate"><span class="pre">--ref-rng</span></code>).</p>
+<a class="reference internal image-reference" href="_images/spye_result.png"><img alt="_images/spye_result.png" class="align-center" src="_images/spye_result.png" style="width: 1200px;" /></a>
 </div></blockquote>
 </li>
 </ul>

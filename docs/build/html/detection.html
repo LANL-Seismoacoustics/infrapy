@@ -97,6 +97,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="association.html">Association</a></li>
 <li class="toctree-l2"><a class="reference internal" href="localization.html">Localization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yield.html">Source Characterization</a></li>
 </ul>
 </li>
 </ul>
@@ -169,13 +170,11 @@
 <span id="afd"></span><h1>Detection<a class="headerlink" href="#detection" title="Permalink to this headline">¶</a></h1>
 <p>InfraPy uses an Adaptive Fisher-Detector (AFD) for identifying detections in the beamforming results.  The standard F-detector is based on decision rules for the F-statistic, which provides an estimate of the signal’s beam power and is calculated as the power in the beam divided by the average over all channels of the power difference between the beam and the individual channels cite{Blandford:1982}.  The AFD accounts for both correlated and uncorrelated noise through an increase in the value of the F-statistic required to declare a detection based upon background F-values being elevated from coherent or persistent noise sources. The figure below illustrates how the AFD remaps the F-statistic through the application of a C-value, which effective reduces the detection threshold (p-value) and decreases the number of noise-related detections.</p>
 <img alt="_images/AFD.png" src="_images/AFD.png" />
-<dl class="simple">
-<dt>See the following for more references on the Adaptive F-Detector:</dt><dd><ul class="simple">
+<p>See the following for more references on the Adaptive F-Detector:</p>
+<ul class="simple">
 <li><p><a class="reference external" href="https://doi.org/10.1111/j.1365-246X.2008.03912.x">Arrowmsith et al., 2008</a></p></li>
 <li><p><a class="reference external" href="https://pubs.geoscienceworld.org/ssa/bssa/article/99/1/449/342096">Arrowsmith et al., 2009</a></p></li>
 </ul>
-</dd>
-</dl>
 </div>
 
 
