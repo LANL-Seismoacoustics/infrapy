@@ -4,6 +4,7 @@ import os
 import warnings 
 
 import click
+import json
 import configparser as cnfg
 from matplotlib.pyplot import figure
 import numpy as np
@@ -441,7 +442,10 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
 
     click.echo('\n' + "Reading in detection list...")
     det_list = data_io.set_det_list(local_detect_label, merge=False)
-    bisl_result = data_io.read_locs(local_loc_label + ".loc.json")
+    if ".loc.json" in local_loc_label:
+        bisl_result = json.load(open(local_loc_label))
+    else:
+        bisl_result = json.load(open(local_loc_label + ".loc.json"))
 
     click.echo('\n' + "BISL Summary:")
     click.echo(bisl.summarize(bisl_result))
@@ -485,7 +489,10 @@ def origin_time(config_file, local_loc_label, figure_out):
     click.echo("  local_detect_label: " + str(local_loc_label))
 
     click.echo('\n' + "Reading in BISL results...")
-    bisl_result = data_io.read_locs(local_loc_label)
+    if ".loc.json" in local_loc_label:
+        bisl_result = json.load(open(local_loc_label))
+    else:
+        bisl_result = json.load(open(local_loc_label + ".loc.json"))
 
     click.echo("Plotting origin time distribution...")
     loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
@@ -510,7 +517,7 @@ def yield_plot(config_file, local_yld_label, figure_out):
     click.echo("#####################################")
     click.echo("##                                 ##")
     click.echo("##             InfraPy             ##")
-    click.echo("##            Yield Plot           ##")
+    click.echo("##       Yield Estimate Plot       ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
     click.echo("")  
@@ -522,12 +529,24 @@ def yield_plot(config_file, local_yld_label, figure_out):
     else:
         user_config = None
 
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_loc_label, 'string')
+    local_yld_label = config.set_param(user_config, 'DETECTION IO', 'local_yld_label', local_yld_label, 'string')
+    figure_out = config.set_param(user_config, 'DETECTION IO', 'figure_out', figure_out, 'string')
 
     click.echo('\n' + "Data summary:")
     click.echo("  local_yld_label: " + str(local_yld_label))
 
     click.echo('\n' + "Reading in SpYE results...")
-    spye_result = data_io.read_yld(local_yld_label)
+    if ".yld.json" in local_yld_label:
+        spye_result = json.load(open(local_yld_label))
+    else:
+        spye_result = json.load(open(local_yld_label + ".yld.json"))
 
-    print(spye_result)
+    click.echo('\n' + 'Results Summary (tons eq. TNT):')
+    click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+    click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+    click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+
+    click.echo('\n' + "Plotting yield PDF...")
+    loc_vis.plot_spye(spye_result, output_path=figure_out)
+
+    click.echo("")

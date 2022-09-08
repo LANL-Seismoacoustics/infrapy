@@ -53,6 +53,7 @@ plot.add_command(cli_visualization.fd)
 plot.add_command(cli_visualization.dets)
 plot.add_command(cli_visualization.loc)
 plot.add_command(cli_visualization.origin_time)
+plot.add_command(cli_visualization.yield_plot)
 
 # Utilities
 utils.add_command(cli_utils.arrivals2json)

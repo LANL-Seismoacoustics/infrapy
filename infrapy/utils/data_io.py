@@ -431,40 +431,6 @@ def write_json(results, output_path):
 
 
 
-def read_locs(local_loc_label):
-    """
-    Ingest a localization result (likely for visualization)
-
-    Parameters
-    ----------
-    local_loc_label: str
-        Path for file
-
-    """
-
-    if ".loc.json" in local_loc_label:
-        return json.load(open(local_loc_label))
-    else:
-        return json.load(open(local_loc_label + ".loc.json"))
-
-
-def read_locs(local_yld_label):
-    """
-    Ingest a localization result (likely for visualization)
-
-    Parameters
-    ----------
-    local_loc_label: str
-        Path for file
-
-    """
-
-    if ".yld.json" in local_yld_label:
-        return json.load(open(local_yld_label))
-    else:
-        return json.load(open(local_yld_label + ".yld.json"))
-
-
 def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
     """
     Export the results of the beamforming operation to a csv file for external analysis/plotting

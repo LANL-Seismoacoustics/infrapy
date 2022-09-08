@@ -327,7 +327,7 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     # Compute the combined near-source spectral amplitude   
     for j in range(det_cnt):
         _, _, pdf[j] = det_list[j].src_spec_pdf(src_loc[0], src_loc[1], freqs, src_spec_vals, smn_spec[j], tloss_models)
-        
+
     psd_fit = interp2d(freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), np.product(pdf, axis=0).reshape((resol, resol)))
     yld_vals = np.logspace(np.log10(yld_rng[0]), np.log10(yld_rng[1]), resol)
     yld_pdf = np.empty_like(yld_vals)
@@ -345,9 +345,11 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     yld_interp = interp1d(yld_vals, yld_pdf)
 
     conf_bnds = [0] * 2
-    conf_bnds[0], _, temp = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.68)
-    conf_bnds[1], _, temp = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.95)
+    conf_bnds[0], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.68)
+    conf_bnds[1], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.95)
 
-    result = {'yld_vals': yld_vals, 'yld_pdf' : yld_pdf, 'conf_bnds': conf_bnds}
+    # NOTE: converts kg to tons for returned result
+    result = {'spec_freqs': freqs, 'spec_vals': src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), 'spec_pdf': np.product(pdf, axis=0).reshape((resol, resol)),
+                'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
 
     return result 
