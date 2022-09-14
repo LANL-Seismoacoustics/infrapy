@@ -312,6 +312,35 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
+    if local_fk_label == 'auto':
+        # try loading waveform data and see if fk_label can be built
+        local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', None, 'string')
+        fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', None, 'string')   
+        db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', None, 'string')
+        if db_config is not None:
+            db_info = cnfg.ConfigParser()
+            db_info.read(db_config)
+        else:
+            db_info = None 
+
+
+        network = config.set_param(user_config, 'WAVEFORM IO', 'network', None, 'string')
+        station = config.set_param(user_config, 'WAVEFORM IO', 'station', None, 'string')
+        location = config.set_param(user_config, 'WAVEFORM IO', 'location', None, 'string')
+        channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', None, 'string')       
+
+        starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', None, 'string')
+        endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', None, 'string')
+
+        stream, _ = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
+
+        if local_fk_label is None or local_fk_label == "auto":
+            if local_wvfrms is not None and "/" in local_wvfrms:
+                local_fk_label = os.path.dirname(local_wvfrms) + "/"
+            else:
+                local_fk_label = ""
+            local_fk_label = local_fk_label + data_io.stream_label(stream)
+
     if ".fk_results.dat" in local_fk_label:
         local_fk_label = local_fk_label[:-15]
 
