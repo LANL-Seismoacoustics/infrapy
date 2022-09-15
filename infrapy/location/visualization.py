@@ -211,6 +211,9 @@ def plot_spye(spye_result, title=None, output_path=None, show_fig=True):
 
     plt.tight_layout()
 
+    if title:
+        plt.title(title)
+        
     if output_path:
         plt.savefig(output_path + ".spye.png", dpi=300) 
     

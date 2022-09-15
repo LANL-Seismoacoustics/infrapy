@@ -1,71 +1,35 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Database Interfacing &mdash; Infrapy 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Utility Functions" href="utilities.html" />
     <link rel="prev" title="InfraView" href="infraview.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html" class="icon icon-home"> Infrapy
-          
-
-          
-            
             <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -73,17 +37,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
@@ -95,73 +49,35 @@
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Infrapy</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
       <li>Database Interfacing</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/pisces.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="database-interfacing">
-<span id="pisces"></span><h1>Database Interfacing<a class="headerlink" href="#database-interfacing" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="database-interfacing">
+<span id="pisces"></span><h1>Database Interfacing<a class="headerlink" href="#database-interfacing" title="Permalink to this headline"></a></h1>
 <p>Infrapy leverages pisces to connect with and process data in databases. More information about pisces can be found at <a class="reference external" href="https://jkmacc-lanl.github.io/pisces/">https://jkmacc-lanl.github.io/pisces/</a>.  The methods described here are still in active development; therefore, if something doesn’t work please contact both the infrapy POCs as well as the pisces POCs for assistance and clarification.</p>
-<div class="section" id="defining-database-connection-info">
-<h2>Defining Database Connection Info<a class="headerlink" href="#defining-database-connection-info" title="Permalink to this headline">¶</a></h2>
+<section id="defining-database-connection-info">
+<h2>Defining Database Connection Info<a class="headerlink" href="#defining-database-connection-info" title="Permalink to this headline"></a></h2>
 <ul>
 <li><p>In order to connect and pull data from a database, the pisces methods need to establish a database session and perform a number of table queries.  The information needed to connect and perform these queries is defined within a separate configuation file specifically for the database that can be defined either on the command line using <code class="code docutils literal notranslate"><span class="pre">--db-config</span></code> or in a general infrapy configuration file as below:</p>
 <blockquote>
@@ -189,28 +105,35 @@ port = 1234
 driver =
 username =
 password =
-owner = my_account
 
 [DBTABLES]
-wfdisc = wfdisc
-site = site
+wfdisc = owner.wfdisc
+site = owner.site
+
+[DBENVIRONMENT]
+???
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>Note that the driver, username, and password fields are optional and if accessing your database doesn’t require them they can be left out of the config file or simply left blank as in the above</p></li>
-<li><p>The owner information is used in combination with the database table list to define the actual table names (e.g., the above would define the site table reference as <code class="code docutils literal notranslate"><span class="pre">my_account.site</span></code>).</p></li>
 <li><p>Add notes about other fields?</p></li>
 </ul>
 </div></blockquote>
 </li>
 </ul>
-</div>
-<div class="section" id="accessing-waveform-data-from-the-database">
-<h2>Accessing Waveform Data from the Database<a class="headerlink" href="#accessing-waveform-data-from-the-database" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="accessing-waveform-data-from-the-database">
+<h2>Accessing Waveform Data from the Database<a class="headerlink" href="#accessing-waveform-data-from-the-database" title="Permalink to this headline"></a></h2>
 <ul>
-<li><p>The utility function, <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">check-db-wvfrms</span></code>, can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:</p>
+<li><p>The utility function <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">check-db-wvfrms</span></code> can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:</p>
 <blockquote>
-<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#################################
+<div><blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>infrapy utils check_db_wvfrms --db-config /path/to/database_info.config --station <span class="s1">&#39;I53*&#39;</span> --channel <span class="s1">&#39;*.DF&#39;</span> --starttime <span class="s1">&#39;2018-12-19T01:00:00&#39;</span> --endtime <span class="s1">&#39;2018-12-19T03:00:00&#39;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>This should establish a database session via pisces and perform a site and waveform search producing something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#################################
 ##                             ##
 ##      InfraPy Utilities      ##
 ##       check_db_wvfrms       ##
@@ -254,69 +177,52 @@ Location info:
 </div>
 <ul class="simple">
 <li><p>Note that all 8 channels of the I53 station are found in the database and the displayed start and end times indicate that the requested 2 hours of data are able to be pulled.  The latitude and longitude of the various station elements are summarized for completeness.</p></li>
-<li><p>Also, pulling waveform data from a database requires only the <code class="code docutils literal notranslate"><span class="pre">site</span></code> table to identify station information and <code class="code docutils literal notranslate"><span class="pre">wfdisc</span></code> to access waveform data.  Additional tables will be required for attaching response information (currently data is returned in counts and not physical units) and other advances in accessing waveform data.</p></li>
+<li><p>Also, pulling waveform data from a database requires only the <code class="code docutils literal notranslate"><span class="pre">site</span></code> table to identify station information and <code class="code docutils literal notranslate"><span class="pre">wfdisc</span></code> to access waveform data.  Additional tables will be required in the future when attaching response information (currently data is returned in counts and not physical units).</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>Running and visualizing beamforming analysis with this data can now be done using the same <code class="code docutils literal notranslate"><span class="pre">my_configuration.config</span></code> file with parameter modifications and other details as discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.  Essentially, when pulling waveform data for analysis, our aim is to be able to point the infrapy methods to a database via pisces and a <code class="code docutils literal notranslate"><span class="pre">database_info.config</span></code> file as easily as pointing it at an FDSN.</p></li>
+<li><p>Running and visualizing fk and fd analyses with a database source can be done using a configuration file with parameter modifications and other details as discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.</p></li>
+<li><p>When pulling waveform data for analysis, our aim is to be able to point Infrapy to a database via pisces and a <code class="code docutils literal notranslate"><span class="pre">database_info.config</span></code> file as easily as pointing it at an FDSN (it should as simple as replacing the ‘fdsn = iris’ line in the config file with ‘db_config = /path/to/database_info.config’).</p></li>
 </ul>
-</div>
-<div class="section" id="writing-analysis-results-into-the-database">
-<h2>Writing Analysis Results into the Database<a class="headerlink" href="#writing-analysis-results-into-the-database" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="writing-analysis-results-into-the-database">
+<h2>Writing Analysis Results into the Database<a class="headerlink" href="#writing-analysis-results-into-the-database" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p>Currently, analysis results using waveform data pulled from a database are written into […].fk_results.dat and […].dets.json files as discussed in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.  In future developments, methods to write those results back into database tables will be implemented.</p></li>
-<li><p>The current plan is to implement such functionality as part of the <a class="reference internal" href="utilities.html#utilities"><span class="std std-ref">Utility Functions</span></a> methods and include methods to both write detection results into the appropriate tables as well as pull detections from a database for event ID and similar analysis.</p></li>
+<li><p>Our current plan is to implement such functionality as part of the <a class="reference internal" href="utilities.html#utilities"><span class="std std-ref">Utility Functions</span></a> methods and include functions that both write detection results into an arrivals table as well as pull detections from a database for into a local .json file for event ID and similar analysis (e.g., detection results to/from an arrivals table via <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">dets2arr</span> <span class="pre">...</span></code> or <code class="code docutils literal notranslate"><span class="pre">infrapy</span> <span class="pre">utils</span> <span class="pre">arr2json</span> <span class="pre">...</span></code>).</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="utilities.html" class="btn btn-neutral float-right" title="Utility Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="infraview.html" class="btn btn-neutral float-left" title="InfraView" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="infraview.html" class="btn btn-neutral float-left" title="InfraView" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utility Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster
-
-    </p>
+    <p>&#169; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

@@ -88,7 +88,7 @@ class InfrasoundDetection(object):
     # increase in beam width for propagation effects
     __prop_width = np.radians(4.0)  
 
-    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None, f_range=None, start_end=None, note=None, traceV=None, network=None, station=None):
+    def __init__(self, lat_loc=None, lon_loc=None, time=None, azimuth=None, f_stat=None, array_d=None, f_range=None, start_end=None, note=None, traceV=None, network=None, station=None, method=None):
 
         self.set_lat(lat_loc)
         self.set_lon(lon_loc)
@@ -99,6 +99,7 @@ class InfrasoundDetection(object):
         self.set_freq_range(f_range)
         self.set_startend(start_end)
         self.set_note(note)
+        self.set_method(method)
         self.set_trace_velocity(traceV)
 
         if self.__peakF_value is None or self.__array_dim is None:

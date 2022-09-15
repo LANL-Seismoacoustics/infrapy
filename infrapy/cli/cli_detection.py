@@ -395,6 +395,8 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
                 array_lon = float(line.split(' ')[-1])
             elif re.search(r'([\d]{4}-[\d]{2}-[\d]{2})',line) is not None and "t0" not in line:
                 data_info.append(line[6:].split('\t')[0])
+            elif "method" in line:
+                method = line.split(' ')[-1][:-1]
 
         beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
         stream_info = [os.path.commonprefix([info.split('.')[j] for info in data_info]) for j in [0,1,3]]
@@ -409,7 +411,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 
     det_list = []
     for det_info in dets:
-        det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
+        det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection", method=method)]
     print("Writing detections to " + local_detect_label + ".dets.json")
     data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
 

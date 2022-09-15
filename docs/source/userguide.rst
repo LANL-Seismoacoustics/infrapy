@@ -1,17 +1,9 @@
 
-Welcome to Infrapy's documentation.  Get started with :ref:`installation` and then get an overview with the :ref:`quickstart`.  There is also a more detailed :ref:`tutorial` that demonstrates the various processing capabilities of infrapy.  The rest of the docs describe each component in detail, with a full reference in the :ref:`api` section.
-
-This document is a work in progress and may be updated as development of Infrapy continues.
-
-.. image:: _static/_images/infrapy.png
-
-
-This part of the documentation, which is mostly prose, begins with some background information about Infrapy, then focuses on step-by-step instructions for data processing using Infrapy.
-
 _____________________________________
 Overview
 _____________________________________
-Infrapy is a tool for processing infrasound and seismic array data. Infrapy implements a database-centric
-approach for pipeline continuous near real-time analysis. The pipeline includes analysis at station and network levels (using beam-forming and clustering techniques, respectively) for the
-detection, association and location of events.  The pipeline relies on the interaction of the algorithms with a relational database structure to organize and store waveform data, the
-parameters for the analysis, and results of both levels of analysis. Our implementation can interact seamlessly with traditional (e.g.: Oracle) and serverless (e.g.: SQLite) relational databases.
+
+Welcome to Infrapy's documentation.  InfraPy is a Python-based tool for processing infrasound data using automated or interactive means.  Following :ref:`installation`, it's recommended to work through the :ref:`quickstart` and :ref:`utilities` included in the package.  Information is also provided to use InfraPy's Graphical User Interface (GUI), :ref:`infraview`.
+
+Infrapy is a tool for processing infrasound data that includes array-centric beamforming and detection methods, event identification via pair-based agglomeration, and Bayesian localization and characterization methods.  InfraPy is implemented to be relatively data agnostic so that analysis can be performed using locally stored files, data pull from an FDSN such as IRIS, or data locally stored in a relational database.  The InfraPy command line interface (CLI) is useful for pipeline analysis to run automated signal detection, event identification, and event characterization.  The InfraView GUI is more aimed at event-of-interest analysis where interactive interrogation of waveform data is needed and detections rapidly visualized for analysis.  
+

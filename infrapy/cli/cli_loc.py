@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from email.policy import default
+import enum
 import os 
 import sys
 import fnmatch
@@ -257,7 +258,13 @@ def run_yield(config_file, local_wvfrms, fdsn, db_config, local_detect_label, lo
         click.echo("Non-local waveform ingestion for yield estimation isn't set up yet...")
         return
 
+    click.echo("Collecting waveform data for each detection...")
     st_list = [Stream([tr for tr in stream if det.station in tr.stats.station]) for det in det_list]
+    for n, det in enumerate(det_list):
+        click.echo('\n' + "Detection network.station: " + det.network + "." + det.station)
+        print(st_list[n])
+    click.echo('')
+
     smn_specs = spye.extract_spectra(det_list, st_list, win_buffer=window_buffer, ns_opt=noise_option)
     
     # ######################### #

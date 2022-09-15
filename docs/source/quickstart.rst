@@ -151,7 +151,7 @@ Array-Level Analyses
         window_step = 5.0
 
         [FD]
-        p_value = 0.95
+        p_value = 0.05
         min_duration = 20.0
 
     Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  The analysis can now be completed by simply running:
@@ -223,7 +223,7 @@ Array-Level Analyses
 
         Algorithm parameters:
           window_len: 3600.0
-          p_value: 0.95
+          p_value: 0.05
           min_duration: 20.0
           back_az_width: 15.0
           fixed_thresh: None
@@ -255,7 +255,7 @@ Array-Level Analyses
                     5.0
                 ],
                 "Array Dim.": 4,
-                "Method": "",
+                "Method": "bartlett",
                 "Event": "",
                 "Note": "InfraPy CLI detection",
                 "Network": "YJ",
@@ -277,12 +277,12 @@ Array-Level Analyses
         :align: center
 
 
-- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with merge detections turn on and comparing the results:
+- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any pair of detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with this option turn on and comparing the results:
 
 
     .. code-block:: bash
         
-        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59 --merge-dets True
 
         infrapy plot fd --config-file config/detection_local.config
 
@@ -295,7 +295,7 @@ Array-Level Analyses
 
     .. code-block:: bash
     
-        infrapy run_fkd --config-file BRP_analysis.config
+        infrapy run_fkd --config-file config/detection_local.config
 
     This option essentially combines the :code:`run_fk` and :code:`run_fd` options into a single analysis run.
 
@@ -324,9 +324,9 @@ Array-Level Analyses
         :align: center
 
 
-    Although not currently included in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
+    Although not currently accessible in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
 
-- Analysis of data from a local database is also available through the InfraPy CLI, and is covered in a separate tutorial on :ref:`pisces`.
+- Analysis of data from a local database is also available through the InfraPy CLI using the Python pisces library, and is covered in a separate tutorial on :ref:`pisces`.
 
 ----------------------
 Network-Level Analyses
@@ -544,10 +544,48 @@ Network-Level Analyses
           exp_type: chemical
 
         Loading local data from ../infrapy-data/hrr-5/*/*.sac
-        Computing detection spectra...
-        
+        Collecting waveform data for each detection...
+
+        Detection network.station: NCPA.W220
+        4 Trace(s) in Stream:
+        .W220CW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+
+        Detection network.station: NCPA.W240
+        3 Trace(s) in Stream:
+        .W240NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W240NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W240SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+
+        Detection network.station: .W340
+        4 Trace(s) in Stream:
+        .W340CW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+        .W340NW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+        .W340SE..HDF | 2012-08-27T23:14:44.000000Z - 2012-08-27T23:34:43.998073Z | 500.0 Hz, 600000 samples
+        .W340SW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+
+        Detection network.station: .W420
+        6 Trace(s) in Stream:
+        .W420CE..HDF | 2012-08-27T23:20:01.000000Z - 2012-08-27T23:40:00.998073Z | 500.0 Hz, 600000 samples
+        .W420CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420SW..HDF | 2012-08-27T23:19:44.000000Z - 2012-08-27T23:39:43.998073Z | 500.0 Hz, 600000 samples
+
+        Detection network.station: .W460
+        6 Trace(s) in Stream:
+        .W460CE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460SW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+
+        Computing detection spectra...        
         Loading transmission loss statistics...
-        
         Estimating yield using spectral amplitudes...
         Writing yield estimate result into HRR-5.yld.json
 

@@ -347,7 +347,7 @@ def fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back
     return header 
 
 
-def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
+def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None, method=None):
     """
     Write detection info from fd analysis into a infrapy.propagation.likelihoods.InfrasoundDetection instance for output into a [...].dets.json file
 
@@ -382,8 +382,9 @@ def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
                                       array_d=int(channel_cnt),
                                       f_range=freq_band,
                                       start_end=(det_info[1], det_info[2]),
+                                      traceV=np.round(det_info[4],2),
                                       note=note,
-                                      traceV=np.round(det_info[4],2)
+                                      method=method
                                       )
 
 

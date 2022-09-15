@@ -1,69 +1,33 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Location &mdash; Infrapy 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html" class="icon icon-home"> Infrapy
-          
-
-          
-            
             <img src="_static/lanl_logo.png" class="logo" alt="Logo"/>
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -71,17 +35,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
@@ -93,75 +47,37 @@
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Infrapy</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
       <li>Location</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/infrapy.location.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="location">
-<h1>Location<a class="headerlink" href="#location" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-infrapy.location.bisl">
-<span id="bisl"></span><h2>BISL<a class="headerlink" href="#module-infrapy.location.bisl" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="infrapy.location.bisl.calc_conf_ellipse">
-<code class="descclassname">infrapy.location.bisl.</code><code class="descname">calc_conf_ellipse</code><span class="sig-paren">(</span><em>means</em>, <em>st_devs</em>, <em>conf_lvl</em>, <em>pnts=100</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.calc_conf_ellipse" title="Permalink to this definition">¶</a></dt>
+             
+  <section id="location">
+<h1>Location<a class="headerlink" href="#location" title="Permalink to this headline"></a></h1>
+<section id="module-infrapy.location.bisl">
+<span id="bisl"></span><h2>BISL<a class="headerlink" href="#module-infrapy.location.bisl" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="infrapy.location.bisl.calc_conf_ellipse">
+<span class="sig-prename descclassname"><span class="pre">infrapy.location.bisl.</span></span><span class="sig-name descname"><span class="pre">calc_conf_ellipse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_devs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_lvl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pnts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.calc_conf_ellipse" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the confidence ellipse around a latitude longitude point</p>
 <p>Computes the points on an ellipse centered at a latitude, longitude point with
 standard deviations (E/W, N/S, and covariance) defiend in kilometers for a given confidence
@@ -182,9 +98,9 @@ level.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="infrapy.location.bisl.find_confidence">
-<code class="descclassname">infrapy.location.bisl.</code><code class="descname">find_confidence</code><span class="sig-paren">(</span><em>func</em>, <em>lims</em>, <em>conf_lvl</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.find_confidence" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="infrapy.location.bisl.find_confidence">
+<span class="sig-prename descclassname"><span class="pre">infrapy.location.bisl.</span></span><span class="sig-name descname"><span class="pre">find_confidence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_lvl</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.find_confidence" title="Permalink to this definition"></a></dt>
 <dd><p>Computes the bounds for a function given a confidence level</p>
 <p>Identifies the points for which int_{x_1}^{x_2}{f(x) dx} includes a given
 fraction of the overall integral such that f(x_1) = f(x_2)</p>
@@ -204,9 +120,9 @@ fraction of the overall integral such that f(x_1) = f(x_2)</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="infrapy.location.bisl.run">
-<code class="descclassname">infrapy.location.bisl.</code><code class="descname">run</code><span class="sig-paren">(</span><em>det_list, path_geo_model=None, custom_region=None, resol=180, bm_width=10.0, rng_max=10005.97260168349, rad_min=100.0, angle=[-180, 180], rad_max=1000.0, MaP_mthd='grid'</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.run" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="infrapy.location.bisl.run">
+<span class="sig-prename descclassname"><span class="pre">infrapy.location.bisl.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">det_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_geo_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_region</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">180</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bm_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10005.97260168349</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[-</span> <span class="pre">180,</span> <span class="pre">180]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MaP_mthd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'grid'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.run" title="Permalink to this definition"></a></dt>
 <dd><p>Run analysis of the posterior pdf for BISL</p>
 <p>Compute the marginal disribution…</p>
 <dl class="simple">
@@ -252,9 +168,9 @@ fraction of the overall integral such that f(x_1) = f(x_2)</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="infrapy.location.bisl.set_region">
-<code class="descclassname">infrapy.location.bisl.</code><code class="descname">set_region</code><span class="sig-paren">(</span><em>det_list</em>, <em>bm_width=10.0</em>, <em>rng_max=10005.97260168349</em>, <em>rad_min=100.0</em>, <em>rad_max=1000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.set_region" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="infrapy.location.bisl.set_region">
+<span class="sig-prename descclassname"><span class="pre">infrapy.location.bisl.</span></span><span class="sig-name descname"><span class="pre">set_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">det_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bm_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10005.97260168349</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.set_region" title="Permalink to this definition"></a></dt>
 <dd><p>Defines the integration region for computation of the BISL probability distribution</p>
 <p>Projects finite width beams from each of the detecting arrays and looks for intersections
 of the primary (center) and secondary (edge) lines to define the integration region
@@ -279,9 +195,9 @@ for computation of the localization distribution</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="infrapy.location.bisl.summarize">
-<code class="descclassname">infrapy.location.bisl.</code><code class="descname">summarize</code><span class="sig-paren">(</span><em>result</em>, <em>confidence_level=95</em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.summarize" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="infrapy.location.bisl.summarize">
+<span class="sig-prename descclassname"><span class="pre">infrapy.location.bisl.</span></span><span class="sig-name descname"><span class="pre">summarize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">95</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#infrapy.location.bisl.summarize" title="Permalink to this definition"></a></dt>
 <dd><p>Outputs results of BISL analysis</p>
 <p>Prints all results to screen in a readable format</p>
 <dl class="simple">
@@ -290,47 +206,35 @@ for computation of the localization distribution</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster
-
-    </p>
+    <p>&#169; Copyright 2020, F.Dannemann Dugick, P.Blom, J.Webster.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

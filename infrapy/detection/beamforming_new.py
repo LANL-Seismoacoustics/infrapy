@@ -862,7 +862,7 @@ def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=
         return -kde.pdf(f)[0]
     kde_peak = minimize_scalar(temp_kde, bracket=(fstat_min, fstat_max), options={'maxiter':250}).x
 
-    return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(det_p_val) * (kde_peak / fstat_peak)
+    return stats.f(TB_prod, TB_prod * (channel_cnt - 1)).ppf(1.0 - det_p_val) * (kde_peak / fstat_peak)
 
 
 # ###################### #
