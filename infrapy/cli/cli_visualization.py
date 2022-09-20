@@ -4,6 +4,7 @@ import os
 import warnings 
 
 import click
+import json
 import configparser as cnfg
 from matplotlib.pyplot import figure
 import numpy as np
@@ -42,8 +43,9 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 
     \b
     Example usage (run from infrapy/examples directory after running the run_fk examples):
-    \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_beam.png
-    \tinfrapy plot fk --config-file config/fk_example2.config --figure-out test.png --show-figure False
+    \tinfrapy plot fk --local-wvfrms 'data/YJ.BRP*'
+    \tinfrapy plot fk --config-file config/detection_local.config
+    \tinfrapy plot fk --config-file config/detection_fdsn.config --figure-out FDSN_fk-results.png --show-figure False
 
     '''
 
@@ -194,9 +196,10 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     Visualize detection (fd) results
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy plot_fd --local-wvfrms 'data/YJ.BRP*' --figure-out BRP_detections.png
-    \tinfrapy plot_fd --config-file config/fk_example2.config --figure-out test.png --show-figure False
+    Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
+    \tinfrapy plot fd --local-wvfrms 'data/YJ.BRP*'
+    \tinfrapy plot fd --config-file config/detection_local.config
+    \tinfrapy plot fd --config-file config/detection_fdsn.config --figure-out FDSN_fd-results.png --show-figure False
 
     '''
 
@@ -350,8 +353,9 @@ def dets(config_file, range_max, local_detect_label, figure_out):
     Visualize detections on a map
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy plot dets --local-detect-label 'data/detection_set1.json' --figure-out detection_set1.png
+    Example usage (run from infrapy/examples directory after running run_assoc example):
+    \tinfrapy plot dets --local-detect-label 'data/Blom_etal2020_GJI/*'
+    \tinfrapy plot dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
 
     '''
 
@@ -402,7 +406,8 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot loc --local-event-label temp.json 
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
 
     '''
 
@@ -437,7 +442,10 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
 
     click.echo('\n' + "Reading in detection list...")
     det_list = data_io.set_det_list(local_detect_label, merge=False)
-    bisl_result = data_io.read_locs(local_loc_label + ".loc.json")
+    if ".loc.json" in local_loc_label:
+        bisl_result = json.load(open(local_loc_label))
+    else:
+        bisl_result = json.load(open(local_loc_label + ".loc.json"))
 
     click.echo('\n' + "BISL Summary:")
     click.echo(bisl.summarize(bisl_result))
@@ -457,7 +465,7 @@ def origin_time(config_file, local_loc_label, figure_out):
 
     \b
     Example usage (run from infrapy/examples directory):
-    \t infrapy plot origin-time --local-loc-label data/location2.json --range-max 1000
+    \tinfrapy plot origin-time --local-loc-label GJI_example-ev0
     '''
     click.echo("")
     click.echo("#####################################")
@@ -481,8 +489,64 @@ def origin_time(config_file, local_loc_label, figure_out):
     click.echo("  local_detect_label: " + str(local_loc_label))
 
     click.echo('\n' + "Reading in BISL results...")
-    bisl_result = data_io.read_locs(local_loc_label)
+    if ".loc.json" in local_loc_label:
+        bisl_result = json.load(open(local_loc_label))
+    else:
+        bisl_result = json.load(open(local_loc_label + ".loc.json"))
 
     click.echo("Plotting origin time distribution...")
     loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
     
+
+@click.command('yield', short_help="Plot yield estimate distribution")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-yld-label", help="Yield estimate result", default=None)
+@click.option("--figure-out", help="Destination for figure", default=None)
+def yield_plot(config_file, local_yld_label, figure_out):
+
+    '''
+    Visualize the SpYE result
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy plot yield --local-yld-label HRR-5.yld.json
+
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##       Yield Estimate Plot       ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    local_yld_label = config.set_param(user_config, 'DETECTION IO', 'local_yld_label', local_yld_label, 'string')
+    figure_out = config.set_param(user_config, 'DETECTION IO', 'figure_out', figure_out, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  local_yld_label: " + str(local_yld_label))
+
+    click.echo('\n' + "Reading in SpYE results...")
+    if ".yld.json" in local_yld_label:
+        spye_result = json.load(open(local_yld_label))
+    else:
+        spye_result = json.load(open(local_yld_label + ".yld.json"))
+
+    click.echo('\n' + 'Results Summary (tons eq. TNT):')
+    click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+    click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+    click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+
+    click.echo('\n' + "Plotting yield PDF...")
+    loc_vis.plot_spye(spye_result, output_path=figure_out)
+
+    click.echo("")

@@ -49,11 +49,10 @@ from infrapy.detection import beamforming_new as fkd
 @click.option("--window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
-@click.option("--multithread", help="Use multithreading (default: " + config.defaults['FK']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
-    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, multithread, cpu_cnt):
+    signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, cpu_cnt):
     '''
     Run beamforming (fk) analysis
 
@@ -155,7 +154,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     window_len = config.set_param(user_config, 'FK', 'window_len', window_len, 'float')
     sub_window_len = config.set_param(user_config, 'FK', 'sub_window_len', sub_window_len, 'float')
     window_step = config.set_param(user_config, 'FK', 'window_step', window_step, 'float')
-    multithread = config.set_param(user_config, 'FK', 'multithread', multithread, 'bool')
     cpu_cnt = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
 
     click.echo('\n' + "Algorithm parameters:")
@@ -176,8 +174,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo("  window_len: " + str(window_len))
     click.echo("  sub_window_len: " + str(sub_window_len))
     click.echo("  window_step: " + str(window_step))
-    click.echo("  multithread: " + str(multithread))
-    if multithread or cpu_cnt is not None:
+    if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
     else:
@@ -226,7 +223,6 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         click.echo('\t' + "start time: " + str(t1))
         click.echo('\t' + "end time: " + str(t2))
 
-
         warning_message = "signal_start and signal_end values poorly defined."
         if t1 > t2:
             warning_message = warning_message + "  signal_start after signal_end."
@@ -262,7 +258,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         click.echo('\n' + "WARNING!  fk results file(s) already exist." + '\n' + "Writing a new version: " + local_fk_label + "-v" + str(k) + ".fk_results.dat")
         np.savetxt(local_fk_label + "-v" + str(k) + ".fk_results.dat", fk_results, header=fk_header)
 
-    if multithread or cpu_cnt is not None:
+    if pl is not None:
         pl.terminate()
         pl.close()
 
@@ -315,6 +311,35 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     # use local ingestion for initial testing
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+
+    if local_fk_label == 'auto':
+        # try loading waveform data and see if fk_label can be built
+        local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', None, 'string')
+        fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', None, 'string')   
+        db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', None, 'string')
+        if db_config is not None:
+            db_info = cnfg.ConfigParser()
+            db_info.read(db_config)
+        else:
+            db_info = None 
+
+
+        network = config.set_param(user_config, 'WAVEFORM IO', 'network', None, 'string')
+        station = config.set_param(user_config, 'WAVEFORM IO', 'station', None, 'string')
+        location = config.set_param(user_config, 'WAVEFORM IO', 'location', None, 'string')
+        channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', None, 'string')       
+
+        starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', None, 'string')
+        endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', None, 'string')
+
+        stream, _ = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
+
+        if local_fk_label is None or local_fk_label == "auto":
+            if local_wvfrms is not None and "/" in local_wvfrms:
+                local_fk_label = os.path.dirname(local_wvfrms) + "/"
+            else:
+                local_fk_label = ""
+            local_fk_label = local_fk_label + data_io.stream_label(stream)
 
     if ".fk_results.dat" in local_fk_label:
         local_fk_label = local_fk_label[:-15]
@@ -370,6 +395,8 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
                 array_lon = float(line.split(' ')[-1])
             elif re.search(r'([\d]{4}-[\d]{2}-[\d]{2})',line) is not None and "t0" not in line:
                 data_info.append(line[6:].split('\t')[0])
+            elif "method" in line:
+                method = line.split(' ')[-1][:-1]
 
         beam_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
         stream_info = [os.path.commonprefix([info.split('.')[j] for info in data_info]) for j in [0,1,3]]
@@ -384,7 +411,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 
     det_list = []
     for det_info in dets:
-        det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection")]
+        det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection", method=method)]
     print("Writing detections to " + local_detect_label + ".dets.json")
     data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
 
@@ -425,7 +452,6 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--fk-window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--fk-sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--fk-window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
-@click.option("--multithread", help="Use multithreading (default: False)", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 
 @click.option("--fd-window-len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
@@ -436,9 +462,9 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
-    local_fk_label, local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method,  signal_start, 
-    signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, multithread, cpu_cnt, fd_window_len, p_value, min_duration, 
+def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, 
+    local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
+    signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration, 
     back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
     Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
@@ -544,7 +570,6 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     fk_window_len = config.set_param(user_config, 'FK', 'window_len', fk_window_len, 'float')
     fk_sub_window_len = config.set_param(user_config, 'FK', 'sub_window_len', fk_sub_window_len, 'float')
     fk_window_step = config.set_param(user_config, 'FK', 'window_step', fk_window_step, 'float')
-    multithread = config.set_param(user_config, 'FK', 'multithread', multithread, 'bool')
     cpu_cnt = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
 
     fd_window_len = config.set_param(user_config, 'FD', 'window_len', fd_window_len, 'float')
@@ -574,8 +599,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     click.echo("  window_len (fk): " + str(fk_window_len))
     click.echo("  sub_window_len (fk): " + str(fk_sub_window_len))
     click.echo("  window_step (fk): " + str(fk_window_step))
-    click.echo("  multithread: " + str(multithread))
-    if multithread or cpu_cnt is not None:
+    if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
     else:

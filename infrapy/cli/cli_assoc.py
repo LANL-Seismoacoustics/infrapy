@@ -33,17 +33,15 @@ from ..association import hjl
 @click.option("--trimming-threshold", help="Mishapen cluster threshold (default: " + config.defaults['ASSOC']['trimming_threshold'] + ")", default=None, type=float)
 @click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
 @click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
-@click.option("--multithread", help="Use multithreading (default: " + config.defaults['ASSOC']['multithread'] + ")", default=None, type=bool)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_assoc(config_file, local_detect_label, local_event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
-                cluster_threshold, trimming_threshold, event_population_min, event_station_min, multithread, cpu_cnt):
+                cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_assoc --local-detect-label 'data/detection_set1.json' --local-event-label assoc_out
-    \tinfrapy run_assoc --config-file config/assoc_example.config
+    \tinfrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example --cpu-cnt 4
     '''
 
     click.echo("")
@@ -95,7 +93,6 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
     trimming_threshold = config.set_param(user_config, 'ASSOC', 'trimming_threshold', trimming_threshold, 'float')
     event_population_min = config.set_param(user_config, 'ASSOC', 'event_population_min', event_population_min, 'float')
     event_station_min = config.set_param(user_config, 'ASSOC', 'event_station_min', event_station_min, 'float')
-    multithread = config.set_param(user_config, 'ASSOC', 'multithread', multithread, 'bool')
     cpu_cnt = config.set_param(user_config, 'ASSOC', 'cpu_cnt', cpu_cnt, 'int')
 
     click.echo('\n' + "Parameter summary:")
@@ -106,7 +103,7 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
     click.echo("  cluster_linkage: " + str(cluster_linkage))
     click.echo("  cluster_threshold: " + str(cluster_threshold))
     click.echo("  trimming_threshold: " + str(trimming_threshold))
-    if multithread or cpu_cnt is not None:
+    if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
     else:
@@ -118,7 +115,10 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
                                     bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=(range_max / 4.0), 
                                     resol=resolution, linkage_method=cluster_linkage, trimming_thresh=trimming_threshold, 
                                     cluster_det_population=event_population_min, cluster_array_population=event_station_min, pool=pl)
+
+    click.echo("Identified " + str(len(events)) + " events." + '\n')
     data_io.write_events(events, event_qls, det_list, local_event_label)    
+
     if pl is not None:
         pl.terminate()
         pl.close()

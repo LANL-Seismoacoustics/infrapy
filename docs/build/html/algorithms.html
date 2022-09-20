@@ -51,6 +51,7 @@
 <li class="toctree-l2"><a class="reference internal" href="detection.html">Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="association.html">Association</a></li>
 <li class="toctree-l2"><a class="reference internal" href="localization.html">Localization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yield.html">Source Characterization</a></li>
 </ul>
 </li>
 </ul>
@@ -81,15 +82,15 @@
              
   <section id="algorithms">
 <span id="id1"></span><h1>Algorithms<a class="headerlink" href="#algorithms" title="Permalink to this headline"></a></h1>
-<ul class="simple">
+<ul>
 <li><p>Analyst methods are modular so that results from other processing tools (e.g., Bloodhound, Cardinal, PMCC) can be used in later analysis steps and vice versa.</p></li>
-<li><dl class="simple">
-<dt>Algorithms are written to be data source agnostic so analysis can be performed regardless of data source once IO method is understood</dt><dd><ul>
+<li><p>Algorithms are written to be data source agnostic so analysis can be performed regardless of data source once IO method is understood</p>
+<blockquote>
+<div><ul class="simple">
 <li><p>Waveform analysis utilizes an ObsPy Stream object for data ingestion</p></li>
 <li><p>Detection information is stored in .json or ascii .dat files that can be ingested using functions in <code class="code docutils literal notranslate"><span class="pre">infrapy.likelihoods</span></code></p></li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
 </li>
 </ul>
 <section id="station-level-processing">
@@ -122,13 +123,21 @@
 </section>
 <section id="localization">
 <h3><a class="reference internal" href="localization.html#localization"><span class="std std-ref">Localization</span></a><a class="headerlink" href="#localization" title="Permalink to this headline"></a></h3>
-<ul>
+<ul class="simple">
 <li><p>Event analysis using the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty</p></li>
 <li><p>Preliminary analysis of the back projections can be used to define the spatial region of interest or it can be specified by the analysis</p></li>
 <li><p>Analysis identifies the maximum posteriori solution</p></li>
 <li><p>The marginalized spatial distribution is approximated as 2d-normal to define 95 and 99% confidence ellipse bounds</p></li>
 <li><p>The marginalized temporal distribution is analyzed to identify the exact 95 and 99% confidence bounds</p></li>
-<li><p>Likelihood definitions relating detection parameters to spatial and temporal source characteristics are shared between association and localization analysis for consistency</p>
+<li><p>Likelihood definitions relating detection parameters to spatial and temporal source characteristics are shared between association and localization analysis for consistency</p></li>
+</ul>
+</section>
+<section id="yield">
+<h3><a class="reference internal" href="yield.html#yield"><span class="std std-ref">Source Characterization</span></a><a class="headerlink" href="#yield" title="Permalink to this headline"></a></h3>
+<ul>
+<li><p>Detections are analyzed to compute the spectral amplitude (magnitude of the Fourier transform) for the arrival waveform</p></li>
+<li><p>Transmission loss statistics are utilized to estimate the infrasonic spectral amplitude at a location near the source from the various observations</p></li>
+<li><p>The near-source spectral amplitude estimate is combined with a source model (currently the Kinney &amp; Graham scaling laws and Friedlander blastwave model) to map the spectral amplitude to blastwave yield</p>
 <blockquote>
 <div><div class="toctree-wrapper compound">
 </div>

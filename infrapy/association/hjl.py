@@ -114,15 +114,15 @@ def set_region(det1, det2, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=
     x, y, z = 0.0, 0.0, 0.0
     for n in range(5):
         if not np.isnan(intersect[n][0]):
-            x += np.sin(np.radians(intersect[n][0])) * np.cos(np.radians(intersect[n][1]))
-            y += np.sin(np.radians(intersect[n][0])) * np.sin(np.radians(intersect[n][1]))
-            z += np.cos(np.radians(intersect[n][0]))
+            x += np.cos(np.radians(intersect[n][0])) * np.cos(np.radians(intersect[n][1]))
+            y += np.cos(np.radians(intersect[n][0])) * np.sin(np.radians(intersect[n][1]))
+            z += np.sin(np.radians(intersect[n][0]))
 
     norm = np.sqrt(x**2 + y**2 + z**2)
     x /= norm
     y /= norm
     z /= norm
-    center = np.array([np.degrees(np.arccos(z)), np.degrees(np.arctan2(y, x))])
+    center = np.array([np.degrees(np.arcsin(z)), np.degrees(np.arctan2(y, x))])
 
     # Check if either array is in the beam of the other array
     # Use the range to the nearer array as the initial radius of the region of interest

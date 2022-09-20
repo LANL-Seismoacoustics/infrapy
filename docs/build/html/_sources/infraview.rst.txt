@@ -6,9 +6,9 @@ InfraView
 
 InfraPy includes an interactive graphical user interface (GUI) called InfraView.  This interface includes waveform analysis methods, beamforming and detection tools, and event identification and localization capabilities.  The InfraView GUI can be accessed from the command line by simply running,
 
-    .. code-block:: none
+    .. code-block:: bash
 
-        >> infraview
+        infraview
 
 --------------------
 Array-Level Analyses

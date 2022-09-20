@@ -51,7 +51,6 @@ Array-Level Analyses
           window_len: 10.0
           sub_window_len: None
           window_step: 5.0
-          multithread: False
 
         Loading local data from data/YJ.BRP*.SAC
 
@@ -152,7 +151,7 @@ Array-Level Analyses
         window_step = 5.0
 
         [FD]
-        p_value = 0.95
+        p_value = 0.05
         min_duration = 20.0
 
     Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  The analysis can now be completed by simply running:
@@ -199,11 +198,13 @@ Array-Level Analyses
 
     If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.
 
-- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified.
+    Lastly, large analysis runs can be accelerated by specifying a number of CPUs to utilize in analysis via :code:`--cpu-cnt`.  Multi-threading in InfraPy beamforming analysis is done by distributing individual analysis windows among available threads.   On a desktop OS X machine used for testing, a single-CPU analysis of the included BRP data requires approximately 32 seconds.  With 4 CPUs this is reduced to 14 seconds and with 10 CPUs it reduces further to approximately 10 seconds.  The limited gains for higher CPUs is due to a amount of time needed to perform background tasks such as reading and writing data that is not multi-threaded.  It should be noted that the BRP example data set includes only 20 minutes of waveform data and that longer data sets would likely benefit from higher numbers of CPUs before these background task times become notable.
 
+- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified. 
+  
     .. code-block:: bash
 
-        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+        infrapy run_fd --config-file config/detection_local.config
 
     Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:
 
@@ -222,7 +223,7 @@ Array-Level Analyses
 
         Algorithm parameters:
           window_len: 3600.0
-          p_value: 0.95
+          p_value: 0.05
           min_duration: 20.0
           back_az_width: 15.0
           fixed_thresh: None
@@ -233,7 +234,7 @@ Array-Level Analyses
         Running fd...
         Writing detections to data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json
 
-    As noted in the output, a new file named :code:`BRP_analysis.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
+    As noted in the output, a new file named :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
 
     .. code-block:: none
 
@@ -244,8 +245,8 @@ Array-Level Analyses
                 "F Stat.": 31.9058,
                 "Trace Vel. (m/s)": 370.97,
                 "Back Azimuth": -41.84,
-                "Latitude": 39.47269821166992,
-                "Longitude": -110.74089813232422,
+                "Latitude": 39.4727,
+                "Longitude": -110.741,
                 "Elevation (m)": null,
                 "Start": 0.0,
                 "End": 5.0,
@@ -254,14 +255,14 @@ Array-Level Analyses
                     5.0
                 ],
                 "Array Dim.": 4,
-                "Method": "",
+                "Method": "bartlett",
                 "Event": "",
                 "Note": "InfraPy CLI detection",
                 "Network": "YJ",
                 "Station": "BRP",
                 "Channel": "EDF"
             },...
-
+        ]
 
 - Once detections are identified in the data record, they can be visualized similarly to the :code:`plot fk` option via :code:`plot fd`.
 
@@ -276,12 +277,12 @@ Array-Level Analyses
         :align: center
 
 
-- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with merge detections turn on and comparing the results:
+- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any pair of detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with this option turn on and comparing the results:
 
 
     .. code-block:: bash
         
-        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59
+        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59 --merge-dets True
 
         infrapy plot fd --config-file config/detection_local.config
 
@@ -294,7 +295,7 @@ Array-Level Analyses
 
     .. code-block:: bash
     
-        infrapy run_fkd --config-file BRP_analysis.config
+        infrapy run_fkd --config-file config/detection_local.config
 
     This option essentially combines the :code:`run_fk` and :code:`run_fd` options into a single analysis run.
 
@@ -323,9 +324,9 @@ Array-Level Analyses
         :align: center
 
 
-    Although not currently included in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
+    Although not currently accessible in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
 
-- Analysis of data from a local database is also available through the InfraPy CLI, and is covered in a separate tutorial on :ref:`pisces`.
+- Analysis of data from a local database is also available through the InfraPy CLI using the Python pisces library, and is covered in a separate tutorial on :ref:`pisces`.
 
 ----------------------
 Network-Level Analyses
@@ -335,9 +336,9 @@ Network-Level Analyses
 
     .. code-block:: bash
     
-        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example
+        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example --cpu-cnt 4
 
-    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  The analysis results will be summarized to the screen,
+    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
     .. code-block:: none
 
@@ -394,6 +395,7 @@ Network-Level Analyses
 	        Trimming poor linkages and repeating clustering analysis...
 
         Cleaning up and merging clusters...
+        identified 3 events.
 
     The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`local_event_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
 
@@ -469,7 +471,7 @@ Network-Level Analyses
 
         Writing localization result into GJI_example-ev0.loc.json
 
-- The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
+    The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
 
     .. code-block:: bash
 
@@ -497,6 +499,113 @@ Network-Level Analyses
 
 
     .. image:: _static/_images/plot_origin_time.png
+        :width: 1200px
+        :align: center
+
+
+- For above-ground explosive sources for which source models such as the Kinney & Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy's Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):
+
+    .. code:: bash
+
+        infrapy run_yield --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
+
+    As with other analysis methods, parameter information will be summarized and high level results:
+
+    .. code:: none
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##    Yield Estimation Analysis    ##
+        ##                                 ##
+        #####################################
+
+
+        Data parameters:
+        local_detect_label: data/HRR-5.dets.json
+        tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
+        local_loc_label: None
+          src_lat: 33.5377
+          src_lon: -106.333961
+        local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+
+        Algorithm parameters:
+          freq_min: 0.25
+          freq_max: 1.0
+          yld_min: 1.0
+          yld_max: 1000.0
+          ref_rng: 1.0
+          resolution: 200
+          noise_option: post
+          window_buffer: 0.2
+          amb_press: 101.325
+          amb_temp: 288.15
+          grnd_burst: True
+          exp_type: chemical
+
+        Loading local data from ../infrapy-data/hrr-5/*/*.sac
+        Collecting waveform data for each detection...
+
+        Detection network.station: NCPA.W220
+        4 Trace(s) in Stream:
+        .W220CW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W220SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+
+        Detection network.station: NCPA.W240
+        3 Trace(s) in Stream:
+        .W240NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W240NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+        .W240SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
+
+        Detection network.station: .W340
+        4 Trace(s) in Stream:
+        .W340CW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+        .W340NW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+        .W340SE..HDF | 2012-08-27T23:14:44.000000Z - 2012-08-27T23:34:43.998073Z | 500.0 Hz, 600000 samples
+        .W340SW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
+
+        Detection network.station: .W420
+        6 Trace(s) in Stream:
+        .W420CE..HDF | 2012-08-27T23:20:01.000000Z - 2012-08-27T23:40:00.998073Z | 500.0 Hz, 600000 samples
+        .W420CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W420SW..HDF | 2012-08-27T23:19:44.000000Z - 2012-08-27T23:39:43.998073Z | 500.0 Hz, 600000 samples
+
+        Detection network.station: .W460
+        6 Trace(s) in Stream:
+        .W460CE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+        .W460SW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
+
+        Computing detection spectra...        
+        Loading transmission loss statistics...
+        Estimating yield using spectral amplitudes...
+        Writing yield estimate result into HRR-5.yld.json
+
+        Results Summary (tons eq. TNT):
+      	    Maximum a Posteriori Yield: 45.5293507487
+	        68% Confidence Bounds: [  21.  115.]
+        	95% Confidence Bounds: [   3.  358.]
+
+    The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL (:code:`[...].loc.json`) and extract the location from that source.  The current implementation can only utilize locally saved waveform data ingested as a single large stream and sub-divided using the network and station info in the detection file.  Eventually, it is planned to allow the methods to pull from an FDSN or database, but for now analysis requires pulling waveform files (this can be done using :code:`infrapy utils write-wvfrms`).
+
+    Visualization of the SpYE analysis result can be done by referencing the output file,
+
+    .. code:: bash
+
+        infrapy plot yield --local-yld-label "HRR-5"
+
+
+    This once again prints the MaP yield and confidence bounds and produces a figure such as that shown below where the left panel shows the PDF for yield and the right panel shows the predicted spectral amplitude near the source (specifically at a stand off distance of :code:`--ref-rng`).
+
+    .. image:: _static/_images/spye_result.png
         :width: 1200px
         :align: center
 
@@ -616,7 +725,7 @@ Scripting and Notebook-Based Analysis
             result,pdf = bisl.run(det_list)
             print(bisl.summarize(result))
 
-- Yield estimation analysis is not currently available through the CLI due to the more complicated nature of the ingested data (requiring waveform data across multiple detecting arrays as well as transmission loss models for the region).  The example yield estimation provided shows how to set up the analysis and estimate yield for an above-ground explosion.  Analysis parameters include the detection file for the event, waveform data location, and strings to ingest each array's data.
+- Yield estimation analysis is a bit challenging to perform interactively or even in an automated way because analysis parameters include the detection file for the event, waveform data from the various detecting stations, transmission loss models, and a source model.  An initial version of this is implemented as part of InfraPy's command line interface as discussed above; however, it is likely a user may prefer to interact directly with the data ingestion and analysis.  
 
     .. code-block:: python
 
@@ -637,11 +746,10 @@ Scripting and Notebook-Based Analysis
             # ######################### #
 
             det_file = "data/HRR-5.dets.json"
-            data_path = "../infrapy-data/hrr-5/"
-            data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", 
-                        "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]
+            wvfrm_path = "../infrapy-data/hrr-5/*/*.sac"
+            tloss_path = "../infrapy/propagation/priors/tloss/2007_08-"
 
-    The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window, a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
+    The analysis parameters include a noise option ("pre" or "post" detection window), a window buffer factor that extends the sample window beyond the detection window by some factor (0.2 meaning a 20% increase in the window length here), a source location, frequency band, yield range, and reference distance from the source at which to compute the source spectral estimate.  If a ground truth yield is known it can be specified and the frequency-yield resolution of the grid can be specified.
 
     .. code-block:: python
 
@@ -665,30 +773,25 @@ Scripting and Notebook-Based Analysis
             #          and spectra          #
             # ############################# #
             det_list = data_io.json_to_detection_list(det_file)
-            st_list = [0] * len(det_list)
-            for j in range(len(st_list)):
-                st_list[j] = read(data_path + data_ids[j] )
-            smn_specs = spye.extract_spectra(det_list, st_list, 
-                                    win_buffer=win_buffer, ns_opt=ns_opt)
+            st_list = [Stream([tr for tr in read(wvfrm_path) if det.station in tr.stats.station]) for det in det_list]
+            smn_specs = spye.extract_spectra(det_list, st_list, win_buffer=win_buffer, ns_opt=ns_opt)
     
 
     The transmission loss model models are defined and loaded,
 
     .. code-block:: python
-        
-        .
+
             # ######################### #
             #     Load TLoss Models     #
             # ######################### #
             tloss_f_min, tloss_f_max, tloss_f_cnt = 0.025, 2.5, 25
 
             models = [0] * 2
-            models[0] = list(np.logspace(np.log10(tloss_f_min), 
-                                np.log10(tloss_f_max), tloss_f_cnt))
+            models[0] = list(np.logspace(np.log10(tloss_f_min), np.log10(tloss_f_max), tloss_f_cnt))
             models[1] = [0] * tloss_f_cnt
             for n in range(tloss_f_cnt):
                 models[1][n] = infrasound.TLossModel()
-                models[1][n].load("../infrapy/propagation/priors/tloss/2007_08-" + "%.3f" % models[0][n] + "Hz.pri")
+                models[1][n].load(tloss_path + "%.3f" % models[0][n] + "Hz.pri")
 
     Finally, analysis can be performed, and results printed and visualized,
 
@@ -698,18 +801,15 @@ Scripting and Notebook-Based Analysis
             #         Run Yield        #
             #    Estimation Methods    #
             # ######################## #
-            yld_vals, yld_pdf, conf_bnds = spye.run(det_list, smn_specs, src_loc, freq_band, models, 
-                                                    yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
+            yld_results = spye.run(det_list, smn_specs, src_loc, freq_band, models, yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
 
             print('\nResults:')
-            print('\t' + "Maximum a Posteriori Yield:", yld_vals[np.argmax(yld_pdf)])
-            print('\t' + "68% Confidence Bounds:", conf_bnds[0])
-            print('\t' + "95% Confidence Bounds:", conf_bnds[1])
+            print('\t' + "Maximum a Posteriori Yield:", yld_results['yld_vals'][np.argmax(yld_results['yld_pdf'])])
+            print('\t' + "68% Confidence Bounds:", yld_results['conf_bnds'][0])
+            print('\t' + "95% Confidence Bounds:", yld_results['conf_bnds'][1])
 
-            plt.semilogx(yld_vals, yld_pdf)
-            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[0][0] <= yld_vals, yld_vals <= conf_bnds[0][1]), color='g', alpha=0.25)
-            plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[1][0] <= yld_vals, yld_vals <= conf_bnds[1][1]), color='g', alpha=0.25)
+            plt.semilogx(yld_results['yld_vals'], yld_results['yld_pdf'])
+            plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][0][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][0][1]), color='g', alpha=0.25)
+            plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][1][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][1][1]), color='g', alpha=0.25)
 
-            plt.show(block=False)
-            plt.pause(5.0)
-            plt.close()
+            plt.show()

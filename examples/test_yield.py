@@ -5,7 +5,7 @@
 # Author:   Philip Blom (pblom@lanl.gov)
 #
 
-from obspy.core import read
+from obspy import read, Stream
 
 import numpy as np
 
@@ -21,8 +21,8 @@ if __name__ == '__main__':
     #     Define Parameters     #
     # ######################### #
     det_file = "data/HRR-5.dets.json"
-    data_path = "../infrapy-data/hrr-5/"
-    data_ids = ["W220/HR5.W220*.sac", "W240/HR5.W240*.sac", "W340/HR5.W340*.sac", "W420/HR5.W420*.sac", "W460/HR5.W460*.sac"]
+    wvfrm_path = "../infrapy-data/hrr-5/*/*.sac"
+    tloss_path = "../infrapy/propagation/priors/tloss/2007_08-"
 
     ns_opt = "post"
     win_buffer = 0.2
@@ -40,11 +40,9 @@ if __name__ == '__main__':
     #          and spectra          #
     # ############################# #
     det_list = data_io.json_to_detection_list(det_file)
-    st_list = [0] * len(det_list)
-    for j in range(len(st_list)):
-        st_list[j] = read(data_path + data_ids[j] )
+    st_list = [Stream([tr for tr in read(wvfrm_path) if det.station in tr.stats.station]) for det in det_list]
     smn_specs = spye.extract_spectra(det_list, st_list, win_buffer=win_buffer, ns_opt=ns_opt)
-    
+
     # ######################### #
     #     Load TLoss Models     #
     # ######################### #
@@ -55,24 +53,22 @@ if __name__ == '__main__':
     models[1] = [0] * tloss_f_cnt
     for n in range(tloss_f_cnt):
         models[1][n] = infrasound.TLossModel()
-        models[1][n].load("../infrapy/propagation/priors/tloss/2007_08-" + "%.3f" % models[0][n] + "Hz.pri")
+        models[1][n].load(tloss_path + "%.3f" % models[0][n] + "Hz.pri")
 
     # ######################## #
     #         Run Yield        #
     #    Estimation Methods    #
     # ######################## #
-    yld_vals, yld_pdf, conf_bnds = spye.run(det_list, smn_specs, src_loc, freq_band, models, yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
+    yld_results = spye.run(det_list, smn_specs, src_loc, freq_band, models, yld_rng=yld_rng, ref_src_rng=ref_rng, resol=resol)
 
     print('\nResults:')
-    print('\t' + "Maximum a Posteriori Yield:", yld_vals[np.argmax(yld_pdf)])
-    print('\t' + "68% Confidence Bounds:", conf_bnds[0])
-    print('\t' + "95% Confidence Bounds:", conf_bnds[1])
+    print('\t' + "Maximum a Posteriori Yield:", yld_results['yld_vals'][np.argmax(yld_results['yld_pdf'])])
+    print('\t' + "68% Confidence Bounds:", yld_results['conf_bnds'][0])
+    print('\t' + "95% Confidence Bounds:", yld_results['conf_bnds'][1])
 
-    plt.semilogx(yld_vals, yld_pdf)
-    plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[0][0] <= yld_vals, yld_vals <= conf_bnds[0][1]), color='g', alpha=0.25)
-    plt.fill_between(yld_vals, yld_pdf, where=np.logical_and(conf_bnds[1][0] <= yld_vals, yld_vals <= conf_bnds[1][1]), color='g', alpha=0.25)
+    plt.semilogx(yld_results['yld_vals'], yld_results['yld_pdf'])
+    plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][0][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][0][1]), color='g', alpha=0.25)
+    plt.fill_between(yld_results['yld_vals'], yld_results['yld_pdf'], where=np.logical_and(yld_results['conf_bnds'][1][0] <= yld_results['yld_vals'], yld_results['yld_vals'] <= yld_results['conf_bnds'][1][1]), color='g', alpha=0.25)
 
-    plt.show(block=False)
-    plt.pause(5.0)
-    plt.close()
+    plt.show()
 

@@ -18,6 +18,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Source Characterization" href="yield.html" />
     <link rel="prev" title="Association" href="association.html" /> 
 </head>
 
@@ -43,13 +44,14 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infraview.html">InfraView</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pisces.html">Interfacing with Pisces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pisces.html">Database Interfacing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">Utility Functions</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="algorithms.html">Algorithms</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="beamforming.html">Array Processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="detection.html">Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="association.html">Association</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Localization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yield.html">Source Characterization</a></li>
 </ul>
 </li>
 </ul>
@@ -81,18 +83,13 @@
              
   <section id="localization">
 <span id="id1"></span><h1>Localization<a class="headerlink" href="#localization" title="Permalink to this headline"></a></h1>
+<p>Event analysis in InfraPy uses the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty. Preliminary analysis of the back projections can be used to define the spatial region of interest.  The analysis identifies the maximum posteriori solution and also marginalizes a subset of the parameters to produce spatial and temporal distributions for the source.  Likelihood definitions relating detection parameters to spatial and temporal source characteristics are shared between association and localization analysis for consistency.</p>
+<p>See the following for more references on BISL:</p>
 <ul class="simple">
-<li><p>Event analysis uses the Bayesian Infrasonic Source Localization (BISL) methodology to estimate both the spatial location of the event as well as the origin time with quantified uncertainty</p></li>
-<li><p>Preliminary analysis of the back projections can be used to define the spatial region of interest or it can be specified by the analysis</p></li>
-<li><p>Analysis identifies the maximum posteriori solution</p></li>
-<li><p>The marginalized spatial distribution is approximated as 2d-normal to define 95 and 99% confidence ellipse bounds</p></li>
-<li><p>The marginalized temporal distribution is analyzed to identify the exact 95 and 99% confidence bounds</p></li>
-<li><p>Likelihood definitions relating detection parameters to spatial and temporal source characteristics are shared between association and localization analysis for consistency</p></li>
+<li><p><a class="reference external" href="https://academic.oup.com/gji/article/181/1/399/718964">Modrak et al., 2010</a></p></li>
+<li><p><a class="reference external" href="https://academic.oup.com/gji/article/196/1/375/586767">Marcillo et al., 2013</a></p></li>
+<li><p><a class="reference external" href="https://academic.oup.com/gji/article/203/3/1682/2594791">Blom et al., 2015</a></p></li>
 </ul>
-<p>See the following for more references on BISL:
-<a class="reference external" href="https://academic.oup.com/gji/article/181/1/399/718964">Modrak et al., 2010</a>
-<a class="reference external" href="https://academic.oup.com/gji/article/196/1/375/586767">Marcillo et al., 2013</a>
-<a class="reference external" href="https://academic.oup.com/gji/article/203/3/1682/2594791">Blom et al., 2015</a></p>
 </section>
 
 
@@ -100,6 +97,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="association.html" class="btn btn-neutral float-left" title="Association" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="yield.html" class="btn btn-neutral float-right" title="Source Characterization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

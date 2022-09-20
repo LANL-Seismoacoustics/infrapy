@@ -90,11 +90,11 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
     fig = plt.figure()
     ax = _setup_map(fig,[[lat_min, lat_max], [lon_min, lon_max]])
 
-    ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
     for det in det_list:
         if det.back_azimuth is not None:
-            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
-            ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=500, del_s=(range_max * 1.0e3 / 500))
+            ax.plot(list(gc_path.lons), list(gc_path.lats), '.', color=back_az_color, markersize=1.5, transform=map_proj)
+    ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
 
     if title:
         plt.title(title)
@@ -142,11 +142,11 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
     ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
     if not zoom:
-        ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
         for det in det_list:
             if det.back_azimuth is not None:
-                gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=100, del_s=(range_max * 1.0e3 / 100))
-                ax.plot(list(gc_path.lons), list(gc_path.lats), color=back_az_color, linewidth=1.5, transform=map_proj)
+                gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=500, del_s=(range_max * 1.0e3 / 500))
+                ax.plot(list(gc_path.lons), list(gc_path.lats), '.', color=back_az_color, markersize=1.5, transform=map_proj)
+        ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
 
     if title:
         plt.set_title(title)
@@ -182,6 +182,41 @@ def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True):
     if output_path:
         plt.savefig(output_path, dpi=300) 
 
+    if show_fig:
+        plt.show()
+
+
+def plot_spye(spye_result, title=None, output_path=None, show_fig=True):
+    '''
+    Visualize the yield estimate PDF from SpYE
+
+    '''
+
+    _, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 3), gridspec_kw={'width_ratios': [2, 1]})
+
+    ax1.set_xscale('log')
+    ax1.plot(np.array(spye_result['yld_vals']), spye_result['yld_pdf'], '-k')
+    ax1.fill_between(np.array(spye_result['yld_vals']), spye_result['yld_pdf'], where=np.logical_and(spye_result['conf_bnds'][0][0] <= np.array(spye_result['yld_vals']), np.array(spye_result['yld_vals']) <= spye_result['conf_bnds'][0][1]), color=back_az_color, alpha=0.25)
+    ax1.fill_between(np.array(spye_result['yld_vals']), spye_result['yld_pdf'], where=np.logical_and(spye_result['conf_bnds'][1][0] <= np.array(spye_result['yld_vals']), np.array(spye_result['yld_vals']) <= spye_result['conf_bnds'][1][1]), color=conf_color, alpha=0.25)
+
+    ax1.set_xlabel("Yield (eq. TNT) [kg]")
+    ax1.set_ylabel("Probability")
+
+
+    F, SP = np.meshgrid(spye_result['spec_freqs'], spye_result['spec_vals'])
+    ax2.scatter(F.flatten(), SP.flatten(), c=np.array(spye_result['spec_pdf']).flatten(), cmap=pdf_cm)
+
+    ax2.set_xlabel("Frequency [Hz]")
+    ax2.set_ylabel("Spectral Amplitude [Pa/Hz]")
+
+    plt.tight_layout()
+
+    if title:
+        plt.title(title)
+        
+    if output_path:
+        plt.savefig(output_path + ".spye.png", dpi=300) 
+    
     if show_fig:
         plt.show()
 

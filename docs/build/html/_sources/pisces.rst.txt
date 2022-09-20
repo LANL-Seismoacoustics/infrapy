@@ -38,15 +38,16 @@ Defining Database Connection Info
         driver = 
         username = 
         password =  
-        owner = my_account
 
         [DBTABLES]
-        wfdisc = wfdisc
-        site = site
+        wfdisc = owner.wfdisc
+        site = owner.site
+
+        [DBENVIRONMENT]
+        ???
+
 
     - Note that the driver, username, and password fields are optional and if accessing your database doesn't require them they can be left out of the config file or simply left blank as in the above
-
-    - The owner information is used in combination with the database table list to define the actual table names (e.g., the above would define the site table reference as :code:`my_account.site`).
 
     - Add notes about other fields?
 
@@ -54,7 +55,14 @@ Defining Database Connection Info
 Accessing Waveform Data from the Database
 -----------------------------------------
 
-- The utility function, :code:`infrapy utils check-db-wvfrms`, can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:
+- The utility function :code:`infrapy utils check-db-wvfrms` can be used to check what waveform data will be extracted to ensure that your database connection is working and that data is being pulled correctly.  An example output of this function is shown below:
+
+     .. code-block:: bash
+
+        infrapy utils check_db_wvfrms --db-config /path/to/database_info.config --station 'I53*' --channel '*.DF' --starttime '2018-12-19T01:00:00' --endtime '2018-12-19T03:00:00'
+
+
+    This should establish a database session via pisces and perform a site and waveform search producing something like:
 
     .. code-block:: none
 
@@ -102,9 +110,11 @@ Accessing Waveform Data from the Database
         
     - Note that all 8 channels of the I53 station are found in the database and the displayed start and end times indicate that the requested 2 hours of data are able to be pulled.  The latitude and longitude of the various station elements are summarized for completeness.
 
-    - Also, pulling waveform data from a database requires only the :code:`site` table to identify station information and :code:`wfdisc` to access waveform data.  Additional tables will be required for attaching response information (currently data is returned in counts and not physical units) and other advances in accessing waveform data.
+    - Also, pulling waveform data from a database requires only the :code:`site` table to identify station information and :code:`wfdisc` to access waveform data.  Additional tables will be required in the future when attaching response information (currently data is returned in counts and not physical units).
 
-- Running and visualizing beamforming analysis with this data can now be done using the same :code:`my_configuration.config` file with parameter modifications and other details as discussed in the :ref:`quickstart`.  Essentially, when pulling waveform data for analysis, our aim is to be able to point the infrapy methods to a database via pisces and a :code:`database_info.config` file as easily as pointing it at an FDSN.
+- Running and visualizing fk and fd analyses with a database source can be done using a configuration file with parameter modifications and other details as discussed in the :ref:`quickstart`.  
+  
+- When pulling waveform data for analysis, our aim is to be able to point Infrapy to a database via pisces and a :code:`database_info.config` file as easily as pointing it at an FDSN (it should as simple as replacing the 'fdsn = iris' line in the config file with 'db_config = /path/to/database_info.config').  
 
 ------------------------------------------
 Writing Analysis Results into the Database
@@ -112,6 +122,5 @@ Writing Analysis Results into the Database
 
 - Currently, analysis results using waveform data pulled from a database are written into [...].fk_results.dat and [...].dets.json files as discussed in the :ref:`quickstart`.  In future developments, methods to write those results back into database tables will be implemented.  
   
-- The current plan is to implement such functionality as part of the :ref:`utilities` methods and include methods to both write detection results into the appropriate tables as well as pull detections from a database for event ID and similar analysis.  
-
+- Our current plan is to implement such functionality as part of the :ref:`utilities` methods and include functions that both write detection results into an arrivals table as well as pull detections from a database for into a local .json file for event ID and similar analysis (e.g., detection results to/from an arrivals table via :code:`infrapy utils dets2arr ...` or :code:`infrapy utils arr2json ...`).
 

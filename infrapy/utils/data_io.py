@@ -347,7 +347,7 @@ def fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back
     return header 
 
 
-def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
+def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None, method=None):
     """
     Write detection info from fd analysis into a infrapy.propagation.likelihoods.InfrasoundDetection instance for output into a [...].dets.json file
 
@@ -382,8 +382,9 @@ def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None):
                                       array_d=int(channel_cnt),
                                       f_range=freq_band,
                                       start_end=(det_info[1], det_info[2]),
+                                      traceV=np.round(det_info[4],2),
                                       note=note,
-                                      traceV=np.round(det_info[4],2)
+                                      method=method
                                       )
 
 
@@ -413,42 +414,22 @@ def write_events(events, event_qls, det_list, local_event_label):
         detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".dets.json", temp)
 
 
-def write_locs(bisl_results, local_loc_label):
+def write_json(results, output_path):
     """
-    Write localization results to file
+    Write location or yield estimation results to json file
 
     Parameters
     ----------
-    bisl_results: dict
-        Dictionary of Bayesian Infrasonic Source Localization (BISL) results
-    local_loc_label: str
+    results: dict
+        Dictionary of BISL or SpYE results
+    local_label: str
         Path for output file
 
     """
 
-    if ".loc.json" in local_loc_label:
-        with open(local_loc_label, 'w') as of:
-            json.dump(bisl_results, of, indent=4, cls=Infrapy_Encoder)
-    else:
-        with open(local_loc_label + ".loc.json", 'w') as of:
-            json.dump(bisl_results, of, indent=4, cls=Infrapy_Encoder)
+    with open(output_path, 'w') as of:
+        json.dump(results, of, indent=4, cls=Infrapy_Encoder)
 
-
-def read_locs(local_loc_label):
-    """
-    Ingest a localization result (likely for visualization)
-
-    Parameters
-    ----------
-    local_loc_label: str
-        Path for file
-
-    """
-
-    if ".loc.json" in local_loc_label:
-        return json.load(open(local_loc_label))
-    else:
-        return json.load(open(local_loc_label + ".loc.json"))
 
 
 def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
