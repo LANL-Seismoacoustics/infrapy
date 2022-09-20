@@ -26,6 +26,18 @@ Array-Level Analyses
         :width: 1200px
         :align: center
 
+- A FDSN data downloader is supplied to enable one to retrieve data directly from IRIS or other FDSN compatible servers. It can be accessed from :code:`File > Import Waveform(s)...`
+
+    .. image:: _static/_images/infraview/fdsn_loader.png
+        :width: 300px
+        :align: center
+
+- The FDSN data downloader includes a station browser that allows you to search for stations by code, or can be used to identify stations that were active at a certain time, and/or within a certain range of a location.  This allow you to select appropriate stations and send them to the FDSN downloader window for easy viewing of its waveforms.
+
+    .. image:: _static/_images/infraview/station_browser.png
+        :width: 300px
+        :align: center
+
 - The blue and red windows in the waveform viewer can be moved and re-sized to identify some reference/noise segment (red) and an analysis segment of interest (blue).  The power spectral density (PSD) for each segment is shown in the upper right panel in red and blue, respectively. 
 
 - Re-size the blue window to include all three high amplitude packets in the waveform set and set the red reference window either before or after to example the spectral content of the high amplitude arrivals.  Select the :code:`Apply Filter?` option on the right and adjust the gray window in the PSD to cover the frequencies where the blue line is notably above the red.  Then, click on the :code:`<-- Set Filter to -->` button to automatically adjust the filter frequencies.
@@ -36,36 +48,29 @@ Array-Level Analyses
 
 - Once the analysis window and frequency range of interest are identified, switch to the Beamforming tab on the top of the GUI.
 
+- Beamformer settings can be changed in the tab at the bottom of the window.  This allows you to set the beamforming algorithm, the window length and step, and the range and resolution of the back azimuth and trace velocities that are searched.
+
+- Detector settings can also be set in the tabs at the bottom.  If the "Automatically calculate threshold" checkbox is checked, then the threshold will be calculated from the red window previously selected in the Waveforms analysis tab. The threshold can also be set manually.  The Back azimuth limit is the maximum spread in the back azimuth for which a detection can have. For a static explosion, this can be small, for a moving source, this could be set to 360 degrees.  The minimum peak with is the number of continuous points that must be above the threshold for something to be considered a detection.
+
+
     .. image:: _static/_images/infraview/beam1.png
         :width: 1200px
         :align: center
 
-- Run beamforming and identify detections...
+- Once you have the beamforming and detector settings that you want, you can click on "Run Beamforming" near the top.  The threshold will be calculated, then the beamformer will run.  You will see the window move through the waveform showing which part of the wave is being analyzed. Values for the F statistic, the back azimuth, and the trace velocity for each window will be plotted for each window step.
 
     .. image:: _static/_images/infraview/beam2.png
         :width: 1200px
         :align: center
 
-- Name and save detections...
+-  When the beamforming run is complete, if detections were found, a window will pop up giving the analyst a chance to name the detection, add an event, and add a note to the detections.  Also, the analyst can discard a detection if not needed. When the Finish button is pressed, the detection(s) will be added to the table in the Detections tab, and will appear on the F-statistic plot with a grey box outlining the start and end of the detections.  These can be clicked on and moved around by the analyst if the auto-detector was deemed inaccurate.
 
     .. image:: _static/_images/infraview/detection1.png
         :width: 300px
         :align: center
 
-- Download data from IRIS...using the station browser...
 
-    .. image:: _static/_images/infraview/station_browser.png
-        :width: 300px
-        :align: center
-
-- Loading data from IRIS...
-
-    .. image:: _static/_images/infraview/fdsn_loader.png
-        :width: 300px
-        :align: center
-
-
-- Continue analysis...
+- Once detections are recorded for a given array, clear out the waveforms, and repeat the process for another array...
 
     .. image:: _static/_images/infraview/fdsn_data.png
         :width: 1200px

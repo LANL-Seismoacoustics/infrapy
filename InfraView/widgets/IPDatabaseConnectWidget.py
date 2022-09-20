@@ -309,32 +309,14 @@ class IPDatabaseConnectWidget(QFrame):
         if env_vars:
             database.set_db_env_variables(env_vars)
 
-        # now proceed as usual
-        dialect = self.dialect_combo.currentText()
-        driver = self.driver_edit.text()
-
-        username = self.username_edit.text()
-        # special characters in the password need to be correctly parsed into url strings
-        password = urllib.parse.quote_plus(self.password_edit.text())
-        hostname = self.hostname_edit.text()
-        port = self.portnum_edit.text()
-        db_name = self.database_name.text()
-
         url = self.url_edit.text()
 
         try:
             self.session = database.db_connect_url(url)
-            # self.session = database.db_connect(dialect=dialect, 
-            #                                    hostname=hostname, 
-            #                                    db_name=db_name, 
-            #                                    port=port, 
-            #                                    username=username, 
-            #                                    password=password, 
-            #                                    driver=driver)
             self.url_edit.setStyleSheet("color: green")
-        except Exception as e:
+        except ValueError as e:
             self.url_edit.setStyleSheet("color: red")
-            self.errorPopup("Error connecting to url:\n{}\n{}".format(url, e))
+            self.errorPopup("Error creating session.  \nMake sure you can reach the database and that the displayed url is correct.")
     
     def close_session(self):
         if self.session is not None:

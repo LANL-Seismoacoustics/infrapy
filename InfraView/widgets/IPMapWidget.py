@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 import urllib
+import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 

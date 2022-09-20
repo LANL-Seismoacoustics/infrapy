@@ -19,6 +19,7 @@ class IPDatabaseWidget(QWidget):
     def buildUI(self):
 
         self.ipdatabase_connect_widget = IPDatabaseConnectWidget.IPDatabaseConnectWidget(self)
+        self.ipdatabase_connect_widget.setMinimumWidth(400)
         self.ipdatabase_query_widget = IPDatabaseQueryWidget.IPDatabaseQueryWidget(self)
         self.ipevent_query_widget = IPDatabaseQueryWidget.IPEventQueryWidget(self)
         self.ipdatabase_query_results_table = IPDatabaseQueryResultsTable.IPDatabaseQueryResultsTable(self)
