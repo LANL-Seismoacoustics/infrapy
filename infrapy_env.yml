@@ -5,7 +5,7 @@ channels:
   - defaults
 
 dependencies:
-  - matplotlib-base
+  - matplotlib-base=3.5
   - cartopy=0.19
   - numpy=1.21
   - python=3.8
