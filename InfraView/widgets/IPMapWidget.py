@@ -1,6 +1,9 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QAction, QCheckBox, QComboBox, QLabel, QSplitter, QSpinBox)
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, 
+                             QMessageBox, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton)
+from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal
+
+from PyQt5.QtGui import QPainter, QPaintEvent, QColor
 
 import matplotlib
 from matplotlib import cm
@@ -53,22 +56,16 @@ class IPMapWidget(QWidget):
         self.mapCanvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                      QtWidgets.QSizePolicy.Expanding)
 
-        main_splitter = QSplitter(Qt.Vertical)
+        self.map_settings_dialog = IPMapSettingsDialog()
 
-        self.map_settings_widget = IPMapSettingsWidget()
-
-        main_splitter.addWidget(self.map_settings_widget)
-        main_splitter.addWidget(self.mapCanvas)
-
-        main_splitter.setStretchFactor(0, 0)
-        main_splitter.setStretchFactor(1, 1)
-
-        # I want to make sure the splitter handle is easily seen...
-        main_splitter.setStyleSheet("QSplitter::handle{ background-color: #444444}")
-        main_splitter.setHandleWidth(2)
+        self.toolbar = QToolBar()
+        self.tool_settings_button = QToolButton()
+        self.tool_settings_button.setText("Settings")
+        self.toolbar.addWidget(self.tool_settings_button)
 
         main_layout = QVBoxLayout()
-        main_layout.addWidget(main_splitter)
+        main_layout.addWidget(self.toolbar)
+        main_layout.addWidget(self.mapCanvas)
 
         self.setLayout(main_layout)
 
@@ -78,12 +75,15 @@ class IPMapWidget(QWidget):
 
     def connect_signals_and_slots(self):
 
-        self.map_settings_widget.borders_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_widget.states_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_widget.lakes_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_widget.rivers_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_widget.coast_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_widget.resolution_cb.currentTextChanged.connect(self.update_resolution)
+        self.map_settings_dialog.borders_checkbox.stateChanged.connect(self.update_feature_visibilities)
+        self.map_settings_dialog.states_checkbox.stateChanged.connect(self.update_feature_visibilities)
+        self.map_settings_dialog.lakes_checkbox.stateChanged.connect(self.update_feature_visibilities)
+        self.map_settings_dialog.rivers_checkbox.stateChanged.connect(self.update_feature_visibilities)
+        self.map_settings_dialog.coast_checkbox.stateChanged.connect(self.update_feature_visibilities)
+        self.map_settings_dialog.resolution_cb.currentTextChanged.connect(self.update_resolution)
+        self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
+
+        self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
 
         # these technically aren't qt signals and slots, these are matplotlib callback connections
         self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
@@ -101,46 +101,74 @@ class IPMapWidget(QWidget):
 
         self.draw_map()
 
-    def draw_map(self):
+    def draw_map(self, preserve_extent=False):
+        if preserve_extent:
+            current_extent = self.axes.get_extent()
+            print("current extent = {}".format(current_extent))
+
         self.axes.clear()
 
-        resolution = self.map_settings_widget.resolution_cb.currentText()
+        if self.map_settings_dialog.offline_checkbox.isChecked():
+            # use the offline maps...
+            cartopy.config['pre_existing_data_dir'] = self.map_settings_dialog.offline_directory_label.text()
+        else:
+            cartopy.config['pre_existing_data_dir'] = ""
+
+        resolution = self.map_settings_dialog.resolution_cb.currentText()
+
+        land_facecolor = (self.map_settings_dialog.land_color_button.color().redF(), 
+                          self.map_settings_dialog.land_color_button.color().greenF(),
+                          self.map_settings_dialog.land_color_button.color().blueF())
 
         land = cfeature.NaturalEarthFeature('physical',
                                             'land',
-                                            scale=self.map_settings_widget.resolution_cb.currentText(),
+                                            scale=self.map_settings_dialog.resolution_cb.currentText(),
                                             edgecolor='face',
-                                            facecolor=cfeature.COLORS['land'],
+                                            facecolor=land_facecolor,
                                             linewidth=0.5)
 
         states_provinces = cfeature.NaturalEarthFeature(category='cultural',
                                                         name='admin_1_states_provinces_lines',
-                                                        scale=self.map_settings_widget.resolution_cb.currentText(),
+                                                        scale=self.map_settings_dialog.resolution_cb.currentText(),
                                                         facecolor='none')
 
         self.land = self.axes.add_feature(land)
-        self.oceans = self.axes.add_feature(cfeature.OCEAN.with_scale(resolution), facecolor=(22. / 255., 43. / 255., 72. / 255., 0.5))
+
+        ocean_facecolor = (self.map_settings_dialog.ocean_color_button.color().redF(), 
+                           self.map_settings_dialog.ocean_color_button.color().greenF(),
+                           self.map_settings_dialog.ocean_color_button.color().blueF())
+
+        self.oceans = self.axes.add_feature(cfeature.OCEAN.with_scale(resolution), facecolor=ocean_facecolor)
 
         self.states = self.axes.add_feature(states_provinces, edgecolor='gray', linewidth=0.5)
         self.lakes = self.axes.add_feature(cfeature.LAKES.with_scale(resolution))
         self.rivers = self.axes.add_feature(cfeature.RIVERS.with_scale(resolution))
         self.borders = self.axes.add_feature(cfeature.BORDERS.with_scale(resolution), linewidth=0.5)
-        # cartopy stopped sending coasts?
-        #self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(resolution))   
+        self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(resolution), linewidth=0.5)
 
         self.update_feature_visibilities()
 
+        if preserve_extent:
+            self.axes.set_extent(current_extent, crs=self.transform)
+
     def update_feature_visibilities(self):
         # This shows/hides the various features shown on the map
-        self.states.set_visible(self.map_settings_widget.states_checkbox.isChecked())
-        self.lakes.set_visible(self.map_settings_widget.lakes_checkbox.isChecked())
-        self.rivers.set_visible(self.map_settings_widget.rivers_checkbox.isChecked())
-        self.borders.set_visible(self.map_settings_widget.borders_checkbox.isChecked())
-        #self.coast.set_visible(self.map_settings_widget.coast_checkbox.isChecked())
+        self.states.set_visible(self.map_settings_dialog.states_checkbox.isChecked())
+        self.lakes.set_visible(self.map_settings_dialog.lakes_checkbox.isChecked())
+        self.rivers.set_visible(self.map_settings_dialog.rivers_checkbox.isChecked())
+        self.borders.set_visible(self.map_settings_dialog.borders_checkbox.isChecked())
+        self.coast.set_visible(self.map_settings_dialog.coast_checkbox.isChecked())
         try:
             self.fig.canvas.draw()  # update matlabplot
         except urllib.error.URLError:
             self.errorPopup('problem with feature download. Proxie issue?')
+    
+    @pyqtSlot()
+    def update_colors(self):
+        self.draw_map(preserve_extent=True)
+        self.update_detections()
+        self.fig.canvas.draw()
+        
 
     def errorPopup(self, message, title="Oops..."):
         msg_box = QMessageBox()
@@ -507,8 +535,8 @@ class IPMapWidget(QWidget):
     def set_central_longitude(self, cl):
 
         # if the function is called directly, not via a signal, then make sure the spinbox is correct
-        if self.map_settings_widget.central_lon_cb.value() != cl:
-            self.map_settings_widget.central_lon_cb.setValue(cl)
+        if self.map_settings_dialog.central_lon_cb.value() != cl:
+            self.map_settings_dialog.central_lon_cb.setValue(cl)
 
         # in order to preserve the zoom, lets first grab the current extent with the goal of resetting it after the new projection
         current_extent = self.axes.get_extent()
@@ -525,40 +553,147 @@ class IPMapWidget(QWidget):
         self.update_detections(autoscale=False)
 '''
 
+
+class IPMapSettingsDialog(QDialog):
+
+    signal_colors_changed = pyqtSignal()
     
-
-
-class IPMapSettingsWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self.setMinimumWidth(400)
+        self.setWindowTitle("InfraView - Map Settings")
         self.buildUI()
 
     def buildUI(self):
 
+        ###   feature settings   ###
+        features_gb = QGroupBox("Features")
         self.borders_checkbox = QCheckBox('Countries  ')
         self.states_checkbox = QCheckBox('States and Provinces  ')
         self.lakes_checkbox = QCheckBox('Lakes  ')
         self.rivers_checkbox = QCheckBox('Rivers  ')
         self.coast_checkbox = QCheckBox('Coastline  ')
 
+        features_layout = QVBoxLayout()
+        features_layout.addWidget(self.borders_checkbox)
+        features_layout.addWidget(self.states_checkbox)
+        features_layout.addWidget(self.lakes_checkbox)
+        features_layout.addWidget(self.rivers_checkbox)
+        features_layout.addWidget(self.coast_checkbox)
+        
+        features_gb.setLayout(features_layout)
+
+        ###   color settings   ###
+        colors_gb = QGroupBox("Colors")
+        ocean_color_label = QLabel("Oceans: ")
+        self.ocean_color_button = IPColorButton(QColor(0,0,255))
+        land_color_label = QLabel("Land: ")
+        self.land_color_button = IPColorButton(QColor(0,255,0))
+
+        colors_layout = QFormLayout()
+        colors_layout.addRow(ocean_color_label, self.ocean_color_button)
+        colors_layout.addRow(land_color_label, self.land_color_button)
+
+        colors_gb.setLayout(colors_layout)
+
+        ###   resolution settings   ###
         label_resolution = QLabel(self.tr('Resolution'))
         self.resolution_cb = QComboBox()
         self.resolution_cb.addItem('50m')
         self.resolution_cb.addItem('110m')
         self.resolution_cb.setCurrentIndex(1)
 
-        hboxlayout = QHBoxLayout()
-        hboxlayout.addWidget(self.borders_checkbox)
-        hboxlayout.addWidget(self.states_checkbox)
-        hboxlayout.addWidget(self.lakes_checkbox)
-        hboxlayout.addWidget(self.rivers_checkbox)
-        # hboxlayout.addWidget(self.coast_checkbox)
-        hboxlayout.addStretch()
-        hboxlayout.addWidget(label_resolution)
-        hboxlayout.addWidget(self.resolution_cb)
+        resolution_layout = QHBoxLayout()
+        resolution_layout.addWidget(label_resolution)
+        resolution_layout.addWidget(self.resolution_cb)
 
-        hboxlayout.setContentsMargins(0, 0, 0, 2)
+        ###   offline maps settings   ###
+        self.offline_checkbox = QCheckBox('Use offline maps  ')
+        self.offline_directory_label = QLabel("Use offline maps")
+        self.offline_directory_label.setEnabled(False)
+        self.offline_directory_select_button = QPushButton("Select Folder...")
+        self.offline_directory_select_button.setEnabled(False)
 
-        self.setLayout(hboxlayout)
+        self.offline_file_dialog = QFileDialog()
+        self.offline_file_dialog.setFileMode(QFileDialog.Directory)
+
+        offline_layout = QHBoxLayout()
+        offline_layout.addWidget(self.offline_checkbox)
+        offline_layout.addWidget(self.offline_directory_label)
+        offline_layout.addWidget(self.offline_directory_select_button)
+
+        ###   dialog buttons   ###
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.accepted.connect(self.accept)
+
+        ###   layouts   ###
+        boxes_layout = QHBoxLayout()
+        boxes_layout.addWidget(features_gb)
+        boxes_layout.addWidget(colors_gb)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(boxes_layout)
+        main_layout.addLayout(resolution_layout)
+        main_layout.addLayout(offline_layout)
+        main_layout.addStretch()
+        main_layout.addWidget(buttons)
+
+        self.setLayout(main_layout)
+
+        self.connect_signals_and_slots()
+
+    def connect_signals_and_slots(self):
+        self.offline_checkbox.clicked.connect(self.offline_directory_select_button.setEnabled)
+        self.offline_checkbox.clicked.connect(self.offline_directory_label.setEnabled)
+
+        self.ocean_color_button.clicked.connect(self.update_ocean_color)
+        self.land_color_button.clicked.connect(self.update_land_color)
+
+        self.offline_directory_select_button.clicked.connect(self.select_offline_maps_directory)
+
+    def update_ocean_color(self):
+        new_color = QColorDialog.getColor(self.ocean_color_button.color())
+        if new_color.isValid():
+            self.ocean_color_button.set_color(new_color)
+            self.signal_colors_changed.emit()
+
+    def update_land_color(self):
+        new_color = QColorDialog.getColor(self.land_color_button.color())
+        if new_color.isValid(): 
+            self.land_color_button.set_color(new_color)
+            self.signal_colors_changed.emit()
+
+    def select_offline_maps_directory(self):
+        #if self.offline_file_dialog.exec():
+        #    self.offline_directory_label.setText(self.offline_file_dialog.directory())
+        self.offline_directory_label.setText(QFileDialog.getExistingDirectory()) 
+
+
+class IPColorButton(QPushButton):
+
+    current_color = QColor(255, 0, 0)
+
+    def __init__(self, color):
+        super().__init__()
+        self.current_color = color
+        size = QSize(self.height(), self.height())
+        self.setFixedSize(QSize(26,26))
+
+    def paintEvent(self, a0: QPaintEvent) -> None:
+        super().paintEvent(a0)
+        r = QRect(0, 0, self.width() * 0.75, self.height() * 0.75)
+        r.moveTo(self.rect().center() - r.center())
+        painter = QPainter(self)
+        painter.setBrush(self.current_color)
+        painter.drawRect(r)
+
+    def set_color(self, new_color):
+        # new color should be a QColor type
+        self.current_color = new_color
+
+    def color(self):
+        return QColor(self.current_color)
