@@ -57,11 +57,16 @@ class IPMapWidget(QWidget):
                                      QtWidgets.QSizePolicy.Expanding)
 
         self.map_settings_dialog = IPMapSettingsDialog()
+        self.map_export_dialog = IPMapExportDialog()
 
         self.toolbar = QToolBar()
+        self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_settings_button = QToolButton()
         self.tool_settings_button.setText("Settings")
+        self.tool_export_button = QToolButton()
+        self.tool_export_button.setText("Export")
         self.toolbar.addWidget(self.tool_settings_button)
+        self.toolbar.addWidget(self.tool_export_button)
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.toolbar)
@@ -84,6 +89,7 @@ class IPMapWidget(QWidget):
         self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
+        self.tool_export_button.clicked.connect(self.map_export_dialog.exec_)
 
         # these technically aren't qt signals and slots, these are matplotlib callback connections
         self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
@@ -104,7 +110,6 @@ class IPMapWidget(QWidget):
     def draw_map(self, preserve_extent=False):
         if preserve_extent:
             current_extent = self.axes.get_extent()
-            print("current extent = {}".format(current_extent))
 
         self.axes.clear()
 
@@ -553,12 +558,32 @@ class IPMapWidget(QWidget):
         self.update_detections(autoscale=False)
 '''
 
+class IPMapExportDialog(QDialog):
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.buildUI()
+
+    def buildUI(self):
+        self.setWindowTitle("Infraview - Map Export")
+         ###   dialog buttons   ###
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.accepted.connect(self.accept)
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(buttons)
+
+        self.setLayout(main_layout)
+
 
 class IPMapSettingsDialog(QDialog):
 
     signal_colors_changed = pyqtSignal()
     
-
+    ocean_color = QColor(0, 107, 166)
+    land_color = QColor(222, 222, 222)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
@@ -588,9 +613,9 @@ class IPMapSettingsDialog(QDialog):
         ###   color settings   ###
         colors_gb = QGroupBox("Colors")
         ocean_color_label = QLabel("Oceans: ")
-        self.ocean_color_button = IPColorButton(QColor(0,0,255))
+        self.ocean_color_button = IPColorButton(self.ocean_color)
         land_color_label = QLabel("Land: ")
-        self.land_color_button = IPColorButton(QColor(0,255,0))
+        self.land_color_button = IPColorButton(self.land_color)
 
         colors_layout = QFormLayout()
         colors_layout.addRow(ocean_color_label, self.ocean_color_button)

@@ -578,6 +578,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         self.saveWindowGeometrySettings()
+        self.mp_pool.close()
         event.accept()
 
     # -------------------------------------------------------

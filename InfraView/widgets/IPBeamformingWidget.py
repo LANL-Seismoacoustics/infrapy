@@ -307,6 +307,7 @@ class IPBeamformingWidget(QWidget):
         toolButton_start.setDefaultAction(self.runAct)
 
         self.stopAct = QAction(QIcon.fromTheme("media-playback-stop"), 'Stop', self)
+        self.stopAct.setEnabled(False)
         toolButton_stop.setToolButtonStyle(Qt.ToolButtonTextOnly)
         toolButton_stop.setDefaultAction(self.stopAct)
 
@@ -925,10 +926,10 @@ class IPBeamformingWidget(QWidget):
         self.timeRangeLRI.setRegion((self.bottomSettings.getSignalRange()[0], self.bottomSettings.getSignalRange()[0] + self.bottomSettings.getWinLength()))
 
         # disable some buttons
-        # self.startButton.setEnabled(False)
         self.runAct.setEnabled(False)
-        # self.clearButton.setEnabled(False)
         self.clearAct.setEnabled(False)
+        self.exportAct.setEnabled(False)
+        self.stopAct.setEnabled(True)
 
         # reset the run_step
         self.run_step = 0
@@ -1062,7 +1063,8 @@ class IPBeamformingWidget(QWidget):
     def reset_run_buttons(self):
         self.runAct.setEnabled(True)
         self.clearAct.setEnabled(True)
-        # self.stopAct.setEnabled(False)
+        self.exportAct.setEnabled(True)
+        self.stopAct.setEnabled(False)
 
     @pyqtSlot()
     def runFinished(self):
