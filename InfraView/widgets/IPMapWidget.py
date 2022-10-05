@@ -12,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 import urllib
+import warnings
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -46,6 +47,7 @@ class IPMapWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        warnings.filterwarnings("error")
         self.buildUI()
 
     def buildUI(self):
@@ -87,6 +89,7 @@ class IPMapWidget(QWidget):
         self.map_settings_dialog.coast_checkbox.stateChanged.connect(self.update_feature_visibilities)
         self.map_settings_dialog.resolution_cb.currentTextChanged.connect(self.update_resolution)
         self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
+        self.map_settings_dialog.signal_offline_directory_changed.connect(self.draw_map)
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
         self.tool_export_button.clicked.connect(self.map_export_dialog.exec_)
@@ -119,6 +122,9 @@ class IPMapWidget(QWidget):
         else:
             cartopy.config['pre_existing_data_dir'] = ""
 
+        print("pre exist dir = {}".format(cartopy.config['pre_existing_data_dir']))
+        print("existing data dir = {}".format(cartopy.config['data_dir']))
+
         resolution = self.map_settings_dialog.resolution_cb.currentText()
 
         land_facecolor = (self.map_settings_dialog.land_color_button.color().redF(), 
@@ -131,7 +137,7 @@ class IPMapWidget(QWidget):
                                             edgecolor='face',
                                             facecolor=land_facecolor,
                                             linewidth=0.5)
-
+        
         states_provinces = cfeature.NaturalEarthFeature(category='cultural',
                                                         name='admin_1_states_provinces_lines',
                                                         scale=self.map_settings_dialog.resolution_cb.currentText(),
@@ -151,8 +157,12 @@ class IPMapWidget(QWidget):
         self.borders = self.axes.add_feature(cfeature.BORDERS.with_scale(resolution), linewidth=0.5)
         self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(resolution), linewidth=0.5)
 
-        self.update_feature_visibilities()
-
+        try:
+            self.update_feature_visibilities()
+        except:
+            self.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
+            return
+            
         if preserve_extent:
             self.axes.set_extent(current_extent, crs=self.transform)
 
@@ -581,6 +591,7 @@ class IPMapExportDialog(QDialog):
 class IPMapSettingsDialog(QDialog):
 
     signal_colors_changed = pyqtSignal()
+    signal_offline_directory_changed = pyqtSignal()
     
     ocean_color = QColor(0, 107, 166)
     land_color = QColor(222, 222, 222)
@@ -693,9 +704,13 @@ class IPMapSettingsDialog(QDialog):
             self.signal_colors_changed.emit()
 
     def select_offline_maps_directory(self):
-        #if self.offline_file_dialog.exec():
-        #    self.offline_directory_label.setText(self.offline_file_dialog.directory())
-        self.offline_directory_label.setText(QFileDialog.getExistingDirectory()) 
+        curr_dir = self.offline_directory_label.text()
+        new_dir = QFileDialog.getExistingDirectory()
+        if new_dir != "":
+            if new_dir != curr_dir:
+                self.offline_directory_label.setText(new_dir) 
+                self.signal_offline_directory_changed.emit()
+        
 
 
 class IPColorButton(QPushButton):
