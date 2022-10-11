@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 import urllib
-import warnings
+import time
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -47,7 +47,7 @@ class IPMapWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        warnings.filterwarnings("error")
+        # warnings.filterwarnings("error")
         self.buildUI()
 
     def buildUI(self):
@@ -59,14 +59,14 @@ class IPMapWidget(QWidget):
                                      QtWidgets.QSizePolicy.Expanding)
 
         self.map_settings_dialog = IPMapSettingsDialog()
-        self.map_export_dialog = IPMapExportDialog()
+        self.map_export_dialog = IPMapExportDialog(self, self.fig)
 
         self.toolbar = QToolBar()
         self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_settings_button = QToolButton()
-        self.tool_settings_button.setText("Settings")
+        self.tool_settings_button.setText("Settings...")
         self.tool_export_button = QToolButton()
-        self.tool_export_button.setText("Export")
+        self.tool_export_button.setText("Export...")
         self.toolbar.addWidget(self.tool_settings_button)
         self.toolbar.addWidget(self.tool_export_button)
 
@@ -157,11 +157,11 @@ class IPMapWidget(QWidget):
         self.borders = self.axes.add_feature(cfeature.BORDERS.with_scale(resolution), linewidth=0.5)
         self.coast = self.axes.add_feature(cfeature.COASTLINE.with_scale(resolution), linewidth=0.5)
 
-        try:
-            self.update_feature_visibilities()
-        except:
-            self.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
-            return
+        #try:
+        self.update_feature_visibilities()
+        #except:
+        #    self.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
+        #    return
             
         if preserve_extent:
             self.axes.set_extent(current_extent, crs=self.transform)
@@ -570,23 +570,97 @@ class IPMapWidget(QWidget):
 
 class IPMapExportDialog(QDialog):
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, figure=None):
         super().__init__(parent)
+        self.fig = figure
         self.buildUI()
 
     def buildUI(self):
         self.setWindowTitle("Infraview - Map Export")
+
+        # export pdf...
+        pdf_group_box = QGroupBox("Export to PDF")
+        self.pdf_file_label = QLabel("")
+        self.pdf_file_label.setMinimumWidth(200)
+        self.pdf_button = QPushButton("Choose file..")
+        self.pdf_export_button = QPushButton("Export")
+        pdf_layout = QHBoxLayout()
+        pdf_layout.addWidget(self.pdf_button)
+        pdf_layout.addWidget(self.pdf_file_label)
+        pdf_layout.addWidget(self.pdf_export_button)
+        pdf_group_box.setLayout(pdf_layout)
+
+        #export img...
+        img_group_box = QGroupBox("Export to image file")
+        self.img_file_label = QLabel("")
+        self.img_file_label.setMinimumWidth(200)
+        self.img_button = QPushButton("Choose file...")
+        self.img_export_button = QPushButton("Export")
+        img_layout = QHBoxLayout()
+        img_layout.addWidget(self.img_button)
+        img_layout.addWidget(self.img_file_label)
+        img_layout.addWidget(self.img_export_button)
+        img_group_box.setLayout(img_layout)
+
          ###   dialog buttons   ###
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok,
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel,
                                    Qt.Horizontal,
                                    self)
-        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
 
         main_layout = QVBoxLayout()
+        main_layout.addWidget(pdf_group_box)
+        main_layout.addWidget(img_group_box)
+        main_layout.addStretch()
         main_layout.addWidget(buttons)
 
         self.setLayout(main_layout)
 
+        self.connect_signals_and_slots()
+
+    def connect_signals_and_slots(self):
+        self.pdf_button.clicked.connect(self.save_pdf)
+        self.img_button.clicked.connect(self.save_img)
+        self.img_export_button.clicked.connect(self.export_img)
+        self.pdf_export_button.clicked.connect(self.export_pdf)
+
+    def errorPopup(self, message, title="Oops..."):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(message)
+        msg_box.setWindowTitle(title)
+        msg_box.exec_()
+
+    def save_pdf(self):
+        filename = QFileDialog.getSaveFileName(parent=self, caption="Save PDF", filter="PDF files (*.pdf)" )
+        print(filename)
+        if filename[0].endswith('.pdf'):
+            new_filename = filename[0]
+        else:
+            if new_filename != "":
+                new_filename = filename[0] + '.pdf'
+
+        self.pdf_file_label.setText(new_filename)
+
+    def save_img(self):
+        filename = QFileDialog.getSaveFileName(parent=self, caption="Save Image", filter="Images (*.png *.xpm *.jpg)" )
+        self.img_file_label.setText(filename[0])
+
+    def export_img(self):
+        if self.img_file_label.text() == "":
+            self.errorPopup("Can't export image.  No image file selected.")
+            return
+        self.fig.savefig(self.img_file_label.text())
+        time.sleep(0.5)
+        self.close()
+
+    def export_pdf(self):
+        if self.pdf_file_label.text() == "":
+            self.errorPopup("Can't export to pdf.  No pdf file selected.")
+            return 
+        self.fig.savefig(self.pdf_file_label.text())
+        time.sleep(1.2)
+        self.close()
 
 class IPMapSettingsDialog(QDialog):
 

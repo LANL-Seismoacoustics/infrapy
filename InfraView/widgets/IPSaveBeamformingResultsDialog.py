@@ -1,10 +1,8 @@
-from os import fstat
-import warnings
+
 from PyQt5.QtWidgets import (QCheckBox, QDialog, QFileDialog, QLabel, QFormLayout, QHBoxLayout, 
                              QVBoxLayout, QPushButton, QDialogButtonBox, QLineEdit, QMessageBox,
                              QWidget, QSizePolicy)
 from PyQt5.QtCore import Qt
-from PyQt5 import QtGui
 
 from pathlib import Path
 

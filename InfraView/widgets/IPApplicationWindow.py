@@ -43,8 +43,8 @@ import warnings
 
 class IPApplicationWindow(QtWidgets.QMainWindow):
 
-    warnings.filterwarnings('error', message='Item already added to PlotItem, ignoring')
-
+    warnings.filterwarnings('ignore', message='Item already added to PlotItem, ignoring')
+    
     sig_stream_changed = pyqtSignal(Stream)
     sig_inventory_changed = pyqtSignal(Inventory)
 

@@ -600,6 +600,9 @@ class IPBeamformingWidget(QWidget):
             elif evt.button() ==QtCore.Qt.RightButton:
                 self.mouseClick_right(evt)
 
+    def mouseClick_right(self, evt):
+        pass
+
     def mouseClick_Left(self, evt):
         # Go ahead and grab the position of the mouse click and also generate a
         # QPoint out of it for some uses
