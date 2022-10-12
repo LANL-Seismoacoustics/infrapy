@@ -35,6 +35,8 @@ class IPMapWidget(QWidget):
     resolution = ''
     extent = None
 
+    current_linecolor='gray'
+
     gt_marker = None
 
     toolbar = None
@@ -43,6 +45,9 @@ class IPMapWidget(QWidget):
     sta_lons = []
     evt_lat = None
     evt_lon = None
+
+    bisl_rslt = (None,None)  #(lat, lon)
+    conf_ellipse = (None, None) #(dx, dy)
 
     def __init__(self, parent):
         super().__init__()
@@ -90,6 +95,7 @@ class IPMapWidget(QWidget):
         self.map_settings_dialog.resolution_cb.currentTextChanged.connect(self.update_resolution)
         self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
         self.map_settings_dialog.signal_offline_directory_changed.connect(self.draw_map)
+        self.map_settings_dialog.signal_background_changed.connect(self.update_background)
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
         self.tool_export_button.clicked.connect(self.map_export_dialog.exec_)
@@ -110,6 +116,7 @@ class IPMapWidget(QWidget):
 
         self.draw_map()
 
+    @pyqtSlot()
     def draw_map(self, preserve_extent=False):
         if preserve_extent:
             current_extent = self.axes.get_extent()
@@ -122,14 +129,23 @@ class IPMapWidget(QWidget):
         else:
             cartopy.config['pre_existing_data_dir'] = ""
 
-        print("pre exist dir = {}".format(cartopy.config['pre_existing_data_dir']))
-        print("existing data dir = {}".format(cartopy.config['data_dir']))
+        # print("pre exist dir = {}".format(cartopy.config['pre_existing_data_dir']))
+        # print("existing data dir = {}".format(cartopy.config['data_dir']))
 
         resolution = self.map_settings_dialog.resolution_cb.currentText()
 
-        land_facecolor = (self.map_settings_dialog.land_color_button.color().redF(), 
-                          self.map_settings_dialog.land_color_button.color().greenF(),
-                          self.map_settings_dialog.land_color_button.color().blueF())
+        if self.map_settings_dialog.backgroud_image_checkbox.isChecked():
+            land_facecolor = 'none'
+            ocean_facecolor = 'none'
+            self.axes.stock_img()
+        else:
+            land_facecolor = (self.map_settings_dialog.land_color_button.color().redF(), 
+                            self.map_settings_dialog.land_color_button.color().greenF(),
+                            self.map_settings_dialog.land_color_button.color().blueF())
+
+            ocean_facecolor = (self.map_settings_dialog.ocean_color_button.color().redF(), 
+                           self.map_settings_dialog.ocean_color_button.color().greenF(),
+                           self.map_settings_dialog.ocean_color_button.color().blueF())
 
         land = cfeature.NaturalEarthFeature('physical',
                                             'land',
@@ -144,10 +160,6 @@ class IPMapWidget(QWidget):
                                                         facecolor='none')
 
         self.land = self.axes.add_feature(land)
-
-        ocean_facecolor = (self.map_settings_dialog.ocean_color_button.color().redF(), 
-                           self.map_settings_dialog.ocean_color_button.color().greenF(),
-                           self.map_settings_dialog.ocean_color_button.color().blueF())
 
         self.oceans = self.axes.add_feature(cfeature.OCEAN.with_scale(resolution), facecolor=ocean_facecolor)
 
@@ -173,17 +185,32 @@ class IPMapWidget(QWidget):
         self.rivers.set_visible(self.map_settings_dialog.rivers_checkbox.isChecked())
         self.borders.set_visible(self.map_settings_dialog.borders_checkbox.isChecked())
         self.coast.set_visible(self.map_settings_dialog.coast_checkbox.isChecked())
-        try:
-            self.fig.canvas.draw()  # update matlabplot
-        except urllib.error.URLError:
-            self.errorPopup('problem with feature download. Proxie issue?')
+        self.fig.canvas.draw()  # update matlabplot
     
     @pyqtSlot()
     def update_colors(self):
         self.draw_map(preserve_extent=True)
-        self.update_detections()
+        self.update_detections(preserve_colors=True)
+        self.plot_ground_truth()
+        self.plot_bisl_result(replot=True)
+        self.plot_conf_ellipse(replot=True)
+        self.fig.canvas.draw()  # update matlabplot
+
+    def update_background(self):
+        self.draw_map(preserve_extent=True)
+        self.update_detections(preserve_colors=True)
+        self.plot_ground_truth()
+        self.plot_bisl_result(replot=True)
+        self.plot_conf_ellipse(replot=True)
         self.fig.canvas.draw()
-        
+
+    def update_resolution(self):
+        self.draw_map(preserve_extent=True)
+        self.update_detections(preserve_colors=True)
+        self.plot_ground_truth()
+        self.plot_bisl_result(replot=True)
+        self.plot_conf_ellipse(replot=True)
+        self.fig.canvas.draw()  # update matlabplot
 
     def errorPopup(self, message, title="Oops..."):
         msg_box = QMessageBox()
@@ -192,7 +219,14 @@ class IPMapWidget(QWidget):
         msg_box.setWindowTitle(title)
         msg_box.exec_()
 
-    def update_detections(self, ip_detections=None, linecolor='gray', autoscale=True):
+    def update_detections(self, ip_detections=None, line_color='gray', autoscale=True, preserve_colors=False):
+        
+        if preserve_colors:
+            linecolor = self.current_linecolor
+        else:
+            linecolor = line_color
+            self.current_linecolor = linecolor
+
         self.clear_plot(reset_zoom=False)
 
         if ip_detections is not None:
@@ -277,7 +311,6 @@ class IPMapWidget(QWidget):
                            color='black',
                            transform=self.transform,
                            gid='detection_marker')
-            self.axes.set_extent(current_extent)
 
         # the plot function will automatically zoom into the view, but we want more control than that, so return the extent
         # to what is was before plotting
@@ -294,16 +327,7 @@ class IPMapWidget(QWidget):
             return
         
 
-    @pyqtSlot(str)
-    def update_resolution(self, new_resolution):
-        # we want to preserve the line color when we replot, so lets try to figure out what that is first
-        line_color = None
-        for c in self.axes.get_children():
-            if c.get_gid() == 'detection_line':
-                line_color = c.get_color()
 
-        self.draw_map()
-        self.update_detections(self.detections, linecolor=line_color)
 
     @pyqtSlot()
     def clear_detections(self):
@@ -311,7 +335,16 @@ class IPMapWidget(QWidget):
         self.clear_plot()
 
     @pyqtSlot(float, float)
-    def plot_ground_truth(self, lon, lat):
+    def plot_ground_truth(self, lon=None, lat=None):
+        if lon!=None:
+            self.evt_lat = lat
+            self.evt_lon = lon
+        else:
+            if self.evt_lon == None:
+                # nothing to plot, so leave
+                return
+            lat = self.evt_lat
+            lon = self.evt_lon
 
         if self.gt_marker is not None:
             self.gt_marker.remove()
@@ -330,19 +363,38 @@ class IPMapWidget(QWidget):
         self.fig.canvas.draw()
         self.repaint()
 
-    def plot_bisl_result(self, result_lon, result_lat):
+    def plot_bisl_result(self, result_lon=None, result_lat=None, replot=False):
+        # note that if replot is False, result_lat and result_lon are required
+
+        #clear out previous marker
         for c in self.axes.get_children():
             if c.get_gid() == 'bisl_result_marker':
                 c.remove()
+        if replot: 
+            # we just need to replot existing data
+            result_lat = self.bisl_rslt[0]
+            result_lon = self.bisl_rslt[1]
+        else:
+            # we have a new result to plot
+            self.bisl_rslt = (result_lat, result_lon)
 
         current_extent = self.axes.get_extent()
         self.axes.plot(result_lon, result_lat, 'o', markersize=7, color='blue', transform=self.transform, gid='bisl_result_marker')
         self.axes.set_extent(current_extent)
 
-    def plot_conf_ellipse(self, result_lons, result_lats, conf_dx, conf_dy):
+    def plot_conf_ellipse(self, result_lons=None, result_lats=None, conf_dx=None, conf_dy=None, replot=False):
         for c in self.axes.get_children():
             if c.get_gid() == 'conf_ellipse':
                 c.remove()
+        if replot:
+            # we just need to replot existing data
+            result_lats = self.bisl_rslt[0]
+            result_lons = self.bisl_rslt[1]
+            conf_dx = self.conf_ellipse[0]
+            conf_dy = self.conf_ellipse[1]
+        else:
+            self.bisl_reslt = (result_lats, result_lons)
+            self.conf_ellipse = (conf_dx, conf_dy)
 
         conf_lons, conf_lats = self.sph_proj.fwd(np.array([result_lons] * len(conf_dx)),
                                                  np.array([result_lats] * len(conf_dy)),
@@ -377,17 +429,7 @@ class IPMapWidget(QWidget):
 
     @pyqtSlot(float)
     def update_range_max(self, new_range):
-        # we want to preserve the line color when we replot, so lets try to figure out what that is
-        # first
-        line_color = 'white'
-        for c in self.axes.get_children():
-            if c.get_gid() == 'detection_line':
-                line_color = c.get_color()
-                break
-
-        self.update_detections(self.detections, linecolor=line_color)
-
-    
+        self.update_detections(self.detections, preserve_colors=True)
 
     def autoscale_plot(self, source_location=None):
         # make an attempt to scale the plot so all relavent info is shown
@@ -633,7 +675,7 @@ class IPMapExportDialog(QDialog):
 
     def save_pdf(self):
         filename = QFileDialog.getSaveFileName(parent=self, caption="Save PDF", filter="PDF files (*.pdf)" )
-        print(filename)
+
         if filename[0].endswith('.pdf'):
             new_filename = filename[0]
         else:
@@ -665,6 +707,7 @@ class IPMapExportDialog(QDialog):
 class IPMapSettingsDialog(QDialog):
 
     signal_colors_changed = pyqtSignal()
+    signal_background_changed = pyqtSignal()
     signal_offline_directory_changed = pyqtSignal()
     
     ocean_color = QColor(0, 107, 166)
@@ -719,6 +762,9 @@ class IPMapSettingsDialog(QDialog):
         resolution_layout.addWidget(label_resolution)
         resolution_layout.addWidget(self.resolution_cb)
 
+        ### background image ##
+        self.backgroud_image_checkbox = QCheckBox('Use background image  ')
+
         ###   offline maps settings   ###
         self.offline_checkbox = QCheckBox('Use offline maps  ')
         self.offline_directory_label = QLabel("Use offline maps")
@@ -747,6 +793,7 @@ class IPMapSettingsDialog(QDialog):
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(boxes_layout)
+        main_layout.addWidget(self.backgroud_image_checkbox)
         main_layout.addLayout(resolution_layout)
         main_layout.addLayout(offline_layout)
         main_layout.addStretch()
@@ -763,7 +810,13 @@ class IPMapSettingsDialog(QDialog):
         self.ocean_color_button.clicked.connect(self.update_ocean_color)
         self.land_color_button.clicked.connect(self.update_land_color)
 
+        self.backgroud_image_checkbox.clicked.connect(self.toggle_background_image)
         self.offline_directory_select_button.clicked.connect(self.select_offline_maps_directory)
+
+    def toggle_background_image(self):
+        self.land_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
+        self.ocean_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
+        self.signal_background_changed.emit()
 
     def update_ocean_color(self):
         new_color = QColorDialog.getColor(self.ocean_color_button.color())

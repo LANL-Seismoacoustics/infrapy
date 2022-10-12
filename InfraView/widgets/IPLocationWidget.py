@@ -63,7 +63,7 @@ class IPLocationWidget(QWidget):
 
     def __init__(self, parent, pool):
         super().__init__()
-        self._parent = parent
+        self.parent = parent
 
         self._mp_pool = pool
 
@@ -195,7 +195,7 @@ class IPLocationWidget(QWidget):
             self._trimmed_detections.append(self._detections[index])
             self._trimmed_detections[-1].index = index
 
-        self.mapWidget.update_detections(self._trimmed_detections, linecolor=linecolor)
+        self.mapWidget.update_detections(self._trimmed_detections, line_color=linecolor)
 
     def run_bisl(self):
 
@@ -355,36 +355,36 @@ class IPLocationWidget(QWidget):
         msgBox.exec_()
 
     def saveWindowGeometrySettings(self):
-        self._parent.settings.beginGroup('LocationWidget')
-        self._parent.settings.setValue("windowSize", self.size())
-        self._parent.settings.setValue("windowPos", self.pos())
-        self._parent.settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
-        self._parent.settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
-        self._parent.settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
-        self._parent.settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
-        self._parent.settings.endGroup()
+        self.parent.settings.beginGroup('LocationWidget')
+        self.parent.settings.setValue("windowSize", self.size())
+        self.parent.settings.setValue("windowPos", self.pos())
+        self.parent.settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
+        self.parent.settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
+        self.parent.settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
+        self.parent.settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
+        self.parent.settings.endGroup()
 
     def restoreWindowGeometrySettings(self):
         # Restore settings
-        self._parent.settings.beginGroup('LocationWidget')
+        self.parent.settings.beginGroup('LocationWidget')
 
-        mapSplitterSettings = self._parent.settings.value("mapSplitterSettings")
+        mapSplitterSettings = self.parent.settings.value("mapSplitterSettings")
         if mapSplitterSettings:
             self.mapSplitter.restoreState(mapSplitterSettings)
 
-        mainSplitterSettings = self._parent.settings.value("mainSplitterSettings")
+        mainSplitterSettings = self.parent.settings.value("mainSplitterSettings")
         if mainSplitterSettings:
             self.mainSplitter.restoreState(mainSplitterSettings)
 
-        assocSplitterSettings = self._parent.settings.value("assocSplitterSettings")
+        assocSplitterSettings = self.parent.settings.value("assocSplitterSettings")
         if assocSplitterSettings:
             self.assoc_splitter.restoreState(assocSplitterSettings)
 
-        locSplitterSettings = self._parent.settings.value("loc_splitterSettings")
+        locSplitterSettings = self.parent.settings.value("loc_splitterSettings")
         if locSplitterSettings:
             self.loc_splitter.restoreState(locSplitterSettings)
 
-        self._parent.settings.endGroup()
+        self.parent.settings.endGroup()
 
 
 class BISLSettings(QFrame):
