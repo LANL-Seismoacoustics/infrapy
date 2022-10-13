@@ -5,7 +5,6 @@
 # Philip Blom (pblom@lanl.gov)
 
 
-from infrapy.utils import latlon
 import numpy as np
 
 from pyproj import Geod
@@ -17,11 +16,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.ticker as mticker
 
+import cartopy
 import cartopy.crs as crs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
-from ..utils import data_io
 from . import bisl
 
 sph_proj = Geod(ellps='sphere')
@@ -33,6 +32,13 @@ map_proj = crs.PlateCarree()
 back_az_color = "DarkRed"
 conf_color = "r"
 pdf_cm = cm.hot_r
+
+def use_offline_maps(self, pre_existing_data_dir, turn_on=True):
+    # call this function to initialize the use of offline maps.  turn_on will initialize the pre_existing_data_directory
+    if turn_on:
+        cartopy.config['pre_existing_data_dir'] = pre_existing_data_dir
+    else:
+        cartopy.config['pre_existing_data_dir'] = ""
 
 def _setup_map(fig, latlon_bnds):
     lat_min, lat_max = latlon_bnds[0]

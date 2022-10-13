@@ -348,7 +348,8 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def dets(config_file, range_max, local_detect_label, figure_out):
+@click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
+def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_dir):
     '''
     Visualize detections on a map
 
@@ -383,9 +384,13 @@ def dets(config_file, range_max, local_detect_label, figure_out):
     click.echo("  local_detect_label: " + str(local_detect_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+    offline_maps_dir = config.set_param(user_config, 'VISUALIZATION', 'offline_maps_dir', offline_maps_dir, 'string')
 
     click.echo('\n' + "Visualization parameters:")
     click.echo("  range_max: " + str(range_max) + '\n')
+    if offline_maps_dir:
+        click.echo("  offline maps directory: {}".format(offline_maps_dir))
+        loc_vis.use_offline_maps(offline_maps_dir)
 
     det_list = data_io.set_det_list(local_detect_label, merge=True)
 
@@ -400,7 +405,8 @@ def dets(config_file, range_max, local_detect_label, figure_out):
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out):
+@click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
+def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out, offline_maps_dir):
     '''
     Visualize BISL results in with wide or zoomed format
 
@@ -435,10 +441,14 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
     click.echo("  local_loc_label: " + str(local_loc_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+    offline_maps_dir = config.set_param(user_config, 'VISUALIZATION', 'offline_maps_dir', offline_maps_dir, 'string')
 
     click.echo('\n' + "Visualization parameters:")
     click.echo("  range_max: " + str(range_max))
     click.echo("  zoom: " + str(zoom))
+    if offline_maps_dir:
+        click.echo("  offline maps directory: {}".format(offline_maps_dir))
+        loc_vis.use_offline_maps(offline_maps_dir)
 
     click.echo('\n' + "Reading in detection list...")
     det_list = data_io.set_det_list(local_detect_label, merge=False)
