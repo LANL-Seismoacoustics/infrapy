@@ -96,6 +96,7 @@ class IPMapWidget(QWidget):
         self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
         self.map_settings_dialog.signal_offline_directory_changed.connect(self.draw_map)
         self.map_settings_dialog.signal_background_changed.connect(self.update_background)
+        self.map_settings_dialog.signal_map_settings_changed.connect(self.update_map)
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
         self.tool_export_button.clicked.connect(self.map_export_dialog.exec_)
@@ -174,9 +175,11 @@ class IPMapWidget(QWidget):
         #except:
         #    self.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
         #    return
-            
+
         if preserve_extent:
             self.axes.set_extent(current_extent, crs=self.transform)
+
+        
 
     def update_feature_visibilities(self):
         # This shows/hides the various features shown on the map
@@ -194,6 +197,7 @@ class IPMapWidget(QWidget):
         self.plot_ground_truth()
         self.plot_bisl_result(replot=True)
         self.plot_conf_ellipse(replot=True)
+        self.draw_gridlines()
         self.fig.canvas.draw()  # update matlabplot
 
     def update_background(self):
@@ -202,6 +206,7 @@ class IPMapWidget(QWidget):
         self.plot_ground_truth()
         self.plot_bisl_result(replot=True)
         self.plot_conf_ellipse(replot=True)
+        self.draw_gridlines()
         self.fig.canvas.draw()
 
     def update_resolution(self):
@@ -210,6 +215,23 @@ class IPMapWidget(QWidget):
         self.plot_ground_truth()
         self.plot_bisl_result(replot=True)
         self.plot_conf_ellipse(replot=True)
+        self.draw_gridlines()
+        self.fig.canvas.draw()  # update matlabplot
+
+    def draw_gridlines(self):
+        if self.map_settings_dialog.show_grid_checkbox.isChecked():
+            gl = self.axes.gridlines(draw_labels=True)
+            gl.xlabel_style = {'size': 10}
+            gl.ylabel_style = {'size': 10}
+
+    def update_map(self):
+        print("updating map")
+        self.draw_map(preserve_extent=True)
+        self.update_detections(preserve_colors=True)
+        self.plot_ground_truth()
+        self.plot_bisl_result(replot=True)
+        self.plot_conf_ellipse(replot=True)
+        self.draw_gridlines()
         self.fig.canvas.draw()  # update matlabplot
 
     def errorPopup(self, message, title="Oops..."):
@@ -374,10 +396,13 @@ class IPMapWidget(QWidget):
             # we just need to replot existing data
             result_lat = self.bisl_rslt[0]
             result_lon = self.bisl_rslt[1]
+            if result_lat == None or result_lon == None:
+                # nothing to plot
+                return
         else:
             # we have a new result to plot
             self.bisl_rslt = (result_lat, result_lon)
-
+        print("result_lon = {}   result_lat = {}".format(result_lon, result_lat))
         current_extent = self.axes.get_extent()
         self.axes.plot(result_lon, result_lat, 'o', markersize=7, color='blue', transform=self.transform, gid='bisl_result_marker')
         self.axes.set_extent(current_extent)
@@ -392,6 +417,9 @@ class IPMapWidget(QWidget):
             result_lons = self.bisl_rslt[1]
             conf_dx = self.conf_ellipse[0]
             conf_dy = self.conf_ellipse[1]
+            if result_lats == None or result_lons == None:
+                # nothng to do
+                return
         else:
             self.bisl_reslt = (result_lats, result_lons)
             self.conf_ellipse = (conf_dx, conf_dy)
@@ -474,19 +502,22 @@ class IPMapWidget(QWidget):
         else:
             height = 250
 
+        width_adj = width/40.
+        height_adj = height/40.
+
         if maxLat == minLat and maxLon == minLon:
             # there is only one point, so behave accordingly
-            self.axes.set_extent([minLon - width / 10.,
-                                 maxLon + width / 10.,
-                                 minLat - height / 10.,
-                                 maxLat + height / 10.],
+            self.axes.set_extent([minLon - width_adj,
+                                 maxLon + width_adj,
+                                 minLat - height_adj,
+                                 maxLat + height_adj],
                                  crs=self.transform)
         else:
             # the normal case
-            self.axes.set_extent([minLon - width / 10.,
-                                 maxLon + width / 10.,
-                                 minLat - height / 10.,
-                                 maxLat + height / 10.],
+            self.axes.set_extent([minLon - width_adj,
+                                 maxLon + width_adj,
+                                 minLat - height_adj,
+                                 maxLat + height_adj],
                                  crs=self.transform)
 
     def motion_notify_callback(self, event):
@@ -709,6 +740,7 @@ class IPMapSettingsDialog(QDialog):
     signal_colors_changed = pyqtSignal()
     signal_background_changed = pyqtSignal()
     signal_offline_directory_changed = pyqtSignal()
+    signal_map_settings_changed = pyqtSignal()
     
     ocean_color = QColor(0, 107, 166)
     land_color = QColor(222, 222, 222)
@@ -750,6 +782,10 @@ class IPMapSettingsDialog(QDialog):
         colors_layout.addRow(land_color_label, self.land_color_button)
 
         colors_gb.setLayout(colors_layout)
+
+        ###   grid settings
+        # grid_gb = QGroupBox("Grid Lines")
+        self.show_grid_checkbox = QCheckBox("Show Grid Lines ")
 
         ###   resolution settings   ###
         label_resolution = QLabel(self.tr('Resolution'))
@@ -794,6 +830,7 @@ class IPMapSettingsDialog(QDialog):
         main_layout = QVBoxLayout()
         main_layout.addLayout(boxes_layout)
         main_layout.addWidget(self.backgroud_image_checkbox)
+        main_layout.addWidget(self.show_grid_checkbox)
         main_layout.addLayout(resolution_layout)
         main_layout.addLayout(offline_layout)
         main_layout.addStretch()
@@ -811,12 +848,16 @@ class IPMapSettingsDialog(QDialog):
         self.land_color_button.clicked.connect(self.update_land_color)
 
         self.backgroud_image_checkbox.clicked.connect(self.toggle_background_image)
+        self.show_grid_checkbox.clicked.connect(self.update_grid_lines)
         self.offline_directory_select_button.clicked.connect(self.select_offline_maps_directory)
 
     def toggle_background_image(self):
         self.land_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
         self.ocean_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
         self.signal_background_changed.emit()
+
+    def update_grid_lines(self):
+        self.signal_map_settings_changed.emit()
 
     def update_ocean_color(self):
         new_color = QColorDialog.getColor(self.ocean_color_button.color())
