@@ -1,11 +1,10 @@
 import sys
 
-from pathlib import Path, PurePath 
+from pathlib import Path
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, QObject, QSettings, QDir
-from PyQt5.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel, QLineEdit,
-                             QPushButton, QFileDialog, QWidget, QGroupBox, QVBoxLayout,
+from PyQt5.QtCore import Qt, QSettings
+from PyQt5.QtWidgets import (QDialog, QGridLayout, QLabel, QLineEdit,
+                             QPushButton, QFileDialog, QWidget, QVBoxLayout,
                              QDialogButtonBox, QSizePolicy)
 
 
@@ -25,7 +24,7 @@ class IPProject:
     projectFileName = None
 
     def __init__(self):
-        self.__globalSettings = QSettings('LANL', 'InfraView')
+        self.globalSettings = QSettings('LANL', 'InfraView')
 
     def makeNewProject(self):
         newDialog = IPNewProjectDialog(self)
@@ -54,6 +53,7 @@ class IPProject:
             self.projectSettings.beginGroup('Main')
             self.projectSettings.setValue('projectName', str(self.projectName))
             self.projectSettings.endGroup()
+
             self.projectSettings.beginGroup('PathNames')
             self.projectSettings.setValue('basePathName', str(self.basePath))
             self.projectSettings.setValue('projectPathName', str(self.projectPath))
@@ -63,7 +63,81 @@ class IPProject:
             self.projectSettings.setValue('customFilterPathName', str(self.customFilterPath))
             self.projectSettings.setValue('beamformingResultsPath', str(self.beamformingResutsPath))
             self.projectSettings.setValue('eventPath', str(self.eventPath))
+            self.projectSettings.endGroup()
 
+            # From here down are settings that are the default for infrapy's CLI interface.  These should 
+            # be kept up-to-date with what is in that file.  Not all of these are used by infraview
+            self.projectSettings.beginGroup('FK')
+            self.projectSettings.setValue('freq_min', 0.5)
+            self.projectSettings.setValue('freq_max', 5.0)
+            self.projectSettings.setValue('back_az_min', -180.0)
+            self.projectSettings.setValue('back_az_max', 180.0)
+            self.projectSettings.setValue('back_az_step', 2.0)
+            self.projectSettings.setValue('trace_vel_min', 300.0)
+            self.projectSettings.setValue('trace_vel_max', 600.0)
+            self.projectSettings.setValue('trace_vel_step', 2.5)
+            self.projectSettings.setValue('method', 'bartlett')
+            self.projectSettings.setValue('signal_start', 'None')
+            self.projectSettings.setValue('signal_end', 'None')
+            self.projectSettings.setValue('noise_start', 'None')
+            self.projectSettings.setValue('noise_end', 'None')
+            self.projectSettings.setValue('window_len', 10)
+            self.projectSettings.setValue('sub_window_len', 'None')
+            self.projectSettings.setValue('window_step', 5)
+            self.projectSettings.setValue('cpu_cnt', 'None')
+            self.projectSettings.endGroup()
+
+            self.projectSettings.beginGroup('FD')
+            self.projectSettings.setValue('window_len', 3600)
+            self.projectSettings.setValue('p_value', 0.01)
+            self.projectSettings.setValue('min_duration', 10)
+            self.projectSettings.setValue('back_az_width', 15.0)
+            self.projectSettings.setValue('fixed_thresh', 'None')
+            self.projectSettings.setValue('thresh_ceil', 'None')
+            self.projectSettings.setValue('return_thresh', False)
+            self.projectSettings.setValue('merge_dets', False)
+            self.projectSettings.endGroup()
+
+            self.projectSettings.beginGroup('ASSOC')
+            self.projectSettings.setValue('back_az_width', 10.0)
+            self.projectSettings.setValue('range_max', 2000.0)
+            self.projectSettings.setValue('resolution', 180)
+            self.projectSettings.setValue('distance_matrix_max', 8.0)
+            self.projectSettings.setValue('cluster_linkage', 'weighted')
+            self.projectSettings.setValue('cluster_threshold', 5.0)
+            self.projectSettings.setValue('trimming_threshold', 3.8)
+            self.projectSettings.setValue('event_population_min', 3)
+            self.projectSettings.setValue('event_station_min', 2)
+            self.projectSettings.setValue('multithread', False)
+            self.projectSettings.setValue('cpu_cnt', 'None')
+            self.projectSettings.endGroup()
+
+            self.projectSettings.beginGroup('LOC')
+            self.projectSettings.setValue('back_az_width', 10.0)
+            self.projectSettings.setValue('range_max', 2000.0)
+            self.projectSettings.setValue('resolution', 180)
+            self.projectSettings.setValue('src_est', 'None')
+            self.projectSettings.setValue('pgm_model', 'None')
+            self.projectSettings.endGroup()
+
+            self.projectSettings.beginGroup('YIELD')
+            self.projectSettings.setValue('source_loc', [30.0, -105])
+            self.projectSettings.setValue('freq_min', 0.25)
+            self.projectSettings.setValue('freq_max', 1.0)
+            self.projectSettings.setValue('yld_min', 1)
+            self.projectSettings.setValue('yld_max', 1000)
+            self.projectSettings.setValue('ref_rng', 1.0)
+            self.projectSettings.setValue('resolution', 200)
+            self.projectSettings.setValue('noise_option', 'post')
+            self.projectSettings.setValue('window_buffer', 0.2)
+            self.projectSettings.setValue('amp_press', 101.325)
+            self.projectSettings.setValue('amp_temp', 288.15)
+            self.projectSettings.setValue('grnd_burst', True)
+            self.projectSettings.setValue('exp_type', 'chemical')
+            self.projectSettings.endGroup()
+
+            self.projectSettings.beginGroup('VISUALIZATION')
+            self.projectSettings.setValue('offline_maps_dir', '')
             self.projectSettings.endGroup()
 
             return True
@@ -73,9 +147,8 @@ class IPProject:
             return False
 
     def loadProject(self):
-        mydirectory = self.__globalSettings.value('last_baseProject_directory', self.homePath)
-        ipprjPathname, _ = QFileDialog.getOpenFileName(
-            caption='Open InfraView Project', directory=mydirectory, filter='InfraView Project Files (*.ipprj)')
+        mydirectory = self.globalSettings.value('last_baseProject_directory', self.homePath)
+        ipprjPathname, _ = QFileDialog.getOpenFileName(caption='Open InfraView Project', directory=mydirectory, filter='InfraView Project Files (*.ipprj)')
         if ipprjPathname:
             self.projectSettings = QSettings(ipprjPathname, QSettings.IniFormat)
             self.projectSettings.beginGroup('Main')

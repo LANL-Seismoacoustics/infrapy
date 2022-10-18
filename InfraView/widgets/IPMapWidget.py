@@ -92,10 +92,12 @@ class IPMapWidget(QWidget):
         self.map_settings_dialog.lakes_checkbox.stateChanged.connect(self.update_feature_visibilities)
         self.map_settings_dialog.rivers_checkbox.stateChanged.connect(self.update_feature_visibilities)
         self.map_settings_dialog.coast_checkbox.stateChanged.connect(self.update_feature_visibilities)
-        self.map_settings_dialog.resolution_cb.currentTextChanged.connect(self.update_resolution)
-        self.map_settings_dialog.signal_colors_changed.connect(self.update_colors)
+
         self.map_settings_dialog.signal_offline_directory_changed.connect(self.draw_map)
-        self.map_settings_dialog.signal_background_changed.connect(self.update_background)
+
+        self.map_settings_dialog.resolution_cb.currentTextChanged.connect(self.update_map)
+        self.map_settings_dialog.signal_colors_changed.connect(self.update_map)
+        self.map_settings_dialog.signal_background_changed.connect(self.update_map)
         self.map_settings_dialog.signal_map_settings_changed.connect(self.update_map)
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
@@ -189,7 +191,19 @@ class IPMapWidget(QWidget):
         self.borders.set_visible(self.map_settings_dialog.borders_checkbox.isChecked())
         self.coast.set_visible(self.map_settings_dialog.coast_checkbox.isChecked())
         self.fig.canvas.draw()  # update matlabplot
-    
+
+
+    @pyqtSlot()
+    def update_map(self):
+        self.draw_map(preserve_extent=True)
+        self.update_detections(preserve_colors=True, autoscale=False)
+        self.plot_ground_truth()
+        self.plot_bisl_result(replot=True)
+        self.plot_conf_ellipse(replot=True)
+        self.draw_gridlines()
+        self.fig.canvas.draw()  # update matlabplot
+
+    """ 
     @pyqtSlot()
     def update_colors(self):
         self.draw_map(preserve_extent=True)
@@ -198,7 +212,7 @@ class IPMapWidget(QWidget):
         self.plot_bisl_result(replot=True)
         self.plot_conf_ellipse(replot=True)
         self.draw_gridlines()
-        self.fig.canvas.draw()  # update matlabplot
+        self.fig.canvas.draw()  # update matlabplot 
 
     def update_background(self):
         self.draw_map(preserve_extent=True)
@@ -216,23 +230,14 @@ class IPMapWidget(QWidget):
         self.plot_bisl_result(replot=True)
         self.plot_conf_ellipse(replot=True)
         self.draw_gridlines()
-        self.fig.canvas.draw()  # update matlabplot
+        self.fig.canvas.draw()  # update matlabplot"""
 
     def draw_gridlines(self):
+        self.gl = None
         if self.map_settings_dialog.show_grid_checkbox.isChecked():
-            gl = self.axes.gridlines(draw_labels=True)
-            gl.xlabel_style = {'size': 10}
-            gl.ylabel_style = {'size': 10}
-
-    def update_map(self):
-        print("updating map")
-        self.draw_map(preserve_extent=True)
-        self.update_detections(preserve_colors=True)
-        self.plot_ground_truth()
-        self.plot_bisl_result(replot=True)
-        self.plot_conf_ellipse(replot=True)
-        self.draw_gridlines()
-        self.fig.canvas.draw()  # update matlabplot
+            self.gl = self.axes.gridlines(draw_labels=True)
+            self.gl.xlabel_style = {'size': 10}
+            self.gl.ylabel_style = {'size': 10}
 
     def errorPopup(self, message, title="Oops..."):
         msg_box = QMessageBox()
@@ -334,22 +339,18 @@ class IPMapWidget(QWidget):
                            transform=self.transform,
                            gid='detection_marker')
 
-        # the plot function will automatically zoom into the view, but we want more control than that, so return the extent
-        # to what is was before plotting
-        self.axes.set_extent(current_extent, crs=self.transform)
-
         if autoscale:
             self.autoscale_plot()
+        else:
+            # if we don't autoscale, then we at least want to return the plot to what it was when 
+            # we entered this function
+            self.axes.set_extent(current_extent, crs=self.transform)
 
         # draw it
         try:
             self.fig.canvas.draw()
-            self.repaint()
         except:
             return
-        
-
-
 
     @pyqtSlot()
     def clear_detections(self):
@@ -519,6 +520,8 @@ class IPMapWidget(QWidget):
                                  minLat - height_adj,
                                  maxLat + height_adj],
                                  crs=self.transform)
+        # now redraw the gridlines since the extent has changed
+        self.update_map()
 
     def motion_notify_callback(self, event):
         if event.xdata is None or event.inaxes != self.axes:

@@ -1,7 +1,6 @@
 name: infrapy_env
 
 channels:
-  - conda-forge
   - defaults
 
 dependencies:
