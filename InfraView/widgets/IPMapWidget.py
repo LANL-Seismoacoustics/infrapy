@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, 
                              QMessageBox, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton)
-from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal, QSettings
 
 from PyQt5.QtGui import QPainter, QPaintEvent, QColor
 
@@ -52,7 +52,6 @@ class IPMapWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        # warnings.filterwarnings("error")
         self.buildUI()
 
     def buildUI(self):
@@ -807,9 +806,20 @@ class IPMapSettingsDialog(QDialog):
         ###   offline maps settings   ###
         self.offline_checkbox = QCheckBox('Use offline maps  ')
         self.offline_directory_label = QLabel("Use offline maps")
-        self.offline_directory_label.setEnabled(False)
+        # read in the offline_director from settings if there is one
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
+        odd = settings.value('offline_maps_dir', '')
+        odd_isChecked_str = settings.value('use_offline_cb', 'False')
+        odd_isChecked = odd_isChecked_str.lower() == 'true'
+        settings.endGroup()
+        self.offline_directory_label.setText(odd)
+        # for now, if there is a directory in the offline_directory_label, assume they want to use that, and activate checkbox
+        self.offline_checkbox.setChecked(odd_isChecked)
+        self.offline_directory_label.setEnabled(odd_isChecked)
+
         self.offline_directory_select_button = QPushButton("Select Folder...")
-        self.offline_directory_select_button.setEnabled(False)
+        self.offline_directory_select_button.setEnabled(odd_isChecked)
 
         self.offline_file_dialog = QFileDialog()
         self.offline_file_dialog.setFileMode(QFileDialog.Directory)
@@ -846,6 +856,7 @@ class IPMapSettingsDialog(QDialog):
     def connect_signals_and_slots(self):
         self.offline_checkbox.clicked.connect(self.offline_directory_select_button.setEnabled)
         self.offline_checkbox.clicked.connect(self.offline_directory_label.setEnabled)
+        self.offline_checkbox.clicked.connect(self.update_settings)
 
         self.ocean_color_button.clicked.connect(self.update_ocean_color)
         self.land_color_button.clicked.connect(self.update_land_color)
@@ -876,13 +887,23 @@ class IPMapSettingsDialog(QDialog):
 
     def select_offline_maps_directory(self):
         curr_dir = self.offline_directory_label.text()
+        
         new_dir = QFileDialog.getExistingDirectory()
         if new_dir != "":
             if new_dir != curr_dir:
                 self.offline_directory_label.setText(new_dir) 
                 self.signal_offline_directory_changed.emit()
         
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
+        settings.setValue('offline_maps_dir', new_dir)
+        settings.endGroup()
 
+    def update_settings(self):
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
+        settings.setValue('use_offline_cb', self.offline_checkbox.isChecked())
+        settings.endGroup()
 
 class IPColorButton(QPushButton):
 

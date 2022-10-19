@@ -22,8 +22,7 @@ class IPPlotViewer(QSplitter):
     def __init__(self, parent, fs_widget):
         super().__init__(parent)
 
-        self._parent = parent
-        self.settings = parent.settings
+        self.parent = parent
         self.fs_widget = fs_widget
         self.buildUI()
 
@@ -103,8 +102,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
     def __init__(self, parent):
         super().__init__(parent=parent)
-        self._parent = parent
-        self.settings = parent.settings     # for convenience
+        self.parent = parent
 
         self.connect_signals_and_slots()
         self.setMouseTracking(True)
@@ -167,7 +165,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.getAllTraceTimeSeries(sts)
 
         # title will always be at 0,0 if it exists
-        self._parent.title.setText(self.earliest_start_time.isoformat())
+        self.parent.title.setText(self.earliest_start_time.isoformat())
 
         for idx, trace in enumerate(sts):
 
@@ -191,10 +189,10 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             # Now lets set up the signal and noise linear region items
             #
             # connect signals and slots so that if the lris are changed, the spins change, and vice versa
-            self._parent.lr_settings_widget.noiseSpinsChanged.connect(new_plot.getNoiseRegion().setRegion)
-            self._parent.lr_settings_widget.signalSpinsChanged.connect(new_plot.getSignalRegion().setRegion)
-            new_plot.getSignalRegion().sigRegionChanged.connect(self._parent.lr_settings_widget.updateSpinValues)
-            new_plot.getNoiseRegion().sigRegionChanged.connect(self._parent.lr_settings_widget.updateSpinValues)
+            self.parent.lr_settings_widget.noiseSpinsChanged.connect(new_plot.getNoiseRegion().setRegion)
+            self.parent.lr_settings_widget.signalSpinsChanged.connect(new_plot.getSignalRegion().setRegion)
+            new_plot.getSignalRegion().sigRegionChanged.connect(self.parent.lr_settings_widget.updateSpinValues)
+            new_plot.getNoiseRegion().sigRegionChanged.connect(self.parent.lr_settings_widget.updateSpinValues)
 
             # itialize the positions of the linear region items
             tstart = self.t[idx][0]
@@ -211,8 +209,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 self.plot_list[0].getSignalRegion().sigRegionChanged.connect(new_plot.copySignalRange)
                 self.plot_list[0].getNoiseRegion().sigRegionChanged.connect(new_plot.copyNoiseRange)
 
-            new_plot.getNoiseRegion().sigRegionChanged.connect(self._parent._parent.update_noise_PSD)
-            new_plot.getSignalRegion().sigRegionChanged.connect(self._parent._parent.update_signal_PSD)
+            new_plot.getNoiseRegion().sigRegionChanged.connect(self.parent._parent.update_noise_PSD)
+            new_plot.getSignalRegion().sigRegionChanged.connect(self.parent._parent.update_signal_PSD)
 
             # cluge because setting background color covers axis for some reason
             new_plot.getAxis("top").setZValue(0)
@@ -269,7 +267,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.clear()
 
         # now, iterate through the current checked items and add the plots that are at each index
-        values = self._parent.waveform_selector.get_value_list()
+        values = self.parent.waveform_selector.get_value_list()
 
         # if there are no checked plots...
         if not any(values):
@@ -684,7 +682,7 @@ class IPLinearRegionSettingsWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
 
-        self._parent = parent
+        self.parent = parent
 
         layout = QHBoxLayout(self)
 

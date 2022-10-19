@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout
                              QFormLayout, QFrame, QMessageBox, QPushButton,
                              QSplitter, QTextEdit, QComboBox)
 
-from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
 
 import numpy as np
 
@@ -355,36 +355,38 @@ class IPLocationWidget(QWidget):
         msgBox.exec_()
 
     def saveWindowGeometrySettings(self):
-        self.parent.settings.beginGroup('LocationWidget')
-        self.parent.settings.setValue("windowSize", self.size())
-        self.parent.settings.setValue("windowPos", self.pos())
-        self.parent.settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
-        self.parent.settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
-        self.parent.settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
-        self.parent.settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
-        self.parent.settings.endGroup()
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
+        settings.setValue("windowSize", self.size())
+        settings.setValue("windowPos", self.pos())
+        settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
+        settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
+        settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
+        settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
+        settings.endGroup()
 
     def restoreWindowGeometrySettings(self):
         # Restore settings
-        self.parent.settings.beginGroup('LocationWidget')
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
 
-        mapSplitterSettings = self.parent.settings.value("mapSplitterSettings")
+        mapSplitterSettings = settings.value("mapSplitterSettings")
         if mapSplitterSettings:
             self.mapSplitter.restoreState(mapSplitterSettings)
 
-        mainSplitterSettings = self.parent.settings.value("mainSplitterSettings")
+        mainSplitterSettings = settings.value("mainSplitterSettings")
         if mainSplitterSettings:
             self.mainSplitter.restoreState(mainSplitterSettings)
 
-        assocSplitterSettings = self.parent.settings.value("assocSplitterSettings")
+        assocSplitterSettings = settings.value("assocSplitterSettings")
         if assocSplitterSettings:
             self.assoc_splitter.restoreState(assocSplitterSettings)
 
-        locSplitterSettings = self.parent.settings.value("loc_splitterSettings")
+        locSplitterSettings = settings.value("loc_splitterSettings")
         if locSplitterSettings:
             self.loc_splitter.restoreState(locSplitterSettings)
 
-        self.parent.settings.endGroup()
+        settings.endGroup()
 
 
 class BISLSettings(QFrame):

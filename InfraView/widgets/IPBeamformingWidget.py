@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
                              QSplitter, QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QSettings
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 
@@ -69,12 +69,10 @@ class IPBeamformingWidget(QWidget):
         super().__init__()
 
         self._parent = parent
-        self.settings = parent.settings
 
         self._mp_pool = pool
 
         self.buildUI()
-        self.restoreWindowGeometrySettings()
 
     def make_crosshair(self):
         crosshair = QPainterPath()
@@ -706,31 +704,33 @@ class IPBeamformingWidget(QWidget):
         return self._parent.getProject()
 
     def saveWindowGeometrySettings(self):
-        self._parent.settings.beginGroup('BeamFormingWidget')
-        self._parent.settings.setValue("windowSize", self.size())
-        self._parent.settings.setValue("windowPos", self.pos())
-        self._parent.settings.setValue("bfmainSplitterSettings", self.main_splitter.saveState())
-        self._parent.settings.setValue("splitterTopSettings", self.splitterTop.saveState())
-        self._parent.settings.setValue("splitterBottomSettings", self.splitterBottom.saveState())
-        self._parent.settings.endGroup()
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('BeamFormingWidget')
+        settings.setValue("windowSize", self.size())
+        settings.setValue("windowPos", self.pos())
+        settings.setValue("bfmainSplitterSettings", self.main_splitter.saveState())
+        settings.setValue("splitterTopSettings", self.splitterTop.saveState())
+        settings.setValue("splitterBottomSettings", self.splitterBottom.saveState())
+        settings.endGroup()
 
     def restoreWindowGeometrySettings(self):
         # Restore settings
-        self._parent.settings.beginGroup('BeamFormingWidget')
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('BeamFormingWidget')
 
-        splitterTopSettings = self._parent.settings.value("splitterTopSettings")
+        splitterTopSettings = settings.value("splitterTopSettings")
         if splitterTopSettings:
             self.splitterTop.restoreState(splitterTopSettings)
 
-        splitterBottomSettings = self._parent.settings.value("splitterBottomSettings")
+        splitterBottomSettings = settings.value("splitterBottomSettings")
         if splitterBottomSettings:
             self.splitterBottom.restoreState(splitterBottomSettings)
 
-        splitterMainSettings = self._parent.settings.value("bfmainSplitterSettings")
+        splitterMainSettings = settings.value("bfmainSplitterSettings")
         if splitterMainSettings:
             self.main_splitter.restoreState(splitterMainSettings)
 
-        self._parent.settings.endGroup()
+        settings.endGroup()
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):

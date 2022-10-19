@@ -1,8 +1,8 @@
 import pyqtgraph as pg
 import numpy as np
 
-from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5 import QtCore
+from PyQt5.QtCore import Qt, pyqtSlot, QSettings
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QMessageBox, QSplitter, QTabWidget)
 
 from InfraView.widgets import (IPFilterSettingsWidget,
@@ -33,8 +33,7 @@ class IPWaveformWidget(QWidget):
     def __init__(self, parent=None, pool=None, project=None):
         super().__init__(parent)
 
-        self._parent = parent
-        self.settings = parent.settings
+        self.parent = parent
         self._mp_pool = pool
 
         self.buildUI()
@@ -80,17 +79,17 @@ class IPWaveformWidget(QWidget):
 
         self.statsViewer.removeTrace.connect(self.remove_trace)
 
-        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self._parent.beamformingWidget.bottomSettings.setNoiseValues)
-        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self._parent.beamformingWidget.bottomSettings.setSignalValues)
-        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self._parent.beamformingWidget.updateWaveformRange)
+        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setNoiseValues)
+        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setSignalValues)
+        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.updateWaveformRange)
         self.plotViewer.pl_widget.sig_active_plot_changed.connect(self.update_widgets)
 
-        self.spectraWidget.f1_Spin.valueChanged.connect(self._parent.beamformingWidget.bottomSettings.setFmin)
-        self.spectraWidget.f2_Spin.valueChanged.connect(self._parent.beamformingWidget.bottomSettings.setFmax)
-        self.spectraWidget.psdPlot.getFreqRegion().sigRegionChanged.connect(self._parent.beamformingWidget.bottomSettings.setFreqValues)
+        self.spectraWidget.f1_Spin.valueChanged.connect(self.parent.beamformingWidget.bottomSettings.setFmin)
+        self.spectraWidget.f2_Spin.valueChanged.connect(self.parent.beamformingWidget.bottomSettings.setFmax)
+        self.spectraWidget.psdPlot.getFreqRegion().sigRegionChanged.connect(self.parent.beamformingWidget.bottomSettings.setFreqValues)
 
     def get_project(self):
-        return self._parent.getProject()
+        return self.parent.getProject()
 
     def errorPopup(self, message, title="Oops..."):
         msgBox = QMessageBox()
@@ -119,13 +118,13 @@ class IPWaveformWidget(QWidget):
         # if not populate the trace stats viewer and plot the traces
         if self._sts is not None:
             # TODO...is there a better way of doing this?
-            self._parent.beamformingWidget.setStreams(self._sts)
+            self.parent.beamformingWidget.setStreams(self._sts)
             self.stationViewer.setInventory(self._inv)
             self.statsViewer.setStats(self._sts)
 
             self.update_streams(self._sts)
 
-            self._parent.setStatus("Ready", 5000)
+            self.parent.setStatus("Ready", 5000)
         else:
             return
 
@@ -258,30 +257,32 @@ class IPWaveformWidget(QWidget):
         return filtered_stream
 
     def saveWindowGeometrySettings(self):
-        self._parent.settings.beginGroup('WaveformWidget')
-        self._parent.settings.setValue("main_splitterSettings", self.main_splitter.saveState())
-        self._parent.settings.setValue("rh_splitterSettings", self.rh_splitter.saveState())
-        self._parent.settings.setValue("lh_splitterSettings", self.lh_splitter.saveState())
-        self._parent.settings.setValue("plotviewer_splitterSettings", self.plotViewer.saveState())
-        self._parent.settings.endGroup()
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('WaveformWidget')
+        settings.setValue("main_splitterSettings", self.main_splitter.saveState())
+        settings.setValue("rh_splitterSettings", self.rh_splitter.saveState())
+        settings.setValue("lh_splitterSettings", self.lh_splitter.saveState())
+        settings.setValue("plotviewer_splitterSettings", self.plotViewer.saveState())
+        settings.endGroup()
 
     def restoreWindowGeometrySettings(self):
         # Restore settings
-        self._parent.settings.beginGroup('WaveformWidget')
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('WaveformWidget')
 
-        main_splitterSettings = self._parent.settings.value("main_splitterSettings")
+        main_splitterSettings = settings.value("main_splitterSettings")
         if main_splitterSettings:
             self.main_splitter.restoreState(main_splitterSettings)
 
-        rh_splitterSettings = self._parent.settings.value("rh_splitterSettings")
+        rh_splitterSettings = settings.value("rh_splitterSettings")
         if rh_splitterSettings:
             self.rh_splitter.restoreState(rh_splitterSettings)
 
-        lh_splitterSettings = self._parent.settings.value("lh_splitterSettings")
+        lh_splitterSettings = settings.value("lh_splitterSettings")
         if lh_splitterSettings:
             self.lh_splitter.restoreState(lh_splitterSettings)
 
-        pv_splitterSettings = self._parent.settings.value("plotviewer_splitterSettings")
+        pv_splitterSettings = settings.value("plotviewer_splitterSettings")
         if pv_splitterSettings:
             self.plotViewer.restoreState(pv_splitterSettings)
         else:
@@ -290,7 +291,7 @@ class IPWaveformWidget(QWidget):
             pww = pv_width - wsw
             self.plotViewer.setSizes([wsw, pww])
 
-        self._parent.settings.endGroup()
+        settings.endGroup()
 
     @QtCore.pyqtSlot(str)
     def remove_trace(self, trace_id):
@@ -431,8 +432,8 @@ class IPWaveformWidget(QWidget):
 
             current_filter_display_settings = self.filterSettingsWidget.get_filter_display_settings()
             if current_filter_display_settings['apply']:
-                self._parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region)
+                self.parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region)
             else:
-                self._parent.beamformingWidget.setWaveform(lines[index], signal_region)
+                self.parent.beamformingWidget.setWaveform(lines[index], signal_region)
 
             

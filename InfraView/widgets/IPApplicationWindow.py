@@ -66,8 +66,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         pg.setConfigOption('foreground', 'k')
         pg.setConfigOptions(antialias=False)
 
-        self.settings = QSettings('LANL', 'InfraView')
-
         self.progname = progname
         self.progversion = progversion
 
@@ -75,7 +73,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
 
         self.buildUI()
-        self.restoreWindowGeometrySettings()
 
     def buildUI(self):
 
@@ -114,6 +111,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.main_widget)
 
+        # go ahead and create dialogs here
         self.fill_sta_info_dialog = IPFillStationInfoDialog()
         self.redundant_trace_dialog = IPRedundantTraceDialog()
         self.aboutDialog = IPAboutDialog(self.progname, self.progversion)
@@ -196,17 +194,25 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         if self._project.makeNewProject():
             self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
             self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
-            self.settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
-            self.settings.setValue('last_project_directory', str(self._project.get_projectPath))
 
+            settings = QSettings('LANL', 'InfraView')
+            settings.beginGroup('General')
+            settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
+            settings.setValue('last_project_directory', str(self._project.get_projectPath))
+            settings.endGroup()
+            
     def filemenu_LoadProject(self):
         newProject = IPProject.IPProject()
         if newProject.loadProject():
             self._project = newProject
             self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
             self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
-            self.settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
-            self.settings.setValue('last_project_directory', str(self._project.get_projectPath))
+
+            settings = QSettings('LANL', 'InfraView')
+            settings.beginGroup('General')
+            settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
+            settings.setValue('last_project_directory', str(self._project.get_projectPath))
+            settings.endGroup()
 
     def filemenu_CloseProject(self):
         self.setWindowTitle(self.progname)
@@ -229,14 +235,15 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.close()
 
     def filemenu_Open(self):
-
-
         # if this hasn't been run yet, I want to default to opening the /data directory.  This can be found relative to the 
         # current directory via...
         default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
         if self._project is None:
             # force a new filename...
-            previous_directory = self.settings.value("last_open_directory", default_data_dir)
+            settings = QSettings('LANL', 'InfraView')
+            settings.beginGroup('General')
+            previous_directory = settings.value("last_open_directory", default_data_dir)
+            settings.endGroup()
         else:
             # There is an open project, so make the default save location
             # correspond to what the project wants
@@ -257,7 +264,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
                 ipath = os.path.dirname(ifile)
                 if self._project is None:
-                    self.settings.setValue("last_open_directory", ipath)
+                    settings = QSettings('LANL', 'InfraView')
+                    settings.beginGroup('General')
+                    settings.setValue("last_open_directory", ipath)
+                    settings.endGroup()
                 else:
                     self._project.set_dataPath(ipath)
                 try:
@@ -385,7 +395,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         if self._project is None:
             # force a new filename...
-            previousDirectory = self.settings.value("last_open_directory", QDir.homePath())
+            settings = QSettings('LANL', 'InfraView')
+            settings.beginGroup('General')
+            previousDirectory = settings.value("last_open_directory", QDir.homePath())
+            settings.endGroup()
         else:
             # There is an open project, so make the default save location
             # correspond to what the project wants
@@ -553,10 +566,11 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def restoreWindowGeometrySettings(self):
         # Restore the widgets geometry settings
-        self.settings.beginGroup('MainWindow')
-        self.resize(self.settings.value("windowSize", QSize(1000, 900)))
-        self.move(self.settings.value("windowPos", QPoint(200, 200)))
-        self.settings.endGroup()
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('MainWindow')
+        self.resize(settings.value("windowSize", QSize(1000, 900)))
+        self.move(settings.value("windowPos", QPoint(200, 200)))
+        settings.endGroup()
 
         self.beamformingWidget.restoreWindowGeometrySettings()
         self.locationWidget.restoreWindowGeometrySettings()
@@ -564,10 +578,11 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def saveWindowGeometrySettings(self):
         # save the widgets geometry settings
-        self.settings.beginGroup('MainWindow')
-        self.settings.setValue("windowSize", self.size())
-        self.settings.setValue("windowPos", self.pos())
-        self.settings.endGroup()
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('MainWindow')
+        settings.setValue("windowSize", self.size())
+        settings.setValue("windowPos", self.pos())
+        settings.endGroup()
 
         self.beamformingWidget.saveWindowGeometrySettings()
         self.locationWidget.saveWindowGeometrySettings()
