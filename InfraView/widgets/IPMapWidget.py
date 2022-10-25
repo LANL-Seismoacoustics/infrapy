@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, 
-                             QMessageBox, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton)
+                             QLineEdit, QMessageBox, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton)
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal, QSettings
 
 from PyQt5.QtGui import QPainter, QPaintEvent, QColor
@@ -64,6 +64,7 @@ class IPMapWidget(QWidget):
 
         self.map_settings_dialog = IPMapSettingsDialog()
         self.map_export_dialog = IPMapExportDialog(self, self.fig)
+        self.missing_maps_dialog = IPMissingMapsDialog(self)
 
         self.toolbar = QToolBar()
         self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
@@ -127,6 +128,8 @@ class IPMapWidget(QWidget):
 
         if self.map_settings_dialog.offline_checkbox.isChecked():
             # use the offline maps...
+            print(cartopy.config['data_dir'])
+            print(cartopy.config['pre_existing_data_dir'])
             cartopy.config['pre_existing_data_dir'] = self.map_settings_dialog.offline_directory_label.text()
         else:
             cartopy.config['pre_existing_data_dir'] = ""
@@ -183,14 +186,18 @@ class IPMapWidget(QWidget):
         
 
     def update_feature_visibilities(self):
-        # This shows/hides the various features shown on the map
-        self.states.set_visible(self.map_settings_dialog.states_checkbox.isChecked())
-        self.lakes.set_visible(self.map_settings_dialog.lakes_checkbox.isChecked())
-        self.rivers.set_visible(self.map_settings_dialog.rivers_checkbox.isChecked())
-        self.borders.set_visible(self.map_settings_dialog.borders_checkbox.isChecked())
-        self.coast.set_visible(self.map_settings_dialog.coast_checkbox.isChecked())
-        self.fig.canvas.draw()  # update matlabplot
+        try:
+            # This shows/hides the various features shown on the map
+            self.states.set_visible(self.map_settings_dialog.states_checkbox.isChecked())
+            self.lakes.set_visible(self.map_settings_dialog.lakes_checkbox.isChecked())
+            self.rivers.set_visible(self.map_settings_dialog.rivers_checkbox.isChecked())
+            self.borders.set_visible(self.map_settings_dialog.borders_checkbox.isChecked())
+            self.coast.set_visible(self.map_settings_dialog.coast_checkbox.isChecked())
+            self.fig.canvas.draw()  # update matlabplot
 
+        except urllib.error.URLError:
+
+            return
 
     @pyqtSlot()
     def update_map(self):
@@ -643,6 +650,54 @@ class IPMapWidget(QWidget):
         self.update_detections(autoscale=False)
 '''
 
+class IPMissingMapsDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.buildUI()
+
+    def buildUI(self):
+        self.setWindowTitle("Infraview -- missing map files...")
+        
+        missing_maps_str = """When initially run, infrapy will attempt to download maps from 
+        the internet. If you don't have an internet connection, it is most likely a proxy issue.
+        In the rare case where you can't connect to the internet, then you can download the maps
+        seperately and point infraview to that directory (see below)."""
+
+        missing_maps_label = QLabel(missing_maps_str)
+        map_dir_label = QLabel("Pre-existing maps directory: ")
+        self.map_location_lineedit = QLineEdit()
+        self.map_location_button = QPushButton("Browse...")
+        self.map_location_button.clicked.connect(self.select_offline_maps_directory)
+
+        select_map_dir_layout = QHBoxLayout()
+        select_map_dir_layout.addWidget(map_dir_label)
+        select_map_dir_layout.addWidget(self.map_location_lineedit)
+        select_map_dir_layout.addWidget(self.map_location_button)
+
+
+
+        ###   dialog buttons   ###
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.rejected.connect(self.reject)
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(missing_maps_label)
+        main_layout.addLayout(select_map_dir_layout)
+        main_layout.addWidget(buttons)
+
+        self.setLayout(main_layout)
+
+    def select_offline_maps_directory(self):
+        new_dir = QFileDialog.getExistingDirectory()
+        
+        self.map_location_lineedit.setText(new_dir) 
+        settings = QSettings('LANL', 'InfraView')
+        settings.beginGroup('LocationWidget')
+        settings.setValue('offline_maps_dir', new_dir)            
+
+
 class IPMapExportDialog(QDialog):
     
     def __init__(self, parent=None, figure=None):
@@ -677,7 +732,7 @@ class IPMapExportDialog(QDialog):
         img_layout.addWidget(self.img_export_button)
         img_group_box.setLayout(img_layout)
 
-         ###   dialog buttons   ###
+        ###   dialog buttons   ###
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel,
                                    Qt.Horizontal,
                                    self)
@@ -811,8 +866,12 @@ class IPMapSettingsDialog(QDialog):
         settings.beginGroup('LocationWidget')
         odd = settings.value('offline_maps_dir', '')
         odd_isChecked_str = settings.value('use_offline_cb', 'False')
-        odd_isChecked = odd_isChecked_str.lower() == 'true'
+        if type(odd_isChecked_str) is str:
+            odd_isChecked = odd_isChecked_str.lower() == 'true'
+        else:
+            odd_isChecked = odd_isChecked_str
         settings.endGroup()
+
         self.offline_directory_label.setText(odd)
         # for now, if there is a directory in the offline_directory_label, assume they want to use that, and activate checkbox
         self.offline_checkbox.setChecked(odd_isChecked)
@@ -889,10 +948,9 @@ class IPMapSettingsDialog(QDialog):
         curr_dir = self.offline_directory_label.text()
         
         new_dir = QFileDialog.getExistingDirectory()
-        if new_dir != "":
-            if new_dir != curr_dir:
-                self.offline_directory_label.setText(new_dir) 
-                self.signal_offline_directory_changed.emit()
+        
+        self.offline_directory_label.setText(new_dir) 
+        self.signal_offline_directory_changed.emit()
         
         settings = QSettings('LANL', 'InfraView')
         settings.beginGroup('LocationWidget')
