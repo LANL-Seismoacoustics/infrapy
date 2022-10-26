@@ -148,8 +148,8 @@ def query_db(session, tables, start_time, end_time, sta="%", cha="%", return_typ
         return None
 
 def prep_session(db_info, check_connection=False):
-    if 'url' in db_info.keys():
-        session = ps.db_connect( db_info['url'])
+    if 'url' in db_info['DATABASE'].keys():
+        session = ps.db_connect( db_info['DATABASE']['url'])
     else:
         session = db_connect2(db_info)
 

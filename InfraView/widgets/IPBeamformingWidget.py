@@ -1309,7 +1309,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         #trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
         trc_vel_vals = np.arange(self._trace_v_range[0], self._trace_v_range[1], self._trace_v_resolution)
 
-        det_p_val = 0.99
+        det_p_val = 0.01
 
         latlon = []
 
