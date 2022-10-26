@@ -7,7 +7,6 @@ class IPBeamformingSettingsWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__()
-        self.__parent = parent  # reference to the IPBeamformingWidget to which this belongs
         self.buildUI()
 
     def buildUI(self):

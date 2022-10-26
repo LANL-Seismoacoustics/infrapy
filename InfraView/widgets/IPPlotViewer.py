@@ -209,8 +209,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 self.plot_list[0].getSignalRegion().sigRegionChanged.connect(new_plot.copySignalRange)
                 self.plot_list[0].getNoiseRegion().sigRegionChanged.connect(new_plot.copyNoiseRange)
 
-            new_plot.getNoiseRegion().sigRegionChanged.connect(self.parent._parent.update_noise_PSD)
-            new_plot.getSignalRegion().sigRegionChanged.connect(self.parent._parent.update_signal_PSD)
+            new_plot.getNoiseRegion().sigRegionChanged.connect(self.parent.parent.update_noise_PSD)
+            new_plot.getSignalRegion().sigRegionChanged.connect(self.parent.parent.update_signal_PSD)
 
             # cluge because setting background color covers axis for some reason
             new_plot.getAxis("top").setZValue(0)

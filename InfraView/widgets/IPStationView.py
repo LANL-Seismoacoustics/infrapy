@@ -28,7 +28,7 @@ class IPStationView(QWidget):
     def __init__(self, parent):
         super().__init__()
 
-        self.__parent = parent
+        self.parent = parent
         self.buildUI()
 
         # self.station_TabWidget.setTabsClosable(True)
@@ -176,7 +176,7 @@ class IPStationView(QWidget):
 
     def getStationCount(self):
         cnt = 0
-        inventory = self.__parent.get_inventory()
+        inventory = self.parent.get_inventory()
         for network in inventory.networks:
             for station in network.stations:
                 cnt += 1
@@ -190,13 +190,13 @@ class IPStationView(QWidget):
         for i in range(self.station_TabWidget.count()):
             self.station_TabWidget.removeTab(0)
  
-        self.__parent.set_inventory(None)
+        self.parent.set_inventory(None)
 
         # now signal to the application that the inventory needs to be cleared
         self.inventory_cleared.emit()
 
     def saveStations(self):
-        inventory = self.__parent.get_inventory()
+        inventory = self.parent.get_inventory()
         if inventory is None:
             self.errorPopup('Oops... There are no stations to save')
             return
@@ -207,36 +207,40 @@ class IPStationView(QWidget):
         else:
             inventory.write(self.savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.savefile[0])
-            self.__parent.settings.setValue("last_stationfile_directory", path)
+            settings = QSettings('LANL', 'InfraView')
+            settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
-        inventory = self.__parent.get_inventory()
+        inventory = self.parent.get_inventory()
         if inventory is None:
             self.errorPopup('Oops... There are no stations to save')
             return
 
-        if self.__parent.get_project() is None:
+        if self.parent.get_project() is None:
             # force a new filename...
-            previousDirectory = self.__parent.settings.value("last_stationfile_directory", QDir.homePath())
+            settings = QSettings('LANL', 'InfraView')
+            previousDirectory = settings.value("last_stationfile_directory", QDir.homePath())
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previousDirectory = str(self.__parent.get_project().get_stationsPath())
+            previousDirectory = str(self.parent.get_project().get_stationsPath())
 
         self.savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
 
         if self.savefile[0]:
-            self.__parent._inv.write(self.savefile[0], format='stationxml', validate=True)
+            self.parent._inv.write(self.savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.savefile[0])
-            self.__parent.settings.setValue("last_stationfile_directory", path)
+            settings = QSettings('LANL', 'InfraView')
+            settings.setValue("last_stationfile_directory", path)
 
     def loadStations(self):
 
-        if self.__parent.get_project() is None:
+        if self.parent.get_project() is None:
             # force a new filename...
-            previousDirectory = self.__parent.settings.value("last_stationfile_directory", QDir.homePath())
+            settings = QSettings('LANL', 'InfraView')
+            previousDirectory = settings.value("last_stationfile_directory", QDir.homePath())
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            previousDirectory = str(self.__parent.get_project().get_stationsPath())
+            previousDirectory = str(self.parent.get_project().get_stationsPath())
 
         self.__openfile = QFileDialog.getOpenFileName(self, 'Open File', previousDirectory)
 
@@ -247,12 +251,12 @@ class IPStationView(QWidget):
                 self.errorPopup("\nThis doesn't seem to be a valid XML file")
                 return
 
-            if self.__parent._inv is not None:
-                self.__parent._inv += newinventory
+            if self.parent._inv is not None:
+                self.parent._inv += newinventory
             else:
-                self.__parent._inv = newinventory
+                self.parent._inv = newinventory
 
-            self.setInventory(self.__parent._inv)
+            self.setInventory(self.parent._inv)
 
 
     def get_current_center(self):
@@ -260,7 +264,7 @@ class IPStationView(QWidget):
 
         # TODO: This is not really setup right now to handle the (very rare) case where an array straddles the
         # international date line
-        inventory = self.__parent.get_inventory()
+        inventory = self.parent.get_inventory()
 
         lat, lon, ele, cnt = 0, 0, 0, 0
 
@@ -278,8 +282,8 @@ class IPStationView(QWidget):
         loaded_stations = []
         trace_stations = []
 
-        streams = self.__parent.get_streams()
-        inventory = self.__parent.get_inventory()
+        streams = self.parent.get_streams()
+        inventory = self.parent.get_inventory()
         
         if streams is None:
             return  # Nothing to reconcile
@@ -320,14 +324,14 @@ class IPStationView(QWidget):
                 if sta not in loaded_stations:
                     needed_stations.append(sta)
         if needed_stations is not None:
-            if self.matchDialog.exec_(needed_stations, (self.__parent.get_earliest_start_time(), self.__parent.get_earliest_start_time())):
+            if self.matchDialog.exec_(needed_stations, (self.parent.get_earliest_start_time(), self.parent.get_earliest_start_time())):
                 new_inventory = self.matchDialog.getInventory()
                 if new_inventory is not None:
                     if inventory is None:
                         inventory = new_inventory
                     else:
                         inventory += new_inventory
-                    self.__parent.set_inventory(inventory)
+                    self.parent.set_inventory(inventory)
                     self.setInventory(inventory)
 
     def errorPopup(self, message):

@@ -21,7 +21,7 @@ class IPSaveAllDialog(QDialog):
 
     def __init__(self, parent):
         super().__init__()
-        self.__parent = parent
+        self.parent = parent
         self.directoryName = None
         self.buildUI()
 
@@ -197,7 +197,7 @@ class IPSaveAllDialog(QDialog):
     def checkBoxClicked(self):
 
         if self.saveFiltered_check.isChecked():
-            filterDisplaySettings = self.__parent.waveformWidget.filterSettingsWidget.get_filter_display_settings()
+            filterDisplaySettings = self.parent.waveformWidget.filterSettingsWidget.get_filter_display_settings()
 
             if filterDisplaySettings['apply'] is False:
                 # self.saveFiltered_check.blockSignals(True)

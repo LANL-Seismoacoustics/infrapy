@@ -68,7 +68,7 @@ class IPBeamformingWidget(QWidget):
     def __init__(self, parent, pool):
         super().__init__()
 
-        self._parent = parent
+        self.parent = parent
 
         self._mp_pool = pool
 
@@ -354,7 +354,7 @@ class IPBeamformingWidget(QWidget):
         self.streams = streams
 
     def get_earliest_start_time(self):
-        return self._parent.waveformWidget.plotViewer.pl_widget.earliest_start_time
+        return self.parent.waveformWidget.plotViewer.pl_widget.earliest_start_time
 
     def plotDetectionLines(self):
         """
@@ -575,7 +575,7 @@ class IPBeamformingWidget(QWidget):
 
         # Gather up any keyboard modifiers to check for Ctrl, or Shift, or
         # other keypresses
-        modifiers = self._parent.ipApp.keyboardModifiers()
+        modifiers = self.parent.ipApp.keyboardModifiers()
         if modifiers == QtCore.Qt.ShiftModifier:
             # Shift+click
             pass
@@ -663,7 +663,7 @@ class IPBeamformingWidget(QWidget):
                 self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
                 self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
 
-                center = self._parent.waveformWidget.stationViewer.get_current_center()
+                center = self.parent.waveformWidget.stationViewer.get_current_center()
                 # since we are manually adding a detection, the start and end need to be estimated...
                 # lets make them +/- 5% of the window width
                 window_range = self.fstatPlot.getViewBox().viewRange()
@@ -701,7 +701,7 @@ class IPBeamformingWidget(QWidget):
         return (np.abs(a-value)).argmin()
 
     def getProject(self):
-        return self._parent.getProject()
+        return self.parent.getProject()
 
     def saveWindowGeometrySettings(self):
         settings = QSettings('LANL', 'InfraView')
@@ -759,11 +759,11 @@ class IPBeamformingWidget(QWidget):
             self.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
-        if self._parent.waveformWidget.get_inventory() is None:
+        if self.parent.waveformWidget.get_inventory() is None:
             self.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
             return
 
-        if self._parent.waveformWidget.stationViewer.getStationCount() != self.streams.count():
+        if self.parent.waveformWidget.stationViewer.getStationCount() != self.streams.count():
             self.errorPopup('The number of stations is not equal to the number of waveforms. Each waveform must have a matching station with Lat./Lon. information in it.')
             return
 
@@ -899,7 +899,7 @@ class IPBeamformingWidget(QWidget):
                                                 self.bottomSettings.getMethod(),
                                                 self.bottomSettings.getNumSigs(),
                                                 self.bottomSettings.getSubWinLength(),
-                                                self._parent.waveformWidget.get_inventory(),
+                                                self.parent.waveformWidget.get_inventory(),
                                                 self._mp_pool,
                                                 self.bottomSettings.getBackAzResolution(),
                                                 self.bottomSettings.getTraceVelResolution(),
@@ -1078,7 +1078,7 @@ class IPBeamformingWidget(QWidget):
         self.reset_run_buttons()
 
         # add a detection at the place were fstat was a maximum
-        center = self._parent.waveformWidget.stationViewer.get_current_center()
+        center = self.parent.waveformWidget.stationViewer.get_current_center()
 
         # Gather data for input into the beamforming peak detector
 

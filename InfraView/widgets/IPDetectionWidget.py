@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
                              QLabel, QGridLayout, QHBoxLayout,
                              QVBoxLayout, QLayout, QMessageBox)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSettings
 
 import pandas as pd
 
@@ -274,7 +274,8 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self.parent.settings.setValue("last_detectionfile_directory", path)
+                settings = QSettings('LANL', 'InfraView')
+                settings.setValue("last_detectionfile_directory", path)
                 fileText = 'savefile: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty display
@@ -293,7 +294,8 @@ class IPDetectionWidget(QWidget):
         if self.parent.getProject() is None:
             # force a new filename...
             default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-            previous_directory = self.parent.settings.value("last_detectionsfile_directory", default_data_dir)
+            settings = QSettings('LANL', 'InfraView')
+            previous_directory = settings.value("last_detectionsfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
             previous_directory = str(self.parent.getProject().get_detectionsPath())
@@ -307,7 +309,8 @@ class IPDetectionWidget(QWidget):
             with open(self._savefile[0], 'w') as of:
                 json.dump(data_to_save, of, indent=4)
                 path = os.path.dirname(self._savefile[0])
-                self.parent.settings.setValue("last_detectionfile_directory", path)
+                settings = QSettings('LANL', 'InfraView')
+                settings.setValue("last_detectionfile_directory", path)
                 fileText = 'file: ' + self._savefile[0]
 
                 # this bit is to shorten long filenames for pretty displayß
@@ -320,7 +323,8 @@ class IPDetectionWidget(QWidget):
         if self.parent.getProject() is None:
             # force a new filename...
             default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-            previous_directory = self.parent.settings.value("last_detectionfile_directory", default_data_dir)
+            settings = QSettings('LANL', 'InfraView')
+            previous_directory = settings.value("last_detectionfile_directory", default_data_dir)
         else:
             # There is an open project, so make the default save location correspond to what the project wants
             previous_directory = str(self.parent.getProject().get_detectionsPath())
@@ -331,7 +335,8 @@ class IPDetectionWidget(QWidget):
             return
 
         with open(self._openfile, 'r') as infile:
-            self.parent.settings.setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
+            settings = QSettings('LANL', 'InfraView')
+            settings.setValue("last_detectionfile_directory", os.path.abspath(self._openfile))
             try:
                 newdata = json.load(infile)
             except json.decoder.JSONDecodeError:

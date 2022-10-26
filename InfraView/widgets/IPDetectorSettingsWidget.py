@@ -9,8 +9,7 @@ class IPDetectorSettingsWidget(QWidget):
     auto_threshold_level = None
 
     def __init__(self, parent):
-        super().__init__()
-        self.__parent = parent  # reference to the IPBeamformingWidget to which this belongs
+        super().__init__(parent)
         self.buildUI()
 
     def buildUI(self):

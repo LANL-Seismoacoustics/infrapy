@@ -128,14 +128,9 @@ class IPMapWidget(QWidget):
 
         if self.map_settings_dialog.offline_checkbox.isChecked():
             # use the offline maps...
-            print(cartopy.config['data_dir'])
-            print(cartopy.config['pre_existing_data_dir'])
             cartopy.config['pre_existing_data_dir'] = self.map_settings_dialog.offline_directory_label.text()
         else:
             cartopy.config['pre_existing_data_dir'] = ""
-
-        # print("pre exist dir = {}".format(cartopy.config['pre_existing_data_dir']))
-        # print("existing data dir = {}".format(cartopy.config['data_dir']))
 
         resolution = self.map_settings_dialog.resolution_cb.currentText()
 
