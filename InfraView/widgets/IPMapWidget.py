@@ -67,7 +67,7 @@ class IPMapWidget(QWidget):
         self.missing_maps_dialog = IPMissingMapsDialog(self)
 
         self.toolbar = QToolBar()
-        self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
+        #self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_settings_button = QToolButton()
         self.tool_settings_button.setText("Settings...")
         self.tool_export_button = QToolButton()
@@ -241,6 +241,7 @@ class IPMapWidget(QWidget):
             self.gl.ylabel_style = {'size': 10}
 
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)
@@ -651,7 +652,7 @@ class IPMissingMapsDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle("Infraview -- missing map files...")
+        self.setWindowTitle("Infraview: Missing map files...")
         
         missing_maps_str = """When initially run, infrapy will attempt to download maps from 
         the internet. If you don't have an internet connection, it is most likely a proxy issue.
@@ -701,7 +702,7 @@ class IPMapExportDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle("Infraview - Map Export")
+        self.setWindowTitle("Infraview: Map Export")
 
         # export pdf...
         pdf_group_box = QGroupBox("Export to PDF")
@@ -750,6 +751,7 @@ class IPMapExportDialog(QDialog):
         self.pdf_export_button.clicked.connect(self.export_pdf)
 
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)
@@ -800,7 +802,7 @@ class IPMapSettingsDialog(QDialog):
         super().__init__(parent)
         self.parent = parent
         self.setMinimumWidth(400)
-        self.setWindowTitle("InfraView - Map Settings")
+        self.setWindowTitle("InfraView: Map Settings")
         self.buildUI()
 
     def buildUI(self):

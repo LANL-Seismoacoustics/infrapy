@@ -19,7 +19,8 @@ def main():
 
     qApp = QtWidgets.QApplication(sys.argv)
 
-    icon_file = here + '/graphics/infraViewIcon.svg'
+    #icon_file = here + '/graphics/infraViewIcon.svg'
+    icon_file = here + '/graphics/icons/start_64.png'
     qApp.setWindowIcon(QIcon(icon_file))
 
     my_system = platform.system()

@@ -79,10 +79,10 @@ class IPLocationWidget(QWidget):
         self.mapWidget = IPMapWidget.IPMapWidget(self)
 
         # set up the distance matrix viewer
-        self.dm_view = IPDistanceMatrixWidget()
+        self.dm_view = IPDistanceMatrixWidget(self)
 
         # set up dendrogram widget
-        self.dendrogram = IPDendrogramWidget()
+        self.dendrogram = IPDendrogramWidget(self)
 
         # set up the bisl settings widget
         self.bislSettings = BISLSettings(self)

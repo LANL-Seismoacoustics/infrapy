@@ -371,6 +371,7 @@ class IPStationBrowser(QWidget):
             self.stationListWidget.addItems(stationList)
 
     def errorPopup(self, message):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
@@ -502,7 +503,7 @@ class IPStationDialog(QDialog):
     def __init__(self, parent=None):
         super(IPStationDialog, self).__init__(parent)
 
-        self.setWindowTitle('Station Browser')
+        self.setWindowTitle('InfraView: Station Browser')
         self.stationBrowser = IPStationBrowser()
         layout = QVBoxLayout()
         layout.addWidget(self.stationBrowser)

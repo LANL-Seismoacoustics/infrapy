@@ -22,7 +22,7 @@ class IPStationMatchDialog(QDialog):
 
     def __buildUI__(self):
 
-        self.setWindowTitle('InfraView - Reconcile Stations')
+        self.setWindowTitle('InfraView: Reconcile Stations')
 
         blurb = QLabel(self.tr('This will ATTEMPT to download the station info for the following Stations.'))
         blurb.setWordWrap(True)

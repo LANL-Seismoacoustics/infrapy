@@ -464,6 +464,7 @@ class IPDetectionWidget(QWidget):
                 return  # and we're done here
 
     def errorPopup(self, message, title='Oops...'):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)

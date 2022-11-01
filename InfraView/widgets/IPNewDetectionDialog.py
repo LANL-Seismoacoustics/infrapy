@@ -54,7 +54,7 @@ class IPNewDetectionsDialog(QDialog):
 
     def buildUI(self):
 
-        self.setWindowTitle(self.tr('InfraView - New Detection(s)'))
+        self.setWindowTitle(self.tr('InfraView: New Detection(s)'))
 
         self.detection_group_box = QGroupBox()
 
@@ -243,7 +243,7 @@ class IPNewDetectionDialog(QDialog):
 
     def __buildUI__(self):
 
-        self.setWindowTitle(self.tr('InfraView - New Detection'))
+        self.setWindowTitle(self.tr('InfraView: New Detection'))
 
         self.data_label = QLabel('')
 

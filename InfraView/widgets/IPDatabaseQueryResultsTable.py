@@ -227,6 +227,7 @@ class IPDatabaseQueryResultsTable(QFrame):
         return table_dictionary
 
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)

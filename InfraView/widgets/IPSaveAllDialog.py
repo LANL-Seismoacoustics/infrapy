@@ -45,7 +45,7 @@ class IPSaveAllDialog(QDialog):
 
     def buildUI(self):
 
-        self.setWindowTitle('Save Data')
+        self.setWindowTitle('InfraView: Save Data')
         self.setMinimumWidth(500)
 
         label_directory = QLabel(self.tr('Directory: '))

@@ -734,6 +734,7 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
@@ -1292,6 +1293,7 @@ class BeamformingWorkerObject(QtCore.QObject):
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)

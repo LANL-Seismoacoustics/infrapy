@@ -16,7 +16,7 @@ class IPSaveBeamformingResultsDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle(self.tr('Save Results'))
+        self.setWindowTitle(self.tr('InfraView: Save Results'))
 
         main_label = QLabel("Export beamforming results to a csv file")
 

@@ -648,7 +648,7 @@ class IPRedundantTraceDialog(QDialog):
         return super().exec_()
 
     def buildUI(self):
-        self.setWindowTitle("Redundant Trace")
+        self.setWindowTitle("InfraView: Redundant Trace")
         self.intro_label = QLabel("")
         self.intro_label.setWordWrap(True)
 
@@ -702,7 +702,7 @@ class IPFillStationInfoDialog(QDialog):
         return super().exec_()
 
     def buildUI(self):
-        self.setWindowTitle('Trace metadata')
+        self.setWindowTitle('InfraView: Trace metadata')
         self.setMinimumWidth(300)
         self.setMaximumWidth(400)
 

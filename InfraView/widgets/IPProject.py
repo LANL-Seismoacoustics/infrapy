@@ -242,7 +242,7 @@ class IPNewProjectDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle('Create a New Project')
+        self.setWindowTitle('InfraView: Create a New Project')
         label_projectName = QLabel(self.tr('Project Name: '))
         self.lineEdit_projectName = QLineEdit()
         self.lineEdit_projectName.textChanged.connect(self.updateProjectPath)

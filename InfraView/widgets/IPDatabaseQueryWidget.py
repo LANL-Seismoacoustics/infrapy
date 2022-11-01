@@ -136,6 +136,7 @@ class IPEventQueryWidget(QFrame):
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
@@ -316,6 +317,7 @@ class IPDatabaseQueryWidget(QFrame):
 
     @pyqtSlot(str, str)
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)

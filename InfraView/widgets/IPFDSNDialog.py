@@ -13,7 +13,7 @@ class IPFDSNDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle(self.tr('FDSN Import'))
+        self.setWindowTitle(self.tr('InfraView: FDSN Import'))
 
         self.fdsnWidget = IPFDSNWidget.IPFDSNWidget()
 

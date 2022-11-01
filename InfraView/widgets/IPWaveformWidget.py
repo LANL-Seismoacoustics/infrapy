@@ -92,6 +92,7 @@ class IPWaveformWidget(QWidget):
         return self.parent.getProject()
 
     def errorPopup(self, message, title="Oops..."):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
