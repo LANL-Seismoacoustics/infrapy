@@ -175,6 +175,7 @@ class IPSaveAllDialog(QDialog):
             return 0
 
     def errorPopup(self, message):
+        title = "InfraView: " + title 
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setText(message)
