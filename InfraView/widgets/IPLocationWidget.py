@@ -23,6 +23,7 @@ from infrapy.location import bisl
 from infrapy.association import hjl
 
 from InfraView.widgets import IPMapWidget
+from InfraView.widgets import IPEventWidget
 
 import pyqtgraph as pg
 from pyqtgraph.GraphicsScene import exportDialog
@@ -89,6 +90,11 @@ class IPLocationWidget(QWidget):
 
         # set up showgroundtruth widget
         self.showgroundtruth = ShowGroundTruth(self)
+        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.updateEventLines)
+        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.plotEventLines)
+        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.mapWidget.plot_ground_truth)
+        self.showgroundtruth.event_widget.showGT_cb.stateChanged.connect(self.mapWidget.show_hide_ground_truth)
+
 
         # set up association settings widget
         self.assocSettings = AssociationSettings(self)
@@ -97,8 +103,8 @@ class IPLocationWidget(QWidget):
         rh_widget = QWidget()
         rh_layout = QVBoxLayout()
         rh_layout.addWidget(self.bislSettings)
-        rh_layout.addWidget(self.showgroundtruth)
         rh_layout.addWidget(self.assocSettings)
+        rh_layout.addWidget(self.showgroundtruth)
         rh_layout.addStretch()
         rh_widget.setLayout(rh_layout)
 
@@ -134,9 +140,6 @@ class IPLocationWidget(QWidget):
         self.clusterThread = QThread()
 
     def connectSignalsAndSlots(self):
-
-        self.showgroundtruth.sig_event_changed.connect(self.mapWidget.plot_ground_truth)
-        self.showgroundtruth.showGT_cb.toggled.connect(self.mapWidget.show_hide_ground_truth)
 
         self.bislSettings.run_bisl_button.clicked.connect(self.run_bisl)
         self.bislSettings.update_dm_button.clicked.connect(self.calc_distance_matrix)
@@ -490,18 +493,13 @@ class ShowGroundTruth(QFrame):
 
     def buildUI(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        self.showGT_cb = QCheckBox("Show Event/Ground Truth")
+        #self.showGT_cb = QCheckBox("Show Event/Ground Truth")
 
-        self.lat_label = QLabel()
-        self.lon_label = QLabel()
-
-        formlayout = QFormLayout()
-        formlayout.addRow('Lon: ', self.lon_label)
-        formlayout.addRow('Lat: ', self.lat_label)
+        self.event_widget = IPEventWidget.IPEventWidget(self)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.showGT_cb)
-        layout.addLayout(formlayout)
+        #layout.addWidget(self.showGT_cb)
+        layout.addWidget(self.event_widget)
 
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
         layout.setAlignment(Qt.AlignCenter)

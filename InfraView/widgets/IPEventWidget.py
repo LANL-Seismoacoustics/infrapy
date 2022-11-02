@@ -13,7 +13,6 @@ import pyproj
 
 class IPEventWidget(QWidget):
 
-    sigEventWidgetLoaded = pyqtSignal()
     sigEventWidgetChanged = pyqtSignal(dict)
     sigEventCleared = pyqtSignal()
     
@@ -34,73 +33,63 @@ class IPEventWidget(QWidget):
         self.buildIcons()
 
         formLayout = QFormLayout()
+        self.showGT_cb = QCheckBox("Show Event on Map")
+        self.showGT_cb.setChecked(False)
 
         self.displayEvent_cb = QCheckBox(self.tr('Show event line on waveform plots'))
         self.displayEvent_cb.setChecked(False)
-        self.displayEvent_cb.stateChanged.connect(self.eventChanged)
 
         self.displayArrivals_cb = QCheckBox(self.tr('Show arrival estimations on waveform plots'))
         self.displayArrivals_cb.setChecked(False)
         self.displayArrivals_cb.setEnabled(self.displayEvent_cb.isChecked())
         
-        self.displayEvent_cb.stateChanged.connect(self.displayArrivals_cb.setEnabled)
-
         label_event_name = QLabel(self.tr('Event ID: '))
         self.event_name_edit = QLineEdit()
-        self.event_name_edit.setFixedWidth(150)
-        self.event_name_edit.textChanged.connect(self.eventChanged)
+        self.event_name_edit.setFixedWidth(100)
 
         label_latitude = QLabel(self.tr('Latitude (deg)'))
         self.event_lat_edit = QDoubleSpinBox()
-        self.event_lat_edit.setFixedWidth(150)
+        self.event_lat_edit.setFixedWidth(125)
         self.event_lat_edit.setRange(-90.1,90.0)
         self.event_lat_edit.setDecimals(8)
         self.event_lat_edit.setSingleStep(0.1)
         self.event_lat_edit.setValue(0.0)
-        self.event_lat_edit.valueChanged.connect(self.eventChanged)
-
+        
         label_longitude = QLabel(self.tr('Longitude (deg)'))
         self.event_lon_edit = QDoubleSpinBox()
-        self.event_lon_edit.setFixedWidth(150)
+        self.event_lon_edit.setFixedWidth(125)
         self.event_lon_edit.setRange(-180.0, 180.0)
         self.event_lon_edit.setDecimals(8)
         self.event_lon_edit.setSingleStep(0.1)
         self.event_lon_edit.setValue(0.0)
-        self.event_lon_edit.valueChanged.connect(self.eventChanged)
 
         label_event_date = QLabel(self.tr('Date (UTC):'))
         self.event_date_edit = QDateEdit()
         self.event_date_edit.setFixedWidth(125)
         self.event_date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.event_date_edit.dateChanged.connect(self.eventChanged)
 
         label_event_time = QLabel(self.tr('Time (UTC):'))
         self.event_time_edit = QTimeEdit()
         self.event_time_edit.setFixedWidth(125)
         self.event_time_edit.setDisplayFormat('HH:mm:ss.zzz')        
-        self.event_time_edit.timeChanged.connect(self.eventChanged)
 
         self.load_button = QPushButton(self.tr(' Load Event...'))
         self.load_button.setMaximumWidth(100)
-        self.load_button.clicked.connect(self.loadEvent)
         self.load_button.setIcon(self.openIcon)
 
         self.save_button = QPushButton(self.tr(' Save Event...'))
         self.save_button.setMaximumWidth(100)
-        self.save_button.clicked.connect(self.saveEventAs)
         self.save_button.setIcon(self.saveAsIcon)
 
         self.clear_button = QPushButton(self.tr(' Clear'))
         self.save_button.setMaximumWidth(100)
-        self.clear_button.clicked.connect(self.clear)
         self.clear_button.setIcon(self.clearIcon)
         
         self.browse_button = QPushButton(self.tr(' IRIS Event Browser...'))
         self.browse_button.setMaximumWidth(200)
-        self.browse_button.clicked.connect(self.browse)
-
         
         show_layout = QVBoxLayout()
+        show_layout.addWidget(self.showGT_cb)
         show_layout.addWidget(self.displayEvent_cb)
         show_layout.addWidget(self.displayArrivals_cb)
 
@@ -143,7 +132,26 @@ class IPEventWidget(QWidget):
 
         self.eventBrowser = IPEventBrowser.IPEventDialog()
 
+        self. connect_signals_and_slots()
+
         self.show()
+
+    def connect_signals_and_slots(self):
+        self.displayEvent_cb.stateChanged.connect(self.displayArrivals_cb.setEnabled)
+        self.displayEvent_cb.stateChanged.connect(self.eventChanged)
+        
+        self.event_name_edit.textChanged.connect(self.eventChanged)
+
+        self.event_lat_edit.valueChanged.connect(self.eventChanged)
+        self.event_lon_edit.valueChanged.connect(self.eventChanged)
+
+        self.event_date_edit.dateChanged.connect(self.eventChanged)
+        self.event_time_edit.timeChanged.connect(self.eventChanged)
+
+        self.load_button.clicked.connect(self.loadEvent)
+        self.save_button.clicked.connect(self.saveEventAs)
+        self.clear_button.clicked.connect(self.clear)
+        self.browse_button.clicked.connect(self.browse)
 
     def buildIcons(self):
         self.clearIcon = QIcon.fromTheme("edit-clear")
@@ -203,19 +211,19 @@ class IPEventWidget(QWidget):
 
     def saveEventAs(self):
         # pop up a save file dialog, default to project directory if a project is open, otherwise use the last used directory
-        if self.parent.getProject() is None:
+        if self.window().getProject() is None:
             # force a new filename...
             savePath=self.settings.value("last_eventfile_directory", QDir.homePath())
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            savePath = str(self.parent.getProject().get_eventPath())
+            savePath = str(self.window().getProject().get_eventPath())
 
         self.savefile = QFileDialog.getSaveFileName(self, 'Save File', savePath)
         if self.savefile[0]:
             with open(self.savefile[0], 'w') as of:
                 json.dump(self.Dict(), of, indent=4)
 
-                if self.parent.getProject() is None:
+                if self.window().getProject() is None:
                     # if there is no open project, update the global settings 
                     self.settings.setValue("last_eventfile_directory", os.path.dirname(self.savefile[0]))
 
@@ -231,11 +239,11 @@ class IPEventWidget(QWidget):
         self.sigEventWidgetChanged.emit(event)
 
     def loadEvent(self):
-        if self.parent.getProject() is None:
+        if self.window().getProject() is None:
             loadPath=self.settings.value("last_eventfile_directory", QDir.homePath())
         else:
             # There is an open project, so make the default save location correspond to what the project wants
-            loadPath = str(self.parent.getProject().get_eventPath())
+            loadPath = str(self.window().getProject().get_eventPath())
 
         self.__openfile = QFileDialog.getOpenFileName(self, 'Open File', loadPath)
         if self.__openfile[0]:
@@ -270,11 +278,11 @@ class IPEventWidget(QWidget):
             else:
                 self.event_date_edit.setDate(self.event_date_edit.minimumDate())
 
-            if self.parent.getProject() is None:
+            if self.window().getProject() is None:
                 # if there is no open project, update the global settings 
                 self.settings.setValue("last_eventfile_directory", os.path.dirname(self.__openfile[0]))
 
-            self.sigEventWidgetLoaded.emit()
+            self.sigEventWidgetChanged.emit(self.Dict())
 
     def calculate_arrival_travel_times(self, receiver_coord):
         # maybe this belongs in a different widget?
@@ -308,7 +316,7 @@ class IPEventWidget(QWidget):
             self.event_lat_edit.setValue(event['Latitude'])
             self.event_date_edit.setDate(QDate.fromString(event['UTC Date'], 'yyyy-MM-dd'))
             self.event_time_edit.setTime(QTime.fromString(event['UTC Time'], 'hh:mm:ss.zzz'))
-            self.sigEventWidgetLoaded.emit()
+            self.sigEventWidgetChanged.emit(self.Dict())
 
     def clear(self):
         self.event_name_edit.setText('')

@@ -336,7 +336,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     @QtCore.pyqtSlot()
     def plotEventLines(self):
 
-        eventWidget = self.window().eventWidget       # reference for convenience
+        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
 
         if eventWidget.hasValidEvent():
             self.clearEventLines()
@@ -367,7 +367,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.clearArrivalLines()
         
         #reference for convenience
-        eventWidget = self.window().eventWidget
+        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
         if eventWidget.hasValidEvent():     # only continue if there is a valid event with location and time
 
             # now if the user has selected the display arrivals checkbox, proceed
@@ -431,7 +431,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     # saying something has changed
     @QtCore.pyqtSlot()
     def updateEventLines(self):
-        eventWidget = self.window().eventWidget       # reference for convenience
+        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
         waveformWidget = self.window().waveformWidget
 
         if eventWidget.hasValidEvent():

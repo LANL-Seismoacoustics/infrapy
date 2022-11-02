@@ -87,10 +87,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # Create the main widgets
         self.beamformingWidget = IPBeamformingWidget.IPBeamformingWidget(self, self.mp_pool)
-        self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.waveformWidget = IPWaveformWidget.IPWaveformWidget(self, self.mp_pool)
+        self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.databaseWidget = IPDatabaseWidget.IPDatabaseWidget(self)
-        self.eventWidget = IPEventWidget.IPEventWidget(self)
 
         # add the main widgets to the application tabs
         self.mainTabs = QTabWidget()
@@ -98,7 +97,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mainTabs.addTab(self.beamformingWidget, 'Beamforming')
         self.mainTabs.addTab(self.locationWidget, 'Location')
         self.mainTabs.addTab(self.databaseWidget, 'Database')
-        self.mainTabs.addTab(self.eventWidget, 'Event/Ground Truth')
 
         mainLayout.addWidget(self.mainTabs)
 
@@ -173,9 +171,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
 
-        self.eventWidget.sigEventWidgetChanged.connect(self.locationWidget.showgroundtruth.eventChanged)
-        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.updateEventLines)
-        self.eventWidget.sigEventWidgetChanged.connect(self.waveformWidget.plotViewer.pl_widget.plotEventLines)
+
 
         self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
 

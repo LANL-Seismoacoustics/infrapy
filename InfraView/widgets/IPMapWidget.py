@@ -204,35 +204,6 @@ class IPMapWidget(QWidget):
         self.draw_gridlines()
         self.fig.canvas.draw()  # update matlabplot
 
-    """ 
-    @pyqtSlot()
-    def update_colors(self):
-        self.draw_map(preserve_extent=True)
-        self.update_detections(preserve_colors=True)
-        self.plot_ground_truth()
-        self.plot_bisl_result(replot=True)
-        self.plot_conf_ellipse(replot=True)
-        self.draw_gridlines()
-        self.fig.canvas.draw()  # update matlabplot 
-
-    def update_background(self):
-        self.draw_map(preserve_extent=True)
-        self.update_detections(preserve_colors=True)
-        self.plot_ground_truth()
-        self.plot_bisl_result(replot=True)
-        self.plot_conf_ellipse(replot=True)
-        self.draw_gridlines()
-        self.fig.canvas.draw()
-
-    def update_resolution(self):
-        self.draw_map(preserve_extent=True)
-        self.update_detections(preserve_colors=True)
-        self.plot_ground_truth()
-        self.plot_bisl_result(replot=True)
-        self.plot_conf_ellipse(replot=True)
-        self.draw_gridlines()
-        self.fig.canvas.draw()  # update matlabplot"""
-
     def draw_gridlines(self):
         self.gl = None
         if self.map_settings_dialog.show_grid_checkbox.isChecked():
@@ -359,32 +330,28 @@ class IPMapWidget(QWidget):
         self.detections = []
         self.clear_plot()
 
-    @pyqtSlot(float, float)
-    def plot_ground_truth(self, lon=None, lat=None):
-        if lon!=None:
-            self.evt_lat = lat
-            self.evt_lon = lon
-        else:
-            if self.evt_lon == None:
-                # nothing to plot, so leave
-                return
-            lat = self.evt_lat
-            lon = self.evt_lon
-
-        if self.gt_marker is not None:
+    def plot_ground_truth(self):
+        if self.gt_marker is not None: # clear old one, and make new one
             self.gt_marker.remove()
-        current_extent = self.axes.get_extent()
+
+        lat = self.parent.showgroundtruth.event_widget.getLat()
+        lon = self.parent.showgroundtruth.event_widget.getLon()
+        
+        current_extent = self.axes.get_extent() # plotting the event should not change the extent
         self.gt_marker, = self.axes.plot(lon, lat, 'X', color='red', transform=self.transform, markersize=16, gid='ground_truth_marker')
         self.axes.set_extent(current_extent)
-        self.fig.canvas.draw()
-        self.show_hide_ground_truth(self.parent.showgroundtruth.show_gt())
-        self.repaint()
 
-    @pyqtSlot(bool)
+        self.show_hide_ground_truth(self.parent.showgroundtruth.event_widget.showGT_cb.checkState())
+
+    @pyqtSlot(int)
     def show_hide_ground_truth(self, show):
 
         if self.gt_marker is not None:
-            self.gt_marker.set_visible(show)
+            if show == Qt.Checked:
+                self.gt_marker.set_visible(True)
+            else:
+                self.gt_marker.set_visible(False)
+
         self.fig.canvas.draw()
         self.repaint()
 
@@ -481,9 +448,9 @@ class IPMapWidget(QWidget):
             lons.append(source_location[0])
             lats.append(source_location[1])
 
-        if self.parent.showgroundtruth.showGT_cb.isChecked():
-            lons.append(self.parent.parent.eventWidget.event_lon_edit.value())
-            lats.append(self.parent.parent.eventWidget.event_lat_edit.value())
+        if self.parent.showgroundtruth.event_widget.showGT_cb.isChecked():
+            lons.append(self.parent.showgroundtruth.event_widget.event_lon_edit.value())
+            lats.append(self.parent.showgroundtruth.event_widget.event_lat_edit.value())
 
         maxLat = max(lats + self.end_lats)
         minLat = min(lats + self.end_lats)
