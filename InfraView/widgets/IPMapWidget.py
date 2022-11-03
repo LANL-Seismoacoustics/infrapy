@@ -24,6 +24,8 @@ import numpy as np
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
 
+from InfraView.widgets import IPUtils
+
 
 class IPMapWidget(QWidget):
 
@@ -172,7 +174,7 @@ class IPMapWidget(QWidget):
         #try:
         self.update_feature_visibilities()
         #except:
-        #    self.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
+        #    IPUtils.errorPopup("There seems to be an issue with the map downloads. If you don't have access to the internet you can download the maps seperately, and use the offline maps setting in the Locations tab to point to the directory where they are downloaded to.")
         #    return
 
         if preserve_extent:
@@ -211,13 +213,6 @@ class IPMapWidget(QWidget):
             self.gl.xlabel_style = {'size': 10}
             self.gl.ylabel_style = {'size': 10}
 
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
 
     def update_detections(self, ip_detections=None, line_color='gray', autoscale=True, preserve_colors=False):
         
@@ -717,13 +712,6 @@ class IPMapExportDialog(QDialog):
         self.img_export_button.clicked.connect(self.export_img)
         self.pdf_export_button.clicked.connect(self.export_pdf)
 
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
 
     def save_pdf(self):
         filename = QFileDialog.getSaveFileName(parent=self, caption="Save PDF", filter="PDF files (*.pdf)" )
@@ -742,7 +730,7 @@ class IPMapExportDialog(QDialog):
 
     def export_img(self):
         if self.img_file_label.text() == "":
-            self.errorPopup("Can't export image.  No image file selected.")
+            IPUtils.errorPopup("Can't export image.  No image file selected.")
             return
         self.fig.savefig(self.img_file_label.text())
         time.sleep(0.5)
@@ -750,7 +738,7 @@ class IPMapExportDialog(QDialog):
 
     def export_pdf(self):
         if self.pdf_file_label.text() == "":
-            self.errorPopup("Can't export to pdf.  No pdf file selected.")
+            IPUtils.errorPopup("Can't export to pdf.  No pdf file selected.")
             return 
         self.fig.savefig(self.pdf_file_label.text())
         time.sleep(1.2)

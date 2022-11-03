@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (QApplication, QDateTimeEdit, QDialogButtonBox, QMes
 
 from PyQt5.QtCore import QDateTime, pyqtSlot, Qt
 
+from InfraView.widgets import IPUtils
+
 import obspy
 from obspy.core import UTCDateTime
 from obspy.clients.fdsn import Client
@@ -222,14 +224,6 @@ class IPEventBrowser(QWidget):
         utcString = str(pdate) + 'T' + str(ptime)
         return utcString
 
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
-
     def downloadEvents(self): 
 
         # Iris is the default client, not sure if it would be useful to include others or not
@@ -237,7 +231,7 @@ class IPEventBrowser(QWidget):
         try:
             client = Client("IRIS")
         except:
-            self.errorPopup("failed to connect to client...proxy issue?")
+            IPUtils.errorPopup("failed to connect to client...proxy issue?")
             return None
         ####
         # laboriously gather the inputs
@@ -343,18 +337,10 @@ class IPEventBrowser(QWidget):
                                      minmagnitude=min_mag,
                                      maxmagnitude=max_mag)
         except obspy.clients.fdsn.header.FDSNNoDataException:
-            self.errorPopup('No data available')
+            IPUtils.errorPopup('No data available')
             return
 
         self.populateresultsTable()
-
-    def errorPopup(self, message):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
         
     def populateresultsTable(self):
         

@@ -14,14 +14,7 @@ from PyQt5.QtWidgets import (QWidget, QAbstractItemView, QLineEdit, QGridLayout,
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate
 
 from InfraView.widgets import IPStationBrowser
-
-# since most of the fields will require capitalized values only, here is a validator for the
-# lineEdits
-
-
-class IPValidator(QtGui.QValidator):
-    def validate(self, string, pos):
-        return QtGui.QValidator.Acceptable, string.upper(), pos
+from InfraView.widgets import IPUtils
 
 
 class IPFDSNWidget(QWidget):
@@ -62,7 +55,8 @@ class IPFDSNWidget(QWidget):
         self.cb.setCurrentText('IRIS')
         self.cb.currentIndexChanged[str].connect(self.onActivated_cb)
 
-        validator = IPValidator(self)
+        validator = IPUtils.CapsValidator(self)
+        
         label_network_name = QLabel(self.tr('Network: '))
         self.networkNameBox = QLineEdit()
         self.networkNameBox.setToolTip('Wildcards OK \nCan be SEED network codes or data center defined codes. \nMultiple codes are comma-separated (e.g. "IU,TA").')

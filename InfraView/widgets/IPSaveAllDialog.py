@@ -10,6 +10,8 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QGridLayout, QFormLayout, QL
                              QPushButton, QFileDialog, QWidget, QGroupBox, QVBoxLayout, QHBoxLayout,
                              QDialogButtonBox, QSizePolicy, QCheckBox, QMessageBox, QScrollArea)
 
+from InfraView.widgets import IPUtils
+
 
 class IPSaveAllDialog(QDialog):
 
@@ -174,14 +176,6 @@ class IPSaveAllDialog(QDialog):
             # Peculiar case where neither is checked
             return 0
 
-    def errorPopup(self, message):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
-
     @QtCore.pyqtSlot()
     def fileEditsChanged(self):
         # slot function called when a fileEdit box is edited
@@ -205,7 +199,7 @@ class IPSaveAllDialog(QDialog):
                 self.saveFiltered_check.setChecked(False)
                 # self.saveFiltered_check.blockSignals(False)
 
-                self.errorPopup('Filter is not currently applied to any data')
+                IPUtils.errorPopup('Filter is not currently applied to any data')
                 return
 
         # clear out previous file info

@@ -13,6 +13,7 @@ import pandas as pd
 from obspy import UTCDateTime
 
 from InfraView.widgets import IPDetectionTableView, IPPickItem, IPNewDetectionDialog, IPPickLine
+from InfraView.widgets import IPUtils
 
 
 class IPDetectionWidget(QWidget):
@@ -173,7 +174,7 @@ class IPDetectionWidget(QWidget):
                     if new_detection.is_equal_to(d):
                         # we already have that detection in the list, so pop up warning and discard the new one
                         duplicate = True
-                        self.errorPopup("A detection is already in the list at index {}.  The new detection will be discarded".format(jdx), title="Duplicate Detection")
+                        IPUtils.errorPopup("A detection is already in the list at index {}.  The new detection will be discarded".format(jdx), title="Duplicate Detection")
 
                 if not duplicate:
                     # append the new detection
@@ -288,7 +289,7 @@ class IPDetectionWidget(QWidget):
     def saveDetectionsAs(self):
 
         if len(self._detections) == 0:
-            self.errorPopup('No Detections to Save')
+            IPUtils.errorPopup('No Detections to Save')
             return
 
         if self.parent.getProject() is None:
@@ -340,7 +341,7 @@ class IPDetectionWidget(QWidget):
             try:
                 newdata = json.load(infile)
             except json.decoder.JSONDecodeError:
-                self.errorPopup("Error loading file. Perhaps this isn't a json file?")
+                IPUtils.errorPopup("Error loading file. Perhaps this isn't a json file?")
                 return
 
             # this is a bit of a hack to make sure opened files have the correct data headers
@@ -462,11 +463,3 @@ class IPDetectionWidget(QWidget):
                 detection.set_end(start_end[1])
                 self.set_data(self._detections)
                 return  # and we're done here
-
-    def errorPopup(self, message, title='Oops...'):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.exec_()

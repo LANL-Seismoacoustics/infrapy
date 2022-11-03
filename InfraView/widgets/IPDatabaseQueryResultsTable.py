@@ -3,10 +3,9 @@ from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal
 
 from obspy.core.stream import Stream
 from obspy.core import UTCDateTime
-import time
-import datetime
 
 from infrapy.utils import database
+from InfraView.widgets import IPUtils
 
 
 class IPWfdiscModel(QAbstractTableModel):
@@ -185,7 +184,7 @@ class IPDatabaseQueryResultsTable(QFrame):
             return None
 
         if len(rows) == 0:
-            self.errorPopup("No stations selected")
+            IPUtils.errorPopup("No stations selected")
             return
 
         selected_rows = []
@@ -225,14 +224,7 @@ class IPDatabaseQueryResultsTable(QFrame):
     def get_tables(self):
         table_dictionary = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
         return table_dictionary
-
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
+        
 
 class IPEventsModel(QAbstractTableModel):
 

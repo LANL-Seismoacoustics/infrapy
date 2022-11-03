@@ -107,14 +107,6 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.connect_signals_and_slots()
         self.setMouseTracking(True)
 
-    def errorPopup(self, message):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
-
     def connect_signals_and_slots(self):
         self.scene().sigMouseMoved.connect(self.myMouseMoved)
         self.scene().sigMouseClicked.connect(self.myMouseClicked)

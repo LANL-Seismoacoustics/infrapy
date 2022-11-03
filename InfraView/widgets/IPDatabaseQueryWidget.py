@@ -8,6 +8,8 @@ from obspy.core.utcdatetime import UTCDateTime
 from infrapy.utils import database
 
 from InfraView.widgets import IPFDSNWidget
+from InfraView.widgets import IPUtils
+
 
 class IPEventQueryWidget(QFrame):
     def __init__(self, parent):
@@ -22,7 +24,7 @@ class IPEventQueryWidget(QFrame):
         self.buildUI()
 
     def buildUI(self):
-        validator = IPFDSNWidget.IPValidator()
+        validator = IPUtils.CapsValidator()
 
         title_label = QLabel("\tEvent Query")
         title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
@@ -121,7 +123,7 @@ class IPEventQueryWidget(QFrame):
     def query_database(self, asquery=False):
         session = self.get_current_session()
         if session is None:
-            self.errorPopup("No current active session")
+            IPUtils.errorPopup("No current active session")
             return
 
         # first thing to do is assemble the info for the query
@@ -134,14 +136,6 @@ class IPEventQueryWidget(QFrame):
             origins = database.eventID_query(session, self.evid_edit.text(), db_tables, asquery=False)
             self.parent.ipevent_query_results_table.setData(origins) 
 
-    @pyqtSlot(str, str)
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.exec_()
 
 class IPDatabaseQueryWidget(QFrame):
 
@@ -158,7 +152,7 @@ class IPDatabaseQueryWidget(QFrame):
 
     def buildUI(self):
 
-        validator = IPFDSNWidget.IPValidator()
+        validator = IPUtils.CapsValidator()
 
         title_label = QLabel("\tWaveform Query")
         title_label.setStyleSheet("QLabel {font-weight:bold; color: white; background-color: black}")
@@ -241,7 +235,7 @@ class IPDatabaseQueryWidget(QFrame):
     def update_query_string(self):
         session = self.get_current_session()
         if session is None:
-            self.errorPopup("No current active session")
+            IPUtils.errorPopup("No current active session")
             return
 
         # get the start date and time into a UTCDateTime
@@ -267,7 +261,7 @@ class IPDatabaseQueryWidget(QFrame):
             new_query = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows', asquery=True)
             self.query_textEdit.setPlainText(str(new_query))
         except KeyError as e:
-            self.errorPopup(str(e) + " is not defined.  Have you defined all your tables?")
+            IPUtils.errorPopup(str(e) + " is not defined.  Have you defined all your tables?")
 
     def get_current_session(self):
         return self.parent.ipdatabase_connect_widget.session
@@ -282,7 +276,7 @@ class IPDatabaseQueryWidget(QFrame):
 
         session = self.get_current_session()
         if session is None:
-            self.errorPopup("No current active session")
+            IPUtils.errorPopup("No current active session")
             return
 
         # get the start date and time into a UTCDateTime
@@ -313,13 +307,4 @@ class IPDatabaseQueryWidget(QFrame):
         if len(wfs) > 0:
             self.parent.ipdatabase_query_results_table.setData(wfs)
         else:
-            self.errorPopup("No results found")
-
-    @pyqtSlot(str, str)
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
+            IPUtils.errorPopup("No results found")

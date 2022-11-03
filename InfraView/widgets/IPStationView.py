@@ -15,6 +15,7 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 import lxml.etree
 
 from InfraView.widgets import IPStationMatchDialog
+from InfraView.widgets import IPUtils
 
 
 class IPStationView(QWidget):
@@ -198,7 +199,7 @@ class IPStationView(QWidget):
     def saveStations(self):
         inventory = self.parent.get_inventory()
         if inventory is None:
-            self.errorPopup('Oops... There are no stations to save')
+            IPUtils.errorPopup('Oops... There are no stations to save')
             return
         # if there is no current filename, prompt for one...
         # TODO: if there is an open project, default to that
@@ -213,7 +214,7 @@ class IPStationView(QWidget):
     def saveStationsAs(self):
         inventory = self.parent.get_inventory()
         if inventory is None:
-            self.errorPopup('Oops... There are no stations to save')
+            IPUtils.errorPopup('Oops... There are no stations to save')
             return
 
         if self.parent.get_project() is None:
@@ -248,7 +249,7 @@ class IPStationView(QWidget):
             try:
                 newinventory = read_inventory(self.__openfile[0], format='stationxml')
             except Exception:
-                self.errorPopup("\nThis doesn't seem to be a valid XML file")
+                IPUtils.errorPopup("\nThis doesn't seem to be a valid XML file")
                 return
 
             if self.parent._inv is not None:
@@ -334,9 +335,3 @@ class IPStationView(QWidget):
                     self.parent.set_inventory(inventory)
                     self.setInventory(inventory)
 
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()

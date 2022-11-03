@@ -30,7 +30,7 @@ from InfraView.widgets import IPLocationWidget
 from InfraView.widgets import IPSaveAllDialog
 from InfraView.widgets import IPWaveformWidget
 from InfraView.widgets import IPDatabaseWidget
-from InfraView.widgets import IPEventWidget
+from InfraView.widgets import IPUtils
 
 # multiprocessing modules
 import pathos.multiprocessing as mp
@@ -174,13 +174,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
 
         self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
     def setStatus(self, s, ms=0):
         self.statusBar().showMessage(s, ms)
@@ -386,7 +379,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
     def filemenu_saveAllWaveforms(self):
         if self.waveformWidget._sts is None:
-            self.errorPopup('Oops... No waveforms to save')
+            IPUtils.errorPopup('Oh dear...no waveforms to save.')
             return
 
         if self._project is None:
@@ -556,7 +549,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 bad_values = bad_values + "\tlon = " + str(lon) + "\n"
             if lat < -90 or lat > 90:
                 bad_values = bad_values + "\tlat = " + str(lat)
-            self.errorPopup("There seems to be a value error in "+ network + "." + station + "." + channel + "\nPossible bad value(s) are:\n" + bad_values)
+            IPUtils.errorPopup("There seems to be a value error in "+ network + "." + station + "." + channel + "\nPossible bad value(s) are:\n" + bad_values)
+
     # ------------------------------------------------------------------------------
     # Settings methods
 
@@ -622,13 +616,6 @@ class IPAboutDialog(QDialog):
         layout.addWidget(info_label)
         layout.addWidget(logo_label)
         self.setLayout(layout)
-
-
-class CapsValidator(QtGui.QValidator):
-    # since most of the fields will require capitalized values only, here is a validator for the
-    # lineEdits
-    def validate(self, string, pos):
-        return QtGui.QValidator.Acceptable, string.upper(), pos
 
 
 class IPRedundantTraceDialog(QDialog):
@@ -726,7 +713,7 @@ class IPFillStationInfoDialog(QDialog):
 
         self.full_name = QLabel('')
 
-        caps_validator = CapsValidator(self)
+        caps_validator = IPUtils.CapsValidator(self)
 
         # Network selector
         self.net_edit = QLineEdit()

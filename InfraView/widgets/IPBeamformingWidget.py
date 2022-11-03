@@ -25,6 +25,7 @@ from InfraView.widgets import IPPlotWidget
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
 from InfraView.widgets import IPSaveBeamformingResultsDialog
+from InfraView.widgets import IPUtils
 
 # import infrapy modules here
 from infrapy.detection import beamforming_new
@@ -732,15 +733,6 @@ class IPBeamformingWidget(QWidget):
 
         settings.endGroup()
 
-    @pyqtSlot(str, str)
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.exec_()
-
     @pyqtSlot(bool)
     def show_calculating_threshold_label(self, show):
         if show:
@@ -753,19 +745,19 @@ class IPBeamformingWidget(QWidget):
 
     def runBeamforming(self):
         if self.streams is None:
-            self.errorPopup('You should have at least 3 streams loaded to run beamfinder')
+            IPUtils.errorPopup('You should have at least 3 streams loaded to run beamfinder')
             return
 
         if len(self.streams) < 3:
-            self.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
+            IPUtils.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
         if self.parent.waveformWidget.get_inventory() is None:
-            self.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
+            IPUtils.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
             return
 
         if self.parent.waveformWidget.stationViewer.getStationCount() != self.streams.count():
-            self.errorPopup('The number of stations is not equal to the number of waveforms. Each waveform must have a matching station with Lat./Lon. information in it.')
+            IPUtils.errorPopup('The number of stations is not equal to the number of waveforms. Each waveform must have a matching station with Lat./Lon. information in it.')
             return
 
         # we only want the slowness plot to show data at end of run
@@ -878,7 +870,7 @@ class IPBeamformingWidget(QWidget):
         # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
         baz_start, baz_end = self.bottomSettings.getBackAzRange()
         if baz_start >= baz_end:
-            self.errorPopup('The back azimuth start angle must be less than the end angle. Please correct this in the Beamformer Settings tab.')
+            IPUtils.errorPopup('The back azimuth start angle must be less than the end angle. Please correct this in the Beamformer Settings tab.')
             self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             # and bail out before going farther
             return
@@ -886,7 +878,7 @@ class IPBeamformingWidget(QWidget):
         # Ditto for the trace velocity range
         tv_min, tv_max = self.bottomSettings.getTraceVRange()
         if tv_min >= tv_max:
-            self.errorPopup('The minimum trace velocity must be less than the max.  Please correct this in the Beamformer Settings tab.')
+            IPUtils.errorPopup('The minimum trace velocity must be less than the max.  Please correct this in the Beamformer Settings tab.')
             self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             return
 
@@ -921,7 +913,7 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_runFinished.connect(self.runFinished)
         self.bfWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
         self.bfWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
-        self.bfWorker.signal_error_popup.connect(self.errorPopup)
+        self.bfWorker.signal_error_popup.connect(IPUtils.errorPopup)
         self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
 
         # show the time range
@@ -1121,11 +1113,11 @@ class IPBeamformingWidget(QWidget):
 
             
             for w in w_array:
-                self.errorPopup(str(w.message), "Warning")
+                IPUtils.errorPopup(str(w.message), "Warning")
         
 
         if len(dets) == 0:
-            self.errorPopup("No Detections Found", "Results")
+            IPUtils.errorPopup("No Detections Found", "Results")
             return
 
         self.detectionWidget.new_detections(dets,
@@ -1159,7 +1151,7 @@ class IPBeamformingWidget(QWidget):
 
     def exportResults(self):
         if len(self._t) == 0:
-            self.errorPopup("There is no data to export", "Warning")
+            IPUtils.errorPopup("There is no data to export", "Warning")
             return  # nothing to do
 
         project = self.getProject()
@@ -1291,15 +1283,6 @@ class BeamformingWorkerObject(QtCore.QObject):
     #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
     #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
-    @pyqtSlot(str, str)
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.exec_()
-
     @pyqtSlot()
     def run(self):
 
@@ -1376,7 +1359,7 @@ class BeamformingWorkerObject(QtCore.QObject):
                 try:
                     beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:, 0, :]
                 except IndexError:
-                    self.errorPopup('Index Error...This usually occurs because the width \n'
+                    IPUtils.errorPopup('Index Error...This usually occurs because the width \n'
                                     'of your noise window is less than the length of your \n'
                                     'beamforming window.  Correct that and try rerunning.')
                     self.stop()

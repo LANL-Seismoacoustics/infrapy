@@ -24,6 +24,7 @@ from infrapy.association import hjl
 
 from InfraView.widgets import IPMapWidget
 from InfraView.widgets import IPEventWidget
+from InfraView.widgets import IPUtils
 
 import pyqtgraph as pg
 from pyqtgraph.GraphicsScene import exportDialog
@@ -203,11 +204,11 @@ class IPLocationWidget(QWidget):
     def run_bisl(self):
 
         if self._trimmed_detections is None:
-            self.errorPopup("no detections loaded. \n You need at least two detections to run BISL.")
+            IPUtils.errorPopup("no detections loaded. \n You need at least two detections to run BISL.")
             return  # nothing to do
 
         if len(self._trimmed_detections) < 2:
-            self.errorPopup("not enough detections loaded. \n You need two or more detections to run BISL.")
+            IPUtils.errorPopup("not enough detections loaded. \n You need two or more detections to run BISL.")
             return  # you need at least 2 detections to calculate the dist matrix
 
         self.bisl_workerObject = BISLWorkerObject(self._trimmed_detections,
@@ -259,11 +260,11 @@ class IPLocationWidget(QWidget):
     def calc_distance_matrix(self):
 
         if len(self._detections) < 1:
-            self.errorPopup("No detections loaded.\n You need two or more detections to calculate a distance matrix.")
+            IPUtils.errorPopup("No detections loaded.\n You need two or more detections to calculate a distance matrix.")
             return  # nothing to do
 
         if len(self._detections) < 2:
-            # self.errorPopup("not enough detections loaded. \n You need 2 or more detections to calculate a distance matrix.")
+            # IPUtils.errorPopup("not enough detections loaded. \n You need 2 or more detections to calculate a distance matrix.")
             return  # you need at least 2 detections to calculate the dist matrix
 
         self.dist_matrix = None
@@ -313,7 +314,7 @@ class IPLocationWidget(QWidget):
     def calc_associations(self):
 
         if self.dist_matrix is None:
-            self.errorPopup("No distance matrix...I need a distance matrix")
+            IPUtils.errorPopup("No distance matrix...I need a distance matrix")
             return  # Nothing to do
 
         self.cluster_workerObject = ClusterWorkerObject(self.dist_matrix,
@@ -349,13 +350,6 @@ class IPLocationWidget(QWidget):
 
         self.dm_view.set_data(distance_matrix_sorted, labels)
         self.update_detections(self._detections, detection_type='detections', recalc_assoc=False)
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
     def saveWindowGeometrySettings(self):
         settings = QSettings('LANL', 'InfraView')
@@ -407,6 +401,7 @@ class BISLSettings(QFrame):
 
         title_label = QLabel('General Settings')
         title_label.setStyleSheet("font-weight: bold;")
+        title_label.setAlignment(Qt.AlignCenter)
 
         self.bm_width_edit = QDoubleSpinBox()
         self.bm_width_edit.setMinimum(2.5)
@@ -462,7 +457,6 @@ class BISLSettings(QFrame):
         self.update_dm_button = QPushButton('Update Dist. Matrix')
 
         mainlayout = QVBoxLayout()
-        mainlayout.setAlignment(Qt.AlignCenter)
         mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
 
@@ -493,12 +487,15 @@ class ShowGroundTruth(QFrame):
 
     def buildUI(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        #self.showGT_cb = QCheckBox("Show Event/Ground Truth")
+        
+        title_label = QLabel('Event/Ground Truth')
+        title_label.setStyleSheet("font-weight: bold;")
+        title_label.setAlignment(Qt.AlignCenter)
 
         self.event_widget = IPEventWidget.IPEventWidget(self)
 
         layout = QVBoxLayout()
-        #layout.addWidget(self.showGT_cb)
+        layout.addWidget(title_label)
         layout.addWidget(self.event_widget)
 
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
@@ -834,7 +831,7 @@ class DistanceMatrixWorkerObject(QObject):
                                                          resol=self._resol,
                                                          pool=self._pool)
         except Exception:
-            self.errorPopup("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
+            IPUtils.errorPopup("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
             return
 
@@ -843,13 +840,6 @@ class DistanceMatrixWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.thread_stopped = True
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
 
 class BISLWorkerObject(QObject):
@@ -889,7 +879,7 @@ class BISLWorkerObject(QObject):
                                          rng_max=self._rng_max,
                                          resol=self._resol)
         except Exception:
-            self.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
+            IPUtils.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
             return
 
@@ -898,13 +888,6 @@ class BISLWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.threadStopped = True
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
 
 class ClusterWorkerObject(QObject):
@@ -935,14 +918,14 @@ class ClusterWorkerObject(QObject):
         try:
             links = linkage(squareform(self._dist_matrix), self._linkage_method)
         except Exception:
-            self.errorPopup("Error while calculating the linkage: {}".format(sys.exc_info()))
+            IPUtils.errorPopup("Error while calculating the linkage: {}".format(sys.exc_info()))
             self.thread_stopped = True
             return
 
         try:
             labels = fcluster(links, self._threshold, criterion='distance') - 1
         except Exception:
-            self.errorPopup("Error while calculating the labels: {}".format(sys.exc_info()))
+            IPUtils.errorPopup("Error while calculating the labels: {}".format(sys.exc_info()))
             self.thread_stopped = True
             return
 
@@ -951,13 +934,6 @@ class ClusterWorkerObject(QObject):
     @pyqtSlot()
     def stop(self):
         self.thread_stopped = True
-
-    def errorPopup(self, message):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
 
 class IPDendrogramWidget(QWidget):
@@ -1041,6 +1017,7 @@ class AssociationSettings(QFrame):
 
         title_label = QLabel('Association Settings')
         title_label.setStyleSheet("font-weight: bold;")
+        title_label.setAlignment(Qt.AlignCenter)
 
         self.threshold_edit = QDoubleSpinBox()
         self.threshold_edit.setMinimum(0.0)
@@ -1059,7 +1036,6 @@ class AssociationSettings(QFrame):
         self.update_assoc_button = QPushButton('Update Associations')
 
         mainlayout = QVBoxLayout()
-        mainlayout.setAlignment(Qt.AlignCenter)
         mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
 

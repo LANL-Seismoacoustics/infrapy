@@ -1,14 +1,14 @@
 from email.errors import NonPrintableDefect
 from ssl import OP_NO_RENEGOTIATION
 from tkinter import N
-import urllib.parse
 import configparser
-import os
 
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
                              QLabel, QLineEdit, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QSizePolicy)
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer, Qt
+
+from InfraView.widgets import IPUtils
 from infrapy.utils import database
 
 class IPTableDialog(QDialog):
@@ -316,7 +316,7 @@ class IPDatabaseConnectWidget(QFrame):
             self.url_edit.setStyleSheet("color: green")
         except ValueError as e:
             self.url_edit.setStyleSheet("color: red")
-            self.errorPopup("Error creating session.  \nMake sure you can reach the database and that the displayed url is correct.")
+            IPUtils.errorPopup("Error creating session.  \nMake sure you can reach the database and that the displayed url is correct.")
     
     def close_session(self):
         if self.session is not None:
@@ -392,7 +392,7 @@ class IPDatabaseConnectWidget(QFrame):
                 self.save_current_button.setEnabled(False)
 
             except Exception as e:
-                self.errorPopup("Error reading config file \n{}".format(str(e)))
+                IPUtils.errorPopup("Error reading config file \n{}".format(str(e)))
 
     def save_current_config(self):
         save_filename = QFileDialog.getSaveFileName(self, "Save db configuration", "/home/jwebster/IPProjects", "(*.ini)")[0]
@@ -417,13 +417,5 @@ class IPDatabaseConnectWidget(QFrame):
 
                 self.save_current_button.setEnabled(False)
             except Exception as e:
-                self.errorPopup("Error saving config file. \n{}".format(e))
-
-    @pyqtSlot(str, str)
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(message)
-        msg_box.setWindowTitle(title)
-        msg_box.exec_()
+                IPUtils.errorPopup("Error saving config file. \n{}".format(e))
+                

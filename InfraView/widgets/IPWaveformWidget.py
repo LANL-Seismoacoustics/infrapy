@@ -18,6 +18,8 @@ import obspy
 from obspy.core.stream import Stream
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
+from InfraView.widgets import IPUtils
+
 
 class IPWaveformWidget(QWidget):
 
@@ -90,14 +92,6 @@ class IPWaveformWidget(QWidget):
 
     def get_project(self):
         return self.parent.getProject()
-
-    def errorPopup(self, message, title="Oops..."):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle(title)
-        msgBox.exec_()
 
     @pyqtSlot(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     def appendTraces(self, newTraces, newInventory):
@@ -229,7 +223,7 @@ class IPWaveformWidget(QWidget):
                                         corners=cfs['order'],
                                         zerophase=cfs['zphase'])
                 except ValueError as e:
-                    self.errorPopup(str(e))
+                    IPUtils.errorPopup(str(e))
 
             elif filtType == 'Low Pass':
                 try:
@@ -238,7 +232,7 @@ class IPWaveformWidget(QWidget):
                                         corners=cfs['order'],
                                         zerophase=cfs['zphase'])
                 except ValueError as e:
-                    self.errorPopup(str(e))
+                    IPUtils.errorPopup(str(e))
 
             elif filtType == 'Band Pass':
                 try:
@@ -248,10 +242,10 @@ class IPWaveformWidget(QWidget):
                                         corners=cfs['order'],
                                         zerophase=cfs['zphase'])
                 except ValueError as e:
-                    self.errorPopup(str(e))
+                    IPUtils.errorPopup(str(e))
 
             else:
-                self.errorPopup(filtType + ' filter not implemented yet')
+                IPUtils.errorPopup(filtType + ' filter not implemented yet')
                 return
             filtered_stream += filtered_trace
 
@@ -315,7 +309,7 @@ class IPWaveformWidget(QWidget):
                 self._inv = self.inv_remove(self._inv, network=net_id, station=station_id)
 
             except AttributeError as e:
-                self.errorPopup(str(e))
+                IPUtils.errorPopup(str(e))
 
             self.stationViewer.setInventory(self._inv)
 

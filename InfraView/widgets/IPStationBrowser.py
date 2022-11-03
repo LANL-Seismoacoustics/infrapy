@@ -15,12 +15,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget,
                              QListWidget, QAbstractItemView,
                              QTabWidget, QFrame)
 
-
-class Validator(QtGui.QValidator):
-    # since most of the fields will require capitalized values only, here is a validator for the
-    # lineEdits
-    def validate(self, string, pos):
-        return QtGui.QValidator.Acceptable, string.upper(), pos
+from InfraView.widgets import IPUtils
 
 
 class IPStationBrowser(QWidget):
@@ -55,7 +50,7 @@ class IPStationBrowser(QWidget):
         if service is not None:
             self.service_cb.setCurrentText(service)
 
-        validator = Validator(self)
+        validator = IPUtils.CapsValidator(self)
 
         # Network selector
         self.network_edit = QLineEdit(network)
@@ -330,7 +325,7 @@ class IPStationBrowser(QWidget):
             try:
                 client = Client(service)
             except obspy.clients.fdsn.header.FDSNException as e:
-                self.errorPopup(str(e))
+                IPUtils.errorPopup(str(e))
                 return
 
             startDate = self.startDate_edit.date().toString("yyyy-MM-dd")
@@ -369,14 +364,6 @@ class IPStationBrowser(QWidget):
                 stationList.append(item.strip())
             self.stationListWidget.clear()
             self.stationListWidget.addItems(stationList)
-
-    def errorPopup(self, message):
-        title = "InfraView: " + title 
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(message)
-        msgBox.setWindowTitle("Oops...")
-        msgBox.exec_()
 
     def onActivated_search(self):
         self.stationListWidget.clear()
