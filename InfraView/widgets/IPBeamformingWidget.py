@@ -1,6 +1,5 @@
 
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
-                             QMessageBox, 
                              QSplitter, QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 

@@ -1,10 +1,6 @@
 from obspy.core.stream import Stream
 from obspy.core import read as obsRead
 
-# import numpy as np
-# from scipy import signal
-from pyproj import Geod
-
 
 def ip_read(pathname_or_url=None, format=None, headonly=False, starttime=None,
             endtime=None, nearest_sample=True, dtype=None, apply_calib=False,

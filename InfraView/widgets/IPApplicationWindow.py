@@ -12,11 +12,11 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.stream import Stream
 
 # PyQt5 includes
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QKeySequence, QPixmap
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSettings, QSize, QPoint, QDir
 from PyQt5.QtWidgets import (QAction, QDialog, QFileDialog, QTabWidget, QGridLayout,
-                             QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QMessageBox, QWidget,
+                             QFormLayout, QHBoxLayout, QVBoxLayout, QLabel, QWidget,
                              QDialog, QDialogButtonBox, QDoubleSpinBox, QLineEdit)
 
 # Infrapy includes
@@ -71,6 +71,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # initialize the multiproccessor pool
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
+        print("cpu count = {}".format(cpu_count()))
 
         self.buildUI()
 

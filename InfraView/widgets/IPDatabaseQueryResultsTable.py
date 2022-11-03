@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QHBoxLayout, QMessageBox, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal
 
 from obspy.core.stream import Stream

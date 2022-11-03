@@ -4,7 +4,7 @@ import json
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
                              QLabel, QGridLayout, QHBoxLayout,
-                             QVBoxLayout, QLayout, QMessageBox)
+                             QVBoxLayout, QLayout)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSettings
 

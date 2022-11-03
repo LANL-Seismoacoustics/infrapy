@@ -9,7 +9,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import (QWidget, QAbstractItemView, QLineEdit, QGridLayout,
                              QComboBox, QLabel, QVBoxLayout, QHBoxLayout,
                              QGroupBox, QPushButton, QDateEdit, QTimeEdit,
-                             QSpinBox, QMessageBox, QListWidget)
+                             QSpinBox, QListWidget)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate
 
@@ -256,12 +256,7 @@ class IPFDSNWidget(QWidget):
         # get the inputs...inputs
         service = self.cb.currentText()
         if(service == 'choose...'):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText('Please select a service to search')
-            msg.setWindowTitle('oops...')
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            IPUtils.errorPopup('Please select a service to search')
             return
 
         # Clear old streams because we don't need them anymore
@@ -284,13 +279,7 @@ class IPFDSNWidget(QWidget):
 
         # Check for unfilled boxes
         if (network == '' or station == '' or channel == ''):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText('You are missing some important info...')
-            msg.setWindowTitle('oops...')
-            msg.setDetailedText("Network, Station, Location, and Channel are all required data.")
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            IPUtils.errorPopup('You are missing some important info...\nNetwork, Station, Location, and Channel are all required data.')
             return
 
         # Download the waveforms
@@ -302,14 +291,7 @@ class IPFDSNWidget(QWidget):
             self.stream = client.get_waveforms(network, station, location, channel, startTime, endTime)
 
         except Exception:
-            # self.parent.setStatus('')
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText('Failure loading waveform')
-            msg.setWindowTitle('oops...')
-            msg.setDetailedText("Double check that the values you entered are valid and the time and date are appropriate.")
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            IPUtils.errorPopup('Failure loading waveform. \nDouble check that the values you entered are valid and the time and date are appropriate.')
             return
 
         for trace in self.stream:
@@ -323,18 +305,8 @@ class IPFDSNWidget(QWidget):
         try:
             self.inventory = client.get_stations(network=network, station=station)
         except:
-            # self.parent.setStatus('')
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText('Failure loading Inventory')
-            msg.setWindowTitle('oops...')
-            msg.setDetailedText("Double check that the values you entered are valid and the time and date are appropriate.")
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
-
+            IPUtils.errorPopup('Failure loading Inventory.  \nDouble check that the values you entered are valid and the time and date are appropriate.')
             return
-        # self.parent.consoleBox.append( 'Downloaded stations from '+service)
-        # self.parent.setStatus('Finished...', 3000)
 
     def getStreams(self):
         return self.stream

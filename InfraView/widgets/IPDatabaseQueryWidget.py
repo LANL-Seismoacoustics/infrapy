@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (QDateEdit, QDateTimeEdit, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, 
-                             QMessageBox, QPushButton, QSpinBox, QTimeEdit, QVBoxLayout,
+                             QPushButton, QSpinBox, QTimeEdit, QVBoxLayout,
                              QPlainTextEdit, QSizePolicy)
 from PyQt5.QtCore import QDate, QTime, pyqtSlot, Qt
 
@@ -7,7 +7,6 @@ from obspy.core.utcdatetime import UTCDateTime
 
 from infrapy.utils import database
 
-from InfraView.widgets import IPFDSNWidget
 from InfraView.widgets import IPUtils
 
 

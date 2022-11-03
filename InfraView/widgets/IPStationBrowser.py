@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget,
                              QVBoxLayout, QLineEdit,
                              QGridLayout,
                              QLabel, QComboBox, QDialog,
-                             QDialogButtonBox, QMessageBox,
+                             QDialogButtonBox, 
                              QPushButton, QDateEdit,
                              QHBoxLayout, QDoubleSpinBox,
                              QListWidget, QAbstractItemView,
@@ -412,12 +412,7 @@ class IPStationBrowser(QWidget):
             self.endDate_edit.setDate(datedate.addDays(1))
             self.eventInfoPopulated = True
         else:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText('There is not a valid event in the Event Tab')
-            msg.setWindowTitle('oops...')
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            IPUtils.errorPopup('There is not a valid event in the Event Tab')
 
     # def setEvent(self, event):
     #     self.currentEvent = event
@@ -529,11 +524,7 @@ class IPStationDialog(QDialog):
     def myaccept(self):
         inv = self.stationBrowser.getInventory()
         if inv is None:
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setText('No station(s) selected.')
-            msgBox.setWindowTitle("Oops...")
-            msgBox.exec_()
+            IPUtils.errorPopup('No station(s) selected.')
             return
         else:
             super().accept()

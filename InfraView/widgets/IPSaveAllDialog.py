@@ -6,9 +6,9 @@ from PyQt5 import QtCore, QtGui
 
 from PyQt5.QtCore import Qt, QSettings, QDir
 
-from PyQt5.QtWidgets import (QApplication, QDialog, QGridLayout, QFormLayout, QLabel, QLayout, QLineEdit,
+from PyQt5.QtWidgets import (QDialog, QGridLayout, QLabel, QLayout, QLineEdit,
                              QPushButton, QFileDialog, QWidget, QGroupBox, QVBoxLayout, QHBoxLayout,
-                             QDialogButtonBox, QSizePolicy, QCheckBox, QMessageBox, QScrollArea)
+                             QDialogButtonBox, QCheckBox, QScrollArea)
 
 from InfraView.widgets import IPUtils
 

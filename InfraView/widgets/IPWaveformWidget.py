@@ -3,11 +3,10 @@ import numpy as np
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, pyqtSlot, QSettings
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QMessageBox, QSplitter, QTabWidget)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QSplitter, QTabWidget)
 
 from InfraView.widgets import (IPFilterSettingsWidget,
                                IPPlotViewer,
-                               IPPlotWidget,
                                IPPSDWidget,
                                IPStationView,
                                IPStatsView)

@@ -1,12 +1,10 @@
 import pyqtgraph as pg
 from pyqtgraph.graphicsItems.GraphicsWidget import GraphicsWidget
 from pyqtgraph.graphicsItems.LabelItem import LabelItem
-from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5 import QtCore, QtGui
 from pyqtgraph import functions as fn
 from pyqtgraph.Point import Point
-from pyqtgraph.graphicsItems.ScatterPlotItem import ScatterPlotItem, drawSymbol
-from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
+from pyqtgraph.graphicsItems.ScatterPlotItem import drawSymbol
 from pyqtgraph.graphicsItems.GraphicsWidgetAnchor import GraphicsWidgetAnchor
 
 

@@ -4,7 +4,7 @@ from tkinter import N
 import configparser
 
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
-                             QLabel, QLineEdit, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QSizePolicy)
+                             QLabel, QLineEdit, QPushButton, QTextEdit, QVBoxLayout, QSizePolicy)
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer, Qt
 

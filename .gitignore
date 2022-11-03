@@ -14,3 +14,4 @@ Copy*
 *.swp
 infrapy-data/
 tutorials/DBConnect.ipynb
+Infraview/graphics/iconds/*.xcf

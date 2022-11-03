@@ -4,7 +4,7 @@ import matplotlib
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
                              QVBoxLayout, QDoubleSpinBox, QSpinBox,
-                             QFormLayout, QFrame, QMessageBox, QPushButton,
+                             QFormLayout, QFrame, QPushButton,
                              QSplitter, QTextEdit, QComboBox)
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings

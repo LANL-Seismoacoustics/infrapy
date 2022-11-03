@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout, QLayout, QMessageBox,
+from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout, QLayout, 
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
                              QVBoxLayout)
 from PyQt5 import QtCore
