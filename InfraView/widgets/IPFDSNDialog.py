@@ -37,3 +37,4 @@ class IPFDSNDialog(QDialog):
     def getInventory(self):
         # pass through to get the inventory info out
         return self.fdsnWidget.getInventory()
+

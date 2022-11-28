@@ -138,8 +138,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.file_menu.addSeparator()
 
-        self.file_menu.addAction(self.tr(' Load Waveform(s)...'), self.filemenu_Open)
-        self.file_menu.addAction(self.tr(' Import Waveform(s)...'), self.filemenu_import)
+        self.file_menu.addAction(self.tr(' Load Waveform File(s)...'), self.filemenu_Open)
+        self.file_menu.addAction(self.tr(' Import from FDSN...'), self.filemenu_import)
         self.file_menu.addAction(self.tr(' Clear Waveform(s)'), self.filemenu_ClearWaveforms)
         self.file_menu.addAction(self.tr(' Save Waveform(s)...'), self.filemenu_saveAllWaveforms)
 
