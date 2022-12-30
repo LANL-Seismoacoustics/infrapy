@@ -9,7 +9,7 @@ import pyqtgraph as pg
 import numpy as np
 from scipy import signal
 
-from InfraView.widgets.IPPlotWidget import IPPlotWidget
+from InfraView.widgets.IPPlotItem import IPPlotItem
 
 
 class IPPSDWidget(QWidget):
@@ -36,7 +36,7 @@ class IPPSDWidget(QWidget):
     def buildUI(self):
         self.setMinimumSize(100, 100)
         self.plotLayoutWidget = pg.GraphicsLayoutWidget()
-        self.psdPlot = IPPlotWidget(mode='PSD')
+        self.psdPlot = IPPlotItem(mode='PSD')
 
         self.psdPlot.enableAutoRange(self.psdPlot.xaxis(), enable=True)
         self.psdPlot.enableAutoRange(self.psdPlot.yaxis(), enable=True)

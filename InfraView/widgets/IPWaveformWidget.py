@@ -50,7 +50,7 @@ class IPWaveformWidget(QWidget):
         self.filterSettingsWidget = IPFilterSettingsWidget.IPFilterSettingsWidget(self)
         self.spectraWidget = IPPSDWidget.IPPSDWidget(self)
 
-        self.plotViewer = IPPlotViewer.IPPlotViewer(self, self.filterSettingsWidget)
+        self.plotViewer = IPPlotViewer.IPPlotViewer(self)
 
         self.lh_splitter = QSplitter(Qt.Vertical)
         self.lh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
@@ -416,8 +416,6 @@ class IPWaveformWidget(QWidget):
         else:
             self.spectraWidget.set_title(self._sts[index].id)
             self.spectraWidget.set_fs(self._sts[index].stats.sampling_rate)
-            # self.spectraWidget.updateSignalPSD()
-            #    self.spectraWidget.updateNoiesPSD()
 
             noise_region_item = self.plotViewer.pl_widget.plot_list[index].getNoiseRegion()
             noise_region_item.sigRegionChanged.emit(noise_region_item)
@@ -425,9 +423,10 @@ class IPWaveformWidget(QWidget):
             signal_region_item.sigRegionChanged.emit(signal_region_item)
 
             current_filter_display_settings = self.filterSettingsWidget.get_filter_display_settings()
+            plot_title = self._sts[index].id
             if current_filter_display_settings['apply']:
-                self.parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region)
+                self.parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region, plot_label=plot_title)
             else:
-                self.parent.beamformingWidget.setWaveform(lines[index], signal_region)
+                self.parent.beamformingWidget.setWaveform(lines[index], signal_region, plot_label=plot_title)
 
             

@@ -3,19 +3,38 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import LinearRegionItem
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QMenu
-from PyQt5.QtCore import pyqtSignal, QPoint
+from PyQt5.QtGui import QCursor, QColor, QBrush, QFont
+from PyQt5.QtWidgets import QMenu, QAction
+from PyQt5.QtCore import pyqtSignal, QPoint, Qt
+
+from obspy.core import UTCDateTime
 
 
 class NonScientific(pg.AxisItem):
-    def __init__(self, *args, **kwargs):
-        super(NonScientific, self).__init__(*args, **kwargs)
+    #def __init__(self, *args, **kwargs):
+    #    super(NonScientific, self).__init__(*args, **kwargs)
 
     def tickStrings(self, values, scale, spacing):
         # This line return the NonScientific notation value
         return ["%0.1f" % x for x in np.array(values).astype(float)]
+
+class IPWaveformTimeAxis(pg.AxisItem):
+    # subclass the basic axis item, mainly to make custom time axis
+    def __init__(self, est, *args, **kwargs):
+        super().__init__(orientation='bottom', *args, **kwargs)
+        # est is the "earliest_start_time"
+        self.set_earliest_start_time(est)
+
+        # make font size smaller
+        font = QFont()
+        font.setPointSize(12)
+        self.setTickFont(font)
+
+    def tickStrings(self, values, scale, spacing):
+        return [(self.earliest_start_time + value).strftime("%H:%M:%S") for value in values]
+
+    def set_earliest_start_time(self, est):
+        self.earliest_start_time = est
 
 
 class IPCustomViewBox(pg.ViewBox):
@@ -36,26 +55,28 @@ class IPCustomViewBox(pg.ViewBox):
     def getMenu(self):
         if self.menu is None:
             self.menu = QMenu()
-            # self.viewAll = QtGui.QAction("View All", self.menu)
-            self.exportImage = QtGui.QAction("Export Image", self.menu)
+            # self.viewAll = QAction("View All", self.menu)
+            self.exportImage = QAction("Export Image", self.menu)
             # self.exportImage.triggered.connect(self.export)
             self.menu.addAction(self.exportImage)
         return self.menu
 
 
-class IPPlotWidget(pg.PlotItem):
+class IPPlotItem(pg.PlotItem):
 
     sigNoiseRegionChanged = pyqtSignal(tuple)
     sigSignalRegionChanged = pyqtSignal(tuple)
     sigFreqRegionChanged = pyqtSignal(tuple)
 
-    _noise_region = None
-    _signal_region = None
-    _freq_region = None
+    noise_region = None
+    signal_region = None
+    freq_region = None
 
-    _pickable = False
+    pickable = False
 
-    def __init__(self, mode='plain', y_label_format=None, pickable=False):
+    labi = None
+
+    def __init__(self, mode='plain', y_label_format=None, pickable=False, est=None):
         '''
         mode can currently be 'Waveform' or 'PSD' or 'Plain'
         '''
@@ -63,10 +84,15 @@ class IPPlotWidget(pg.PlotItem):
         if y_label_format == 'nonscientific':
             super().__init__(axisItems={'left': NonScientific(orientation='left')})
         else:
-            super().__init__()
+            if mode == 'waveform':
+                if est is None:
+                    est = UTCDateTime(0)
+                super().__init__(axisItems={'bottom': IPWaveformTimeAxis(est=est)})
+            else:
+                super().__init__()
 
         # this will tell the widget if you can click on it and generate a 'pick'
-        self._pickable = pickable
+        self.pickable = pickable
 
         self.showAxis('right')
         self.getAxis('right').setTicks('')
@@ -74,24 +100,41 @@ class IPPlotWidget(pg.PlotItem):
         self.getAxis('top').setTicks('')
 
         self.getAxis('left').setWidth(80)
+        font = QFont()
+        font.setPointSize(12)
+        self.getAxis('left').setTickFont(font)
 
         if mode == 'waveform':
-            self._noise_region = IPLinearRegionItem_Noise()
-            self._signal_region = IPLinearRegionItem_Signal()
+            self.noise_region = IPLinearRegionItem_Noise()
+            self.signal_region = IPLinearRegionItem_Signal()
 
-            self.addItem(self._noise_region)
-            self.addItem(self._signal_region)
+            self.addItem(self.noise_region)
+            self.addItem(self.signal_region)
 
         elif mode == 'PSD':
-            self._freq_region = IPFreqLinearRegionItem()
+            self.freq_region = IPFreqLinearRegionItem()
 
-            self.addItem(self._freq_region)
+            self.addItem(self.freq_region)
 
         elif mode == 'plain':
             pass
 
     def setBackgroundColor(self, r, g, b):
-        self.vb.setBackgroundColor(QtGui.QColor(r, g, b))
+        self.vb.setBackgroundColor(QColor(r, g, b))
+
+    def setEarliestStartTime(self, est):
+        self.getAxis('bottom').set_earliest_start_time(est)
+
+    def setPlotLabel(self, text):
+        if self.labi is not None:
+            self.vb.removeItem(self.labi)
+        self.labi = pg.LabelItem(text=text)
+        self.labi.setParentItem(self.vb)
+        self.labi.anchor(itemPos=(0.0,0.0), parentPos=(0.0,0.0))
+
+    def clearPlotLabel(self):
+        self.vb.removeItem(self.labi)
+        self.labi = None
 
     def xaxis(self):
         return self.vb.XAxis
@@ -100,9 +143,9 @@ class IPPlotWidget(pg.PlotItem):
         return self.vb.YAxis
 
     def mouseClickEvent(self, evt):
-        if evt.button() == QtCore.Qt.RightButton:
-            if self._pickable:
-                if evt.button() == QtCore.Qt.LeftButton:
+        if evt.button() == Qt.RightButton:
+            if self.pickable:
+                if evt.button() == Qt.LeftButton:
                     p = QCursor.pos()   # This is the global coordinate of the mouse
                     scene_pos = evt.scenePos()
 
@@ -113,70 +156,70 @@ class IPPlotWidget(pg.PlotItem):
             evt.accept()
 
     def mouseDragEvent(self, evt):
-        if evt.button() == QtCore.Qt.RightButton:
+        if evt.button() == Qt.RightButton:
             evt.ignore()
         else:
             pass
 
     def getNoiseRegion(self):
-        return self._noise_region
+        return self.noise_region
 
     def getSignalRegion(self):
-        return self._signal_region
+        return self.signal_region
 
     def getFreqRegion(self):
-        return self._freq_region
+        return self.freq_region
 
     def getNoiseRegionRange(self):
-        if self._noise_region is not None:
-            return self._noise_region.getRegion()
+        if self.noise_region is not None:
+            return self.noise_region.getRegion()
         else:
             return None
 
     def getSignalRegionRange(self):
-        if self._signal_region is not None:
-            return self._signal_region.getRegion()
+        if self.signal_region is not None:
+            return self.signal_region.getRegion()
         else:
             return None
 
     def getFreqRegionRange(self):
-        if self._freq_region is not None:
-            return self._freq_region.getRegion()
+        if self.freq_region is not None:
+            return self.freq_region.getRegion()
         else:
             return None
 
     def setNoiseRegionRange(self, range):
-        if self._noise_region is not None:
-            self._noise_region.setRegion(range)
+        if self.noise_region is not None:
+            self.noise_region.setRegion(range)
 
     def setSignalRegionRange(self, range):
-        if self._signal_region is not None:
-            self._signal_region.setRegion(range)
+        if self.signal_region is not None:
+            self.signal_region.setRegion(range)
 
     def setFreqRegionRange(self, range):
-        if self._freq_region is not None:
-            self._freq_region.setRegion(range)
+        if self.freq_region is not None:
+            self.freq_region.setRegion(range)
 
     def copySignalRange(self, sourceSigRegion):
         reg = sourceSigRegion.getRegion()
-        self._signal_region.setRegion(reg)
+        self.signal_region.setRegion(reg)
 
     def copyNoiseRange(self, sourceNoiseRegion):
         reg = sourceNoiseRegion.getRegion()
-        self._noise_region.setRegion(reg)
+        self.noise_region.setRegion(reg)
 
 
 class IPLinearRegionItem_Noise(LinearRegionItem):
 
-    def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
-        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
+    def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None, swapMode='block'):
+        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds, swapMode=swapMode)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(255, 71, 71, 50))
+        brush = QBrush(QColor(255, 71, 71, 50))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
 
-        if ev.button() == QtCore.Qt.RightButton:
+        if ev.button() == Qt.RightButton:
             ev.accept()
             pos = ev.screenPos()
             self.showMenu(pos)
@@ -195,15 +238,15 @@ class IPLinearRegionItem_Noise(LinearRegionItem):
 
 class IPLinearRegionItem_Signal(LinearRegionItem):
 
-    def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
-        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
+    def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None, swapMode='block'):
+        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds, swapMode=swapMode)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(80, 159, 250, 100))
+        brush = QBrush(QColor(80, 159, 250, 100))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
 
-        if ev.button() == QtCore.Qt.RightButton:
+        if ev.button() == Qt.RightButton:
             ev.accept()
             pos = ev.screenPos()
             self.showMenu(pos)
@@ -222,15 +265,15 @@ class IPLinearRegionItem_Signal(LinearRegionItem):
 
 class IPFreqLinearRegionItem(LinearRegionItem):
 
-    def __init__(self, values=[np.log10(0.5), np.log10(5)], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None):
-        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds)
+    def __init__(self, values=[np.log10(0.5), np.log10(5)], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None, swapMode='block'):
+        super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds, swapMode=swapMode)
         self.setZValue(15)
-        brush = QtGui.QBrush(QtGui.QColor(200, 200, 200, 50))
+        brush = QBrush(QColor(200, 200, 200, 50))
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
 
-        if ev.button() == QtCore.Qt.RightButton:
+        if ev.button() == Qt.RightButton:
             ev.accept()
             pos = ev.screenPos()
             self.showMenu(pos)

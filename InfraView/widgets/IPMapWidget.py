@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, 
-                             QLineEdit, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton)
+                             QLineEdit, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton, QDoubleSpinBox)
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal, QSettings
 
 from PyQt5.QtGui import QPainter, QPaintEvent, QColor
@@ -68,17 +68,28 @@ class IPMapWidget(QWidget):
         self.map_export_dialog = IPMapExportDialog(self, self.fig)
         self.missing_maps_dialog = IPMissingMapsDialog(self)
 
+        self.extentWidget = IPExtentSettingsWidget(self)
+        self.extentWidget.setVisible(False)
+
         self.toolbar = QToolBar()
+
         #self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_settings_button = QToolButton()
         self.tool_settings_button.setText("Settings...")
+
         self.tool_export_button = QToolButton()
         self.tool_export_button.setText("Export...")
+
+        self.tool_extent_button = QToolButton()
+        self.tool_extent_button.setText("Extent...")
+
         self.toolbar.addWidget(self.tool_settings_button)
+        self.toolbar.addWidget(self.tool_extent_button)
         self.toolbar.addWidget(self.tool_export_button)
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.toolbar)
+        main_layout.addWidget(self.extentWidget)
         main_layout.addWidget(self.mapCanvas)
 
         self.setLayout(main_layout)
@@ -104,10 +115,15 @@ class IPMapWidget(QWidget):
 
         self.tool_settings_button.clicked.connect(self.map_settings_dialog.exec_)
         self.tool_export_button.clicked.connect(self.map_export_dialog.exec_)
+        self.tool_extent_button.clicked.connect(self.showhide_extent_widget)
+
+        self.extentWidget.hide_button.clicked.connect(self.hide_extent_widget)
+        self.extentWidget.sig_extent_changed.connect(self.set_map_extent)
+        self.extentWidget.sig_set_to_global.connect(self.set_map_extent_to_global)
 
         # these technically aren't qt signals and slots, these are matplotlib callback connections
-        self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
-        self.fig.canvas.mpl_connect('button_release_event', self.button_release_callback)
+        #self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
+        #self.fig.canvas.mpl_connect('button_release_event', self.button_release_callback)
         self.fig.canvas.mpl_connect('motion_notify_event', self.motion_notify_callback)
         # self.fig.canvas.mpl_connect('scroll_event', self.scroll_event_callback)
 
@@ -178,9 +194,30 @@ class IPMapWidget(QWidget):
         #    return
 
         if preserve_extent:
-            self.axes.set_extent(current_extent, crs=self.transform)
+            self.set_map_extent(current_extent)
+            self.extentWidget.set_extent_spin_values(current_extent)
 
-        
+    def showhide_extent_widget(self):
+        if self.extentWidget.isVisible():
+            self.extentWidget.setVisible(False)
+        else:
+            self.extentWidget.setVisible(True)
+
+    def hide_extent_widget(self):
+        self.extentWidget.setVisible(False)
+
+    @pyqtSlot(list)
+    def set_map_extent(self, extent):
+        print(extent)
+        self.axes.set_extent(extent)
+        self.fig.canvas.draw()  # update matlabplot
+
+    @pyqtSlot()
+    def set_map_extent_to_global(self):
+        self.axes.set_global()
+        global_extent = [-179.99, 180, -90, 90]
+        self.extentWidget.set_extent_spin_values(global_extent)
+        self.update_map()
 
     def update_feature_visibilities(self):
         try:
@@ -212,7 +249,6 @@ class IPMapWidget(QWidget):
             self.gl = self.axes.gridlines(draw_labels=True)
             self.gl.xlabel_style = {'size': 10}
             self.gl.ylabel_style = {'size': 10}
-
 
     def update_detections(self, ip_detections=None, line_color='gray', autoscale=True, preserve_colors=False):
         
@@ -285,7 +321,9 @@ class IPMapWidget(QWidget):
                            color=linecolor,
                            transform=self.transform,
                            gid='detection_line')
-            self.axes.set_extent(current_extent)
+
+            self.set_map_extent(current_extent)                    # update map
+            self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
         for detection in self.detections:
             if detection.array_dim == 3:
@@ -312,7 +350,8 @@ class IPMapWidget(QWidget):
         else:
             # if we don't autoscale, then we at least want to return the plot to what it was when 
             # we entered this function
-            self.axes.set_extent(current_extent, crs=self.transform)
+            self.set_map_extent(current_extent)
+            self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
         # draw it
         try:
@@ -334,7 +373,9 @@ class IPMapWidget(QWidget):
         
         current_extent = self.axes.get_extent() # plotting the event should not change the extent
         self.gt_marker, = self.axes.plot(lon, lat, 'X', color='red', transform=self.transform, markersize=16, gid='ground_truth_marker')
-        self.axes.set_extent(current_extent)
+
+        self.set_map_extent(current_extent)
+        self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
         self.show_hide_ground_truth(self.parent.showgroundtruth.event_widget.showGT_cb.checkState())
 
@@ -368,9 +409,12 @@ class IPMapWidget(QWidget):
             # we have a new result to plot
             self.bisl_rslt = (result_lat, result_lon)
         print("result_lon = {}   result_lat = {}".format(result_lon, result_lat))
+
         current_extent = self.axes.get_extent()
         self.axes.plot(result_lon, result_lat, 'o', markersize=7, color='blue', transform=self.transform, gid='bisl_result_marker')
-        self.axes.set_extent(current_extent)
+
+        self.set_map_extent(current_extent)
+        self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
     def plot_conf_ellipse(self, result_lons=None, result_lats=None, conf_dx=None, conf_dy=None, replot=False):
         for c in self.axes.get_children():
@@ -396,7 +440,8 @@ class IPMapWidget(QWidget):
 
         current_extent = self.axes.get_extent()
         self.axes.plot(conf_lons, conf_lats, color='black', transform=self.transform, gid='conf_ellipse')
-        self.axes.set_extent(current_extent)
+        self.set_map_extent(current_extent)
+        self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
         self.fig.canvas.draw()
         self.repaint()
@@ -416,6 +461,7 @@ class IPMapWidget(QWidget):
                 c.remove()
         if reset_zoom:
             self.axes.set_global()
+            self.extentWidget.set_extent_spin_values(-180,180,-90,90)
 
         self.fig.canvas.draw()  # update matlabplot
         self.repaint()          # update widget
@@ -430,6 +476,7 @@ class IPMapWidget(QWidget):
         if len(self.detections) < 1:
             # nothing to scale to, so set to global extent and exit
             self.axes.set_global()
+            self.extentWidget.set_extent_spin_values(-180,180,-90,90)
             return
 
         lons = []
@@ -472,18 +519,15 @@ class IPMapWidget(QWidget):
 
         if maxLat == minLat and maxLon == minLon:
             # there is only one point, so behave accordingly
-            self.axes.set_extent([minLon - width_adj,
-                                 maxLon + width_adj,
-                                 minLat - height_adj,
-                                 maxLat + height_adj],
-                                 crs=self.transform)
+            new_extent = [minLon - width_adj, maxLon + width_adj, minLat - height_adj, maxLat + height_adj]
+            self.set_map_extent(new_extent)
         else:
             # the normal case
-            self.axes.set_extent([minLon - width_adj,
-                                 maxLon + width_adj,
-                                 minLat - height_adj,
-                                 maxLat + height_adj],
-                                 crs=self.transform)
+            new_extent = [minLon - width_adj, maxLon + width_adj, minLat - height_adj, maxLat + height_adj]
+            self.set_map_extent(new_extent)
+        
+        self.extentWidget.set_extent_spin_values(new_extent)     # update extentWidget
+
         # now redraw the gridlines since the extent has changed
         self.update_map()
 
@@ -494,25 +538,7 @@ class IPMapWidget(QWidget):
             return
 
         elif event.button == 1:     # make sure the left button is clicked for a drag
-            extent = self.axes.get_extent()
-
-            dx = event.xdata - self.start_mouse_loc[0]
-            dy = event.ydata - self.start_mouse_loc[1]
-
-            lo1 = extent[0] - dx
-            lo2 = extent[1] - dx
-
-            la1 = extent[2] - dy
-            la2 = extent[3] - dy
-
-            if lo1 < -180 or lo2 > 180:
-                return
-
-            if la1 < -90 or la2 > 90:
-                return
-
-            self.axes.set_extent([lo1, lo2, la1, la2], crs=self.transform)
-            self.fig.canvas.draw_idle()
+            pass
         else:
             self.mouse_moved = True
             # if event.button is None:
@@ -526,7 +552,7 @@ class IPMapWidget(QWidget):
             return
         else:
             self.start_mouse_loc = [event.xdata, event.ydata]
-            # print("start = {}".format(self.start_mouse_loc))
+            print("start = {}".format(self.start_mouse_loc))
 
     def button_release_callback(self, event):
         # This is to handle the button release from within matplotlib...undoes whatever the button press did
@@ -534,7 +560,7 @@ class IPMapWidget(QWidget):
             return
         else:
             self.end_mouse_loc = [event.xdata, event.ydata]
-            # print("end = {}".format(self.end_mouse_loc))
+            print("end = {}".format(self.end_mouse_loc))
 '''
     # Matplotlib callbacks go here_____________________
 
@@ -575,7 +601,8 @@ class IPMapWidget(QWidget):
 
         extent = [lo1, lo2, la1, la2]
 
-        self.axes.set_extent(extent, crs=self.transform)
+        self.set_map_extent(extent)
+        self.extentWidget.set_extent_spin_values(extent)
 
         self.fig.canvas.draw()
 
@@ -715,17 +742,24 @@ class IPMapExportDialog(QDialog):
 
     def save_pdf(self):
         filename = QFileDialog.getSaveFileName(parent=self, caption="Save PDF", filter="PDF files (*.pdf)" )
+        if filename[0] == '':
+            # dialog was cancelled, just leave
+            return
 
         if filename[0].endswith('.pdf'):
             new_filename = filename[0]
         else:
-            if new_filename != "":
+            if filename[0] != "":
                 new_filename = filename[0] + '.pdf'
 
         self.pdf_file_label.setText(new_filename)
 
     def save_img(self):
         filename = QFileDialog.getSaveFileName(parent=self, caption="Save Image", filter="Images (*.png *.xpm *.jpg)" )
+        if filename[0] == '':
+            # dialog was cancelled, just leave
+            return
+
         self.img_file_label.setText(filename[0])
 
     def export_img(self):
@@ -916,7 +950,6 @@ class IPMapSettingsDialog(QDialog):
         settings.endGroup()
 
 class IPColorButton(QPushButton):
-
     current_color = QColor(255, 0, 0)
 
     def __init__(self, color):
@@ -939,3 +972,103 @@ class IPColorButton(QPushButton):
 
     def color(self):
         return QColor(self.current_color)
+
+class IPExtentSettingsWidget(QWidget):
+
+    sig_extent_changed = pyqtSignal(list)
+    sig_set_to_global = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.buildUI()
+
+    def buildUI(self):
+        ll_groupbox = QGroupBox("Lower left coordinates")
+        ur_groupbox = QGroupBox("Upper right coordinates")
+
+        self.ll_lat_spin = QDoubleSpinBox()
+        self.ll_lat_spin.setMaximumWidth(100)
+        self.ll_lat_spin.setRange(-90.0, 90.0)
+        self.ll_lat_spin.setValue(-90.0)
+        self.ll_lat_spin.setPrefix("Lat: ")
+        self.ll_lat_spin.valueChanged.connect(self.activate_update_button)
+
+        self.ll_lon_spin = QDoubleSpinBox()
+        self.ll_lon_spin.setMaximumWidth(100)
+        self.ll_lon_spin.setRange(-179.99, 180.0)
+        self.ll_lon_spin.setValue(-179.99)
+        self.ll_lon_spin.setPrefix("Lon: ")
+        self.ll_lon_spin.valueChanged.connect(self.activate_update_button)
+
+        ll_layout = QHBoxLayout()
+        ll_layout.addWidget(self.ll_lon_spin)
+        ll_layout.addWidget(self.ll_lat_spin)
+        ll_groupbox.setLayout(ll_layout)
+
+        self.ur_lat_spin = QDoubleSpinBox()
+        self.ur_lat_spin.setMaximumWidth(100)
+        self.ur_lat_spin.setRange(-90., 90.0)
+        self.ur_lat_spin.setValue(90.0)
+        self.ur_lat_spin.setPrefix("Lat: ")
+        self.ur_lat_spin.valueChanged.connect(self.activate_update_button)
+
+        self.ur_lon_spin = QDoubleSpinBox()
+        self.ur_lon_spin.setMaximumWidth(100)
+        self.ur_lon_spin.setRange(-179.99, 180.0)
+        self.ur_lon_spin.setValue(180.0)
+        self.ur_lon_spin.setPrefix("Lon: ")
+        self.ur_lon_spin.valueChanged.connect(self.activate_update_button)
+
+        ur_layout = QHBoxLayout()
+        ur_layout.addWidget(self.ur_lon_spin)
+        ur_layout.addWidget(self.ur_lat_spin)
+        ur_groupbox.setLayout(ur_layout)
+
+        self.update_plot_button = QPushButton("Update")
+        self.update_plot_button.setMaximumWidth(100)
+        self.update_plot_button.setEnabled(False)
+        self.update_plot_button.clicked.connect(self.deactivate_update_button)
+        self.update_plot_button.clicked.connect(self.update_map_extent)
+
+        self.set_to_global_button = QPushButton("Global")
+        self.set_to_global_button.setMaximumWidth(100)
+        self.set_to_global_button.clicked.connect(self.set_to_global)
+
+        self.hide_button = QPushButton("Hide")
+        self.hide_button.setMaximumWidth(60)
+
+        h_layout = QHBoxLayout()
+        h_layout.addWidget(ll_groupbox)
+        h_layout.addWidget(ur_groupbox)
+        h_layout.addWidget(self.update_plot_button)
+        h_layout.addWidget(self.set_to_global_button)
+        h_layout.addStretch()
+        h_layout.addWidget(self.hide_button)
+        h_layout.setContentsMargins(0,0,0,0)
+        self.setLayout(h_layout) 
+
+    def set_extent_spin_values(self, extent):
+        # ll_lon: lower left longitude
+        # ur_lat: upper right latitude
+        # etc
+
+        self.ll_lon_spin.setValue(extent[0])
+        self.ll_lat_spin.setValue(extent[2])
+        self.ur_lon_spin.setValue(extent[1])
+        self.ur_lat_spin.setValue(extent[3])
+
+    def set_to_global(self):
+        self.sig_set_to_global.emit()
+
+    def activate_update_button(self):
+        self.update_plot_button.setEnabled(True)
+
+    def deactivate_update_button(self):
+        self.update_plot_button.setEnabled(False)
+
+    def update_map_extent(self):
+        extent = [self.ll_lon_spin.value(), self.ur_lon_spin.value(), self.ll_lat_spin.value(), self.ur_lat_spin.value()]
+        print(extent)
+        self.sig_extent_changed.emit(extent)
+
+

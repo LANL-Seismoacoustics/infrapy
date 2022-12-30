@@ -168,7 +168,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.sig_stream_changed.connect(self.waveformWidget.update_streams)
         self.sig_inventory_changed.connect(self.waveformWidget.update_inventory)
 
-        self.beamformingWidget.waveformPlot.sigXRangeChanged.connect(self.waveformWidget.plotViewer.pl_widget.adjustSignalRegionRange)
+        #self.beamformingWidget.waveformPlot.sigXRangeChanged.connect(self.waveformWidget.plotViewer.pl_widget.adjustSignalRegionRange)
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
 

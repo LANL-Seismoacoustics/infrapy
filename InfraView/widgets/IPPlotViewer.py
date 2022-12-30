@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox, QLabel,
                              QHBoxLayout, QVBoxLayout,
                              QScrollArea, QSplitter)
 
-from InfraView.widgets import IPPlotWidget
+from InfraView.widgets import IPPlotItem
 from InfraView.widgets import IPWaveformSelectorWidget
 from InfraView.widgets import IPEventLine
 
@@ -18,11 +18,9 @@ import pyproj
 
 class IPPlotViewer(QSplitter):
 
-    def __init__(self, parent, fs_widget):
+    def __init__(self, parent):
         super().__init__(parent)
-
         self.parent = parent
-        self.fs_widget = fs_widget
         self.buildUI()
 
     def buildUI(self):
@@ -149,10 +147,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.active_plot = 0
 
         if sts is None:
-            # nothing to do
-            return
+            return      # nothing to do
 
-        # populate self.t
         # the filtered lines will have the same range as the unfiltered, so just pass sts
         self.getAllTraceTimeSeries(sts)
 
@@ -172,8 +168,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             # generate the filtered lines from the filtered streams
             self.filtered_plot_lines.append(pg.PlotDataItem(self.t[idx], filtered_sts[idx].data))
 
-            # create a new plot and add it to the layout
-            new_plot = IPPlotWidget.IPPlotWidget(mode='waveform')
+            # create a new plot and add data to it
+            new_plot = IPPlotItem.IPPlotItem(mode='waveform', est=self.earliest_start_time)
             new_plot.addItem(self.plot_lines[idx], name=trace.id)
             new_plot.addItem(self.filtered_plot_lines[idx])
 
@@ -211,11 +207,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_plot.getAxis("right").setZValue(0)
             #
             ####################################################################################
-            # create the legend/label for the new plot
-            li = pg.LegendItem()
-            li.setParentItem(new_plot.vb)
-            li.anchor(itemPos=(0, 1), parentPos=(0, 1))
-            li.addItem(self.plot_lines[idx], trace.id)
+            # create the label for the new plot and pin it to the top left
+            new_plot.setPlotLabel(trace.id)
 
             # set the plot lines' color and width (if you chance something here, it needs to also
             # be changed in updateTraces)
@@ -324,7 +317,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
     # --------------------------------------------------
     # Event line routines...
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def plotEventLines(self):
 
         eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
@@ -420,7 +413,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
     # This will be called whenever a signal is emitted from the eventwidget
     # saying something has changed
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def updateEventLines(self):
         eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
         waveformWidget = self.window().waveformWidget
@@ -439,7 +432,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
         self.plotArrivalLines()
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def updateEventWidget(self):
         eventWidget = self.window().eventWidget       # reference for convenience
 
@@ -448,7 +441,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_UTC_event_time = self.sts[0].stats.starttime + self.event_line_list[0].pos().x()
             eventWidget.setUTCDateTime(new_UTC_event_time)
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def clearEventLines(self):
         for plot in self.plot_list:
             for item in reversed(plot.items):
@@ -717,11 +710,11 @@ class IPLinearRegionSettingsWidget(QWidget):
         nrange = regionItem.getRegion()
 
         # All of the regions are linked, so pull off the values of the first one
-        if isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Noise):
+        if isinstance(regionItem, IPPlotItem.IPLinearRegionItem_Noise):
             self.noiseStartSpin.setValue(nrange[0])
             self.noiseDurationSpin.setValue(nrange[1] - nrange[0])
 
-        elif isinstance(regionItem, IPPlotWidget.IPLinearRegionItem_Signal):
+        elif isinstance(regionItem, IPPlotItem.IPLinearRegionItem_Signal):
             self.signalStartSpin.setValue(nrange[0])
             self.signalDurationSpin.setValue(nrange[1] - nrange[0])
 

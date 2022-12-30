@@ -82,7 +82,7 @@ class IPFilterSettingsWidget(QWidget):
         self.update_Button.clicked.connect(self.update_clicked)
 
         layout = QGridLayout(self)
-        layout.setMargin(20)
+        # layout.setMargin(20)
         layout.addWidget(QLabel(self.tr('Type: ')), 0, 0, alignment=Qt.AlignRight)
         layout.addWidget(self.cb_filter_type, 0, 1)
         layout.addWidget(self.label_highpassFreq, 1, 0, alignment=Qt.AlignRight)

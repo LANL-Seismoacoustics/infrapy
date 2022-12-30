@@ -46,11 +46,11 @@ class IPPolarPlot(pg.PlotItem):
 
         # need to draw new circles.  First clear out old ones.
         for item in reversed(self.items):
-            if type(item) is pg.QtGui.QGraphicsEllipseItem or type(item) is pg.TextItem:
+            if type(item) is pg.QtWidgets.QGraphicsEllipseItem or type(item) is pg.TextItem:
                 self.removeItem(item)
 
         for r in range(1, circle_count+1):
-            circle = pg.QtGui.QGraphicsEllipseItem(-r / (min_trace_vel*circle_count), -r / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count))
+            circle = pg.QtWidgets.QGraphicsEllipseItem(-r / (min_trace_vel*circle_count), -r / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count))
             circle.setPen(pg.mkPen(0.95))
             circle.setZValue(10)
             self.addItem(circle)

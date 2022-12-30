@@ -15,3 +15,4 @@ Copy*
 infrapy-data/
 tutorials/DBConnect.ipynb
 Infraview/graphics/iconds/*.xcf
+docs/build/

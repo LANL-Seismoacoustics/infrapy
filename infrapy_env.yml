@@ -2,17 +2,18 @@ name: infrapy_env
 
 channels:
   - defaults
+  - conda-forge
 
 dependencies:
   - matplotlib-base=3.5
   - cartopy=0.19
   - numpy=1.21
-  - python=3.8
+  - python=3.9
   - scipy
   - numba
   - obspy=1.2.2
-  - pyqt=5.12
-  - pyqtgraph=0.12
+  - pyqt=5.15.7
+  - pyqtgraph=0.13.1
   - pandas
   - cx_oracle
   - scikit-learn
@@ -30,7 +31,7 @@ dependencies:
   - pip
 
   - pip:
-    - git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
-    #- pisces==0.3.2
+    #- git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
+    - pisces==0.4.0
     - -e .
 

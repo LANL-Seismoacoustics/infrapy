@@ -20,7 +20,7 @@ from InfraView.widgets import IPDetectionWidget
 from InfraView.widgets import IPDetectorSettingsWidget
 from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
-from InfraView.widgets import IPPlotWidget
+from InfraView.widgets import IPPlotItem
 from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
 from InfraView.widgets import IPSaveBeamformingResultsDialog
@@ -95,11 +95,11 @@ class IPBeamformingWidget(QWidget):
         self.lhWidget = pg.GraphicsLayoutWidget()
         self.lhWidget.setMouseTracking(True)
 
-        self.waveformPlot = IPPlotWidget.IPPlotWidget()
+        self.waveformPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.waveformPlot.setLabel('left', 'Waveform')
         self.waveformPlot.hideButtons()
 
-        self.fstatPlot = IPPlotWidget.IPPlotWidget()
+        self.fstatPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.fstatPlot.hideButtons()
         self.fstatPlot.setYRange(0, 1, padding=0)
         self.fstatPlot.disableAutoRange(axis=ViewBox.XAxis)
@@ -122,7 +122,7 @@ class IPBeamformingWidget(QWidget):
         # this is the label that pops up to alert someone that the program is calculating the threshold
         self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
 
-        self.traceVPlot = IPPlotWidget.IPPlotWidget()
+        self.traceVPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.traceVPlot.hideButtons()
         self.traceVPlot.showGrid(x=True, y=True, alpha=0.3)
         self.traceVPlot.setYRange(0, 500, padding=0)
@@ -135,7 +135,7 @@ class IPBeamformingWidget(QWidget):
         self.set_textitem_fontsize(self.traceV_marker_label, 10)
         self.traceV_slowness_marker = pg.PlotDataItem([], [], symbol = 'o', symbolSize='10', color=self.lanl_green)
 
-        self.backAzPlot = IPPlotWidget.IPPlotWidget()
+        self.backAzPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.backAzPlot.hideButtons()
         self.backAzPlot.showGrid(x=True, y=True, alpha=0.3)
         self.backAzPlot.setYRange(-180, 180, padding=0)
@@ -198,7 +198,7 @@ class IPBeamformingWidget(QWidget):
         self.slownessPlot.addItem(self.max_line)
 
         # Create the slowness widget and its dataitem
-        self.projectionPlot = IPPlotWidget.IPPlotWidget()
+        self.projectionPlot = IPPlotItem.IPPlotItem()
         
         self.projectionCurve = pg.PlotDataItem(x=[],
                                                y=[],
@@ -218,9 +218,9 @@ class IPBeamformingWidget(QWidget):
         self.projectionPlot.setXRange(-180, 180)
         self.projectionPlot.getAxis('bottom').setTicks([[(-180, '-180'), (-90, '-90'), (0, '0'), (90, '90'), (180, '180')]])
 
-        self.slowness_time_label = pg.LabelItem('t = ', color='444444')
-        self.slowness_backAz_label = pg.LabelItem('Back Azimuth (deg) = ', color='444444')
-        self.slowness_traceV_label = pg.LabelItem('Trace Velocity (m/s) = ', color='444444')
+        self.slowness_time_label = pg.LabelItem('t = ', color=QColor(44, 44, 44))
+        self.slowness_backAz_label = pg.LabelItem('Back Azimuth (deg) = ', color=QColor(44, 44, 44))
+        self.slowness_traceV_label = pg.LabelItem('Trace Velocity (m/s) = ', color=QColor(44, 44, 44))
 
         slownessWidget.addItem(self.slownessPlot)
         slownessWidget.nextRow()
@@ -454,14 +454,23 @@ class IPBeamformingWidget(QWidget):
                     plot.removeItem(item)
                     del item
 
-    @pyqtSlot(pg.PlotDataItem, tuple)
-    def setWaveform(self, plotLine, region):
+    @pyqtSlot(pg.PlotDataItem, tuple, str)
+    def setWaveform(self, plotLine, region, plot_label=None):
         initial = False
         if self.waveform_data_item is not None:
             self.waveform_data_item.clear()
         else:
             self.waveform_data_item = pg.PlotDataItem()
             initial = True
+
+        # bringing in a new waveform, we might have a new earliest_start_time, so update that in the 
+        # plots so that the x-axes will be correct
+        est = self.get_earliest_start_time()
+        self.waveformPlot.setEarliestStartTime(est)
+        self.fstatPlot.setEarliestStartTime(est)
+        self.backAzPlot.setEarliestStartTime(est)
+        self.traceVPlot.setEarliestStartTime(est)
+
 
         # need to make a copy of the currently active plot and give it to the beamformingwidget for display
         self.waveform_data_item.setData(plotLine.xData, plotLine.yData)
@@ -470,6 +479,8 @@ class IPBeamformingWidget(QWidget):
         if initial:
             # only need to add the item if it wasn't already added
             self.waveformPlot.addItem(self.waveform_data_item)
+        if plot_label is not None:
+            self.waveformPlot.setPlotLabel(plot_label)
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
 
     @pyqtSlot(tuple)
@@ -1214,6 +1225,8 @@ class IPBeamformingWidget(QWidget):
     def clearWaveformPlot(self):
         self.waveform_data_item = None
         self.waveformPlot.clear()
+        self.waveformPlot.setTitle(None)
+        self.waveformPlot.clearPlotLabel()
         self.waveformPlot.setYRange(0, 1, padding=0)
         self.clearResultPlots()     # it doesn't make sense to have results and no waveform
 
