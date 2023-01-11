@@ -40,9 +40,9 @@ class IPBeamformingSettingsWidget(QWidget):
         self.method_cb.currentTextChanged.connect(self.methodChanged)
 
         self.fmin_label = QLabel("0.5 Hz") # if changed here, make sure you change in the IPPSDWidget
-        self.fmin_label.setMinimumWidth(75)
+        self.fmin_label.setMinimumWidth(90)
         self.fmax_label = QLabel("5.0 Hz")
-        self.fmax_label.setMinimumWidth(75)   
+        self.fmax_label.setMinimumWidth(90)   
 
         self.noiseStart_label = QLabel()
         self.noiseDuration_label = QLabel()
@@ -161,10 +161,10 @@ class IPBeamformingSettingsWidget(QWidget):
         return vl
 
     def setFmin(self, min):
-        self.fmin_label.setText("{:.4f}".format(min))
+        self.fmin_label.setText("{:.5f} Hz".format(min))
 
     def setFmax(self, max):
-        self.fmax_label.setText("{:.4f}".format(max))
+        self.fmax_label.setText("{:.5f} Hz".format(max))
 
     def getNoiseRange(self):
         return (float(self.noiseStart_label.text()), float(self.noiseStart_label.text()) + float(self.noiseDuration_label.text()))
@@ -248,8 +248,8 @@ class IPBeamformingSettingsWidget(QWidget):
     @QtCore.pyqtSlot(tuple)
     def setFreqValues(self, IPLinearRegionItem):
         values = IPLinearRegionItem.getRegion()
-        self.fmin_label.setText("{:.4f} Hz".format(10**values[0]))
-        self.fmax_label.setText("{:.4f} Hz".format(10**values[1]))
+        self.fmin_label.setText("{:.5f} Hz".format(10**values[0]))
+        self.fmax_label.setText("{:.5f} Hz".format(10**values[1]))
 
     @QtCore.pyqtSlot(str)
     def methodChanged(self, newMethod):

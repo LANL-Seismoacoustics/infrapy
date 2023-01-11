@@ -25,7 +25,7 @@ class IPDetectorSettingsWidget(QWidget):
         self.back_az_limit.setSuffix(' deg')
         self.back_az_limit.setValue(10.0)
         self.back_az_limit.setMinimum(1.0)
-        self.back_az_limit.setMaximum(90.0)
+        self.back_az_limit.setMaximum(360.0)
         self.back_az_limit.setToolTip("This is the range in degrees of variation in back azimuths used to determine if a value is part of a detection.")
 
         self.min_peak_width = QSpinBox()
