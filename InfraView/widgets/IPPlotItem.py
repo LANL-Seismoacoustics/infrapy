@@ -101,8 +101,9 @@ class IPPlotItem(pg.PlotItem):
 
         self.getAxis('left').setWidth(80)
         font = QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
         self.getAxis('left').setTickFont(font)
+        self.getAxis('bottom').setTickFont(font)
 
         if mode == 'waveform':
             self.noise_region = IPLinearRegionItem_Noise()

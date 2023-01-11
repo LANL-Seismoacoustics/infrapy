@@ -17,8 +17,8 @@ class IPPolarPlot(pg.PlotItem):
         self.hideAxis('right')
         self.hideAxis('left')
         self.vb.setAspectLocked(lock=True, ratio=1)
-        self.addLine(x=0, pen=0.8, z=10)
-        self.addLine(y=0, pen=0.8, z=10)
+        #self.addLine(x=0, pen=0.5, z=10)
+        #self.addLine(y=0, pen=0.5, z=10)
         self.setRange(min_trace_vel*12/10)
         self.hideButtons()
 
@@ -31,7 +31,7 @@ class IPPolarPlot(pg.PlotItem):
         for a in angles:
             x = radius * math.sin(math.radians(a))
             y = radius * math.cos(math.radians(a))
-            self.plot([0,x],[0,y], pen=(0.95))
+            self.plot([0,x],[0,y], pen=(0.75))
 
     def addLabels(self, min_trace_vel):
         N_text = pg.TextItem(html='<b>N</b>')
@@ -51,7 +51,7 @@ class IPPolarPlot(pg.PlotItem):
 
         for r in range(1, circle_count+1):
             circle = pg.QtWidgets.QGraphicsEllipseItem(-r / (min_trace_vel*circle_count), -r / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count), r * 2 / (min_trace_vel*circle_count))
-            circle.setPen(pg.mkPen(0.95))
+            circle.setPen(pg.mkPen(0.75))
             circle.setZValue(10)
             self.addItem(circle)
 

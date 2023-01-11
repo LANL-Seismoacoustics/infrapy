@@ -95,6 +95,7 @@ class IPMapWidget(QWidget):
         self.setLayout(main_layout)
 
         self.compute_figure()
+        self.draw_map()
 
         self.connect_signals_and_slots()
 
@@ -120,6 +121,7 @@ class IPMapWidget(QWidget):
         self.extentWidget.hide_button.clicked.connect(self.hide_extent_widget)
         self.extentWidget.sig_extent_changed.connect(self.set_map_extent)
         self.extentWidget.sig_set_to_global.connect(self.set_map_extent_to_global)
+        self.extentWidget.sig_autoscale.connect(self.autoscale_plot)
 
         # these technically aren't qt signals and slots, these are matplotlib callback connections
         #self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
@@ -134,8 +136,6 @@ class IPMapWidget(QWidget):
         self.transform = ccrs.PlateCarree()
 
         self.axes = self.fig.add_subplot(1, 1, 1, projection=self.projection)
-
-        self.draw_map()
 
     @pyqtSlot()
     def draw_map(self, preserve_extent=False):
@@ -208,7 +208,6 @@ class IPMapWidget(QWidget):
 
     @pyqtSlot(list)
     def set_map_extent(self, extent):
-        print(extent)
         self.axes.set_extent(extent)
         self.fig.canvas.draw()  # update matlabplot
 
@@ -234,23 +233,34 @@ class IPMapWidget(QWidget):
             return
 
     @pyqtSlot()
-    def update_map(self):
+    def update_map(self, replot_bisl=True):
         self.draw_map(preserve_extent=True)
         self.update_detections(preserve_colors=True, autoscale=False)
         self.plot_ground_truth()
-        self.plot_bisl_result(replot=True)
-        self.plot_conf_ellipse(replot=True)
+        if self.parent.dm_view.is_group_selected():
+            self.plot_bisl_result(replot=replot_bisl)
+            self.plot_conf_ellipse(replot=replot_bisl)
         self.draw_gridlines()
         self.fig.canvas.draw()  # update matlabplot
 
-    def draw_gridlines(self):
+    def draw_gridlines(self, preserve_extent=True):
+        
         self.gl = None
         if self.map_settings_dialog.show_grid_checkbox.isChecked():
             self.gl = self.axes.gridlines(draw_labels=True)
-            self.gl.xlabel_style = {'size': 10}
-            self.gl.ylabel_style = {'size': 10}
+            
 
-    def update_detections(self, ip_detections=None, line_color='gray', autoscale=True, preserve_colors=False):
+    def update_detections(self, line_color='gray', autoscale=True, preserve_colors=False):
+        
+        # trimmed_detections will hold either the entire set if not trimmed, or just the detections
+        # chosen in the distance matrix.
+        ip_detections = self.parent.get_trimmed_detections()
+        
+        if ip_detections is None:
+            return
+
+        if not autoscale:
+            current_extent = self.axes.get_extent() # save this in case we are preserving the current extent
         
         if preserve_colors:
             linecolor = self.current_linecolor
@@ -260,20 +270,13 @@ class IPMapWidget(QWidget):
 
         self.clear_plot(reset_zoom=False)
 
-        if ip_detections is not None:
-            self.detections = ip_detections
-        
-        if self.detections is None:
-            return
-
-        current_extent = self.axes.get_extent()
         rng_max = self.parent.bislSettings.rng_max_edit.value() * 1000
 
         lons = []
         lats = []
 
         # for scaling purposes, lets keep a copy of the lons and lats in a seperate array
-        for detection in self.detections:
+        for detection in ip_detections:
             lons.append(detection.longitude)
             lats.append(detection.latitude)
 
@@ -282,7 +285,7 @@ class IPMapWidget(QWidget):
         self.end_lons = []
 
         # this for loop draws the back azimuth lines. They will be length d (in degrees)
-        for idx, detection in enumerate(self.detections):
+        for idx, detection in enumerate(ip_detections):
 
             p_lons = [detection.longitude]
             p_lats = [detection.latitude]
@@ -322,10 +325,7 @@ class IPMapWidget(QWidget):
                            transform=self.transform,
                            gid='detection_line')
 
-            self.set_map_extent(current_extent)                    # update map
-            self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
-
-        for detection in self.detections:
+        for detection in ip_detections:
             if detection.array_dim == 3:
                 symbol = '^'                    # triangle
             elif detection.array_dim == 4:
@@ -348,7 +348,7 @@ class IPMapWidget(QWidget):
         if autoscale:
             self.autoscale_plot()
         else:
-            # if we don't autoscale, then we at least want to return the plot to what it was when 
+            # if we don't autoscale, then we want to return the plot to what it was when 
             # we entered this function
             self.set_map_extent(current_extent)
             self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
@@ -361,7 +361,7 @@ class IPMapWidget(QWidget):
 
     @pyqtSlot()
     def clear_detections(self):
-        self.detections = []
+        #do i still need this?
         self.clear_plot()
 
     def plot_ground_truth(self):
@@ -395,9 +395,8 @@ class IPMapWidget(QWidget):
         # note that if replot is False, result_lat and result_lon are required
 
         #clear out previous marker
-        for c in self.axes.get_children():
-            if c.get_gid() == 'bisl_result_marker':
-                c.remove()
+        self.remove_bisl_result()
+
         if replot: 
             # we just need to replot existing data
             result_lat = self.bisl_rslt[0]
@@ -408,18 +407,22 @@ class IPMapWidget(QWidget):
         else:
             # we have a new result to plot
             self.bisl_rslt = (result_lat, result_lon)
-        print("result_lon = {}   result_lat = {}".format(result_lon, result_lat))
 
         current_extent = self.axes.get_extent()
         self.axes.plot(result_lon, result_lat, 'o', markersize=7, color='blue', transform=self.transform, gid='bisl_result_marker')
-
         self.set_map_extent(current_extent)
+
         self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
-    def plot_conf_ellipse(self, result_lons=None, result_lats=None, conf_dx=None, conf_dy=None, replot=False):
+    def remove_bisl_result(self):
         for c in self.axes.get_children():
-            if c.get_gid() == 'conf_ellipse':
+            if c.get_gid() == 'bisl_result_marker':
                 c.remove()
+
+    def plot_conf_ellipse(self, result_lons=None, result_lats=None, conf_dx=None, conf_dy=None, replot=False):
+        # clear out previous ellipse
+        self.remove_conf_ellipse()
+
         if replot:
             # we just need to replot existing data
             result_lats = self.bisl_rslt[0]
@@ -446,9 +449,15 @@ class IPMapWidget(QWidget):
         self.fig.canvas.draw()
         self.repaint()
 
+    def remove_conf_ellipse(self):
+        for c in self.axes.get_children():
+            if c.get_gid() == 'conf_ellipse':
+                c.remove()
+
     def clear_plot(self, reset_zoom=True):
         for c in self.axes.get_children():
             c_gid = c.get_gid()
+
             if c_gid == 'detection_label':
                 c.remove()
             elif c_gid == 'detection_marker':
@@ -461,34 +470,36 @@ class IPMapWidget(QWidget):
                 c.remove()
         if reset_zoom:
             self.axes.set_global()
-            self.extentWidget.set_extent_spin_values(-180,180,-90,90)
+            self.extentWidget.set_extent_spin_values([-179.99,180,-90,90])
 
         self.fig.canvas.draw()  # update matlabplot
         self.repaint()          # update widget
 
-    @pyqtSlot(float)
+    #@pyqtSlot(float)
     def update_range_max(self, new_range):
-        self.update_detections(self.detections, preserve_colors=True)
+        self.update_detections(preserve_colors=True)
 
     def autoscale_plot(self, source_location=None):
         # make an attempt to scale the plot so all relavent info is shown
 
-        if len(self.detections) < 1:
+        detections = self.parent.get_trimmed_detections()
+
+        if len(detections) < 1:
             # nothing to scale to, so set to global extent and exit
             self.axes.set_global()
-            self.extentWidget.set_extent_spin_values(-180,180,-90,90)
+            self.extentWidget.set_extent_spin_values([-180,180,-90,90])
             return
 
         lons = []
         lats = []
 
-        for detection in self.detections:
+        for detection in detections:
             lons.append(detection.longitude)
             lats.append(detection.latitude)
 
-        if source_location is not None:
+        """ if source_location is not None:
             lons.append(source_location[0])
-            lats.append(source_location[1])
+            lats.append(source_location[1]) """
 
         if self.parent.showgroundtruth.event_widget.showGT_cb.isChecked():
             lons.append(self.parent.showgroundtruth.event_widget.event_lon_edit.value())
@@ -502,20 +513,16 @@ class IPMapWidget(QWidget):
 
         if maxLon != minLon:
             width = abs(maxLon - minLon)
-            if width < 250:
-                width = 250
         else:
-            width = 250
+            width = 20
 
         if maxLat != minLat:
             height = abs(maxLat - minLat)
-            if height < 250:
-                height = 250
         else:
-            height = 250
+            height = 20
 
-        width_adj = width/40.
-        height_adj = height/40.
+        width_adj = width * 0.10
+        height_adj = height * 0.10
 
         if maxLat == minLat and maxLon == minLon:
             # there is only one point, so behave accordingly
@@ -529,7 +536,7 @@ class IPMapWidget(QWidget):
         self.extentWidget.set_extent_spin_values(new_extent)     # update extentWidget
 
         # now redraw the gridlines since the extent has changed
-        self.update_map()
+        #self.update_map()
 
     def motion_notify_callback(self, event):
         if event.xdata is None or event.inaxes != self.axes:
@@ -635,6 +642,7 @@ class IPMapWidget(QWidget):
         self.update_detections(autoscale=False)
 '''
 
+
 class IPMissingMapsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -658,8 +666,6 @@ class IPMissingMapsDialog(QDialog):
         select_map_dir_layout.addWidget(map_dir_label)
         select_map_dir_layout.addWidget(self.map_location_lineedit)
         select_map_dir_layout.addWidget(self.map_location_button)
-
-
 
         ###   dialog buttons   ###
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel,
@@ -777,6 +783,7 @@ class IPMapExportDialog(QDialog):
         self.fig.savefig(self.pdf_file_label.text())
         time.sleep(1.2)
         self.close()
+
 
 class IPMapSettingsDialog(QDialog):
 
@@ -949,6 +956,7 @@ class IPMapSettingsDialog(QDialog):
         settings.setValue('use_offline_cb', self.offline_checkbox.isChecked())
         settings.endGroup()
 
+
 class IPColorButton(QPushButton):
     current_color = QColor(255, 0, 0)
 
@@ -973,10 +981,12 @@ class IPColorButton(QPushButton):
     def color(self):
         return QColor(self.current_color)
 
+
 class IPExtentSettingsWidget(QWidget):
 
     sig_extent_changed = pyqtSignal(list)
     sig_set_to_global = pyqtSignal()
+    sig_autoscale = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1034,6 +1044,10 @@ class IPExtentSettingsWidget(QWidget):
         self.set_to_global_button.setMaximumWidth(100)
         self.set_to_global_button.clicked.connect(self.set_to_global)
 
+        self.autoscale_button = QPushButton("Autoscale")
+        self.autoscale_button.setMaximumWidth(100)
+        self.autoscale_button.clicked.connect(self.autoscale_map)
+
         self.hide_button = QPushButton("Hide")
         self.hide_button.setMaximumWidth(60)
 
@@ -1042,6 +1056,7 @@ class IPExtentSettingsWidget(QWidget):
         h_layout.addWidget(ur_groupbox)
         h_layout.addWidget(self.update_plot_button)
         h_layout.addWidget(self.set_to_global_button)
+        h_layout.addWidget(self.autoscale_button)
         h_layout.addStretch()
         h_layout.addWidget(self.hide_button)
         h_layout.setContentsMargins(0,0,0,0)
@@ -1060,6 +1075,9 @@ class IPExtentSettingsWidget(QWidget):
     def set_to_global(self):
         self.sig_set_to_global.emit()
 
+    def autoscale_map(self):
+        self.sig_autoscale.emit()
+
     def activate_update_button(self):
         self.update_plot_button.setEnabled(True)
 
@@ -1068,7 +1086,4 @@ class IPExtentSettingsWidget(QWidget):
 
     def update_map_extent(self):
         extent = [self.ll_lon_spin.value(), self.ur_lon_spin.value(), self.ll_lat_spin.value(), self.ur_lat_spin.value()]
-        print(extent)
         self.sig_extent_changed.emit(extent)
-
-

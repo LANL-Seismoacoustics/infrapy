@@ -35,39 +35,22 @@ matplotlib.use('Qt5Agg')
 
 class IPLocationWidget(QWidget):
 
-    axes = None
-    p1 = None
-    t1 = None
-    label_items = []
-    markers = []
-    _transform = None
-    _projection = None
-    _ellipse = None
-    _bisl_result = None
-    _gt_marker = None   # this will hold the reference to the ground truth marker
+    bisl_result = None
 
-    _detections = []
-    _trimmed_detections = []
-    _dist_matrix = None
+    detections = []
+    trimmed_detections = []
 
-    center = []             # will hold the coordinates of the current center of the map
-    start_mouse_loc = []    # will hold the coordinates of the mouse, used in the mouse_move_event
-    mouse_moved = True      # this is used for zooming in and out
-    startx = 0
-    starty = 0
-
-    _mp_pool = None
+    mp_pool = None  # multiprocessing pool
 
     signal_start_dist_calc = pyqtSignal()
     signal_start_BISL_calc = pyqtSignal()
     signal_start_cluster_calc = pyqtSignal()
-    signal_draw_map = pyqtSignal()
 
     def __init__(self, parent, pool):
         super().__init__()
         self.parent = parent
 
-        self._mp_pool = pool
+        self.mp_pool = pool
 
         self.buildUI()
 
@@ -159,11 +142,16 @@ class IPLocationWidget(QWidget):
     @pyqtSlot()
     def detections_cleared(self):
         self.mapWidget.clear_plot()
-        self._detections = []
-        self.mapWidget.clear_detections()
+        self.detections = []
         self.dm_view.clear()
         self.dendrogram.clear_plot()
         self.consoleBox.clear()
+    
+    def get_detections(self):
+        return self.detections
+
+    def get_trimmed_detections(self):
+        return self.trimmed_detections
 
     @pyqtSlot(list)
     def update_detections(self, new_detections, detection_type='ip_detections', recalc_assoc=True):
@@ -174,15 +162,18 @@ class IPLocationWidget(QWidget):
             self.detections_cleared()
             return
 
-        self._detections = []
+        self.detections = []
         if detection_type == "ip_detections":   # we need to covert to InfrasoundDetections
             for detection in new_detections:
-                self._detections.append(detection.to_InfrasoundDetection())
+                self.detections.append(detection.to_InfrasoundDetection())
+
         else:
             for detection in new_detections:
-                self._detections.append(detection)
+                self.detections.append(detection)
 
-        self.mapWidget.update_detections(self._detections)
+        self.trimmed_detections = self.detections
+
+        self.mapWidget.update_detections()
 
         if recalc_assoc:
             self.calc_distance_matrix()
@@ -190,28 +181,39 @@ class IPLocationWidget(QWidget):
     @pyqtSlot(list, str)
     def trim_detections(self, indicies, linecolor='gray'):
 
-        self._trimmed_detections = []
-        if len(self._detections) < 1:
+        # the detections to show has been changed, which means we probably don't 
+        # want the bisl results showing anymore.  So lets remove those first.
+        self.mapWidget.remove_conf_ellipse()
+        self.mapWidget.remove_bisl_result()
+
+        self.trimmed_detections = []
+        if len(self.detections) < 1:
             return  # nothing to do
 
         # lets pick out the detections that we want to show
         for index in indicies:
-            self._trimmed_detections.append(self._detections[index])
-            self._trimmed_detections[-1].index = index
+            self.trimmed_detections.append(self.detections[index])
+            self.trimmed_detections[-1].index = index
 
-        self.mapWidget.update_detections(self._trimmed_detections, line_color=linecolor)
+        self.mapWidget.update_detections(line_color=linecolor)
 
     def run_bisl(self):
-
-        if self._trimmed_detections is None:
+        if not self.dm_view.is_group_selected():
+            IPUtils.errorPopup("You need to select a cluster in the Distance Matrix to run BISL on.")
+            return  # nothing to do
+        if self.trimmed_detections is None:
             IPUtils.errorPopup("no detections loaded. \n You need at least two detections to run BISL.")
             return  # nothing to do
 
-        if len(self._trimmed_detections) < 2:
+        if len(self.trimmed_detections) < 2:
             IPUtils.errorPopup("not enough detections loaded. \n You need two or more detections to run BISL.")
             return  # you need at least 2 detections to calculate the dist matrix
 
-        self.bisl_workerObject = BISLWorkerObject(self._trimmed_detections,
+        # if there are previous bisl results on the map, remove them now
+        self.mapWidget.remove_bisl_result()
+        self.mapWidget.remove_conf_ellipse()
+
+        self.bisl_workerObject = BISLWorkerObject(self.trimmed_detections,
                                                   beam_width=self.bislSettings.bm_width_edit.value(),
                                                   rad_min=self.bislSettings.rad_min_edit.value(),
                                                   rad_max=self.bislSettings.rad_max_edit.value(),
@@ -230,7 +232,7 @@ class IPLocationWidget(QWidget):
 
     @pyqtSlot(dict)
     def bisl_run_finished(self, result):
-        self._bisl_result = result
+        self.bisl_result = result
 
         self.consoleBox.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
 
@@ -239,43 +241,43 @@ class IPLocationWidget(QWidget):
     @pyqtSlot(int)
     def calc_conf_ellipse(self, confidence):
 
-        if self._bisl_result is None:
+        if self.bisl_result is None:
             return  # nothing to plot
 
         conf_dx, conf_dy = bisl.calc_conf_ellipse([0.0, 0.0],
-                                                  [self._bisl_result['EW_stdev'],
-                                                  self._bisl_result['NS_stdev'],
-                                                  self._bisl_result['covar']],
+                                                  [self.bisl_result['EW_stdev'],
+                                                  self.bisl_result['NS_stdev'],
+                                                  self.bisl_result['covar']],
                                                   confidence)
         # tell the mapWidget to plot the results
-        self.mapWidget.plot_bisl_result(self._bisl_result['lon_mean'],
-                                        self._bisl_result['lat_mean'])
+        self.mapWidget.plot_bisl_result(self.bisl_result['lon_mean'],
+                                        self.bisl_result['lat_mean'])
 
-        self.mapWidget.plot_conf_ellipse(self._bisl_result['lon_mean'],
-                                         self._bisl_result['lat_mean'],
+        self.mapWidget.plot_conf_ellipse(self.bisl_result['lon_mean'],
+                                         self.bisl_result['lat_mean'],
                                          conf_dx,
                                          conf_dy)
 
     @pyqtSlot()
     def calc_distance_matrix(self):
 
-        if len(self._detections) < 1:
+        if len(self.detections) < 1:
             IPUtils.errorPopup("No detections loaded.\n You need two or more detections to calculate a distance matrix.")
             return  # nothing to do
 
-        if len(self._detections) < 2:
+        if len(self.detections) < 2:
             # IPUtils.errorPopup("not enough detections loaded. \n You need 2 or more detections to calculate a distance matrix.")
             return  # you need at least 2 detections to calculate the dist matrix
 
         self.dist_matrix = None
 
-        self.dm_workerObject = DistanceMatrixWorkerObject(self._detections,
+        self.dm_workerObject = DistanceMatrixWorkerObject(self.detections,
                                                           beam_width=self.bislSettings.bm_width_edit.value(),
                                                           rng_max=self.bislSettings.rng_max_edit.value(),
                                                           rad_min=self.bislSettings.rad_min_edit.value(),
                                                           rad_max=self.bislSettings.rad_max_edit.value(),
                                                           resol=self.bislSettings.resolution_edit.value(),
-                                                          pool=self._mp_pool)
+                                                          pool=self.mp_pool)
 
         self.dm_workerObject.moveToThread(self.dmThread)
 
@@ -349,7 +351,7 @@ class IPLocationWidget(QWidget):
                 distance_matrix_sorted[n1][n2] = self.dist_matrix[sorting[n1], sorting[n2]]
 
         self.dm_view.set_data(distance_matrix_sorted, labels)
-        self.update_detections(self._detections, detection_type='detections', recalc_assoc=False)
+        self.update_detections(self.detections, detection_type='detections', recalc_assoc=False)
 
     def saveWindowGeometrySettings(self):
         settings = QSettings('LANL', 'InfraView')
@@ -399,7 +401,8 @@ class BISLSettings(QFrame):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        title_label = QLabel('General Settings')
+        title_label = QLabel('BISL')
+        title_label.setToolTip('Bayesian Infrasound Source Localization')
         title_label.setStyleSheet("font-weight: bold;")
         title_label.setAlignment(Qt.AlignCenter)
 
@@ -534,7 +537,10 @@ class IPDistanceMatrixWidget(QWidget):
     redPen = pg.mkPen(color='r')
 
     color_palette_pens = []
-    color_palette_str = ['b', 'r', 'g']
+    color_palette_str = ['b', 'r', 'g', 'c', 'm', 'y']
+
+    # used to keep track of wether a group has been clicked on.
+    group_selected = False
 
     signal_trim_detections = pyqtSignal(list, str)
 
@@ -557,8 +563,11 @@ class IPDistanceMatrixWidget(QWidget):
         gl_layout = pg.GraphicsLayoutWidget()
         gl_layout.addItem(self.dm_plotitem)
 
-        layout = QHBoxLayout()
+        instruct_label = QLabel("Click on a cluster to choose detections to run BISL on.")
+
+        layout = QVBoxLayout()
         layout.addWidget(gl_layout)
+        layout.addWidget(instruct_label)
         self.setLayout(layout)
 
     def showCalculatingText(self):
@@ -693,6 +702,12 @@ class IPDistanceMatrixWidget(QWidget):
         for pnt in self.s1.points():
             pnt.setPen(self.whitePen)
 
+    def is_group_selected(self):
+        if self.current_group is None:
+            return False
+        else:
+            return True
+
     @pyqtSlot(object, object)
     def handle_mouse_click(self, scatterPlot, points):
 
@@ -702,15 +717,18 @@ class IPDistanceMatrixWidget(QWidget):
             pos_y = int(pnt.pos().y())
 
             if self.labels[self.sorted_labels[pos_x]] == self.labels[self.sorted_labels[pos_y]]:
-                # the point is in a group, so we want to highlight that group by fading all the points NOT in the group
+                # the point is in a group, so we want to highlight that group with a colored outline
                 group_num = self.labels[self.sorted_labels[pos_x]]
-                if group_num != self.current_group:
 
-                    # we have a new group, so reset previous...
+                # now check to see if the clicked group is a new one, or the one currently clicked
+                if group_num != self.current_group:
+                    # we have a new group, so first reset all points
                     for pnt in self.s1.points():
                         pnt.setPen(self.whitePen)
 
+                    # update current group
                     self.current_group = group_num
+
                     # find indicies of detections not in the group
                     indicies = [i for i, value in enumerate(self.labels) if value == group_num]
 
@@ -730,7 +748,7 @@ class IPDistanceMatrixWidget(QWidget):
                                 else:
                                     p.setPen(self.whitePen)
             else:
-                # reset the group
+                # the clicked point is not in a group, so don't highlight anything
                 self.current_group = None
 
                 for pnt in self.s1.points():
@@ -782,8 +800,6 @@ class IPDistanceMatrixPlot(pg.PlotItem):
         self.hideAxis('top')
         self.setTitle('Distance Matrix')
 
-        # self.export_dialog = exportDialog.ExportDialog(self.scene())
-
     def mouseClickEvent(self, evt):
         if evt.button() == Qt.RightButton:
             self.export_dialog = exportDialog.ExportDialog(self.scene())
@@ -804,32 +820,32 @@ class DistanceMatrixWorkerObject(QObject):
                  pool=None):
 
         super().__init__()
-        self._detections = detections
-        self._beam_width = beam_width
-        self._rng_max = rng_max
-        self._rad_min = rad_min
-        self._rad_max = rad_max
-        self._resol = resol
-        self._pool = pool
+        self.detections = detections
+        self.beam_width = beam_width
+        self.rng_max = rng_max
+        self.rad_min = rad_min
+        self.rad_max = rad_max
+        self.resol = resol
+        self.pool = pool
 
         self.thread_stopped = True
 
     @pyqtSlot()
     def run(self):
 
-        if len(self._detections) == 0:
+        if len(self.detections) == 0:
             return  # nothing to do
 
         self.thread_stopped = False
 
         try:
-            self.dist_matrix = hjl.build_distance_matrix(self._detections,
-                                                         bm_width=self._beam_width,
-                                                         rng_max=self._rng_max,
-                                                         rad_min=self._rad_min,
-                                                         rad_max=self._rad_max,
-                                                         resol=self._resol,
-                                                         pool=self._pool)
+            self.dist_matrix = hjl.build_distance_matrix(self.detections,
+                                                         bm_width=self.beam_width,
+                                                         rng_max=self.rng_max,
+                                                         rad_min=self.rad_min,
+                                                         rad_max=self.rad_max,
+                                                         resol=self.resol,
+                                                         pool=self.pool)
         except Exception:
             IPUtils.errorPopup("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
@@ -854,36 +870,36 @@ class BISLWorkerObject(QObject):
                  resol=180):
 
         super().__init__()
-        self._detections = detections
-        self._beam_width = beam_width
-        self._rng_max = rng_max
-        self._rad_min = rad_min
-        self._rad_max = rad_max
-        self._resol = resol
+        self.detections = detections
+        self.beam_width = beam_width
+        self.rng_max = rng_max
+        self.rad_min = rad_min
+        self.rad_max = rad_max
+        self.resol = resol
 
         self.thread_stopped = True
 
     @pyqtSlot()
     def run(self):
-        if len(self._detections) == 0:
+        if len(self.detections) == 0:
             return  # nothing to do
 
         self.thread_stopped = False
 
         # run bisl
         try:
-            self._bisl_result = bisl.run(self._detections,
-                                         bm_width=self._beam_width,
-                                         rad_min=self._rad_min,
-                                         rad_max=self._rad_max,
-                                         rng_max=self._rng_max,
-                                         resol=self._resol)
+            self.bisl_result = bisl.run(self.detections,
+                                         bm_width=self.beam_width,
+                                         rad_min=self.rad_min,
+                                         rad_max=self.rad_max,
+                                         rng_max=self.rng_max,
+                                         resol=self.resol)
         except Exception:
             IPUtils.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
             return
 
-        self.signal_runFinished.emit(self._bisl_result)
+        self.signal_runFinished.emit(self.bisl_result)
 
     @pyqtSlot()
     def stop(self):
@@ -899,16 +915,16 @@ class ClusterWorkerObject(QObject):
                  linkage_method='weighted'):
 
         super().__init__()
-        self._dist_matrix = dm
-        self._threshold = threshold
-        self._linkage_method = linkage_method
+        self.dist_matrix = dm
+        self.threshold = threshold
+        self.linkage_method = linkage_method
 
         self.thread_stopped = True
 
     @pyqtSlot()
     def run(self):
 
-        det_cnt = len(self._dist_matrix)
+        det_cnt = len(self.dist_matrix)
         if det_cnt == 0:
             return  # nothing to do
 
@@ -916,14 +932,14 @@ class ClusterWorkerObject(QObject):
 
         # run clustering
         try:
-            links = linkage(squareform(self._dist_matrix), self._linkage_method)
+            links = linkage(squareform(self.dist_matrix), self.linkage_method)
         except Exception:
             IPUtils.errorPopup("Error while calculating the linkage: {}".format(sys.exc_info()))
             self.thread_stopped = True
             return
 
         try:
-            labels = fcluster(links, self._threshold, criterion='distance') - 1
+            labels = fcluster(links, self.threshold, criterion='distance') - 1
         except Exception:
             IPUtils.errorPopup("Error while calculating the labels: {}".format(sys.exc_info()))
             self.thread_stopped = True
