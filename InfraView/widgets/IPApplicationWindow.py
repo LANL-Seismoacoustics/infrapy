@@ -30,6 +30,7 @@ from InfraView.widgets import IPLocationWidget
 from InfraView.widgets import IPSaveAllDialog
 from InfraView.widgets import IPWaveformWidget
 from InfraView.widgets import IPDatabaseWidget
+from InfraView.widgets import IPSingleSensorWidget
 from InfraView.widgets import IPUtils
 
 # multiprocessing modules
@@ -88,9 +89,11 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # Create the main widgets
         self.beamformingWidget = IPBeamformingWidget.IPBeamformingWidget(self, self.mp_pool)
+        self.singleSensorWidget = IPSingleSensorWidget.IPSingleSensorWidget(self)
         self.waveformWidget = IPWaveformWidget.IPWaveformWidget(self, self.mp_pool)
         self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.databaseWidget = IPDatabaseWidget.IPDatabaseWidget(self)
+        
 
         # add the main widgets to the application tabs
         self.mainTabs = QTabWidget()
@@ -98,6 +101,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mainTabs.addTab(self.beamformingWidget, 'Beamforming')
         self.mainTabs.addTab(self.locationWidget, 'Location')
         self.mainTabs.addTab(self.databaseWidget, 'Database')
+        self.mainTabs.addTab(self.singleSensorWidget, 'Single Sensor')
 
         mainLayout.addWidget(self.mainTabs)
 
@@ -435,6 +439,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.beamformingWidget.clearWaveformPlot()
         self.waveformWidget.clearWaveforms()
+        self.singleSensorWidget.clearWaveformPlots()
 
     def trace_to_inventory(self, trace):
         # if sac files are opened, it's useful to extract inventory from their streams so that we can populate the 

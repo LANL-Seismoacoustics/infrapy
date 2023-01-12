@@ -26,9 +26,9 @@ class IPWaveformTimeAxis(pg.AxisItem):
         self.set_earliest_start_time(est)
 
         # make font size smaller
-        font = QFont()
-        font.setPointSize(12)
-        self.setTickFont(font)
+        # font = QFont()
+        # font.setPointSize(12)
+        # self.setTickFont(font)
 
     def tickStrings(self, values, scale, spacing):
         return [(self.earliest_start_time + value).strftime("%H:%M:%S") for value in values]
@@ -100,10 +100,10 @@ class IPPlotItem(pg.PlotItem):
         self.getAxis('top').setTicks('')
 
         self.getAxis('left').setWidth(80)
-        font = QFont()
-        font.setPointSize(10)
-        self.getAxis('left').setTickFont(font)
-        self.getAxis('bottom').setTickFont(font)
+        # font = QFont()
+        # font.setPointSize(10)
+        # self.getAxis('left').setTickFont(font)
+        # self.getAxis('bottom').setTickFont(font)
 
         if mode == 'waveform':
             self.noise_region = IPLinearRegionItem_Noise()

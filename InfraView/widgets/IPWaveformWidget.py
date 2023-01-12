@@ -83,6 +83,8 @@ class IPWaveformWidget(QWidget):
         self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setNoiseValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setSignalValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.updateWaveformRange)
+        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.singleSensorWidget.updateSignalWaveformRange)
+        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.singleSensorWidget.updateNoiseWaveformRange)
         self.plotViewer.pl_widget.sig_active_plot_changed.connect(self.update_widgets)
 
         self.spectraWidget.f1_Spin.valueChanged.connect(self.parent.beamformingWidget.bottomSettings.setFmin)
@@ -198,7 +200,8 @@ class IPWaveformWidget(QWidget):
         self.update_widgets(index, 
                             self.plotViewer.get_plot_lines(), 
                             self.plotViewer.get_filtered_plot_lines(), 
-                            self.plotViewer.pl_widget.plot_list[index].getSignalRegionRange())
+                            self.plotViewer.pl_widget.plot_list[index].getSignalRegionRange(),
+                            self.plotViewer.pl_widget.plot_list[index].getNoiseRegionRange())
 
     def filter_stream(self, stream, cfs):
 
@@ -406,8 +409,8 @@ class IPWaveformWidget(QWidget):
 
         self.spectraWidget.updateNoisePSD(self._sts[active_plot][start:stop])
 
-    @pyqtSlot(int, list, list, tuple)
-    def update_widgets(self, index, lines, filtered_lines, signal_region):
+    @pyqtSlot(int, list, list, tuple, tuple)
+    def update_widgets(self, index, lines, filtered_lines, signal_region, noise_region):
         # the -1 is sent if none of the plots are visible
         if len(self._sts) < 1 or index == -1:
             self.spectraWidget.set_title('...')
@@ -426,7 +429,11 @@ class IPWaveformWidget(QWidget):
             plot_title = self._sts[index].id
             if current_filter_display_settings['apply']:
                 self.parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region, plot_label=plot_title)
+                self.parent.singleSensorWidget.setSignalWaveform(filtered_lines[index], signal_region, plot_label=plot_title)
+                self.parent.singleSensorWidget.setNoiseWaveform(filtered_lines[index], noise_region, plot_label=plot_title)
             else:
                 self.parent.beamformingWidget.setWaveform(lines[index], signal_region, plot_label=plot_title)
+                self.parent.singleSensorWidget.setSignalWaveform(lines[index], signal_region, plot_label=plot_title)
+                self.parent.singleSensorWidget.setNoiseWaveform(lines[index], noise_region, plot_label=plot_title)
 
             

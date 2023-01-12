@@ -74,7 +74,7 @@ class IPPlotViewer(QSplitter):
 
 class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
-    sig_active_plot_changed = pyqtSignal(int, list, list, tuple)
+    sig_active_plot_changed = pyqtSignal(int, list, list, tuple, tuple)
 
     plot_list = []              # this list will hold references to the plots
     plot_lines = []             # this list will hold references to the unfiltered plot lines
@@ -243,7 +243,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.sig_active_plot_changed.emit(self.active_plot,
                                               self.plot_lines,
                                               self.filtered_plot_lines,
-                                              self.plot_list[self.active_plot].getSignalRegion().getRegion())
+                                              self.plot_list[self.active_plot].getSignalRegion().getRegion(),
+                                              self.plot_list[self.active_plot].getNoiseRegion().getRegion())
 
     def draw_plots(self):
         # The idea here is to draw the plots that are currently selected in the waveformselectorwidget
@@ -259,7 +260,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             self.sig_active_plot_changed.emit(-1,
                                               self.plot_lines,
                                               self.filtered_plot_lines,
-                                              self.plot_list[0].getSignalRegion().getRegion())
+                                              self.plot_list[0].getSignalRegion().getRegion(),
+                                              self.plot_list[0].getNoiseRegion().getRegion())
             return
 
         # if the active_plot is not currently checked, make the first checked plot the active plot
@@ -268,7 +270,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             self.sig_active_plot_changed.emit(self.active_plot,
                                               self.plot_lines,
                                               self.filtered_plot_lines,
-                                              self.plot_list[self.active_plot].getSignalRegion().getRegion())
+                                              self.plot_list[self.active_plot].getSignalRegion().getRegion(),
+                                              self.plot_list[self.active_plot].getNoiseRegion().getRegion())
 
         for idx, plot in enumerate(self.plot_list):
             # set the color of the plots
@@ -627,7 +630,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 self.sig_active_plot_changed.emit(idx,
                                                   self.plot_lines,
                                                   self.filtered_plot_lines,
-                                                  self.plot_list[0].getSignalRegion().getRegion())
+                                                  self.plot_list[0].getSignalRegion().getRegion(),
+                                                  self.plot_list[0].getNoiseRegion().getRegion())
 
             else:
                 my_plot.setBackgroundColor(230, 230, 230)
