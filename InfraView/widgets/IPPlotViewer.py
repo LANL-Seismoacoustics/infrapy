@@ -200,6 +200,10 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
             new_plot.getNoiseRegion().sigRegionChanged.connect(self.parent.parent.update_noise_PSD)
             new_plot.getSignalRegion().sigRegionChanged.connect(self.parent.parent.update_signal_PSD)
 
+            # this will tell the single station widget to update when the LRIs finish being moved
+            new_plot.getSignalRegion().sigRegionChangeFinished.connect(self.parent.parent.parent.singleSensorWidget.signal_region_changed)
+            new_plot.getNoiseRegion().sigRegionChangeFinished.connect(self.parent.parent.parent.singleSensorWidget.noise_region_changed)
+
             # cluge because setting background color covers axis for some reason
             new_plot.getAxis("top").setZValue(0)
             new_plot.getAxis("bottom").setZValue(0)
