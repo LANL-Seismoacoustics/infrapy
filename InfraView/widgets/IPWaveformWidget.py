@@ -83,8 +83,8 @@ class IPWaveformWidget(QWidget):
         self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setNoiseValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setSignalValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.updateWaveformRange)
-        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.singleSensorWidget.updateSignalWaveformRange)
-        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.singleSensorWidget.updateNoiseWaveformRange)
+        self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.singleSensorWidget.updateSignalRange)
+        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.singleSensorWidget.updateNoiseRange)
         self.plotViewer.pl_widget.sig_active_plot_changed.connect(self.update_widgets)
 
         self.spectraWidget.f1_Spin.valueChanged.connect(self.parent.beamformingWidget.bottomSettings.setFmin)

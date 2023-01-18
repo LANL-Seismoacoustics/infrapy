@@ -36,6 +36,25 @@ class IPWaveformTimeAxis(pg.AxisItem):
     def set_earliest_start_time(self, est):
         self.earliest_start_time = est
 
+class IPSpectrogramTimeAxis(pg.AxisItem):
+    # subclass the basic axis item, mainly to make custom time axis
+    def __init__(self, *args, **kwargs):
+        super().__init__(orientation='bottom', *args, **kwargs)
+        # st: (UTCDateTime) is the start_time of the window which will be the earliest start 
+        # time of the waveforms plus the offset seconds of the signal/noise window
+        self.set_start_time(UTCDateTime(0))
+
+        # make font size smaller
+        # font = QFont()
+        # font.setPointSize(12)
+        # self.setTickFont(font)
+
+    def tickStrings(self, values, scale, spacing):
+        return [(self.start_time + value).strftime("%H:%M:%S") for value in values]
+
+    def set_start_time(self, st):
+        self.start_time = st
+
 
 class IPCustomViewBox(pg.ViewBox):
 
@@ -78,7 +97,9 @@ class IPPlotItem(pg.PlotItem):
 
     def __init__(self, mode='plain', y_label_format=None, pickable=False, est=None):
         '''
-        mode can currently be 'Waveform' or 'PSD' or 'Plain'
+        mode: (str) can currently be 'waveform' or 'PSD' or 'Plain' or 'Spectrogram'
+        est: (UTCDateTime) Earliest Start Time
+        pickable: (bool) Can you click on plot to make a pick
         '''
 
         if y_label_format == 'nonscientific':
@@ -88,6 +109,10 @@ class IPPlotItem(pg.PlotItem):
                 if est is None:
                     est = UTCDateTime(0)
                 super().__init__(axisItems={'bottom': IPWaveformTimeAxis(est=est)})
+            elif mode == 'spectrogram':
+                if est is None:
+                    est = UTCDateTime(0)
+                super().__init__(axisItems={'bottom': IPSpectrogramTimeAxis(est=est)})
             else:
                 super().__init__()
 
@@ -212,6 +237,8 @@ class IPPlotItem(pg.PlotItem):
 
 class IPLinearRegionItem_Noise(LinearRegionItem):
 
+    sig_IPRegion_Change_finished = pyqtSignal(tuple)
+
     def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None, swapMode='block'):
         super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds, swapMode=swapMode)
         self.setZValue(15)
@@ -219,7 +246,6 @@ class IPLinearRegionItem_Noise(LinearRegionItem):
         self.setBrush(brush)
 
     def mouseClickEvent(self, ev):
-
         if ev.button() == Qt.RightButton:
             ev.accept()
             pos = ev.screenPos()
@@ -236,8 +262,15 @@ class IPLinearRegionItem_Noise(LinearRegionItem):
     def showMe(self):
         self.setVisible(True)
 
+    def lineMovedFinished(self):
+        self.sig_IPRegion_Change_finished.emit(self.getRegion())
+        super().lineMovedFinished()
+
+
 
 class IPLinearRegionItem_Signal(LinearRegionItem):
+
+    sig_IPRegion_Change_finished = pyqtSignal(tuple)
 
     def __init__(self, values=[0, 1], orientation=LinearRegionItem.Vertical, brush=None, movable=True, bounds=None, swapMode='block'):
         super().__init__(values=values, orientation=orientation, brush=brush, movable=movable, bounds=bounds, swapMode=swapMode)
@@ -262,6 +295,11 @@ class IPLinearRegionItem_Signal(LinearRegionItem):
 
     def showMe(self):
         self.setVisible(True)
+
+    def lineMovedFinished(self):
+        print("move finished")
+        self.sig_IPRegion_Change_finished.emit(self.getRegion())
+        super().lineMovedFinished()
 
 
 class IPFreqLinearRegionItem(LinearRegionItem):
