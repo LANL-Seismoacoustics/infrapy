@@ -44,11 +44,6 @@ class IPSpectrogramTimeAxis(pg.AxisItem):
         # time of the waveforms plus the offset seconds of the signal/noise window
         self.set_start_time(UTCDateTime(0))
 
-        # make font size smaller
-        # font = QFont()
-        # font.setPointSize(12)
-        # self.setTickFont(font)
-
     def tickStrings(self, values, scale, spacing):
         return [(self.start_time + value).strftime("%H:%M:%S") for value in values]
 

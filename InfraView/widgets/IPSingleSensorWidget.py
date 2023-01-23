@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QWidget, QComboBox, QDoubleSpinBox, QSpinBox, QForm
                              QHBoxLayout, QLabel, QPushButton, QToolBar, QToolButton,
                              QVBoxLayout)
 
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QThread
 from PyQt5 import QtGui
 
 import pyqtgraph as pg
@@ -38,7 +38,7 @@ class IPSingleSensorWidget(QWidget):
 
         self.toolbar.addWidget(self.tool_settings_button)
 
-        self.spectrogram_settings_widget = IPSpectrogramSettingsWidget()
+        self.spectrogram_settings_widget = IPSpectrogramSettingsWidget(self)
         self.spectrogram_settings_widget.setVisible(False)
 
         self.waveformPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
@@ -115,11 +115,16 @@ class IPSingleSensorWidget(QWidget):
         if plot_label is not None:
             self.waveformPlot.setPlotLabel(plot_label)
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
-        
-        # generate spectrogram
+        self.updateSignalSpectrogram()
+        """ # generate spectrogram
         if self.waveform_data_item is not None:
-            self.signalSpecWidget.calc_spectrogram(self.waveform_data_item.getData(), Fs=self.signal_fs )
-            self.signalSpecWidget.set_start_time(self.get_earliest_start_time())
+            self.signalSpecWidget.calc_spectrogram(self.waveform_data_item.getData(), 
+                                                  Fs=self.signal_fs, 
+                                                  nfft=self.spectrogram_settings_widget.nfft_spin.value(),
+                                                  nperseg=self.spectrogram_settings_widget.nperseg_spin.value(),
+                                                  noverlap=self.spectrogram_settings_widget.noverlap_spin.value()
+                                                  )
+            self.signalSpecWidget.set_start_time(self.get_earliest_start_time()) """
 
     @pyqtSlot(tuple)
     def updateSignalRange(self, new_range):
@@ -130,6 +135,17 @@ class IPSingleSensorWidget(QWidget):
 
         self.signalSpecWidget.set_xaxis(new_range)
         self.signalSpecWidget.auto_scale_yaxis()
+
+    def updateSignalSpectrogram(self):
+         # generate spectrogram
+        if self.waveform_data_item is not None:
+            self.signalSpecWidget.calc_spectrogram(self.waveform_data_item.getData(), 
+                                                  Fs=self.signal_fs, 
+                                                  nfft=self.spectrogram_settings_widget.nfft_spin.value(),
+                                                  nperseg=self.spectrogram_settings_widget.nperseg_spin.value(),
+                                                  noverlap=self.spectrogram_settings_widget.noverlap_spin.value()
+                                                  )
+            self.signalSpecWidget.set_start_time(self.get_earliest_start_time())
 
 
     @pyqtSlot(pg.PlotDataItem, tuple, str)
@@ -161,10 +177,16 @@ class IPSingleSensorWidget(QWidget):
 
         self.noisePlot.setXRange(region[0], region[1], padding=0)
 
-        # generate spectrogram
+        self.updateNoiseSpectrogram()
+        """ # generate spectrogram
         if self.noise_data_item is not None:
-            self.noiseSpecWidget.calc_spectrogram(self.noise_data_item.getData(), Fs=self.noise_fs)
-            self.noiseSpecWidget.set_start_time(self.get_earliest_start_time())
+            self.noiseSpecWidget.calc_spectrogram(self.noise_data_item.getData(), 
+                                                  Fs=self.noise_fs, 
+                                                  nfft=self.spectrogram_settings_widget.nfft_spin.value(),
+                                                  nperseg=self.spectrogram_settings_widget.nperseg_spin.value(),
+                                                  noverlap=self.spectrogram_settings_widget.noverlap_spin.value()
+                                                  )
+            self.noiseSpecWidget.set_start_time(self.get_earliest_start_time()) """
 
     @pyqtSlot(tuple)
     def updateNoiseRange(self, new_range):
@@ -175,17 +197,32 @@ class IPSingleSensorWidget(QWidget):
 
         self.noiseSpecWidget.set_xaxis(new_range)
         self.noiseSpecWidget.auto_scale_yaxis()
+
+    def updateNoiseSpectrogram(self):
+        if self.noise_data_item is not None:
+            self.noiseSpecWidget.calc_spectrogram(self.noise_data_item.getData(), 
+                                                  Fs=self.noise_fs, 
+                                                  nfft=self.spectrogram_settings_widget.nfft_spin.value(),
+                                                  nperseg=self.spectrogram_settings_widget.nperseg_spin.value(),
+                                                  noverlap=self.spectrogram_settings_widget.noverlap_spin.value()
+                                                  )
+            self.noiseSpecWidget.set_start_time(self.get_earliest_start_time())
+
+    @pyqtSlot()
+    def updateSpectrograms(self):
+        self.updateSignalSpectrogram()
+        self.updateNoiseSpectrogram()
         
     def clearWaveformPlots(self):
         self.waveform_data_item = None
         self.waveformPlot.clear()
-        self.waveformPlot.setTitle(None)
+        self.waveformPlot.setTitle("")
         self.waveformPlot.clearPlotLabel()
         self.waveformPlot.setYRange(0, 1, padding=0)
         
         self.noise_data_item = None
         self.noisePlot.clear()
-        self.noisePlot.setTitle(None)
+        self.noisePlot.setTitle("")
         self.noisePlot.clearPlotLabel()
         self.noisePlot.setYRange(0,1,padding=0)
 
@@ -202,6 +239,8 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     color_bar = None
     spec_img = None     # image that holds the spectrogram
 
+    sig_start_spec_calc = pyqtSignal()
+
     def __init__(self, parent, est=None):
         super().__init__(mode='spectrogram')
         self.parent = parent
@@ -213,36 +252,59 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         self.spec_img = pg.ImageItem( image=np.eye(3), levels=(0,1) ) # create example image
         self.addItem(self.spec_img)
 
+        self.calc_spec_thread = QThread()
+
     def set_data(self, data, region):
         # data is a plot data item, range is the current range viewed
         self.data_item = data
         self.region = region
 
-    def set_xaxis(self, range):
-        self.setXRange(range[0], range[1], padding=0)
+    def set_xaxis(self, range=None):
+        if range is None:
+            self.setXRange(0, 1, padding=0)
+        else:
+            self.setXRange(range[0], range[1], padding=0)
     
-    def set_yaxis(self, range):
-        self.setYRange(range[0], range[1], padding=0)
+    def set_yaxis(self, range=None):
+        if range is None:
+            self.setYRange(0, 1, padding=0)
+        else:
+            self.setYRange(range[0], range[1], padding=0)
 
     def auto_scale_yaxis(self):
         if self.full_range_y is not None:
             self.set_yaxis([self.full_range_y[0], self.full_range_y[1]])
 
     def clear_spectrogram(self):
-        self.spec_img = None
+        self.spec_img = pg.ImageItem( image=np.eye(3), levels=(0,1) ) # create example image
         self.clear()
+        self.addItem(self.spec_img)
 
     def calc_spectrogram(self, data, nfft=None, Fs=1.0, noverlap=100, nperseg=None):
         if data is None:
             return
-
-        f, t, Sxx = signal.spectrogram(data[1], Fs, nfft=nfft, noverlap=noverlap, nperseg=nperseg)
-        log_Sxx = 10 * np.log10(Sxx)
         
-        # the spectrogram comes in with the time axis as the y-axis... transpose it for sane plotting
-        log_Sxx = np.transpose(log_Sxx)
+        self.calc_spec_worker_object = IPSpectrogramCalcWorker(data, Fs, nfft, nperseg, noverlap)
+        self.sig_start_spec_calc.connect(self.calc_spec_worker_object.run)
+        self.calc_spec_worker_object.signal_runFinished.connect(self.run_finished)
+        self.calc_spec_worker_object.moveToThread(self.calc_spec_thread)
+        self.calc_spec_thread.start()
+        self.sig_start_spec_calc.emit()
 
-        self.plot_spectrogram(f, t, log_Sxx)
+    @pyqtSlot(bool)
+    def run_finished(self, success):
+        if success:
+            f, t, Sxx = self.calc_spec_worker_object.get_results()
+
+            # calc the db of the data (ref at 1.0 - if data is in Pascals, we'll want to do 20log10(P/Pref), but not sure how to know that right now)
+            log_Sxx = 10 * np.log10(Sxx)
+        
+            # the spectrogram comes in with the time axis as the y-axis... transpose it for sane plotting
+            log_Sxx = np.transpose(log_Sxx)
+
+            self.plot_spectrogram(f, t, log_Sxx)
+        else:
+            print("Failure to calculate spectrogram")
     
     def set_start_time(self, st):
         self.getAxis(name='bottom').set_start_time(st)
@@ -255,9 +317,11 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         self.transform.scale(xscale, yscale)
         self.spec_img.setTransform(self.transform)
 
+        #self.setLogMode(x=False, y=True)
+
         # colormap
-        color_maps = ['viridis', 'plasma', 'inferno', 'magma', 'cividis']
-        cmap = pg.colormap.get(color_maps[2])
+        color_map_str = self.parent.spectrogram_settings_widget.colormap_cb.currentText()
+        cmap = pg.colormap.get(color_map_str)
 
         minv, maxv = np.nanmin(np.nanmin(Sxx[Sxx != -np.inf])), np.nanmax(np.nanmax(Sxx))
 
@@ -271,6 +335,8 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         
         self.spec_img.setImage(Sxx)
 
+        self.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
+
         self.full_range_y = [f[0], f[-1]]
         self.set_yaxis(self.full_range_y)
 
@@ -281,9 +347,10 @@ class IPSpectrogramSettingsWidget(QWidget):
 
     sig_spectrogram_changed = pyqtSignal()
   
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.buildUI()
+        self.parent = parent
 
     def buildUI(self):
 
@@ -292,6 +359,7 @@ class IPSpectrogramSettingsWidget(QWidget):
         colormap_label = QLabel("    Color Map: ")
         self.colormap_cb = QComboBox()
         self.colormap_cb.addItems(color_maps)
+        self.colormap_cb.currentTextChanged.connect(self.activate_update_button)
 
 
         # number of points in the fft
@@ -300,25 +368,37 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.nfft_spin.setMaximumWidth(100)
         self.nfft_spin.setMinimum(4)
         self.nfft_spin.setMaximum(100000)
-        self.nfft_spin.setValue(1024)
+        self.nfft_spin.setValue(256)
         self.nfft_spin.setToolTip("Length of the FFT used, if a zero padded FFT is desired. Defaults to length of nperseg")
-       
+        self.nfft_spin.valueChanged.connect(self.activate_update_button)
+
         nperseg_label = QLabel("    nPerSeg: ")
         self.nperseg_spin = QSpinBox()
         self.nperseg_spin.setMaximumWidth(100)
         self.nperseg_spin.setMinimum(4)
         self.nperseg_spin.setMaximum(100000)
-        self.nperseg_spin.setValue(1024)
+        self.nperseg_spin.setValue(256)
         self.nperseg_spin.setToolTip("Length of each segment. Must be great than or equal to nFFT")
+        self.nperseg_spin.valueChanged.connect(self.activate_update_button)
+
+        noverlap_label = QLabel("    nOverlap: ")
+        self.noverlap_spin = QSpinBox()
+        self.noverlap_spin.setMaximumWidth(100)
+        self.noverlap_spin.setMinimum(0)
+        self.noverlap_spin.setMaximum(100000)
+        self.noverlap_spin.setValue(200)
+        self.noverlap_spin.setToolTip("Number of points to overlap between segments")
+        self.noverlap_spin.valueChanged.connect(self.activate_update_button)
         
         self.update_button = QPushButton("Update")
         self.update_button.setMaximumWidth(100)
         self.update_button.setEnabled(False)
         self.update_button.clicked.connect(self.deactivate_update_button)
-        self.update_button.clicked.connect(self.update_spectrograms)
+        self.update_button.clicked.connect(self.parent().updateSpectrograms)
 
         self.hide_button = QPushButton("Hide")
         self.hide_button.setMaximumWidth(60)
+        self.hide_button.clicked.connect(self.hide)
 
         form1_layout = QFormLayout()
         form1_layout.addRow(nperseg_label, self.nperseg_spin)
@@ -326,6 +406,7 @@ class IPSpectrogramSettingsWidget(QWidget):
 
         form2_layout = QFormLayout()
         form2_layout.addRow(colormap_label, self.colormap_cb)
+        form2_layout.addRow(noverlap_label, self.noverlap_spin)
 
         h_layout = QHBoxLayout()
         h_layout.addLayout(form1_layout)
@@ -336,12 +417,48 @@ class IPSpectrogramSettingsWidget(QWidget):
         h_layout.setContentsMargins(0,0,0,0)
         self.setLayout(h_layout) 
 
-
     def activate_update_button(self):
         self.update_button.setEnabled(True)
 
     def deactivate_update_button(self):
         self.update_button.setEnabled(False)
 
-    def update_spectrograms(self):
-        pass
+    @pyqtSlot()
+    def hide(self):
+        self.setVisible(False)
+
+    
+
+
+class IPSpectrogramCalcWorker(QObject):
+    signal_runFinished = pyqtSignal(bool)
+
+    f = None
+    t = None
+    Sxx = None
+
+    def __init__(self, data, fs, nfft, nperseg, noverlap):
+        super().__init__()
+        self.data = data
+        self.fs = fs
+        self.nfft = nfft
+        self.nperseg = nperseg
+        self.noverlap = noverlap
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.f, self.t, self.Sxx = signal.spectrogram(self.data[1], 
+                                       self.fs, 
+                                       nfft=self.nfft, 
+                                       noverlap=self.noverlap, 
+                                       nperseg=self.nperseg)
+        except:
+            self.signal_runFinished.emit(False)
+
+        self.signal_runFinished.emit(True)
+
+        
+    def get_results(self):
+        return self.f, self.t, self.Sxx
+        
