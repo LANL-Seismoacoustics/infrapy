@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import (QWidget, QComboBox, QDoubleSpinBox, QSpinBox, QFormLayout, 
-                             QHBoxLayout, QLabel, QPushButton, QToolBar, QToolButton,
+from PyQt5.QtWidgets import (QWidget, QRadioButton, QComboBox, QDoubleSpinBox, QSpinBox, QFormLayout, 
+                             QGroupBox, QHBoxLayout, QLabel, QPushButton, QToolBar, QToolButton,
                              QVBoxLayout)
 
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QThread
@@ -20,10 +20,9 @@ class IPSingleSensorWidget(QWidget):
     signal_fs = 1.0
     noise_fs = 1.0
     
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
-
-        self.parent = parent
+        self.appWidget = parent
         self.buildUI()
 
     def buildUI(self):
@@ -74,7 +73,7 @@ class IPSingleSensorWidget(QWidget):
         self.spectrogram_settings_widget.setVisible(self.spectrogram_settings_widget.isHidden())
 
     def get_earliest_start_time(self):
-        return self.parent.waveformWidget.get_earliest_start_time()
+        return self.appWidget.waveformWidget.get_earliest_start_time()
 
     @pyqtSlot(object)
     def signal_region_changed(self, lri):
@@ -239,11 +238,14 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     color_bar = None
     spec_img = None     # image that holds the spectrogram
 
+    color_bar = None
+    histogram = None
+
     sig_start_spec_calc = pyqtSignal()
 
     def __init__(self, parent, est=None):
         super().__init__(mode='spectrogram')
-        self.parent = parent
+        self.singleStationWidget = parent
         self.buildUI()
 
     def buildUI(self):
@@ -317,21 +319,41 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         self.transform.scale(xscale, yscale)
         self.spec_img.setTransform(self.transform)
 
-        #self.setLogMode(x=False, y=True)
-
         # colormap
-        color_map_str = self.parent.spectrogram_settings_widget.colormap_cb.currentText()
+        color_map_str = self.singleStationWidget.spectrogram_settings_widget.colormap_cb.currentText()
         cmap = pg.colormap.get(color_map_str)
+        self.spec_img.setColorMap(cmap)
 
+        # scale widget...
+        scale_setting = self.singleStationWidget.spectrogram_settings_widget.get_scale_setting()
         minv, maxv = np.nanmin(np.nanmin(Sxx[Sxx != -np.inf])), np.nanmax(np.nanmax(Sxx))
 
-        if self.color_bar is None:
-            self.color_bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cmap, label='magnitude [dB]')
+        if scale_setting == 'cbar':
+            if self.histogram is not None:
+                self.histogram.setVisible(False)
+            if self.color_bar is None:
+                self.color_bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cmap, label='magnitude [dB]')
             self.color_bar.setImageItem(self.spec_img, insert_in=self)
-        else:
+            self.color_bar.setVisible(True)
             self.color_bar.setLevels(low=minv, high=maxv)
-            
-        self.spec_img.setColorMap(cmap)
+            self.color_bar.setVisible(True)
+
+        if scale_setting == 'hist':
+            if self.color_bar is not None:
+                self.color_bar.setVisible(False)
+            if self.histogram is None:
+                self.histogram = pg.HistogramLUTItem(image=self.spec_img, levelMode='rgba')
+            self.histogram.setImageItem(self.spec_img)
+            self.histogram.setVisible(True)
+            self.histogram.setLevels(minv, maxv)
+                
+        if scale_setting =='none':
+            if self.histogram is not None:
+                self.histogram.setVisible(False)
+            if self.color_bar is not None:
+                self.color_bar.setVisible(False)
+
+        
         
         self.spec_img.setImage(Sxx)
 
@@ -349,18 +371,13 @@ class IPSpectrogramSettingsWidget(QWidget):
   
     def __init__(self, parent):
         super().__init__(parent)
+        self.singleStationWidget = parent
         self.buildUI()
-        self.parent = parent
 
     def buildUI(self):
 
-        # colormap
-        color_maps = ['viridis', 'plasma', 'inferno', 'magma', 'cividis']
-        colormap_label = QLabel("    Color Map: ")
-        self.colormap_cb = QComboBox()
-        self.colormap_cb.addItems(color_maps)
-        self.colormap_cb.currentTextChanged.connect(self.activate_update_button)
-
+        spec_gb = QGroupBox("Spectrogram ")
+        spec_layout = QHBoxLayout()
 
         # number of points in the fft
         nfft_label = QLabel("    nFFT: ")
@@ -389,33 +406,73 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.noverlap_spin.setValue(200)
         self.noverlap_spin.setToolTip("Number of points to overlap between segments")
         self.noverlap_spin.valueChanged.connect(self.activate_update_button)
-        
-        self.update_button = QPushButton("Update")
-        self.update_button.setMaximumWidth(100)
-        self.update_button.setEnabled(False)
-        self.update_button.clicked.connect(self.deactivate_update_button)
-        self.update_button.clicked.connect(self.parent().updateSpectrograms)
-
-        self.hide_button = QPushButton("Hide")
-        self.hide_button.setMaximumWidth(60)
-        self.hide_button.clicked.connect(self.hide)
 
         form1_layout = QFormLayout()
         form1_layout.addRow(nperseg_label, self.nperseg_spin)
         form1_layout.addRow(nfft_label, self.nfft_spin)
 
         form2_layout = QFormLayout()
-        form2_layout.addRow(colormap_label, self.colormap_cb)
+        #form2_layout.addRow(colormap_label, self.colormap_cb)
         form2_layout.addRow(noverlap_label, self.noverlap_spin)
 
+        spec_layout.addLayout(form1_layout)
+        spec_layout.addLayout(form2_layout)
+        spec_gb.setLayout(spec_layout)
+
+        #######################
+        color_scale_gb = QGroupBox("Scale")
+        color_scale_layout = QVBoxLayout()
+        self.none_rb = QRadioButton('None: ')
+        self.none_rb.setChecked(True)
+        self.none_rb.clicked.connect(self.activate_update_button)
+        self.hist_rb = QRadioButton('Histogram: ')
+        self.hist_rb.clicked.connect(self.activate_update_button)
+        self.colorbar_rb = QRadioButton('Color Bar: ')
+        self.colorbar_rb.clicked.connect(self.activate_update_button)
+    
+        color_scale_layout.addWidget(self.hist_rb)
+        color_scale_layout.addWidget(self.colorbar_rb)
+        color_scale_layout.addWidget(self.none_rb)
+        color_scale_gb.setLayout(color_scale_layout)
+
+        #######################
+        cmap_gb = QGroupBox("Colors")
+        cmap_layout = QFormLayout()
+        # colormap
+        colormap_label = QLabel("    Color Map: ")
+        self.colormap_cb = QComboBox()
+        self.colormap_cb.addItems(['viridis', 'plasma', 'inferno', 'magma', 'cividis'])
+        self.colormap_cb.currentTextChanged.connect(self.activate_update_button)
+        cmap_layout.addRow(colormap_label, self.colormap_cb)
+        cmap_gb.setLayout(cmap_layout)
+        
+        self.update_button = QPushButton("Update")
+        self.update_button.setMaximumWidth(100)
+        self.update_button.setEnabled(False)
+        self.update_button.clicked.connect(self.deactivate_update_button)
+        self.update_button.clicked.connect(self.singleStationWidget.updateSpectrograms)
+
+        self.hide_button = QPushButton("Hide")
+        self.hide_button.setMaximumWidth(60)
+        self.hide_button.clicked.connect(self.hide)
+
         h_layout = QHBoxLayout()
-        h_layout.addLayout(form1_layout)
-        h_layout.addLayout(form2_layout)
+        h_layout.addWidget(spec_gb)
+        h_layout.addWidget(color_scale_gb)
+        h_layout.addWidget(cmap_gb)
         h_layout.addWidget(self.update_button)
         h_layout.addStretch()
         h_layout.addWidget(self.hide_button)
         h_layout.setContentsMargins(0,0,0,0)
         self.setLayout(h_layout) 
+
+    def get_scale_setting(self):
+        if self.none_rb.isChecked():
+            return 'none'
+        elif self.hist_rb.isChecked():
+            return 'hist'
+        elif self.colorbar_rb.isChecked():
+            return 'cbar'
 
     def activate_update_button(self):
         self.update_button.setEnabled(True)
