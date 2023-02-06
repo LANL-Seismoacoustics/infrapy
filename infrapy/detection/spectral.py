@@ -55,6 +55,49 @@ def calc_thresh_wrapper(args):
     return calc_thresh(*args)
 
 
+def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, times_history):
+
+        t0 = trace.stats.starttime
+
+        t_mean = UTCDateTime(t0) + np.mean(det_pnts[:, 0])
+        t1 = UTCDateTime(t0) + min(det_pnts[:, 0])
+        t2 = UTCDateTime(t0) + max(det_pnts[:, 0])
+
+        t_mid = UTCDateTime(t0) + np.mean(det_pnts[:, 0])
+        tm_index = np.argmin([abs(tn - t_mid) for tn in times_history])
+        bg_freqs = f[peaks_history[tm_index] != 0]
+        bg_peaks = peaks_history[tm_index][peaks_history[tm_index] != 0]
+        bg_thresh = thresh_history[tm_index][peaks_history[tm_index] != 0]
+
+        det_info = dict()
+        det_info['Time (UTC)'] = str(t_mean)
+        det_info['Start'] = t1 - t_mean 
+        det_info['End'] = t2 - t_mean
+        det_info['Freq Range'] = [np.round(min(det_pnts[:, 1]), 2),
+                                  np.round(max(det_pnts[:, 1]), 2)]
+
+        try:
+            det_info['Latitude'] = float(trace.stats.sac['stla'])
+            det_info['Longitude'] = float(trace.stats.sac['stlo'])
+        except:
+            print("Lat/Lon info not in trace header, omitting from detection file.")
+
+        det_info['Network'] = trace.stats.network
+        det_info['Station'] = trace.stats.station
+        det_info['Channel'] = trace.stats.channel
+
+        det_info['Sxx_points'] = det_pnts
+
+        SXX_det_mask = np.logical_and(min(det_pnts[:, 0]) < t, t < max(det_pnts[:, 0]))
+        det_info['Sxx_det_mean'] = [f, np.mean(Sxx_log[:, SXX_det_mask], axis=1)]
+        det_info['Sxx_det_max'] = [f, np.max(Sxx_log[:, SXX_det_mask], axis=1)]
+
+        det_info['Background Peaks'] = [bg_freqs, bg_peaks]
+        det_info['Background Threshold'] = [bg_freqs, bg_thresh]
+
+        return det_info
+
+
 def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, smoothing_factor, 
             clustering_freq_scaling, clustering_eps, clustering_min_samples, pl):
     """Run the spectral detection (sd) methods
@@ -94,7 +137,7 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
 
     # Compute spectrogram from the trace
     dt = trace.stats.delta
-    nperseg = int((4.0 / freq_band[0]) / dt) 
+    nperseg = int((4.0 / freq_band[0]) / dt)
 
     f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap = int(nperseg * spec_overlap))
     freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
@@ -105,7 +148,7 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
     thresh_history, peaks_history, times_history = [], [], []
     spec_dets = []
 
-    prog_bar_len, win_cnt = 50, int((t[-1] - t[0]) / adaptive_window_step) + 1
+    prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step) + 1
     print('\t' + "Progress: ", end = '')
     prog_bar.prep(prog_bar_len)
 
@@ -150,44 +193,6 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
     clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
     print("Identified " + str(max(clustering.labels_) + 1) + " detections." + '\n')
 
-    det_list = []
-    for k in range(max(clustering.labels_) + 1):
-        label_mask = clustering.labels_ == k
-
-        t_mean = UTCDateTime(trace.stats.starttime) + np.mean(spec_dets[label_mask][:, 0])
-        t1 = UTCDateTime(trace.stats.starttime) + min(spec_dets[label_mask][:, 0])
-        t2 = UTCDateTime(trace.stats.starttime) + max(spec_dets[label_mask][:, 0])
-
-        t_mid = UTCDateTime(trace.stats.starttime) + np.mean(spec_dets[label_mask][:, 0])
-        tm_index = np.argmin([abs(tn - t_mid) for tn in times_history])
-        bg_freqs = f[peaks_history[tm_index] != 0]
-        bg_peaks = peaks_history[tm_index][peaks_history[tm_index] != 0]
-        bg_thresh = thresh_history[tm_index][peaks_history[tm_index] != 0]
-
-        det_info = dict()
-        det_info['Time (UTC)'] = str(t_mean)
-        det_info['Start'] = t1 - t_mean 
-        det_info['End'] = t2 - t_mean
-        det_info['Freq Range'] = [np.round(min(spec_dets[label_mask][:, 1]), 2),
-                                  np.round(max(spec_dets[label_mask][:, 1]), 2)]
-
-        try:
-            det_info['Latitude'] = float(trace.stats.sac['stla'])
-            det_info['Longitude'] = float(trace.stats.sac['stlo'])
-        except:
-            print("Lat/Lon info not in trace header, omitting from detection file.")
-
-        det_info['Network'] = trace.stats.network
-        det_info['Station'] = trace.stats.station
-        det_info['Channel'] = trace.stats.channel
-
-        det_info['Sxx_points'] = spec_dets[label_mask]
-        det_info['Sxx_det_mean'] = [f, np.mean(Sxx_log[:, np.logical_and(min(spec_dets[label_mask][:, 0]) < t, t < max(spec_dets[label_mask][:, 0]))], axis=1)]
-        det_info['Sxx_det_max'] = [f, np.max(Sxx_log[:, np.logical_and(min(spec_dets[label_mask][:, 0]) < t, t < max(spec_dets[label_mask][:, 0]))], axis=1)]
-
-        det_info['Background Peaks'] = [bg_freqs, bg_peaks]
-        det_info['Background Threshold'] = [bg_freqs, bg_thresh]
-
-        det_list = det_list + [det_info]
+    det_list = [det2dict(f, t, Sxx_log, spec_dets[clustering.labels_ == k], trace, peaks_history, thresh_history, times_history) for k in range(max(clustering.labels_) + 1)]
 
     return det_list 

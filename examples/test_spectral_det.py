@@ -8,6 +8,7 @@
 # Created 10/27/2022
 # Last Modified 10/27/2022
 
+import os 
 import numpy as np
 import json 
 
@@ -27,6 +28,7 @@ from sklearn.cluster import DBSCAN
 
 from infrapy.detection import spectral as spec_det
 from infrapy.utils import data_io as infrapy_data_io
+from infrapy.detection import visualization as det_vis
 
 
 
@@ -57,14 +59,6 @@ if __name__ == '__main__':
     # pl = None
     pl = mp.Pool(14)
 
-    '''
-    trace = read(data_file)[0]
-    det_list = spec_det.run_sd(trace, [freq_min, freq_max], spec_overlap, p_val, threshold_window, threshold_window * threshold_overlap,
-            smoothing_factor, clustering_freq_dist, clustering_eps, clustering_min_samples, pl)
-
-    with open(file_out, 'w') as of:
-        json.dump(det_list, of, indent=4, cls=infrapy_data_io.Infrapy_Encoder)
-    '''
 
     # ######################### #
     #       Read data and       #
@@ -144,51 +138,11 @@ if __name__ == '__main__':
     clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
     print('\n' + "Identified " + str(max(clustering.labels_) + 1) + " detections.")
 
-    label_mask = clustering.labels_ == -1
-    a[2].plot(spec_dets[:, 0][label_mask], spec_dets[:, 1][label_mask], '.', color='0.5', markersize=1.5)
-
     det_list = []
+    a[2].plot(spec_dets[:, 0][clustering.labels_ == -1], spec_dets[:, 1][clustering.labels_ == -1], '.', color='0.5', markersize=1.5)
     for k in range(max(clustering.labels_) + 1):
-        label_mask = clustering.labels_ == k
-
-        t_mean = UTCDateTime(tr.stats.starttime) + np.mean(spec_dets[label_mask][:, 0])
-        t1 = UTCDateTime(tr.stats.starttime) + min(spec_dets[label_mask][:, 0])
-        t2 = UTCDateTime(tr.stats.starttime) + max(spec_dets[label_mask][:, 0])
-
-        t_mid = UTCDateTime(tr.stats.starttime) + np.mean(spec_dets[label_mask][:, 0])
-        tm_index = np.argmin([abs(tn - t_mid) for tn in times_history])
-        bg_freqs = f[peaks_history[tm_index] != 0]
-        bg_peaks = peaks_history[tm_index][peaks_history[tm_index] != 0]
-        bg_thresh = thresh_history[tm_index][peaks_history[tm_index] != 0]
-
-        det_info = dict()
-        det_info['Time (UTC)'] = str(t_mean)
-        det_info['Start'] = t1 - t_mean 
-        det_info['End'] = t2 - t_mean
-        det_info['Freq Range'] = [np.round(min(spec_dets[label_mask][:, 1]), 2),
-                                  np.round(max(spec_dets[label_mask][:, 1]), 2)]
-
-        try:
-            det_info['Latitude'] = float(tr.stats.sac['stla'])
-            det_info['Longitude'] = float(tr.stats.sac['stlo'])
-        except:
-            print("Lat/Lon info not in file header, omitting from detection file.")
-
-        det_info['Network'] = tr.stats.network
-        det_info['Station'] = tr.stats.station
-        det_info['Channel'] = tr.stats.channel
-
-        det_info['Sxx_points'] = spec_dets[label_mask]
-        det_info['Sxx_det_mean'] = [f, np.mean(Sxx_log[:, np.logical_and(min(spec_dets[label_mask][:, 0]) < t, t < max(spec_dets[label_mask][:, 0]))], axis=1)]
-        det_info['Sxx_det_max'] = [f, np.max(Sxx_log[:, np.logical_and(min(spec_dets[label_mask][:, 0]) < t, t < max(spec_dets[label_mask][:, 0]))], axis=1)]
-
-        det_info['Background Peaks'] = [bg_freqs, bg_peaks]
-        det_info['Background Threshold'] = [bg_freqs, bg_thresh]
-
-        det_list = det_list + [det_info]
-
-        a[2].plot(spec_dets[:, 0][label_mask], spec_dets[:, 1][label_mask], '.', markersize=1.5)            
-
+        det_list = det_list + [spec_det.det2dict(f, t, Sxx_log, spec_dets[clustering.labels_ == k], tr, peaks_history, thresh_history, times_history)]
+        a[2].plot(spec_dets[:, 0][ clustering.labels_ == k], spec_dets[:, 1][ clustering.labels_ == k], '.', markersize=1.5)            
 
     a[2].set_yscale('log')
     a[2].set_ylim(freq_min, freq_max)
@@ -219,7 +173,7 @@ if __name__ == '__main__':
     ax[1].set_ylabel("Spectral Amplitude [Pa^2/Hz]")
 
     plt.show()
-    
+
     if pl is not None:
         pl.close()
     
