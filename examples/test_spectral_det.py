@@ -25,83 +25,22 @@ from scipy.optimize import curve_fit, minimize_scalar
 
 from sklearn.cluster import DBSCAN
 
+from infrapy.detection import spectral as spec_det
 from infrapy.utils import data_io as infrapy_data_io
 
-def calc_thresh(Sxx_vals, plot_fit=False):
-    if Sxx_vals is not None:
-        kernel = gaussian_kde(Sxx_vals)
-
-        spec_spread = np.max(Sxx_vals) - np.min(Sxx_vals)
-        spec_vals = np.linspace(np.min(Sxx_vals) - 0.33 * spec_spread, np.max(Sxx_vals) + 0.33 * spec_spread, 100)
-
-        mean0 = simps(spec_vals * kernel(spec_vals), spec_vals)
-        stdev0 = np.sqrt(simps((spec_vals - mean0)**2 * kernel(spec_vals), spec_vals))
-        thresh0 = norm.ppf(1.0 - p_val, loc=mean0, scale=stdev0)
-
-        if plot_fit:
-            plt.figure(figsize=(10, 4), dpi=75)
-            plt.clf()
-            plt.plot(spec_vals, kernel(spec_vals), '-k', linewidth=2.5, label="Kernel Density Estimate")
-            plt.plot(spec_vals, norm.pdf(spec_vals - mean0, scale=stdev0), '--b', linewidth=1.5, label="Normal Dist Estimate")
-
-        try:
-            mask = np.logical_and(mean0 - 2.0 * stdev0 < spec_vals, spec_vals < mean0 + 2.0 * stdev0)
-
-            def temp(x, A0, x0, sig0):
-                return A0 * norm.pdf(x, loc=x0, scale=sig0)
-
-            popt_norm, _ = curve_fit(temp, spec_vals[mask], kernel(spec_vals[mask]), p0=(1.0, mean0, stdev0))
-
-            def temp(x, sk, A0, x0, sig0):
-                return A0 * skewnorm.pdf(x, sk, loc=x0, scale=sig0)
-
-            popt, _ = curve_fit(temp, spec_vals[mask], kernel(spec_vals[mask]), p0=(0.0, 1.0, mean0, stdev0))
-            thresh_fit = skewnorm.ppf(1.0 - p_val, popt[0], loc=popt[2], scale=popt[3])
-            thresh = min(thresh0, thresh_fit)
-
-            def temp2(x):
-                return -skewnorm.pdf(x, popt[0], loc=popt[2], scale=popt[3])
-            peak = minimize_scalar(temp2, bracket=(popt[2] - 2.0 * popt[3], popt[2] + 2.0 * popt[3])).x
-
-            if plot_fit:
-                # plt.title("thresh0: " + str(thresh0) + ", thresh_skew: " + str(thresh_fit))
-                plt.plot(spec_vals, popt_norm[0] * norm.pdf(spec_vals, loc=popt_norm[1], scale=popt_norm[2]), '-b', linewidth=1.5, label="Normal Fit")
-                plt.plot(spec_vals, popt[1] * skewnorm.pdf(spec_vals, popt[0], loc=popt[2], scale=popt[3]), '-r', linewidth=1.5, label="Skew Normal Fit")
-                plt.axvline(thresh, color='red', linestyle='-.')
-                plt.axvline(peak, color='green')
-                plt.axvline()
-            
-        except:
-            print("Exception in computing skew fit...")
-            thresh = thresh0
-            peak = mean0
-
-        if plot_fit:
-            plt.legend(loc='upper right')
-            plt.xlabel("Spectral Density (dB) [Pa/Hz]")
-            plt.ylabel("Probability")
-            plt.show()
-
-        return thresh, peak
-    else:
-        return 0.0, 0.0
-
-
-def calc_thresh_wrapper(args):
-    return calc_thresh(*args)
 
 
 if __name__ == '__main__':
     # ######################### #
     #     Define Parameters     #
     # ######################### #
-    data_file = "YJ.BRP1..EDF.SAC"
+    data_file = "data/YJ.BRP1..EDF.SAC"
 
     freq_min, freq_max = 0.2, 30.0
     spec_overlap = 0.75
 
     p_val = 0.01
-    threshold_window = 750.0
+    threshold_window = 900.0
     threshold_overlap = 0.5
     smoothing_factor = 4
 
@@ -118,13 +57,21 @@ if __name__ == '__main__':
     # pl = None
     pl = mp.Pool(14)
 
+    '''
+    trace = read(data_file)[0]
+    det_list = spec_det.run_sd(trace, [freq_min, freq_max], spec_overlap, p_val, threshold_window, threshold_window * threshold_overlap,
+            smoothing_factor, clustering_freq_dist, clustering_eps, clustering_min_samples, pl)
+
+    with open(file_out, 'w') as of:
+        json.dump(det_list, of, indent=4, cls=infrapy_data_io.Infrapy_Encoder)
+    '''
+
     # ######################### #
     #       Read data and       #
     #    compute spectrogram    #
     # ######################### #
 
     tr = read(data_file)[0]
-
     dt = tr.stats.delta
     nperseg = int((4.0 / freq_min) / dt) 
 
@@ -132,26 +79,9 @@ if __name__ == '__main__':
     freq_band_mask = np.logical_and(freq_min < f, f < freq_max)
     Sxx_log = 10.0 * np.log10(Sxx)
 
-    '''
-    fig, a = plt.subplots(2, sharex=True)
-    a[0].plot(tr.times(), tr.data, '-k')
-
-    f_grid, t_grid = np.meshgrid(f, t)
-    a[1].scatter(t_grid.flatten(), f_grid.flatten(), c=Sxx_log.T.flatten(), marker="s", s=2.5, cmap=cm.jet)
-    a[1].set_yscale('log')
-
-    a[1].set_xlabel("Time [s]")
-    a[1].set_ylabel("Frequency [Hz]")
-    a[0].set_ylabel("Amplitude")
-
-    # thresh, peak = calc_thresh(Sxx_log[np.argmin(abs(f - 22.0))], plot_fit=True)
-    plt.show()   
-
-    '''
-
-    # ######################### #
-    #     Compute threshold     #
-    # ######################### #
+    # ########################## #
+    #     Compute thresholds     #
+    # ########################## #
     thresh_history = []
     peaks_history = []
     times_history = []
@@ -164,18 +94,10 @@ if __name__ == '__main__':
         t_window = t[window_mask]
 
         if pl is not None:
-            args = [[Sxx_window[fn], False] if freq_min < f[fn] and f[fn] < freq_max else [None, False] for fn in range(len(f))]
-            '''
-            args = []
-            for fn in range(len(f)):
-                if freq_min < f[fn] and f[fn] < freq_max:
-                    args = args + [[Sxx_window[fn], False]]
-                else:
-                    args = args + [[None, False]]
-            '''
-            temp = pl.map(calc_thresh_wrapper, args)
+            args = [[Sxx_window[fn], p_val] if freq_min < f[fn] and f[fn] < freq_max else [None, False] for fn in range(len(f))]
+            temp = pl.map(spec_det.calc_thresh_wrapper, args)
         else:
-            temp = np.array([calc_thresh(Sxx_window[fn]) if (freq_min < f[fn] and f[fn] < freq_max) else 0.0 for fn in range(len(f))])
+            temp = np.array([spec_det.calc_thresh(Sxx_window[fn], p_val) if (freq_min < f[fn] and f[fn] < freq_max) else 0.0 for fn in range(len(f))])
 
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
@@ -214,9 +136,6 @@ if __name__ == '__main__':
 
     a[1].axhline(freq_min, color='0.5')
     a[1].axhline(freq_max, color='0.5')
-
-    # a[2].plot(spec_dets[:, 0], spec_dets[:, 1], 'ok', markersize=0.5)
-    # plt.show()
 
     # ######################### #
     #  Cluster into detections  #
@@ -300,6 +219,7 @@ if __name__ == '__main__':
     ax[1].set_ylabel("Spectral Amplitude [Pa^2/Hz]")
 
     plt.show()
-
+    
     if pl is not None:
         pl.close()
+    
