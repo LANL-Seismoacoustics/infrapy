@@ -16,6 +16,7 @@ from obspy import UTCDateTime
 from infrapy.utils import config
 from infrapy.utils import data_io
 from infrapy.detection import beamforming_new as fkd
+from infrapy.detection import spectral
 
 
 @click.command('run_fk', short_help="Run beamforming methods on waveform data")
@@ -712,5 +713,203 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 
 
 
+@click.command('run_sd', short_help="Run spectral detection on a single channel")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-wvfrms", help="Local waveform data files", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+
+@click.option("--local-latlon", help="Array location information for local waveforms", default=None)
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+
+@click.option("--local-detect-label", help="Label for local detection (sd) results", default=None)
+
+@click.option("--signal-start", help="Start of analysis window", default=None)
+@click.option("--signal-end", help="End of analysis window", default=None)
+
+@click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
+@click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
+@click.option("--window-len", help="Adaptive window length (default: " + config.defaults['SD']['window_len'] + " [s])", default=None, type=float)
+@click.option("--window-step", help="Adaptive window step (default: " + config.defaults['SD']['window_step'] + " [s])", default=None, type=float)
+@click.option("--p-value", help="Detection p-value (default: " + config.defaults['SD']['p_value'] + ")", default=None, type=float)
+@click.option("--smoothing", help="Smoothing factor for the background and threshold (default:" + config.defaults['SD']['smoothing'], default=None, type=float)
+@click.option("--freq-tm-factor", help="Frequency/time mapping factor (sec/decade) (default: " + config.defaults['SD']['freq_tm_factor'], default=None, type=float)
+@click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'], default=None, type=float)
+@click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'], default=None, type=float)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
+    local_detect_label, signal_start, signal_end, freq_min, freq_max, window_len, window_step, p_value, smoothing, freq_tm_factor,
+    cluster_eps, cluster_min_samples, cpu_cnt):
+    '''
+    Run spectral detection methods on a single channel to identify signals of interest.
+    
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy run_sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
+
+    '''
+    
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##   Spectral Detection Analyses   ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("") 
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo('\n' + "Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None
+
+    # Database configuration and info   
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
+
+    # Local waveform IO parameters
+    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+
+    # FDSN waveform IO parameters
+    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+
+    # Trimming times
+    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+
+    # Result IO
+    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+
+    click.echo('\n' + "Data parameters:")
+    if local_wvfrms is not None:
+        click.echo("  local_wvfrms: " + str(local_wvfrms))
+        click.echo("  local_latlon: " + str(local_latlon))
+    elif fdsn is not None:
+        click.echo("  fdsn: " + str(fdsn))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+        click.echo("  db_config: " + str(db_config))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    else:
+        click.echo("Invalid data parameters.  Config file requires 1 of:")
+        click.echo("  local_wvfrms")
+        click.echo("  fdsn")
+        click.echo("  db_url (and other database info)")
+        
+    click.echo("  local_detect_label: " + str(local_detect_label))
 
 
+    # Algorithm parameters
+    freq_min = config.set_param(user_config, 'SD', 'freq_min', freq_min, 'float')
+    freq_max = config.set_param(user_config, 'SD', 'freq_max', freq_max, 'float')
+    signal_start = config.set_param(user_config, 'SD', 'signal_start', signal_start, 'string')
+    signal_end = config.set_param(user_config, 'SD', 'signal_end', signal_end, 'string')
+    window_len = config.set_param(user_config, 'SD', 'window_len', window_len, 'float')
+    window_step = config.set_param(user_config, 'SD', 'window_step', window_step, 'float')
+    p_value = config.set_param(user_config, 'SD', 'p_value', p_value, 'float')
+    smoothing = config.set_param(user_config, 'SD', 'smoothing', smoothing, 'float')
+    freq_tm_factor = config.set_param(user_config, 'SD', 'freq_tm_factor', freq_tm_factor, 'float')
+    cluster_eps = config.set_param(user_config, 'SD', 'cluster_eps', cluster_eps, 'float')
+    cluster_min_samples = config.set_param(user_config, 'SD', 'cluster_min_samples', cluster_min_samples, 'int')
+
+    click.echo('\n' + "Algorithm parameters:")
+    click.echo("  freq_min: " + str(freq_min))
+    click.echo("  freq_max: " + str(freq_max))
+    click.echo("  signal_start: " + str(signal_start))
+    click.echo("  signal_end: " + str(signal_end))
+    click.echo("  window_len: " + str(window_len))
+    click.echo("  window_step: " + str(window_step))
+    click.echo("  p_value: " + str(p_value))
+    click.echo("  smoothing: " + str(smoothing))
+    click.echo("  freq_tm_factor: " + str(freq_tm_factor))
+    click.echo("  cluster_eps: " + str(cluster_eps))
+    click.echo("  cluster_min_samples: " + str(cluster_min_samples))
+    if cpu_cnt is not None:
+        click.echo("  cpu_cnt: " + str(cpu_cnt))
+        pl = Pool(cpu_cnt)
+    else:
+        pl = None
+
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    if latlon:
+        array_loc = latlon[0]
+    else:
+        array_loc = [stream[0].stats.sac['stla'], stream[0].stats.sac['stlo']]
+
+    if local_wvfrms is not None and "/" in local_wvfrms:
+        output_id = os.path.dirname(local_wvfrms) + "/"
+    else:
+        output_id = ""
+    output_id = output_id + data_io.stream_label(stream)
+
+    # Check if using a signal window
+    if signal_start is not None:
+        t1 = UTCDateTime(signal_start)
+        t2 = UTCDateTime(signal_end)
+
+        click.echo('\n' + "Trimming data to signal analysis window...")
+        click.echo('\t' + "start time: " + str(t1))
+        click.echo('\t' + "end time: " + str(t2))
+
+        warning_message = "signal_start and signal_end values poorly defined."
+        if t1 > t2:
+            warning_message = warning_message + "  signal_start after signal_end."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t1 < stream[0].stats.starttime:
+            warning_message = warning_message + "  signal_start before data start time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t2 > stream[0].stats.endtime:
+            warning_message = warning_message + "  signal_end after data end time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        else:
+            stream.trim(t1, t2)
+
+    det_list = spectral.run_sd(stream[0], [freq_min, freq_max], 0.75, p_value, window_len, window_step, smoothing, 
+                                freq_tm_factor, cluster_eps, cluster_min_samples, pl)
+
+    if local_detect_label is None or local_detect_label == "auto":
+        local_detect_label = output_id
+
+    click.echo("Writing detection results using label: " + local_detect_label)
+    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+
+    if pl is not None:
+        pl.terminate()
+        pl.close()

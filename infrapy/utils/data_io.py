@@ -538,13 +538,16 @@ def detection_list_to_json(filename, detections, stream_info=None):
         Network, station, and channel info
     """
 
-    output = []
-    for entry in detections:
-        output.append(entry.generateDict())
-        if stream_info:
-            output[-1]['Network'] = stream_info[0]
-            output[-1]['Station'] = stream_info[1]
-            output[-1]['Channel'] = stream_info[2]
+    if type(detections[0]) == lklhds.InfrasoundDetection:
+        output = []
+        for entry in detections:
+            output.append(entry.generateDict())
+            if stream_info:
+                output[-1]['Network'] = stream_info[0]
+                output[-1]['Station'] = stream_info[1]
+                output[-1]['Channel'] = stream_info[2]
+    else:
+        output = detections
 
     with open(filename, 'w') as of:
         json.dump(output, of, indent=4, cls=Infrapy_Encoder)

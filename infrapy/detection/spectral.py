@@ -27,7 +27,7 @@ def calc_thresh(Sxx_vals, p_val):
         kernel = gaussian_kde(Sxx_vals)
 
         spec_spread = np.max(Sxx_vals) - np.min(Sxx_vals)
-        spec_vals = np.linspace(np.min(Sxx_vals) - 0.33 * spec_spread, np.max(Sxx_vals) + 0.33 * spec_spread, 100)
+        spec_vals = np.linspace(np.min(Sxx_vals) - 0.25 * spec_spread, np.max(Sxx_vals) + 0.25 * spec_spread, 100)
 
         mean0 = simps(spec_vals * kernel(spec_vals), spec_vals)
         stdev0 = np.sqrt(simps((spec_vals - mean0)**2 * kernel(spec_vals), spec_vals))
@@ -166,10 +166,10 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
 
-
-        if smoothing_factor > 2:
-            threshold[freq_band_mask] = savgol_filter(threshold[freq_band_mask], smoothing_factor * 2, smoothing_factor)
-            peaks[freq_band_mask] = savgol_filter(peaks[freq_band_mask], smoothing_factor * 2, smoothing_factor)
+        if smoothing_factor is not None:
+            if smoothing_factor > 2:
+                threshold[freq_band_mask] = savgol_filter(threshold[freq_band_mask], smoothing_factor * 2, smoothing_factor)
+                peaks[freq_band_mask] = savgol_filter(peaks[freq_band_mask], smoothing_factor * 2, smoothing_factor)
 
         thresh_history = thresh_history + [threshold]
         peaks_history = peaks_history + [peaks]

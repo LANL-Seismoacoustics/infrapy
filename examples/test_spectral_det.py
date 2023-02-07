@@ -151,28 +151,10 @@ if __name__ == '__main__':
     plt.savefig(fig_out, dpi=300)
     with open(file_out, 'w') as of:
         json.dump(det_list, of, indent=4, cls=infrapy_data_io.Infrapy_Encoder)
-    
+
     # Load and plot one of the detections...
     det_list = json.load(open(file_out))
-    det_info = det_list[3]
-
-    fig, ax = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={'width_ratios': [2, 1]})
-    ax[0].plot(np.array(det_info['Sxx_points'])[:, 0] , np.array(det_info['Sxx_points'])[:, 1], 'ok')
-    ax[0].set_yscale('log')
-
-    ax[1].semilogx(det_info['Background Peaks'][0], det_info['Background Peaks'][1], '-k', linewidth=1.0)
-    ax[1].semilogx(det_info['Background Threshold'][0], det_info['Background Threshold'][1], '--k', linewidth=1.0)
-    ax[1].semilogx(det_info['Sxx_det_mean'][0], det_info['Sxx_det_mean'][1], '-b', linewidth=1.5)
-    ax[1].semilogx(det_info['Sxx_det_max'][0], det_info['Sxx_det_max'][1], '-r', linewidth=1.0)
-    ax[1].axvspan(det_info['Freq Range'][0], det_info['Freq Range'][1], color='green', alpha=0.5, edgecolor=None)
-
-    ax[0].set_xlabel("Time [s]")
-    ax[0].set_ylabel("Frequency [Hz]")
-
-    ax[1].set_xlabel("Frequency [Hz]")
-    ax[1].set_ylabel("Spectral Amplitude [Pa^2/Hz]")
-
-    plt.show()
+    det_vis.plot_sd_single(tr, det_list[3], show_fig=True)
 
     if pl is not None:
         pl.close()

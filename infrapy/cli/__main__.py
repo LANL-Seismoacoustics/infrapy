@@ -53,6 +53,7 @@ main.add_command(utils)
 main.add_command(cli_detection.run_fk)
 main.add_command(cli_detection.run_fd)
 main.add_command(cli_detection.run_fkd)
+main.add_command(cli_detection.run_sd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
 
@@ -64,6 +65,8 @@ run_spye.add_command(cli_loc.combine)
 # visualizations
 plot.add_command(cli_visualization.fk)
 plot.add_command(cli_visualization.fd)
+plot.add_command(cli_visualization.sd)
+
 plot.add_command(cli_visualization.dets)
 plot.add_command(cli_visualization.loc)
 plot.add_command(cli_visualization.origin_time)

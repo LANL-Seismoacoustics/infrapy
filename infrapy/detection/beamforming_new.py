@@ -552,7 +552,7 @@ def run(X, S, f, dxdy, delays, freq_band, method="bartlett", ns_covar_inv=None, 
         normalize_beam : boolean
             Option to normalize the beam and return coherence (value between 0 and 1)
         pool : multiprocessing pool
-            Multiprocessing pool for accelerating caluclation (maps over frequency)
+            Multiprocessing pool for accelerating calculation (maps over frequency)
         param_opt : string
             Option for the solution parameterization: 'planar' or 'spherical'
         sph_vel : float
