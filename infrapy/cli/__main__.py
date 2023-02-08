@@ -18,6 +18,15 @@ def main():
     pass
 
 
+@click.group('run_spye', short_help="Estimate explosive yield from a surface explosion", context_settings={'help_option_names': ['-h', '--help']})
+def run_spye():
+    '''
+    infrapy run_spye - explosive yield estimation methods
+    
+    '''
+    pass 
+
+
 @click.group('plot', short_help="Visualize infrapy analysis results", context_settings={'help_option_names': ['-h', '--help']})
 def plot():
     '''
@@ -36,6 +45,7 @@ def utils():
     pass 
 
 
+main.add_command(run_spye)
 main.add_command(plot)
 main.add_command(utils)
 
@@ -45,7 +55,11 @@ main.add_command(cli_detection.run_fd)
 main.add_command(cli_detection.run_fkd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
-main.add_command(cli_loc.run_yield)
+
+# SpYE
+run_spye.add_command(cli_loc.regional)
+run_spye.add_command(cli_loc.single_station)
+run_spye.add_command(cli_loc.combine)
 
 # visualizations
 plot.add_command(cli_visualization.fk)
