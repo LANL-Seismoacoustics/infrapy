@@ -205,7 +205,7 @@ def plot_spye(spye_result, title=None, output_path=None, show_fig=True):
     ax1.fill_between(np.array(spye_result['yld_vals']), spye_result['yld_pdf'], where=np.logical_and(spye_result['conf_bnds'][0][0] <= np.array(spye_result['yld_vals']), np.array(spye_result['yld_vals']) <= spye_result['conf_bnds'][0][1]), color=back_az_color, alpha=0.25)
     ax1.fill_between(np.array(spye_result['yld_vals']), spye_result['yld_pdf'], where=np.logical_and(spye_result['conf_bnds'][1][0] <= np.array(spye_result['yld_vals']), np.array(spye_result['yld_vals']) <= spye_result['conf_bnds'][1][1]), color=conf_color, alpha=0.25)
 
-    ax1.set_xlabel("Yield (eq. TNT) [kg]")
+    ax1.set_xlabel("Yield (eq. TNT) [tons]")
     ax1.set_ylabel("Probability")
 
 

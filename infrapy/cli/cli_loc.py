@@ -303,7 +303,7 @@ def regional(config_file, local_wvfrms, fdsn, db_config, local_detect_label, loc
     click.echo('')
 
 
-@click.command('single_station', short_help="Estimate the near-source spectral amplitude from a single station")
+@click.command('single-station', short_help="Estimate the near-source spectral amplitude from a single station")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
@@ -328,11 +328,11 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, local_detect_labe
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_spye single_station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
-    \tinfrapy run_spye single_station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
-    \tinfrapy run_spye single_station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
-    \tinfrapy run_spye single_station --local-wvfrms '../infrapy-data/hrr-5/W420/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 3 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W420"
-    \tinfrapy run_spye single_station --local-wvfrms '../infrapy-data/hrr-5/W460/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 4 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W460"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W420/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 3 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W420"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W460/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 4 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W460"
     '''
 
     click.echo("")
@@ -445,9 +445,7 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, local_detect_labe
 
     # Define grid and estimate near-source spectral amplitude
     click.echo("Computing near-source spectral amplitude PDF...")
-    f_grid, spec_grid, pdf = det_list[det_index].src_spec_pdf(src_lat, src_lon, np.linspace(tlms[0][0], tlms[0][-1], resolution),
-                                                                np.linspace(min(spec_amp), max(spec_amp) + 40.0, resolution), np.vstack((f, spec_amp)), tlms)
-    spec_grid = spec_grid + 10.0 * np.log10(1.0 / ref_rng)
+    f_grid, spec_grid, pdf = spye._single_station(det_list[det_index], np.vstack((f, spec_amp)), [src_lat, src_lon], tlms, [freq_min, freq_max], resolution, ref_rng)
 
     click.echo("Saving PDF info to " + local_pdf_label + ".spye_pdf.npz")
     np.savez(local_pdf_label + ".spye_pdf.npz", f_grid, spec_grid, pdf)
@@ -528,31 +526,23 @@ def combine(config_file, local_pdf_label, local_yld_label, yld_min, yld_max, ref
     else:
         dir_files = os.listdir(".")
 
-    for file in dir_files:
+    for file in np.sort(dir_files):
         if fnmatch.fnmatch(file, os.path.basename(local_pdf_label)):
             file_list += [file]
 
-
     # Load single-station PDFs
-    print('\n' + "Loading and interpolating near-source spectral estimates...")
-    freqs, spec_vals, PDFs = [], [], []
-    for file in file_list:
-        click.echo('\t' + "Loading results from " + file)
-        with np.load(file) as data:
-            freqs = freqs + [data['arr_0']]
-            spec_vals = spec_vals + [data['arr_1']]
-            PDFs = PDFs + [data['arr_2']]
+    click.echo('\n' + "Loading and interpolating near-source spectral estimates...")
 
+    # combine and project onto blastwave model
+    spye_result = spye._combine(file_list, np.array([yld_min * 1.0e3, yld_max * 1.0e3]), ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type)
 
+    if ".yld.json" not in local_yld_label:
+        local_yld_label = local_yld_label + ".yld.json"
+    click.echo("Writing yield estimate result into " + local_yld_label)
+    data_io.write_json(spye_result, local_yld_label)
 
-    freqs = np.array(freqs)
-    spec_vals = np.array(spec_vals)
-    PDFs = np.array(PDFs)
-
-
-
-    f_vals = np.linspace(np.min(freqs), np.max(freqs), resolution)
-    P_vals = np.linspace(np.min(spec_vals), np.max(spec_vals), resolution)
-
-    print(freqs.shape)
-    print(np.unique(freqs).shape)
+    click.echo('\n' + 'Results Summary (tons eq. TNT):')
+    click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+    click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+    click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+    click.echo('')

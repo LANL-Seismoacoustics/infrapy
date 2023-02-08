@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-from scipy.integrate import quad
-from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
+from scipy.integrate import quad, simpson
+from scipy.interpolate import interp1d, interp2d, LinearNDInterpolator
 from scipy.signal import savgol_filter
 
 from ..detection import beamforming_new
@@ -350,6 +350,67 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
 
     # NOTE: converts kg to tons for returned result
     result = {'spec_freqs': freqs, 'spec_vals': src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), 'spec_pdf': np.product(pdf, axis=0).reshape((resol, resol)),
+                'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
+
+    return result 
+
+def _single_station(det, src_spec, src_loc, tlms, freq_lims, resolution, ref_rng):
+    f_grid, spec_grid, pdf = det.src_spec_pdf(src_loc[0], src_loc[1], np.logspace(np.log10(max(freq_lims[0], tlms[0][0])), np.log10(min(freq_lims[1], tlms[0][-1])), resolution),
+                                np.linspace(max(src_spec[1]) - 10.0, max(src_spec[1]) + 40.0, resolution), src_spec, tlms)
+    spec_grid = spec_grid + 10.0 * np.log10(1.0 / ref_rng)
+
+    return f_grid, spec_grid, pdf
+
+
+def _combine(file_list, yld_rng, ref_rng, resolution, p_amb, T_amb, grnd_burst, exp_type):
+    freq_min, freq_max = 0.0, np.inf 
+    P_min, P_max = -np.inf, np.inf 
+    PDF_interp = []
+    for file in file_list:
+        print('\t' + "Loading results from " + file)
+        with np.load(file) as data:
+            freq_min = max(freq_min, min(data['arr_0']))
+            freq_max = min(freq_max, max(data['arr_0']))
+
+            P_min = max(P_min, min(data['arr_1']))
+            P_max = min(P_max, max(data['arr_1']))
+
+            PDF_interp = PDF_interp + [LinearNDInterpolator(list(zip(data['arr_0'], data['arr_1'])), data['arr_2'], fill_value=0.0)]
+    
+    def psd_fit(f, P):
+        return np.prod(np.array([PDF(f, P) for PDF in PDF_interp]), axis=0)
+
+    f_vals = np.logspace(np.log10(freq_min), np.log10(freq_max), resolution)
+    P_vals = np.linspace(P_min, P_max, resolution)
+    
+    f_grid, P_grid = np.meshgrid(f_vals, P_vals)
+    jnt_pdf_grid = psd_fit(f_grid.flatten(), P_grid.flatten())
+
+    yld_vals = np.logspace(np.log10(yld_rng[0]), np.log10(yld_rng[1]), resolution)
+    yld_pdf = np.empty_like(yld_vals)
+
+    for n in range(len(yld_vals)):
+        if grnd_burst:
+            def temp(f):
+                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 2.0, ref_rng, p_amb, T_amb, exp_type))) / f
+        else:
+            def temp(f):
+                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 1.0, ref_rng, p_amb, T_amb, exp_type))) / f
+
+        yld_pdf[n] = simpson(temp(f_vals), x=f_vals)
+
+
+    yld_interp = interp1d(yld_vals, yld_pdf)
+
+    plt.plot(yld_vals, yld_pdf)
+    plt.show()
+
+    conf_bnds = [0] * 2
+    conf_bnds[0], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.68)
+    conf_bnds[1], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.95)
+
+    # NOTE: converts kg to tons for returned result
+    result = {'spec_freqs': f_vals, 'spec_vals': P_vals, 'spec_pdf': jnt_pdf_grid,
                 'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
 
     return result 
