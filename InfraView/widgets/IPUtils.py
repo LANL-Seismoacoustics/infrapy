@@ -10,7 +10,7 @@ reb_red = pg.mkColor(255, 71, 71)
 
 # arrays of QColors
 # blue to red... one white color removed
-blue_to_red = [pg.mkColor("#1984c5"), pg.mkColor("#22a7f0"), pg.mkColor("#63bff0"), pg.mkColor("#a7d5ed"), pg.mkColor("#e1a692"), pg.mkColor("#de6e56"), pg.mkColor("#e14b31"), pg.mkColor("#c23728")]
+blue_to_red = [pg.mkColor("#1984c5"), pg.mkColor("#c23728"), pg.mkColor("#22a7f0"), pg.mkColor("#63bff0"), pg.mkColor("#a7d5ed"), pg.mkColor("#e1a692"), pg.mkColor("#de6e56"), pg.mkColor("#e14b31")]
 
 @pyqtSlot(str, str)
 def errorPopup(message, title="Oops..."):

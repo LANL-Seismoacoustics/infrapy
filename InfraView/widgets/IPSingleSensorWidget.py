@@ -641,49 +641,50 @@ class IPDetectorSettingsWidget(QWidget):
         self.pval_spin.setMinimum(0.0)
         self.pval_spin.setMaximum(1.0)
         self.pval_spin.setValue(0.01)
-        self.pval_spin.setMaximumWidth(100)
+        self.pval_spin.setDecimals(3)
+        self.pval_spin.setMaximumWidth(150)
 
         fmin_label = QLabel("Freq min: ")
         self.fmin_spin = QDoubleSpinBox()
         self.fmin_spin.setMinimum(0.0)
         self.fmin_spin.setMaximum(10000.0)
         self.fmin_spin.setValue(0.0)    
-        self.fmin_spin.setMaximumWidth(100)
+        self.fmin_spin.setMaximumWidth(150)
 
         fmax_label = QLabel("Freq max: ")
         self.fmax_spin = QDoubleSpinBox()
         self.fmax_spin.setMinimum(1.0)
         self.fmax_spin.setMaximum(10000.0)
         self.fmax_spin.setValue(1.0)    # this needs to be set when a spectrogram is created
-        self.fmax_spin.setMaximumWidth(100)
+        self.fmax_spin.setMaximumWidth(150)
 
         smooth_label = QLabel("Smoothing Factor: ")
         self.smooth_spin = QSpinBox()
         self.smooth_spin.setMinimum(1.0)
         self.smooth_spin.setMaximum(1000)
         self.smooth_spin.setValue(5.0)
-        self.smooth_spin.setMaximumWidth(100)
+        self.smooth_spin.setMaximumWidth(150)
 
         clust_freq_scale_label = QLabel("Cluster Freq. Scaling: ")
         self.clust_freq_scale_spin = QDoubleSpinBox()
         self.clust_freq_scale_spin.setMinimum(1.0)
         self.clust_freq_scale_spin.setMaximum(10000.0)
         self.clust_freq_scale_spin.setValue(35.0)
-        self.clust_freq_scale_spin.setMaximumWidth(100)
+        self.clust_freq_scale_spin.setMaximumWidth(150)
 
         clust_eps_label = QLabel("Clustering EPS: ")
         self.clust_eps_spin = QDoubleSpinBox()
         self.clust_eps_spin.setMinimum(1.0)
         self.clust_eps_spin.setMaximum(10000.0)
         self.clust_eps_spin.setValue(10.0)
-        self.clust_eps_spin.setMaximumWidth(100)
+        self.clust_eps_spin.setMaximumWidth(150)
 
         clust_min_samples_label = QLabel("Clustering Min Samples: ")
         self.clust_min_samples_spin = QSpinBox()
         self.clust_min_samples_spin.setMinimum(1)
         self.clust_min_samples_spin.setMaximum(10000)
         self.clust_min_samples_spin.setValue(40)
-        self.clust_min_samples_spin.setMaximumWidth(100)
+        self.clust_min_samples_spin.setMaximumWidth(150)
 
         form1_layout = QFormLayout()
         form1_layout.addRow(pval_label, self.pval_spin)
@@ -772,8 +773,6 @@ class IPScatterPlotTimeAxis(pg.AxisItem):
         self.set_start_time(start_time)
 
     def tickStrings(self, values, scale, spacing):
-        print("tick strings")
-        print([(self.start_time + value).strftime("%H:%M:%S") for value in values])
         return [(self.start_time + value).strftime("%H:%M:%S") for value in values]
 
     def set_start_time(self, st):
@@ -821,7 +820,6 @@ class IPDetectionPlotItem(pg.PlotItem):
         self.spi.clear()
 
         # initialize the start time of the axis
-        print("start_time = {}".format(start_time))
         self.getAxis('bottom').set_start_time(start_time)
 
         #we have to make the spots that will be drawn
@@ -846,18 +844,15 @@ class IPDetectionPlotItem(pg.PlotItem):
         core_samples_mask[db.core_sample_indices_] = True
 
         colors = IPUtils.blue_to_red
-        print(colors)
+
         spots = []
-        print(detections.shape)
         for k, col in zip(unique_labels, colors):
-            print("k = {},  col = {}".format(k,col.rgb()))
             if k == -1:
                 # Black used for noise.
                 col = pg.mkColor(0,0,0)
             class_member_mask = labels == k
            
             xy = detections[class_member_mask & core_samples_mask]
-            print(xy.shape)
             for data in xy:
                 spots.append({'pos': (data[0], data[1]), 'pen': {'color': col}, 'brush': col, 'symbol': 's', 'size': 7*dt})
 
