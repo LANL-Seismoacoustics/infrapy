@@ -36,6 +36,9 @@ class IPWaveformTimeAxis(pg.AxisItem):
     def set_earliest_start_time(self, est):
         self.earliest_start_time = est
 
+    def get_start_time(self):
+        return self.earliest_start_time
+
 class IPSpectrogramTimeAxis(pg.AxisItem):
     # subclass the basic axis item, mainly to make custom time axis
     def __init__(self, *args, **kwargs):
@@ -145,6 +148,9 @@ class IPPlotItem(pg.PlotItem):
 
     def setEarliestStartTime(self, est):
         self.getAxis('bottom').set_earliest_start_time(est)
+
+    def get_start_time(self):
+        return self.getAxis('bottom').get_start_time()
 
     def setPlotLabel(self, text):
         if self.labi is not None:

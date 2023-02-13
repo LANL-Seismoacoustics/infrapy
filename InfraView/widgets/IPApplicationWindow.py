@@ -89,7 +89,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # Create the main widgets
         self.beamformingWidget = IPBeamformingWidget.IPBeamformingWidget(self, self.mp_pool)
-        self.singleSensorWidget = IPSingleSensorWidget.IPSingleSensorWidget(self)
+        self.singleSensorWidget = IPSingleSensorWidget.IPSingleSensorWidget(self, self.mp_pool)
         self.waveformWidget = IPWaveformWidget.IPWaveformWidget(self, self.mp_pool)
         self.locationWidget = IPLocationWidget.IPLocationWidget(self, self.mp_pool)
         self.databaseWidget = IPDatabaseWidget.IPDatabaseWidget(self)

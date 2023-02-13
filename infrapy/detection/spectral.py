@@ -143,7 +143,6 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
     freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
     Sxx_log = 10.0 * np.log10(Sxx)
 
-
     # Scan through adaptive windows to identify above-background spectrogram points
     thresh_history, peaks_history, times_history = [], [], []
     spec_dets = []
