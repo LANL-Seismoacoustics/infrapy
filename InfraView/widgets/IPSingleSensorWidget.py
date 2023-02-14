@@ -349,7 +349,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
 
     def buildUI(self):
         self.setLabel(axis='left', text='Frequency (Hz)')
-        #self.setLabel(axis='bottom', text='Time')
+        #self.setLabel(axis='bottom', text='Time') # probably not needed, i think everyone knows what this axis is
         self.spec_img = pg.ImageItem( image=np.eye(3), levels=(0,1) ) # create example image
         self.addItem(self.spec_img)
 
@@ -446,36 +446,23 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
 
         #####BUILD THE COLORBAR
         if scale_setting == 'cbar':
-            if self.histogram is not None:
-                self.histogram.setVisible(False)
             if self.color_bar is None:
-                self.color_bar = pg.ColorBarItem(interactive=True, values=(minv, maxv), colorMap=cmap, label='magnitude [dB]')
+                self.color_bar = pg.ColorBarItem(interactive=True, label='magnitude [dB]')
+            self.color_bar.setColorMap(cmap)
+            self.color_bar.setLevels((minv, maxv))
             self.color_bar.setImageItem(self.spec_img, insert_in=self)
-            self.color_bar.setVisible(True)
             self.color_bar.setLevels(low=minv, high=maxv)
             self.color_bar.setVisible(True)
-
-        #####BUILD THE HISTOGRAM
-        if scale_setting == 'hist':
-            if self.color_bar is not None:
-                self.color_bar.setVisible(False)
-            if self.histogram is None:
-                self.histogram = pg.HistogramLUTItem(image=self.spec_img, levelMode='rgba')
-            self.histogram.setImageItem(self.spec_img)
-            self.histogram.setVisible(True)
-            self.histogram.setLevels(minv, maxv)
                 
         #####HIDE EVERYTHING
         if scale_setting =='none':
-            if self.histogram is not None:
-                self.histogram.setVisible(False)
             if self.color_bar is not None:
                 self.color_bar.setVisible(False)
 
-        # add the data to make the image
+        # ADD THE DATA TO MAKE THE IMAGE
         self.spec_img.setImage(Sxx)
 
-        # set axis limits
+        # AXIS LIMITS
         self.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
         self.full_range_y = [f[0], f[-1]]
         self.set_yaxis(self.full_range_y)
@@ -529,8 +516,6 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.colormap_cb.addItems(['viridis', 'plasma', 'inferno', 'magma', 'cividis'])
         self.colormap_cb.currentTextChanged.connect(self.activate_update_button)
 
-
-
         form1_layout = QFormLayout()
         form1_layout.addRow(nperseg_label, self.nperseg_spin)
         form1_layout.addRow(nfft_label, self.nfft_spin)
@@ -554,7 +539,7 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.colorbar_rb = QRadioButton('Color Bar: ')
         self.colorbar_rb.clicked.connect(self.activate_update_button)
     
-        color_scale_layout.addWidget(self.hist_rb)
+        #color_scale_layout.addWidget(self.hist_rb)
         color_scale_layout.addWidget(self.colorbar_rb)
         color_scale_layout.addWidget(self.none_rb)
         color_scale_gb.setLayout(color_scale_layout)
@@ -641,6 +626,7 @@ class IPDetectorSettingsWidget(QWidget):
         self.pval_spin.setMinimum(0.0)
         self.pval_spin.setMaximum(1.0)
         self.pval_spin.setValue(0.01)
+        self.pval_spin.setSingleStep(0.001)
         self.pval_spin.setDecimals(3)
         self.pval_spin.setMaximumWidth(150)
 
@@ -703,12 +689,6 @@ class IPDetectorSettingsWidget(QWidget):
         det_layout.addLayout(form1_layout)
         det_layout.addLayout(form2_layout)
         det_layout.addLayout(form3_layout)
-        
-        # self.update_button = QPushButton("Update")
-        # self.update_button.setMaximumWidth(100)
-        # self.update_button.setEnabled(False)
-        # self.update_button.clicked.connect(self.deactivate_update_button)
-        # self.update_button.clicked.connect(self.singleStationWidget.updateSpectrograms)
 
         self.hide_button = QPushButton("Hide")
         self.hide_button.setMaximumWidth(60)
@@ -716,7 +696,6 @@ class IPDetectorSettingsWidget(QWidget):
 
         h_layout = QHBoxLayout()
         h_layout.addLayout(det_layout)
-        #h_layout.addWidget(self.update_button)
         h_layout.addStretch()
         h_layout.addWidget(self.hide_button)
         h_layout.setContentsMargins(0,0,0,0)
