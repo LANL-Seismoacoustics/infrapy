@@ -101,7 +101,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mainTabs.addTab(self.beamformingWidget, 'Beamforming')
         self.mainTabs.addTab(self.locationWidget, 'Location')
         self.mainTabs.addTab(self.databaseWidget, 'Database')
-        self.mainTabs.addTab(self.singleSensorWidget, 'Single Sensor')
+        self.mainTabs.addTab(self.singleSensorWidget, 'Spectral')
 
         mainLayout.addWidget(self.mainTabs)
 
