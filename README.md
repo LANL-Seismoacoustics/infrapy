@@ -64,11 +64,15 @@ Infrapy is in continued development.  Features are added, bugs are fixed, and do
     
     >> git pull
 
-Occasionally, this will cause errors due to some package dependancies changing.  If that happens, try updating your conda environment via:
+Occasionally, this will cause errors due to some package dependancies changing.  If that happens, try updating your conda environment via the shell script located in the root infrapy directory:
+
+    >> update_infrapy.sh
+    
+This is equivalent to running the command: 
 
     >> conda env update --name infrapy_env --file infrapy_env.yml --prune
     
-For your convenience, the above commands are included in a bash script in the infrapy root directory called update_infrapy.sh which will execute the pull and the conda update in that order.
+which will execute a git pull and the conda update in that order.
         
 ## Tutorials
 
