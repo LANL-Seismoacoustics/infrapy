@@ -31,7 +31,7 @@ dependencies:
   - pip
 
   - pip:
-    #- git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
-    - pisces==0.4.0
+    - git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
+    #- pisces==0.4.0
     - -e .
 
