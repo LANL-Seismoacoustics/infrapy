@@ -162,6 +162,7 @@ class IPDatabaseQueryWidget(QFrame):
         self.sta_edit.setValidator(validator)
 
         self.cha_edit = QLineEdit()
+        self.cha_edit.setText("BDF")
         self.cha_edit.setMaximumWidth(150)
         self.cha_edit.setToolTip('Wildcards OK \nOne or more SEED channel codes. \nMultiple codes are comma-separated (e.g. "BHZ,HHZ")')
         self.cha_edit.setValidator(validator)
@@ -225,7 +226,7 @@ class IPDatabaseQueryWidget(QFrame):
 
     def clear_form(self):
         self.sta_edit.setText("")
-        self.cha_edit.setText("")
+        self.cha_edit.setText("BDF")
         self.start_date_edit.setDate(self.start_date_edit.minimumDate())
         self.start_time_edit.setTime(QTime(00,00,00))
         self.duration_edit.setValue(600)

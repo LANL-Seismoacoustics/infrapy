@@ -8,7 +8,7 @@ import numpy as np
 from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QWidget, QAbstractItemView, QLineEdit, QFormLayout,
                              QComboBox, QLabel, QVBoxLayout, QHBoxLayout,
                              QGroupBox, QPushButton, QDateEdit, QTimeEdit,
-                             QSpinBox, QListWidget)
+                             QSizePolicy, QSpinBox, QListWidget)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate, Qt
 
@@ -21,11 +21,13 @@ class IPNewFDSNDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
+        self.setWindowTitle("InfraView: Add FDSN Service")
         form_layout = QFormLayout()
         name_label = QLabel("Service Name")
         self.service_name_edit = QLineEdit()
         url_label = QLabel("Service URL")
         self.service_url_edit = QLineEdit()
+        self.service_url_edit.setPlaceholderText("ex: http://service.iris.edu")
         self.service_url_edit.setMinimumWidth(220)
 
         form_layout.addRow(name_label, self.service_name_edit)
@@ -66,24 +68,29 @@ class IPFDSNWidget(QWidget):
         optionsContainer = QWidget()
         optionsContainer.setLayout(formLayout)
 
-        # First lets populate the client drop down
-        self.cb = QComboBox()
-        self.cb.setMinimumWidth(150)
-        label_service_name = QLabel(self.tr('Service:'))
-
-        # add button for new fdsn service
-        self.new_service_button = QPushButton("Add FDSN server")
-        self.new_service_button.setMinimumWidth(150)
-        self.new_service_button.clicked.connect(self.add_service)
-
         # in order to allow for custom fdsn servers, we have to make our own fdsn dictionary that we can append to
         self.fdsn_dictionary = URL_MAPPINGS
         #self.fdsn_dictionary.update({'BEER':'https://fdsnws.ilikebeer.com'})
 
-        for key in sorted(self.fdsn_dictionary.keys()):
-            self.cb.addItem(key)
+        # First lets populate the client drop down
+        self.cb = QComboBox()
+        self.cb.setMinimumWidth(150)
+        self.cb.currentTextChanged.connect(self.service_changed)
+        label_service_name = QLabel(self.tr('Service:'))
+
+        self.cb.addItems(self.fdsn_dictionary.keys())
         self.cb.setCurrentText('IRIS')
+        self.cb.setToolTip(self.fdsn_dictionary['IRIS'])
         self.cb.currentIndexChanged[str].connect(self.onActivated_cb)
+
+        # add button for new fdsn service
+        self.new_service_button = QPushButton("+")
+        self.new_service_button.setToolTip("Add an FDSN service")
+        self.new_service_button.clicked.connect(self.add_service)
+
+        service_layout = QHBoxLayout()
+        service_layout.addWidget(self.cb)
+        service_layout.addWidget(self.new_service_button)
 
         validator = IPUtils.CapsValidator(self)
         
@@ -106,7 +113,7 @@ class IPFDSNWidget(QWidget):
         self.location_Box.setValidator(validator)
 
         label_channel_str = QLabel(self.tr('Channel:'))
-        self.channel_Box = QLineEdit('*')
+        self.channel_Box = QLineEdit('BDF')
         self.channel_Box.setMinimumWidth(170)
         self.channel_Box.setToolTip('Wildcards OK \nOne or more SEED channel codes. \nMultiple codes are comma-separated (e.g. "BHZ,HHZ")')
         self.channel_Box.setValidator(validator)
@@ -142,26 +149,14 @@ class IPFDSNWidget(QWidget):
         self.browserButton = QPushButton('Station Browser')
         self.browserButton.clicked.connect(self.onClicked_browserButton)
 
-        # gridLayout.addWidget(label_service_name, 0, 0)
-        # gridLayout.addWidget(self.cb, 0, 1)
-        # gridLayout.addWidget(label_network_name, 1, 0)
-        # gridLayout.addWidget(self.networkNameBox, 1, 1)
-        # gridLayout.addWidget(label_station_name, 2, 0)
-        # gridLayout.addWidget(self.stationNameBox, 2, 1)
-        # gridLayout.addWidget(label_location_str, 3, 0)
-        # gridLayout.addWidget(self.location_Box, 3, 1)
-        # gridLayout.addWidget(label_channel_str, 4, 0)
-        # gridLayout.addWidget(self.channel_Box, 4, 1)
-        # gridLayout.addWidget(label_startDate, 5, 0)
-        # gridLayout.addWidget(self.startDate_edit, 5, 1)
-        # gridLayout.addWidget(label_startTime, 6, 0)
-        # gridLayout.addWidget(self.startTime_edit, 6, 1)
-        # gridLayout.addWidget(label_traceLength, 7, 0)
-        # gridLayout.addWidget(self.traceLength_t, 7, 1)
-        # gridLayout.addWidget(importEventButton, 8, 1, 1, 2)
+        formLayout.addRow(label_service_name, service_layout)
 
-        formLayout.addRow(label_service_name, self.cb)
-        formLayout.addWidget(self.new_service_button)
+        horizontalLineWidget = QWidget()
+        horizontalLineWidget.setFixedHeight(2);
+        horizontalLineWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed);
+        horizontalLineWidget.setStyleSheet("background-color: #c0c0c0;");
+        formLayout.addWidget(horizontalLineWidget)
+
         formLayout.addRow(label_network_name, self.networkNameBox)
         formLayout.addRow(label_station_name, self.stationNameBox)
         formLayout.addRow(label_location_str, self.location_Box)
@@ -191,9 +186,14 @@ class IPFDSNWidget(QWidget):
     def add_service(self):
         if self.add_serviceDialog.exec_():
             name, url = self.add_serviceDialog.get_service()
-            print(name, url)
+            self.fdsn_dictionary[name] = url
+            self.cb.addItem(name)
+            self.cb.setCurrentText(name)
+            self.cb.setToolTip(url)
 
-
+    @pyqtSlot(str)
+    def service_changed(self, name):
+        self.cb.setToolTip(self.fdsn_dictionary[name])
 
     def onClicked_browserButton(self):
 
