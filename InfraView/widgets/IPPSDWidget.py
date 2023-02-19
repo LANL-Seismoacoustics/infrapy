@@ -221,6 +221,11 @@ class IPPSDWidget(QWidget):
     def updateLinearFrequencyIndicators(self):
         self.psdPlot.getFreqRegion().setRegion([np.log10(self.f1_Spin.value()), np.log10(self.f2_Spin.value())])
 
+    def updateFreqRange(self, rgn):
+        self.f1_Spin.setValue(rgn[0])
+        self.f2_Spin.setValue(rgn[1])
+        self.psdPlot.getFreqRegion().setRegion([np.log10(self.f1_Spin.value()), np.log10(self.f2_Spin.value())])
+
     def setFilterFromPSD(self):
 
         filterSettings = self.parent.filterSettingsWidget.get_filter_settings()

@@ -11,47 +11,47 @@ class IPFilterSettingsWidget(QWidget):
     sig_filter_changed = pyqtSignal(dict)
     sig_filter_display_changed = pyqtSignal(dict)
 
-    _filter_display_settings = {}  # Holder of the current filter display settings
+    filter_display_settings = {}  # Holder of the current filter display settings
 
-    _filter_display_settings_default = {'apply': False, 'showUnfiltered': False}
+    filter_display_settings_default = {'apply': False, 'showUnfiltered': False}
 
-    _filter_settings = {}  # Holder of the current filter settings
+    filter_settings = {}  # Holder of the current filter settings
 
-    _filter_settings_default = {'type': 'Band Pass', 'F_low': 5.0, 'F_high': .5,
+    filter_settings_default = {'type': 'Band Pass', 'F_low': 5.0, 'F_high': .5,
                                 'order': 4, 'zphase': False}
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
 
         super().__init__(parent)
-
-        self._filter_settings = self._filter_settings_default.copy()
-        self._filter_display_settings = self._filter_display_settings_default.copy()
+        self.parent = parent
+        self.filter_settings = self.filter_settings_default.copy()
+        self.filter_display_settings = self.filter_display_settings_default.copy()
         self.__buildUI__()
         self.show()
 
     def __buildUI__(self):
 
         self.applyFilter_checkbox = QCheckBox('Apply Filter?')
-        self.applyFilter_checkbox.setChecked(self._filter_display_settings['apply'])
+        self.applyFilter_checkbox.setChecked(self.filter_display_settings['apply'])
         self.applyFilter_checkbox.stateChanged.connect(self.apply_filter)
 
         self.showUnfiltered = QCheckBox('Show Unfiltered?')
-        self.showUnfiltered.setChecked(self._filter_display_settings['showUnfiltered'])
+        self.showUnfiltered.setChecked(self.filter_display_settings['showUnfiltered'])
         self.showUnfiltered.stateChanged.connect(self.onActivated_showUnfiltered)
 
         self.cb_filter_type = QComboBox()
-        self.cb_filter_type.addItem('Low Pass')
-        self.cb_filter_type.addItem('High Pass')
+        #self.cb_filter_type.addItem('Low Pass')
+        #self.cb_filter_type.addItem('High Pass')
         self.cb_filter_type.addItem('Band Pass')
 
-        cb_idx = self.cb_filter_type.findText(self._filter_settings['type'])
+        cb_idx = self.cb_filter_type.findText(self.filter_settings['type'])
         self.cb_filter_type.setCurrentIndex(cb_idx)
         self.cb_filter_type.currentIndexChanged[str].connect(self.onActivated_cb)
 
         self.label_lowpassFreq = QLabel(self.tr('Low Pass F: '))
         self.lowpassSpin = QDoubleSpinBox()
         self.lowpassSpin.setDecimals(5)
-        self.lowpassSpin.setValue(self._filter_settings['F_low'])
+        self.lowpassSpin.setValue(self.filter_settings['F_low'])
         self.lowpassSpin.setMaximum(100000)
         self.lowpassSpin.setMinimum(.00002)
         self.lowpassSpin.setSingleStep(.1)
@@ -61,7 +61,7 @@ class IPFilterSettingsWidget(QWidget):
         self.label_highpassFreq = QLabel(self.tr('High Pass F: '))
         self.highpassSpin = QDoubleSpinBox()
         self.highpassSpin.setDecimals(5)
-        self.highpassSpin.setValue(self._filter_settings['F_high'])
+        self.highpassSpin.setValue(self.filter_settings['F_high'])
         self.highpassSpin.setMaximum(100000)
         self.highpassSpin.setMinimum(.00001)
         self.highpassSpin.setSingleStep(.1)
@@ -71,11 +71,11 @@ class IPFilterSettingsWidget(QWidget):
         self.label_order = QLabel(self.tr('Order: '))
         self.orderSpin = QSpinBox()
         self.orderSpin.setMinimum(1)
-        self.orderSpin.setValue(self._filter_settings['order'])
+        self.orderSpin.setValue(self.filter_settings['order'])
 
         self.label_zeroPhase = QLabel(self.tr('Zero Phase'))
         self.zeroPhase = QCheckBox()
-        self.zeroPhase.setChecked(self._filter_settings['zphase'])
+        self.zeroPhase.setChecked(self.filter_settings['zphase'])
 
         self.update_Button = QPushButton('Update')
         self.update_Button.setMaximumWidth(200)
@@ -112,7 +112,7 @@ class IPFilterSettingsWidget(QWidget):
         self.setLayout(qvbox)
 
     def onActivated_cb(self, text):
-        self._filter_settings['type'] = text
+        self.filter_settings['type'] = text
 
         if text == 'Low Pass' or text == 'Low Pass Cheby2' or text == 'Low Pass Fir':
             # disable the highpass freq. spin
@@ -142,27 +142,27 @@ class IPFilterSettingsWidget(QWidget):
         self.update_Button.setEnabled(True)
 
     def onActivated_showUnfiltered(self):
-        self._filter_display_settings['showUnfiltered'] = self.showUnfiltered.isChecked()
-        self.sig_filter_display_changed.emit(self._filter_display_settings)
+        self.filter_display_settings['showUnfiltered'] = self.showUnfiltered.isChecked()
+        self.sig_filter_display_changed.emit(self.filter_display_settings)
 
     def update_clicked(self):
-        self.sig_filter_changed.emit(self._filter_settings)
-
+        self.sig_filter_changed.emit(self.filter_settings)
+        self.parent.spectraWidget.updateFreqRange((self.highpassSpin.value(), self.lowpassSpin.value()))
     def onActivated_zeroPhase(self, int):
-        self._filter_settings['zphase'] = self.zeroPhase.isChecked()
+        self.filter_settings['zphase'] = self.zeroPhase.isChecked()
 
     def onActivated_lpSpin(self, float):
-        self._filter_settings['F_low'] = self.lowpassSpin.value()
+        self.filter_settings['F_low'] = self.lowpassSpin.value()
 
     def onActivated_hpSpin(self, float):
-        self._filter_settings['F_high'] = self.highpassSpin.value()
+        self.filter_settings['F_high'] = self.highpassSpin.value()
 
     def enableAll(self):
         # This enables all of the appropriate inputs
         self.cb_filter_type.setEnabled(True)
         self.label_order.setEnabled(True)
         self.orderSpin.setEnabled(True)
-        self.onActivated_cb(self._filter_settings['type'])
+        self.onActivated_cb(self.filter_settings['type'])
         self.label_zeroPhase.setEnabled(True)
         self.zeroPhase.setEnabled(True)
         self.showUnfiltered.setEnabled(True)
@@ -185,45 +185,45 @@ class IPFilterSettingsWidget(QWidget):
     def apply_filter(self, state):
 
         if state == 2:
-            self._filter_display_settings['apply'] = True
+            self.filter_display_settings['apply'] = True
             self.enableAll()
         else:
-            self._filter_display_settings['apply'] = False
+            self.filter_display_settings['apply'] = False
 
-        self.sig_filter_changed.emit(self._filter_settings)
-        self.sig_filter_display_changed.emit(self._filter_display_settings)
+        self.sig_filter_changed.emit(self.filter_settings)
+        self.sig_filter_display_changed.emit(self.filter_display_settings)
 
-    def reset_filter_settings(self):
-        self._filter_settings = self._filter_settings_default.copy()
-        self._filter_display_settings = self._filter_display_settings_default.copy()
+    def resetfilter_settings(self):
+        self.filter_settings = self.filter_settings_default.copy()
+        self.filter_display_settings = self.filter_display_settings_default.copy()
 
         self.updateWidget()
         self.disableAll()
 
     def get_filter_settings(self):
-        return self._filter_settings
+        return self.filter_settings
 
     def get_filter_display_settings(self):
-        return self._filter_display_settings
+        return self.filter_display_settings
 
     def set_filter_settings(self, settings):
-        self._filter_settings = settings
+        self.filter_settings = settings
         self.sig_filter_changed.emit(settings)
         self.update_widget()
 
     def update_widget(self):
         # when filter settings are changed programatically, update the widget to show current settings
 
-        self.applyFilter_checkbox.setChecked(self._filter_display_settings['apply'])
-        self.showUnfiltered.setChecked(self._filter_display_settings['showUnfiltered'])
+        self.applyFilter_checkbox.setChecked(self.filter_display_settings['apply'])
+        self.showUnfiltered.setChecked(self.filter_display_settings['showUnfiltered'])
 
-        cb_idx = self.cb_filter_type.findText(self._filter_settings['type'])
+        cb_idx = self.cb_filter_type.findText(self.filter_settings['type'])
         self.cb_filter_type.setCurrentIndex(cb_idx)
 
-        self.lowpassSpin.setValue(self._filter_settings['F_low'])
-        self.highpassSpin.setValue(self._filter_settings['F_high'])
-        self.orderSpin.setValue(self._filter_settings['order'])
-        self.zeroPhase.setChecked(self._filter_settings['zphase'])
+        self.lowpassSpin.setValue(self.filter_settings['F_low'])
+        self.highpassSpin.setValue(self.filter_settings['F_high'])
+        self.orderSpin.setValue(self.filter_settings['order'])
+        self.zeroPhase.setChecked(self.filter_settings['zphase'])
 
     def save_current_filter(self):
         newSettings = QSettings('LANL', 'IPView')
@@ -232,8 +232,8 @@ class IPFilterSettingsWidget(QWidget):
         newSettings.setValue("newFilterKey", "Butterworth")
 
     def refresh_filter_entries(self):
-        self.cb_filter_type.setCurrentText(self._filter_settings['type'])
-        self.lowpassSpin.setValue(self._filter_settings['F_low'])
-        self.highpassSpin.setValue(self._filter_settings['F_high'])
-        self.orderSpin.setValue(self._filter_settings['order'])
-        self.zeroPhase.setChecked(self._filter_settings['zphase'])
+        self.cb_filter_type.setCurrentText(self.filter_settings['type'])
+        self.lowpassSpin.setValue(self.filter_settings['F_low'])
+        self.highpassSpin.setValue(self.filter_settings['F_high'])
+        self.orderSpin.setValue(self.filter_settings['order'])
+        self.zeroPhase.setChecked(self.filter_settings['zphase'])

@@ -895,7 +895,7 @@ class IPMapSettingsDialog(QDialog):
         main_layout = QVBoxLayout()
         main_layout.addLayout(boxes_layout)
         main_layout.addWidget(self.backgroud_image_checkbox)
-        main_layout.addWidget(self.show_grid_checkbox)
+        #main_layout.addWidget(self.show_grid_checkbox)
         main_layout.addLayout(resolution_layout)
         main_layout.addLayout(offline_layout)
         main_layout.addStretch()
