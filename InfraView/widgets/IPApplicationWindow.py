@@ -50,7 +50,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     sig_inventory_changed = pyqtSignal(Inventory)
 
     # variable to hold the reference of the loaded project object (if any)
-    _project = None
+    project = None
 
     # we will have one multiprocessing pool used by any/all widgets
     mp_pool = None
@@ -184,40 +184,40 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.statusBar().showMessage(s, ms)
 
     def filemenu_NewProject(self):
-        self._project = IPProject.IPProject()
-        if self._project.makeNewProject():
-            self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
-            self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
+        self.project = IPProject.IPProject()
+        if self.project.makeNewProject():
+            self.setWindowTitle(self.progname + ' - ' + self.project.getprojectName())
+            self.setStatus(self.project.get_projectName() + ' successfully loaded', 5000)
 
             settings = QSettings('LANL', 'InfraView')
             settings.beginGroup('General')
-            settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
-            settings.setValue('last_project_directory', str(self._project.get_projectPath))
+            settings.setValue("last_baseProject_directory", str(self.project.get_basePath()))
+            settings.setValue('last_project_directory', str(self.project.get_projectPath))
             settings.endGroup()
             
     def filemenu_LoadProject(self):
         newProject = IPProject.IPProject()
         if newProject.loadProject():
-            self._project = newProject
-            self.setWindowTitle(self.progname + ' - ' + self._project.get_projectName())
-            self.setStatus(self._project.get_projectName() + ' successfully loaded', 5000)
+            self.project = newProject
+            self.setWindowTitle(self.progname + ' - ' + self.project.get_projectName())
+            self.setStatus(self.project.get_projectName() + ' successfully loaded', 5000)
 
             settings = QSettings('LANL', 'InfraView')
             settings.beginGroup('General')
-            settings.setValue("last_baseProject_directory", str(self._project.get_basePath()))
-            settings.setValue('last_project_directory', str(self._project.get_projectPath))
+            settings.setValue("last_baseProject_directory", str(self.project.get_basePath()))
+            settings.setValue('last_project_directory', str(self.project.get_projectPath))
             settings.endGroup()
 
     def filemenu_CloseProject(self):
         self.setWindowTitle(self.progname)
-        # self.consoleBox.append('Closed Project: ' + self._project.get_projectName())
+        # self.consoleBox.append('Closed Project: ' + self.project.get_projectName())
         self.filemenu_ClearWaveforms()
-        if self._project is not None:
-            self.setStatus(self._project.get_projectName() + ' successfully closed', 5000)
-            self._project = None
+        if self.project is not None:
+            self.setStatus(self.project.get_projectName() + ' successfully closed', 5000)
+            self.project = None
 
     def getProject(self):
-        return self._project
+        return self.project
 
     def get_earliest_start_time(self):
         return self._earliest_start_time
@@ -232,7 +232,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         # if this hasn't been run yet, I want to default to opening the /data directory.  This can be found relative to the 
         # current directory via...
         default_data_dir = os.path.join(os.path.dirname(__file__), '../../examples/data')
-        if self._project is None:
+        if self.project is None:
             # force a new filename...
             settings = QSettings('LANL', 'InfraView')
             settings.beginGroup('General')
@@ -241,7 +241,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         else:
             # There is an open project, so make the default save location
             # correspond to what the project wants
-            previous_directory = str(self._project.get_dataPath())
+            previous_directory = str(self.project.get_dataPath())
 
         ifiles = QFileDialog.getOpenFileNames(self, 'Open File...', previous_directory)
 
@@ -257,13 +257,13 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                         current_trace_names.append(self.getTraceName(trace))
 
                 ipath = os.path.dirname(ifile)
-                if self._project is None:
+                if self.project is None:
                     settings = QSettings('LANL', 'InfraView')
                     settings.beginGroup('General')
                     settings.setValue("last_open_directory", ipath)
                     settings.endGroup()
                 else:
-                    self._project.set_dataPath(ipath)
+                    self.project.set_dataPath(ipath)
                 try:
                     new_stream = obsRead(ifile)
                     
@@ -387,7 +387,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             IPUtils.errorPopup('Oh dear...no waveforms to save.')
             return
 
-        if self._project is None:
+        if self.project is None:
             # force a new filename...
             settings = QSettings('LANL', 'InfraView')
             settings.beginGroup('General')
@@ -396,7 +396,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         else:
             # There is an open project, so make the default save location
             # correspond to what the project wants
-            previousDirectory = str(self._project.get_dataPath())
+            previousDirectory = str(self.project.get_dataPath())
 
         accepted = self.saveAllDialog.exec_(self.waveformWidget._sts, previousDirectory)
 

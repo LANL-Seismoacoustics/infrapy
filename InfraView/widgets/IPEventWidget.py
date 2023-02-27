@@ -11,6 +11,7 @@ from InfraView.widgets import IPEventBrowser
 from obspy.core import UTCDateTime
 import pyproj
 
+
 class IPEventWidget(QWidget):
 
     sigEventWidgetChanged = pyqtSignal(dict)

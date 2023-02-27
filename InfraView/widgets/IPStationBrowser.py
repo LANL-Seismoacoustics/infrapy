@@ -20,7 +20,7 @@ from InfraView.widgets import IPUtils
 
 class IPStationBrowser(QWidget):
 
-    __inv = None
+    inventory = None
 
     def __init__(self, service=None, network=None):
         super().__init__()
@@ -332,7 +332,7 @@ class IPStationBrowser(QWidget):
             endDate = self.endDate_edit.date().toString("yyyy-MM-dd")
 
             try:
-                self.__inv = client.get_stations(network=network,
+                self.inventory = client.get_stations(network=network,
                                                  station=station,
                                                  location=location,
                                                  channel=channel,
@@ -355,7 +355,7 @@ class IPStationBrowser(QWidget):
 
             self.stationListWidget.clear()
 
-            inv_contents = self.__inv.get_contents()
+            inv_contents = self.inventory.get_contents()
 
             stationList = []
 
@@ -377,7 +377,7 @@ class IPStationBrowser(QWidget):
         return
 
     def onActivated_reset(self):
-        self.__inv = None
+        self.inventory = None
         self.network_edit.setText('')
         self.station_edit.setText('')
         self.location_edit.setText('')
@@ -450,7 +450,7 @@ class IPStationBrowser(QWidget):
 
         lat, lon, cnt = 0, 0, 0
 
-        for network in self.__inv:
+        for network in self.inventory:
             for station in network:
                 lat += station.latitude
                 lon += station.longitude
@@ -459,11 +459,11 @@ class IPStationBrowser(QWidget):
         return [lat / cnt, lon / cnt]
 
     def getInventory(self):
-        return self.__inv
+        return self.inventory
 
     def getSelectedInventory(self):
         reducedInv = []
-        for item in self.__inv:
+        for item in self.inventory:
             if item.isSelected():
                 reducedInv.append(item)
         return reducedInv
