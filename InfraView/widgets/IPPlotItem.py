@@ -160,7 +160,8 @@ class IPPlotItem(pg.PlotItem):
         self.labi.anchor(itemPos=(0.0,0.0), parentPos=(0.0,0.0))
 
     def clearPlotLabel(self):
-        self.vb.removeItem(self.labi)
+        if self.labi is not None:
+            self.vb.removeItem(self.labi)
         self.labi = None
 
     def xaxis(self):

@@ -44,8 +44,8 @@ class IPWaveformWidget(QWidget):
         self.stationViewer = IPStationView.IPStationView(self)
         self.statsViewer = IPStatsView.IPStatsView(self)
         self.info_tabs = QTabWidget()
-        self.info_tabs.addTab(self.statsViewer, 'Trace Info')
         self.info_tabs.addTab(self.stationViewer, 'Station Info')
+        self.info_tabs.addTab(self.statsViewer, 'Trace Info')
 
         self.filterSettingsWidget = IPFilterSettingsWidget.IPFilterSettingsWidget(self)
         self.spectraWidget = IPPSDWidget.IPPSDWidget(self)
@@ -362,7 +362,6 @@ class IPWaveformWidget(QWidget):
         return obspy.core.inventory.inventory.Inventory(networks, 'source')
 
     def clearWaveforms(self):
-
         # empty out the streams
         self._sts = None
         self._sts_filtered = None

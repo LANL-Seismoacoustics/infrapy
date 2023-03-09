@@ -41,6 +41,7 @@ class IPSingleSensorWidget(QWidget):
 
         ##### TOOLBAR
         self.toolbar = QToolBar()
+        self.toolbar.setStyleSheet("QToolBar{background-color: silver; }")
         #self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_runDetector_button = QToolButton()
         self.tool_runDetector_button.setText("Run Detector")
@@ -125,6 +126,12 @@ class IPSingleSensorWidget(QWidget):
         return self.appWidget.waveformWidget.get_earliest_start_time()
     
     def run_spectral_detector(self):
+        # before we do anything, pull in spectrogram data and make sure there is something to process
+        # pull in the spectrogram data
+        f, t, Sxx_log = self.noiseSpecWidget.get_logdata()
+        if f is None or t is None or Sxx_log is None:
+            IPUtils.errorPopup("You must have data loaded to run the detector.")
+            return      
 
         # Pull in the detector settings
         pval = self.detector_settings_widget.pval_spin.value()
@@ -139,9 +146,6 @@ class IPSingleSensorWidget(QWidget):
             IPUtils.errorPopup("Frequency min must be less than frequency max")
             return
 
-        # pull in the spectrogram data
-        f, t, Sxx_log = self.noiseSpecWidget.get_logdata()
-        
         noise_t_range = self.noiseSpecWidget.get_xrange()
         noise_window_mask = np.logical_and(noise_t_range[0] <= t, t <= noise_t_range[1])
         noise_t_window = t[noise_window_mask]
@@ -339,6 +343,10 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     color_bar = None
     histogram = None
 
+    f = None
+    t = None
+    Sxx = None
+
     sig_start_spec_calc = pyqtSignal()
     sig_fmax_changed = pyqtSignal(float)
 
@@ -362,6 +370,8 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
 
     def get_logdata(self):
         # return the f,t,and log10(Sxx) data for further use
+        if self.Sxx is None:
+            return None, None, None
         return self.f, self.t, 10 * np.log10(self.Sxx)
     
     def get_xrange(self):
@@ -391,6 +401,9 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
             self.set_yaxis([self.full_range_y[0], self.full_range_y[1]])
 
     def clear_spectrogram(self):
+        self.f = None
+        self.t = None 
+        self.Sxx = None
         self.spec_img = pg.ImageItem( image=np.eye(3), levels=(0,1) ) # create example image
         self.clear()
         self.addItem(self.spec_img)
@@ -833,11 +846,11 @@ class IPDetectionPlotItem(pg.PlotItem):
            
             xy = detections[class_member_mask & core_samples_mask]
             for data in xy:
-                spots.append({'pos': (data[0], data[1]), 'pen': {'color': col}, 'brush': col, 'symbol': 's', 'size': 7*dt})
+                spots.append({'pos': (data[0], data[1]), 'pen': {'color': col}, 'brush': col, 'symbol': 's', 'size':5.6*dt})
 
             xy = detections[class_member_mask & ~core_samples_mask]
             for data in xy:
-                spots.append({'pos': (data[0], data[1]), 'pen': {'color': col}, 'brush': col, 'symbol': 's', 'size': 7*dt})
+                spots.append({'pos': (data[0], data[1]), 'pen': {'color': col}, 'brush': col, 'symbol': 's', 'size':5.6*dt})
 
         self.spi.addPoints(spots)
 

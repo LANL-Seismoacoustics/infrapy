@@ -170,7 +170,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
         function to pull obspy streams from the database.  
         stations: str
         channel: str
-        starttime: DateTime 
+        starttime: UTCDateTime 
     '''
 
     Site = db_tables['site']
@@ -182,6 +182,13 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
 
     if channel is None:
         channel = "*"
+
+    # the pisces.request.get_stations function requires the start/end days to be an integer in jdate format (YYYYDDD)
+    # so we have to massage our starttime and endtimes to that form
+    julian_start = starttime.year * 1000 + starttime.julday
+    julian_end = endtime.year * 1000 + endtime.julday
+    wtime = (julian_start, julian_end)
+    print("wtime = {}".format(wtime))
 
     # get station info
     if "%" in stations:

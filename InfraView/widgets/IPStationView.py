@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout, QLayout, 
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
-                             QVBoxLayout)
+                             QVBoxLayout, QRadioButton)
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtGui import QIcon
@@ -17,6 +17,8 @@ import lxml.etree
 from InfraView.widgets import IPStationMatchDialog
 from InfraView.widgets import IPUtils
 
+import pyqtgraph as pg
+
 
 class IPStationView(QWidget):
 
@@ -24,7 +26,7 @@ class IPStationView(QWidget):
     savefile = None
 
     inventory_changed = pyqtSignal(obspy.core.inventory.inventory.Inventory)
-    inventory_cleared = pyqtSignal()
+    sig_inventory_cleared = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__()
@@ -42,6 +44,8 @@ class IPStationView(QWidget):
 
         self.station_TabWidget = QTabWidget()
         # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.arrayViewWidget = IPArrayView(self)
 
         self.clearButton = QPushButton(' Clear Stations')
         self.clearButton.setIcon(self.clearIcon)
@@ -73,6 +77,9 @@ class IPStationView(QWidget):
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.station_TabWidget)
+        #mainLayout.addStretch()
+        mainLayout.addWidget(self.arrayViewWidget)
+        #mainLayout.addStretch()
         mainLayout.addLayout(verticalLayout)
 
         # go ahead and make an instance of the matchDialog for later use
@@ -93,6 +100,9 @@ class IPStationView(QWidget):
         self.saveAsButton.clicked.connect(self.saveStationsAs)
         self.loadButton.clicked.connect(self.loadStations)
         self.reconcileButton.clicked.connect(self.reconcileStations)
+
+        self.inventory_changed.connect(self.arrayViewWidget.set_data)
+        self.sig_inventory_cleared.connect(self.arrayViewWidget.clear)
 
     def setInventory(self, inventory):
         if inventory is None:
@@ -194,7 +204,8 @@ class IPStationView(QWidget):
         self.parent.set_inventory(None)
 
         # now signal to the application that the inventory needs to be cleared
-        self.inventory_cleared.emit()
+        self.sig_inventory_cleared.emit()
+
 
     def saveStations(self):
         inventory = self.parent.get_inventory()
@@ -335,3 +346,58 @@ class IPStationView(QWidget):
                     self.parent.set_inventory(inventory)
                     self.setInventory(inventory)
 
+
+class IPArrayView(QWidget):
+
+    spi = None
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.station_plot = pg.PlotWidget(title='Station Geometry')
+
+        self.station_plot.showAxis('right')
+        self.station_plot.getAxis('right').setTicks('')
+        self.station_plot.showAxis('top')
+        self.station_plot.getAxis('top').setTicks('')
+
+        self.station_plot.getAxis('bottom').setLabel('Longitude')
+        self.station_plot.getAxis('left').setLabel('Latitude')
+
+        self.station_plot.enableAutoRange()
+        self.station_plot.setDefaultPadding(0.04)
+
+        self.station_plot.setAspectLocked(True, ratio=1)
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.station_plot)
+
+        self.setLayout(main_layout)
+
+
+    @pyqtSlot(Inventory)
+    def set_data(self, inv):
+        spots = []          # clear array of datas
+        self.station_plot.clear()
+
+        self.spi = pg.ScatterPlotItem()
+        self.station_plot.addItem(self.spi)
+        
+        for net in inv.networks:
+            for sta in net.stations:
+                loc = (sta.longitude, sta.latitude)
+                spots.append({'pos': loc, 'symbol': '+'})
+                self.create_label(loc, sta.code)
+
+        self.spi.addPoints(spots)
+
+    def clear(self):
+        self.station_plot.clear()
+        if self.spi is not None:
+            self.spi.clear()
+
+        
+    def create_label(self, location, label):
+        text_label = pg.TextItem(label)
+        text_label.setPos(location[0], location[1])
+        self.station_plot.addItem(text_label, ignoreBounds=True)

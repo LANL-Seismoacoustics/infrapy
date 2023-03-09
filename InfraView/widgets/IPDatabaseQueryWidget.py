@@ -267,9 +267,10 @@ class IPDatabaseQueryWidget(QFrame):
         return self.parent.ipdatabase_connect_widget.session
 
     def get_startstop_times(self):
-        # returns iso format string of the start and stop times
-        starttime = self.start_date_edit.date().toString(Qt.ISODate) + "T" + self.start_time_edit.time().toString(Qt.ISODate)
-        stoptime = (UTCDateTime(starttime) + self.duration_edit.value()).isoformat()
+        # returns UTCDateTime objects of the start and stop times
+        starttime_str = self.start_date_edit.date().toString(Qt.ISODate) + "T" + self.start_time_edit.time().toString(Qt.ISODate)
+        starttime = UTCDateTime(starttime_str)
+        stoptime = UTCDateTime(starttime) + self.duration_edit.value()
         return starttime, stoptime
 
     def query_database(self):
