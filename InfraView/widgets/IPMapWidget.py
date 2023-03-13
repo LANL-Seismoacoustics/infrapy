@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, Q
                              QLineEdit, QToolBar, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton, QDoubleSpinBox)
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal, QSettings
 
-from PyQt5.QtGui import QPainter, QPaintEvent, QColor
+from PyQt5.QtGui import QPainter, QPaintEvent, QColor, QPalette
 
 import matplotlib
 from matplotlib import cm
@@ -72,6 +72,7 @@ class IPMapWidget(QWidget):
         self.extentWidget.setVisible(False)
 
         self.toolbar = QToolBar()
+        self.toolbar.setStyleSheet("QToolBar{background-color: silver; }")
 
         #self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_settings_button = QToolButton()
@@ -993,6 +994,12 @@ class IPExtentSettingsWidget(QWidget):
         self.buildUI()
 
     def buildUI(self):
+
+        # pal = QPalette()
+        # pal.setColor(QPalette.Window, Qt.lightGray)
+        # self.setAutoFillBackground(True)
+        # self.setPalette(pal)
+
         ll_groupbox = QGroupBox("Lower left coordinates")
         ur_groupbox = QGroupBox("Upper right coordinates")
 
