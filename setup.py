@@ -53,9 +53,10 @@ setup(name = "infrapy",
                'scripts/update_refsta.py'],
 
       package_dir={'infrapy.propagation' : 'infrapy/propagation'},
-      package_data={'infrapy.propagation' : ['compass.png',
-                                             'ak135_1st_arrivals.dat'],
-                    'infrapy.resources' :['default.config']},
+      package_data={'infrapy.propagation' : ['compass.png'],
+                    'infrapy.resources' : ['default.config'],
+                    'infrapy.resources.travelTimeTables' : ['ak135_1st_arrivals.dat']},
+                    
 
       install_requires = ['numpy',
                           'scipy',

@@ -2,17 +2,15 @@ import os
 
 from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout, QLayout, 
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
-                             QVBoxLayout, QRadioButton)
-from PyQt5 import QtCore
-from PyQt5 import QtGui
+                             QVBoxLayout)
+
 from PyQt5.QtGui import QIcon
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDir, QSettings
 
 import obspy
 from obspy import read_inventory
-from obspy.core.inventory import Inventory, Network, Station, Channel, Site
-import lxml.etree
+from obspy.core.inventory import Inventory
 
 from InfraView.widgets import IPStationMatchDialog
 from InfraView.widgets import IPUtils
@@ -22,7 +20,11 @@ import pyqtgraph as pg
 
 class IPStationView(QWidget):
 
-    # class to ease the process of displaying the obspy inventory list
+    ''' Widget that shows pertinent information about the current inventory.
+        Note that this widget does not keep a copy of the current inventory, that
+        is stored in the parent waveformwidget.  This widget simply gets and puts inventory 
+        info from there.
+    '''
     savefile = None
 
     inventory_changed = pyqtSignal(obspy.core.inventory.inventory.Inventory)
@@ -43,6 +45,8 @@ class IPStationView(QWidget):
         self.buildIcons()
 
         self.station_TabWidget = QTabWidget()
+        self.station_TabWidget.setTabsClosable(True)
+        self.station_TabWidget.tabCloseRequested.connect(self.remove_station_by_name)
         # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.arrayViewWidget = IPArrayView(self)
@@ -193,15 +197,19 @@ class IPStationView(QWidget):
                 cnt += 1
         return cnt
 
-    @QtCore.pyqtSlot(int)
+    @pyqtSlot(int)
     def closeMyTab(self, idx):
         self.station_TabWidget.removeTab(idx)
+
+    @pyqtSlot(int)
+    def remove_station_by_name(self, idx):
+        title = self.station_TabWidget.tabText(idx)
+        parts = title.split('.')
+        self.parent.remove_from_inventory(net=parts[0], sta=parts[1], loc=parts[2], cha=parts[3], keep_empty=False)
 
     def clear(self):
         for i in range(self.station_TabWidget.count()):
             self.station_TabWidget.removeTab(0)
- 
-        self.parent.set_inventory(None)
 
         # now signal to the application that the inventory needs to be cleared
         self.sig_inventory_cleared.emit()

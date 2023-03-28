@@ -188,18 +188,19 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
     julian_start = starttime.year * 1000 + starttime.julday
     julian_end = endtime.year * 1000 + endtime.julday
     wtime = (julian_start, julian_end)
-    print("wtime = {}".format(wtime))
 
     # get station info
-    if "%" in stations:
-        # Load data specified with a while card (e.g., 'I26H*') via a Site table query
-        sta_list = session.query(Site).filter(Site.sta.contains(stations))
-    elif ',' in stations:
-        # Load data specified by a string list of stations (e.g., 'I26H1, I26H2, I26H3, I26H4') with get_stations
-        sta_list = ps.request.get_stations(session, Site, stations=stations.strip('()[]').replace(" ", "").split(','))
-    else:
-        # Load data specified by a Python list of strings (e.g., ['I26H1', 'I26H2', 'I26H3', 'I26H4']) with get_stations
-        sta_list = ps.request.get_stations(session, Site, stations=stations)
+    # if "%" in stations:
+    #     # Load data specified with a while card (e.g., 'I26H*') via a Site table query
+    #     sta_list = session.query(Site).filter(Site.sta.contains(stations))
+    # elif ',' in stations:
+    #     # Load data specified by a string list of stations (e.g., 'I26H1, I26H2, I26H3, I26H4') with get_stations
+    #     sta_list = ps.request.get_stations(session, Site, stations=stations.strip('()[]').replace(" ", "").split(','))
+    # else:
+    #     # Load data specified by a Python list of strings (e.g., ['I26H1', 'I26H2', 'I26H3', 'I26H4']) with get_stations
+    #     sta_list = ps.request.get_stations(session, Site, stations=stations)
+
+    sta_list = ps.request.get_stations(session, Site, stations=stations, time_span=wtime)
 
     # pull data into the stream and merge to combine time segments
     st = Stream()

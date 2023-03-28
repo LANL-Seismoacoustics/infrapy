@@ -176,8 +176,6 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
 
-
-
         self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
 
     def setStatus(self, s, ms=0):

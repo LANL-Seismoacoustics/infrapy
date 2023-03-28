@@ -96,6 +96,7 @@ class IPWaveformWidget(QWidget):
 
     @pyqtSlot(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     def appendTraces(self, newTraces, newInventory):
+        print("appending")
         if newTraces is None:
             return
 
@@ -110,6 +111,8 @@ class IPWaveformWidget(QWidget):
             trace.data = trace.data - np.mean(trace.data)
             self._sts.merge(fill_value=0)
 
+        print("Merged traces...")
+
         # it's possible, if the open failed, that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
         if self._sts is not None:
@@ -121,6 +124,8 @@ class IPWaveformWidget(QWidget):
             self.update_streams(self._sts)
 
             self.parent.setStatus("Ready", 5000)
+
+            print('finished appending')
         else:
             return
 
@@ -141,21 +146,26 @@ class IPWaveformWidget(QWidget):
             self._inv += new_inventory
         self.stationViewer.setInventory(self._inv)
 
-    def remove_from_inventory(self, net, sta, loc, cha):
-        new_inventory = self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=False)
-        self.update_inventory(new_inventory)
+    def remove_from_inventory(self, net, sta, loc, cha, keep_empty=False):
+        new_inventory = self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=keep_empty)
+        self.set_inventory(new_inventory)
+
+    def get_inventory(self):
+        return self._inv
+
+    def set_inventory(self, new_inv):
+        self._inv = None
+        self.update_inventory(new_inv)
+
+    def clear_inventory(self):
+        self._inv = None
+        self.stationViewer.clear()
 
     def get_streams(self):
         return self._sts
 
     def get_filtered_streams(self):
         return self._sts_filtered
-
-    def get_inventory(self):
-        return self._inv
-
-    def set_inventory(self, new_inv):
-        self._inv = new_inv
 
     def getTraceName(self, trace):
         traceName = trace.stats['network'] + '.' + trace.stats['station'] + \
@@ -365,10 +375,10 @@ class IPWaveformWidget(QWidget):
         # empty out the streams
         self._sts = None
         self._sts_filtered = None
+        self.clear_inventory()
 
         # empty out the child widgets
         self.statsViewer.clear()
-        self.stationViewer.clear()
         self.plotViewer.clear()
         self.spectraWidget.clearPlot()
 
