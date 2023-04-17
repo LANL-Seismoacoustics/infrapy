@@ -143,11 +143,14 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
     freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
     Sxx_log = 10.0 * np.log10(Sxx)
 
+    if freq_band[1] > f[-1]:
+        print("Warning!  Maximum frequency is above Nyquist (" + str(f[-1]) + ")")
+
     # Scan through adaptive windows to identify above-background spectrogram points
     thresh_history, peaks_history, times_history = [], [], []
     spec_dets = []
 
-    prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step) + 1
+    prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step)
     print('\t' + "Progress: ", end = '')
     prog_bar.prep(prog_bar_len)
 
@@ -160,7 +163,7 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
             args = [[Sxx_window[fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
             temp = pl.map(calc_thresh_wrapper, args)
         else:
-            temp = np.array([calc_thresh(Sxx_window[fn], p_val) if (freq_band[0] < f[fn] and f[fn] < freq_band[1]) else 0.0 for fn in range(len(f))])
+            temp = np.array([calc_thresh(Sxx_window[fn], p_val) if (freq_band[0] < f[fn] and f[fn] < freq_band[1]) else (0.0, 0.0) for fn in range(len(f))])
 
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]

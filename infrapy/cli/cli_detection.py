@@ -797,6 +797,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     # Result IO
     local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
 
+
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
         click.echo("  local_wvfrms: " + str(local_wvfrms))
@@ -826,7 +827,11 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         click.echo("  db_url (and other database info)")
         
     click.echo("  local_detect_label: " + str(local_detect_label))
-
+    if cpu_cnt is not None:
+        click.echo("  cpu_cnt: " + str(cpu_cnt))
+        pl = Pool(cpu_cnt)
+    else:
+        pl = None
 
     # Algorithm parameters
     freq_min = config.set_param(user_config, 'SD', 'freq_min', freq_min, 'float')
@@ -840,6 +845,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     freq_tm_factor = config.set_param(user_config, 'SD', 'freq_tm_factor', freq_tm_factor, 'float')
     cluster_eps = config.set_param(user_config, 'SD', 'cluster_eps', cluster_eps, 'float')
     cluster_min_samples = config.set_param(user_config, 'SD', 'cluster_min_samples', cluster_min_samples, 'int')
+    cpu_cnt = config.set_param(user_config, 'SD', 'cpu_cnt', cpu_cnt, 'int')
 
     click.echo('\n' + "Algorithm parameters:")
     click.echo("  freq_min: " + str(freq_min))
@@ -869,6 +875,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         array_loc = latlon[0]
     else:
         array_loc = [stream[0].stats.sac['stla'], stream[0].stats.sac['stlo']]
+
 
     if local_wvfrms is not None and "/" in local_wvfrms:
         output_id = os.path.dirname(local_wvfrms) + "/"
@@ -907,8 +914,11 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id
 
-    click.echo("Writing detection results using label: " + local_detect_label)
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    if len(det_list) > 0:
+        click.echo("Writing detection results using label: " + local_detect_label)
+        data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+    else:
+        click.echo("No detection identified in analysis.")
 
     if pl is not None:
         pl.terminate()

@@ -9,6 +9,8 @@ import configparser as cnfg
 from matplotlib.pyplot import figure
 import numpy as np
 
+from obspy import UTCDateTime
+
 from multiprocessing import Pool
 
 from infrapy.location import bisl
@@ -449,15 +451,45 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 
     stream, _ = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 
-    if local_wvfrms is not None and "/" in local_wvfrms:
-        output_id = os.path.dirname(local_wvfrms) + "/"
-    else:
-        output_id = ""
-    output_id = output_id + data_io.stream_label(stream)
+    # Check if using a signal window
+    if signal_start is not None:
+        t1 = UTCDateTime(signal_start)
+        t2 = UTCDateTime(signal_end)
 
-    if ".dets.json" not in output_id:
-        output_id = output_id + ".dets.json"
-    det_list = json.load(open(output_id))
+        click.echo('\n' + "Trimming data to signal analysis window...")
+        click.echo('\t' + "start time: " + str(t1))
+        click.echo('\t' + "end time: " + str(t2))
+
+        warning_message = "signal_start and signal_end values poorly defined."
+        if t1 > t2:
+            warning_message = warning_message + "  signal_start after signal_end."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t1 < stream[0].stats.starttime:
+            warning_message = warning_message + "  signal_start before data start time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        elif t2 > stream[0].stats.endtime:
+            warning_message = warning_message + "  signal_end after data end time."
+            warning_message = warning_message + "  Stream won't be trimmed."
+            warnings.warn((warning_message))
+        else:
+            stream.trim(t1, t2)
+
+    if local_detect_label is not None:
+        if ".dets.json" not in local_detect_label:
+            local_detect_label = local_detect_label + ".dets.json"
+        det_list = json.load(open(local_detect_label))
+    else:
+        if local_wvfrms is not None and "/" in local_wvfrms:
+            output_id = os.path.dirname(local_wvfrms) + "/"
+        else:
+            output_id = ""
+        output_id = output_id + data_io.stream_label(stream)
+
+        if ".dets.json" not in output_id:
+            output_id = output_id + ".dets.json"
+        det_list = json.load(open(output_id))
 
     if len(det_list) == 0:
         click.echo("Note: no detections found in analysis.")
