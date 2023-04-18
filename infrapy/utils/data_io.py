@@ -137,7 +137,7 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
     elif db_info is not None:
         print('\n' + "Loading data from database...")
         session, db_tables = database.prep_session(db_info)
-        stream, latlon = database.wvfrms_from_db(session, db_tables, station, channel, starttime, endtime)
+        stream, latlon = database.wvfrms_from_db(session, db_tables, station, channel, UTCDateTime(starttime), UTCDateTime(endtime))
 
     else:
         msg = "Warning: No waveform data source specified."
