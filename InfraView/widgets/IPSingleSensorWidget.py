@@ -659,9 +659,9 @@ class IPDetectorSettingsWidget(QWidget):
 
         smooth_label = QLabel("Smoothing Factor: ")
         self.smooth_spin = QSpinBox()
-        self.smooth_spin.setMinimum(1.0)
+        self.smooth_spin.setMinimum(1)
         self.smooth_spin.setMaximum(1000)
-        self.smooth_spin.setValue(5.0)
+        self.smooth_spin.setValue(5)
         self.smooth_spin.setMaximumWidth(150)
 
         clust_freq_scale_label = QLabel("Cluster Freq. Scaling: ")

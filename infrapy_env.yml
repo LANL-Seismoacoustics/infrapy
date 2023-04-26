@@ -5,9 +5,9 @@ channels:
   - conda-forge
 
 dependencies:
-  - matplotlib-base=3.5
-  - cartopy=0.19
-  - numpy=1.21
+  - matplotlib-base
+  - cartopy
+  - numpy
   - python=3.9
   - scipy
   - numba
