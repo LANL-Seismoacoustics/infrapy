@@ -19,17 +19,13 @@ from matplotlib import cm
 
 from obspy.core import read, UTCDateTime
 
-from scipy.integrate import simps
-from scipy.signal import spectrogram, savgol_filter
-from scipy.stats import gaussian_kde, norm, skewnorm
-from scipy.optimize import curve_fit, minimize_scalar
+from scipy.signal import spectrogram
 
 from sklearn.cluster import DBSCAN
 
 from infrapy.detection import spectral as spec_det
 from infrapy.utils import data_io as infrapy_data_io
 from infrapy.detection import visualization as det_vis
-
 
 
 if __name__ == '__main__':
@@ -44,7 +40,6 @@ if __name__ == '__main__':
     p_val = 0.01
     threshold_window = 900.0
     threshold_overlap = 0.5
-    smoothing_factor = 4
 
     run_clustering = False
 
@@ -95,10 +90,6 @@ if __name__ == '__main__':
 
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
-
-        if smoothing_factor > 2:
-            threshold[freq_band_mask] = savgol_filter(threshold[freq_band_mask], smoothing_factor * 2, smoothing_factor)
-            peaks[freq_band_mask] = savgol_filter(peaks[freq_band_mask], smoothing_factor * 2, smoothing_factor)
 
         thresh_history = thresh_history + [threshold]
         peaks_history = peaks_history + [peaks]
@@ -154,7 +145,7 @@ if __name__ == '__main__':
 
     # Load and plot one of the detections...
     det_list = json.load(open(file_out))
-    det_vis.plot_sd_single(tr, det_list[3], show_fig=True)
+    det_vis.plot_sd_single(tr, det_list[3], freq_band=(freq_min, freq_max), show_fig=True)
 
     if pl is not None:
         pl.close()
