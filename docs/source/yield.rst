@@ -11,6 +11,8 @@ Source characteristization (e.g., yield estimation) can be performed using Infra
 - Construction of models requires use of the `NCPAprop software <https://github.com/chetzer-ncpa/ncpaprop-release>`_ and methods in :code:`infrapy/propagation/infrasound.py` (a separate Python library named :code:`stochprop` is being developed that will provide more straight forward means of creating these models)
 
 
+**Citation**
+
 See the following for more references on yield estimation using regional infrasound:
 
 - `Friedlander, 1946 <https://doi.org/10.1098/rspa.1946.0046>`_

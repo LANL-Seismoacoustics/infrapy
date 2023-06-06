@@ -66,6 +66,8 @@ Mathematical Details
         \hat{\mathcal{P}}_\text{MUSIC} \left( f, \vec{s}, q \right) = \frac{1}{\vec{\Phi}^\dagger \mathbf{\Pi}_q \vec{\Phi}}
 
 
+**Citation**
+
 See the following for more references on beamforming:
 
 - `Rost and Thomas, 2002 <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2000RG000100>`_
