@@ -628,7 +628,7 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
     click.echo(bisl.summarize(bisl_result))
 
     click.echo("Drawing map with BISL source location estimate...")
-    loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out, grnd_truth=grnd_truth)
+    loc_vis.plot_loc(det_list, bisl_result, range_max=range_max, zoom=zoom, title=None, output_path=figure_out)
     
 
 

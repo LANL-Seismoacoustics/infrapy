@@ -38,8 +38,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #      Propagation Models      #
 # ############################ #
 canon_rcel_wts = np.array([0.0539, 0.0899, 0.8562])
-canon_rcel_vrs = np.array([0.066, 0.08, 0.33])
 canon_rcel_mns = np.array([1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26])
+canon_rcel_vrs = np.array([0.066, 0.08, 0.33])
 
 def canonical_rcel(rcel):
     if len(np.atleast_1d(rcel)) == 1:

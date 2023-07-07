@@ -27,8 +27,11 @@ from ..utils import data_io
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
 @click.option("--src-est", help="Estimated source location and radius of region to consider (default: None)", default=None)
+@click.option("--rcel-wts", help="Custom reciprocal celerity model weights", default=None)
+@click.option("--rcel-mns", help="Custom reciprocal celerity model means", default=None)
+@click.option("--rcel-sds", help="Custom reciprocal celerity model standard deviations", default=None)
 @click.option("--pgm-file", help="Path geometry model (PGM) file (default: None)", default=None)
-def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, range_max, resolution, src_est, pgm_file):
+def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, range_max, resolution, src_est, rcel_wts, rcel_mns, rcel_sds, pgm_file):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -84,10 +87,21 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
     click.echo("  range_max: " + str(range_max))
     click.echo("  resolution: " + str(resolution))
     click.echo("  src_est: " + str(src_est))
-    click.echo("  pgm_file: " + str(pgm_file))
+
+    if rcel_wts is not None:
+        infrasound.canon_rcel_wts = np.array([float(val) for val in rcel_wts.replace(" ","").split(",")])
+        click.echo("  User defined reciprocal celerity (weights): " + str(infrasound.canon_rcel_wts))
+
+    if rcel_mns is not None:
+        infrasound.canon_rcel_mns = np.array([float(val) for val in rcel_mns.replace(" ","").split(",")])
+        click.echo("  User defined reciprocal celerity (means): " + str(infrasound.canon_rcel_mns))
+
+    if rcel_sds is not None:
+        infrasound.canon_rcel_vrs = np.array([float(val) for val in rcel_sds.replace(" ","").split(",")])
+        click.echo("  User defined reciprocal celerity (stdev): " + str(infrasound.canon_rcel_vrs))
 
     if pgm_file is not None:
-        click.echo("")
+        click.echo("  pgm_file: " + str(pgm_file))
         pgm = infrasound.PathGeometryModel()
         pgm.load(pgm_file)
     else:

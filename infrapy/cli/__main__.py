@@ -79,6 +79,7 @@ utils.add_command(cli_utils.calc_celerity)
 utils.add_command(cli_utils.check_db_wvfrm)
 utils.add_command(cli_utils.write_wvfrms)
 utils.add_command(cli_utils.best_beam)
+utils.add_command(cli_utils.fit_celerity)
 
 
 if __name__ == '__main__':

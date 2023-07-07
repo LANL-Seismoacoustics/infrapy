@@ -10,8 +10,7 @@ Author: pblom@lanl.gov
 import os
 import pickle
 import imp 
-
-from threading import local 
+import click
 
 import warnings
 
@@ -20,8 +19,8 @@ from inspect import trace
 
 import matplotlib.pyplot as plt 
 
-from pickletools import read_long1
-import click
+from scipy.stats import gaussian_kde, norm
+from scipy.optimize import curve_fit
 
 import numpy as np
 
@@ -641,3 +640,75 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
 
 
+@click.command('fit-celerity', short_help="Generate a GMM celerity model")
+@click.option("--data-file", help="File containing celerity information", default=None)
+@click.option("--cel-index", help="Column index of celerity values", default=6)
+@click.option("--atten-index", help="Column index of attenuation values", default=11)
+@click.option("--atten-lim", help="Attenuation limit", default=None, type=float)
+def fit_celerity(data_file, cel_index, atten_index, atten_lim):
+    '''
+    Compute a KDE of celerity values and generate parameters for a reciprocal celerity model
+
+    \b
+    Example usage (requires a data file with celerities):
+    \tinfrapy utils fit-celerity --data-file ToyAtmo.arrivals.dat
+
+    '''
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         fit-celerity        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")   
+
+
+    click.echo("  Loading data from " + data_file)
+    data = np.loadtxt(data_file)
+    cel_data = data[:, cel_index]
+
+    if atten_index is not None:
+        click.echo("  Building KDE with limited arrivals (" + str(atten_lim) + " dB Sutherland & Bass attenuation limit)")
+        atten_data = data[:, atten_index]
+        cel_kernel = gaussian_kde(1.0 / cel_data[atten_data > atten_lim])
+    else:
+        click.echo("  Building KDE for all arrival celerities")
+        cel_kernel = gaussian_kde(1.0 / cel_data)
+
+    cel_vals = np.linspace(0.38, 0.18, 200)
+    rcel_pdf = cel_kernel(1.0 / cel_vals)
+
+    click.echo("  Generating fit to KDE...")
+    def rcel_func(rcel, wt1, wt2, wt3, mn1, mn2, mn3, std1, std2, std3):
+        result = (wt1 / std1) * norm.pdf((rcel - mn1) / std1)
+        result = result + (wt2 / std2) * norm.pdf((rcel - mn2) / std2)
+        result = result + (wt3 / std3) * norm.pdf((rcel - mn3) / std3)
+
+        return result
+    
+    popt, _ = curve_fit(rcel_func, 1.0 / cel_vals, rcel_pdf,
+                         p0=[0.0539, 0.0899, 0.8562, 
+                             1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26,
+                             0.066, 0.08, 0.33])
+    popt = np.round(popt, 3)
+
+    click.echo('\n' + "  Recripocal celerity model parameters (CLI and config file formats):")
+    click.echo("    --rcel-wts '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "' --rcel-mns '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "' --rcel-sds '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
+
+    click.echo("    rcel_wts = '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "'")
+    click.echo("    rcel_mns = '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "'")
+    click.echo("    rcel_sds = '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
+
+    click.echo("    Note: mean reciprocal celerities: 1.0/" + str(np.round(1.0 / popt[3], 3)) + ", 1.0/" + str(np.round(1.0 / popt[4], 3)) + ", 1.0/" + str(np.round(1.0 / popt[5], 3)) + '\n')
+
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(cel_vals, rcel_pdf, '-k', linewidth=4.0, label="Data KDE")
+    plt.plot(cel_vals, rcel_func(1.0 / cel_vals, popt[0], popt[1], popt[2],popt[3], popt[4], popt[5], 
+                                 popt[6], popt[7], popt[8]), '--r', linewidth=2.0, label="GMM Fit")
+    plt.xlabel("Celerity [m/s]")
+    plt.ylabel("Probability")
+    plt.legend()
+    plt.show()
