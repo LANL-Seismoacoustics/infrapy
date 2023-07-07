@@ -25,6 +25,9 @@ class IPWfdiscModel(QAbstractTableModel):
     def columnCount(self, parent=None):
         return len(self.wfs[0])
 
+    def column_headers(self):
+        return self.col_headers
+
     def data(self, index, role):
         if index.isValid():
             if role == Qt.DisplayRole:
@@ -203,11 +206,16 @@ class IPDatabaseQueryResultsTable(QFrame):
 
         db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema())
 
+        # we need the indexes of the stations and channel columns in the wfdisc table
+        headers = self.model.column_headers()
+        sta_idx = headers.index('sta')
+        chn_idx = headers.index('chan')
+
         for wd in selected_wds:
             new_stream, _ = database.wvfrms_from_db(self.get_session(),
                                                     db_tables=db_tables,
-                                                    stations=[wd[0]],
-                                                    channel=wd[1],
+                                                    stations=wd[sta_idx],
+                                                    channel=wd[chn_idx],
                                                     starttime=starttime,
                                                     endtime=stoptime)
 
