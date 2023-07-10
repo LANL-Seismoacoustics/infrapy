@@ -669,7 +669,7 @@ def fit_celerity(data_file, cel_index, atten_index, atten_lim):
     data = np.loadtxt(data_file)
     cel_data = data[:, cel_index]
 
-    if atten_index is not None:
+    if atten_lim is not None:
         click.echo("  Building KDE with limited arrivals (" + str(atten_lim) + " dB Sutherland & Bass attenuation limit)")
         atten_data = data[:, atten_index]
         cel_kernel = gaussian_kde(1.0 / cel_data[atten_data > atten_lim])
@@ -694,7 +694,7 @@ def fit_celerity(data_file, cel_index, atten_index, atten_lim):
                              0.066, 0.08, 0.33])
     popt = np.round(popt, 3)
 
-    click.echo('\n' + "  Recripocal celerity model parameters (CLI and config file formats):")
+    click.echo('\n' + "  Reciprocal celerity model parameters (CLI and config file formats):")
     click.echo("    --rcel-wts '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "' --rcel-mns '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "' --rcel-sds '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
 
     click.echo("    rcel_wts = '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "'")
@@ -703,12 +703,11 @@ def fit_celerity(data_file, cel_index, atten_index, atten_lim):
 
     click.echo("    Note: mean reciprocal celerities: 1.0/" + str(np.round(1.0 / popt[3], 3)) + ", 1.0/" + str(np.round(1.0 / popt[4], 3)) + ", 1.0/" + str(np.round(1.0 / popt[5], 3)) + '\n')
 
-
     plt.figure(figsize=(7, 4))
     plt.plot(cel_vals, rcel_pdf, '-k', linewidth=4.0, label="Data KDE")
     plt.plot(cel_vals, rcel_func(1.0 / cel_vals, popt[0], popt[1], popt[2],popt[3], popt[4], popt[5], 
                                  popt[6], popt[7], popt[8]), '--r', linewidth=2.0, label="GMM Fit")
-    plt.xlabel("Celerity [m/s]")
+    plt.xlabel("Celerity [km/s]")
     plt.ylabel("Probability")
     plt.legend()
     plt.show()
