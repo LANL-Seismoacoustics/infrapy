@@ -168,7 +168,7 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
         plt.show()
 
 
-def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True):
+def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True, grnd_truth=None):
     '''
     Visualize the origin time PDF computed in BISL
     
@@ -180,12 +180,17 @@ def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True):
     mask = np.logical_and(np.datetime64(bisl_results['t_min']) <= origin_times,
                             origin_times <= np.datetime64(bisl_results['t_max']))
 
-    plt.figure()
-    plt.plot(origin_times, origin_time_pdf, '-k')
+    plt.figure(figsize=(7, 3))
+    plt.plot(origin_times, origin_time_pdf, '-k', linewidth=2.5)
     plt.fill_between(origin_times[mask], 0.0, origin_time_pdf[mask], color=conf_color, alpha=0.5)
     plt.xlabel("Origin Time")
     plt.ylabel("Probability")
+    plt.ylim(0)
 
+    if grnd_truth is not None:
+        print('\t' + "Including ground truth origin time...")
+        plt.axvline(np.datetime64(grnd_truth), color='m', linewidth=3.33)
+        
     if title:
         plt.title(title)
 

@@ -165,12 +165,24 @@ def set_det_list(local_detect_label, merge=True):
 
     """
 
-    if ".dets.json" not in local_detect_label:
-        local_detect_label = local_detect_label + ".dets.json"
 
     if "*" not in local_detect_label:
-        print("Loading detections from file: " + local_detect_label)
-        det_list = json_to_detection_list(local_detect_label)
+        if "," not in local_detect_label:
+            print("Loading detections from file: " + local_detect_label)
+            if ".dets.json" not in local_detect_label:
+                local_detect_label = local_detect_label + ".dets.json"
+            det_list = json_to_detection_list(local_detect_label)
+        else:
+            for file in local_detect_label.replace(" ","").split(","):
+                if ".dets.json" not in file:
+                    file = file + ".dets.json"
+
+                det_list = []
+                if merge:
+                    det_list = det_list + json_to_detection_list(file)
+                else:
+                    det_list = det_list + [json_to_detection_list(file)]
+
     else:
         if len(os.path.dirname(local_detect_label)) > 0:
             file_path = os.path.dirname(local_detect_label) + "/"
@@ -199,6 +211,9 @@ def set_det_list(local_detect_label, merge=True):
             det_list = []
             for file in file_list:
                 print('\t' + file_path + file)
+
+                if ".dets.json" not in file:
+                    file = file + ".dets.json"
 
                 if merge:
                     det_list = det_list + json_to_detection_list(file_path + file)

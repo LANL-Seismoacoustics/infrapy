@@ -636,7 +636,8 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-loc-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
-def origin_time(config_file, local_loc_label, figure_out):
+@click.option("--grnd-truth", help="Ground truth origin time for comparison", default=None)
+def origin_time(config_file, local_loc_label, figure_out, grnd_truth):
     '''
     Visualize the BISL origin time distribution
 
@@ -672,7 +673,7 @@ def origin_time(config_file, local_loc_label, figure_out):
         bisl_result = json.load(open(local_loc_label + ".loc.json"))
 
     click.echo("Plotting origin time distribution...")
-    loc_vis.plot_origin_time(bisl_result, output_path=figure_out)
+    loc_vis.plot_origin_time(bisl_result, output_path=figure_out, grnd_truth=grnd_truth)
     
 
 @click.command('yield', short_help="Plot yield estimate distribution")
