@@ -54,7 +54,7 @@ class IPPlotViewer(QSplitter):
         self.pl_widget.plot_list.clear()
         self.pl_widget.filtered_plot_lines.clear()
         self.pl_widget.clear()
-        self.waveform_selector.clear_form()
+        self.waveform_selector.clear_layout()
         self.title.setText("")
 
     @pyqtSlot(Stream, Stream)

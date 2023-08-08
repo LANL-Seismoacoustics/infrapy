@@ -27,6 +27,7 @@ class IPStationView(QWidget):
     '''
 
     savefile = None
+    inv = None
 
     inventory_changed = pyqtSignal(Inventory)
     sig_inventory_cleared = pyqtSignal()
@@ -34,7 +35,6 @@ class IPStationView(QWidget):
     def __init__(self, parent):
         super().__init__()
 
-        self.inv = None
         self.parent = parent
         self.buildUI()
         
@@ -112,7 +112,7 @@ class IPStationView(QWidget):
         self.saveAsIcon = QIcon.fromTheme("document-save-as")
 
     def connectSignalsandSlots(self):
-        self.clearButton.clicked.connect(self.clear)
+        self.clearButton.clicked.connect(self.clear_all)
         self.saveButton.clicked.connect(self.saveStations)
         self.saveAsButton.clicked.connect(self.saveStationsAs)
         self.loadButton.clicked.connect(self.loadStations)
@@ -166,11 +166,11 @@ class IPStationView(QWidget):
                  
         te.setHtml(html_str)
 
-    def update_station_view(self, inv):
+    def update_station_view(self):
         # populate the station tabs in the Station view
-        self.clear()
-        
-        self.inv = inv
+        self.clear_view()
+
+        print(self.inv)
 
         # Create the Tabs, and fill with metadata
         for network in self.inv:
@@ -192,14 +192,21 @@ class IPStationView(QWidget):
                 cnt += 1
         return cnt
 
-    def clear(self):
+    def clear_view(self):
 
-        self.inv = None
         for i in range(self.station_TabWidget.count()):
             self.station_TabWidget.removeTab(0)
 
         # now signal to the application that the inventory needs to be cleared
+        
+    def clear_inv(self):
+        # resets inv to None
+        self.inv = None
         self.sig_inventory_cleared.emit()
+
+    def clear_all(self):
+        self.clear_view()
+        self.clear_inv()
 
     @pyqtSlot(int)
     @pyqtSlot(str)
@@ -212,9 +219,11 @@ class IPStationView(QWidget):
         else:
             sta_name = entry.split('.')[1]
 
+        print(sta_name)
+
         self.inv = self.inv.remove(station=sta_name)
         
-        self.update_station_view(self.inv)
+        self.update_station_view()
 
     
 
@@ -336,10 +345,9 @@ class IPStationView(QWidget):
         self.inv = self.merge_inv_networks(self.inv)
 
         # ready to update the view
-        self.update_station_view(self.inv)
+        self.update_station_view()
 
     def remove_station(self, station):
-        print("Removing Station {}".format(station))
         self.inv = self.inv.remove(station=station, keep_empty=False)
         self.update_station_view()
     
@@ -389,6 +397,7 @@ class IPStationView(QWidget):
                 cnt += 1
 
         return [lat / cnt, lon / cnt, ele / cnt]
+    
 
     def reconcileStations(self):
         
@@ -423,9 +432,8 @@ class IPStationView(QWidget):
             new_inventory = self.merge_inv_networks(new_inventory)
 
             if new_inventory is not None:
-
                 # since the user has already chosen to overwrite the new inventory, we set the merge mode as KEEP_NEW
-                self.inv = self.merge_new_inventory(new_inventory, mode='KEEP_NEW')
+                self.merge_new_inventory(new_inventory, mode='KEEP_NEW')
 
 
 class IPDuplicateStationDialog(QDialog):
