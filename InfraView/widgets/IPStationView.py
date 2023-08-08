@@ -47,7 +47,7 @@ class IPStationView(QWidget):
         self.station_TabWidget = QTabWidget()
         self.station_TabWidget.setMinimumSize(200,0)
         self.station_TabWidget.setTabsClosable(True)
-        self.station_TabWidget.tabCloseRequested.connect(self.remove_station_by_name)
+        self.station_TabWidget.tabCloseRequested.connect(self.remove_station_from_inv)
         # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.arrayViewWidget = IPArrayView(self)
@@ -202,16 +202,21 @@ class IPStationView(QWidget):
         self.sig_inventory_cleared.emit()
 
     @pyqtSlot(int)
-    def remove_station_by_name(self, idx):
-        # get the name of the tab
-        name = self.station_TabWidget.tabText(idx)
+    @pyqtSlot(str)
+    def remove_station_from_inv(self, entry):
+        # you can pass either a tab index, or a trace.id.  
+        if type(entry) is int:
+            # get the name of the tab
+            sta_name = self.station_TabWidget.tabText(entry).split('.')[1]
 
-        # peel off the station name
-        sta_name = name.split('.')[1]
+        else:
+            sta_name = entry.split('.')[1]
 
-        self.inv = self.inv.remove(station=sta_name).copy()
+        self.inv = self.inv.remove(station=sta_name)
         
-        self.update_station_view()
+        self.update_station_view(self.inv)
+
+    
 
     def saveStations(self):
         

@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import (QWidget, QAbstractButton, QButtonGroup, 
-                             QCheckBox, QFormLayout, QLabel, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QAbstractButton, QButtonGroup, QPushButton, 
+                             QCheckBox, QGridLayout, QLabel, QVBoxLayout)
 
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt
 
 from obspy.core.stream import Stream
 
@@ -9,10 +9,18 @@ from obspy.core.stream import Stream
 class IPWaveformSelectorWidget(QWidget):
 
     sig_checkbox_clicked = pyqtSignal(list)
+    sig_remove_trace_by_id = pyqtSignal(str)
+    sig_remove_station_by_name = pyqtSignal(str)
 
     checkbox_list = []
+    del_button_list = []
     name_list = []
     value_list = []
+
+    # button ids are used to keep track of buttons and corresponding checkboxes
+    # the pushbutton will have an id that is the negative of the checkbox.  Since
+    # this id can't be -1, we start counting at 2.  Maybe a better way to do this?
+    button_id = 2 
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -22,22 +30,27 @@ class IPWaveformSelectorWidget(QWidget):
     
     def buildUI(self):
 
-        self.button_group = QButtonGroup()
-        self.button_group.setExclusive(False)
-        self.button_group.buttonClicked.connect(self.update_what_is_displayed)
+        self.showhide_button_group = QButtonGroup()
+        self.showhide_button_group.setExclusive(False)
+        self.showhide_button_group.idClicked.connect(self.update_what_is_displayed)
+
+        self.del_button_group = QButtonGroup()
+        self.del_button_group.idClicked.connect(self.del_button_clicked)
         
         self.title_label = QLabel("Show/Hide")
+        self.del_label = QLabel("Remove")
 
-        self.form_layout = QFormLayout()
+        self.grid_layout = QGridLayout()
 
         self.tooltip_label = QLabel()
+        self.grid_layout.addWidget(self.title_label, 0, 0)
+        self.grid_layout.addWidget(self.del_label, 0, 1)
         tooltip_text = 'Note: This is for displaying/hiding plots only.  When you run the beamformer, all traces loaded will be used in the calculation. If you need to delete a trace, do it using the tabs in the trace viewer.'
         self.tooltip_label.setText(tooltip_text)
         self.tooltip_label.setWordWrap(True)
 
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.title_label)
-        self.main_layout.addLayout(self.form_layout)
+        self.main_layout.addLayout(self.grid_layout)
         self.main_layout.addStretch()
         self.main_layout.addWidget(self.tooltip_label)
         
@@ -62,7 +75,7 @@ class IPWaveformSelectorWidget(QWidget):
         self.value_list.clear()
         self.clear_form()
 
-        for trace in new_stream:
+        for i, trace in enumerate(new_stream):
             # All new traces are automatically set to display
             val = True # default value for a checkbox is True
             if trace.id in previous_name_list:
@@ -70,29 +83,47 @@ class IPWaveformSelectorWidget(QWidget):
                 idx = previous_name_list.index(trace.id)
                 val = previous_value_list[idx]
 
-            # append new info to the name and value lists
-            self.name_list.append(trace.id)
             self.value_list.append(val)
-
             # make a new checkbox and add it to the list
-            new_checkbox = QCheckBox()
-            self.button_group.addButton(new_checkbox)
-            new_checkbox.setChecked(val)
-            self.checkbox_list.append(new_checkbox)
-            self.form_layout.addRow(trace.id, new_checkbox)
+            showhide_checkbox = QCheckBox(trace.id)
+            showhide_checkbox.setChecked(val)
+
+            self.checkbox_list.append(showhide_checkbox)
+            self.showhide_button_group.addButton(showhide_checkbox)
+            self.showhide_button_group.setId(showhide_checkbox, self.button_id)
+
+            del_button = QPushButton('x')
+            del_button.setToolTip('Remove {} from plot'.format(trace.id))
+            self.del_button_group.addButton(del_button)
+            self.del_button_group.setId(del_button, -self.button_id)
+            self.del_button_list.append(del_button)
+
+            # increment the button id for the next one.
+            self.button_id += 1
+
+            self.grid_layout.addWidget(showhide_checkbox, i+1 , 0)   # the plus one is because the title is in row 0
+            self.grid_layout.addWidget(del_button, i+1, 1)
 
     def clear_form(self):
         self.checkbox_list.clear()
-        for row in reversed(range(self.form_layout.count())):
-            item = self.form_layout.takeAt(row)
-            item.widget().deleteLater()
+        for idx in reversed(range(self.grid_layout.count())):
+            if idx != 0 or idx != 1:    # don't delete the title row
+                item = self.grid_layout.takeAt(idx)
+                item.widget().deleteLater()
 
-    @pyqtSlot(QAbstractButton)
-    def update_what_is_displayed(self, button):
+    @pyqtSlot(int)
+    def del_button_clicked(self, id):
+        clicked_checkbox = self.showhide_button_group.button(-id)
+        self.sig_remove_trace_by_id.emit(clicked_checkbox.text())
+        print("removing station {}".format(clicked_checkbox.text()))
+        self.sig_remove_station_by_name.emit(clicked_checkbox.text())
+
+    @pyqtSlot(int)
+    def update_what_is_displayed(self, id):
         # the value list is used by pl_widget to keep track of what is clicked
-        for idx, checkbox in enumerate(self.checkbox_list):
-            if checkbox is button:
-                self.value_list[idx] = checkbox.isChecked()
+        checked_button = self.showhide_button_group.button(id)
+        idx = self.checkbox_list.index(checked_button)
+        self.value_list[idx] = checked_button.isChecked()
         
         # This tells the plotviewer to update which plots to show
         self.parent.pl_widget.draw_plots()
