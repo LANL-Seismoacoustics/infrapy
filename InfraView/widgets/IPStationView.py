@@ -53,25 +53,25 @@ class IPStationView(QWidget):
         self.arrayViewWidget = IPArrayView(self)
         self.arrayViewWidget.setMinimumSize(200, 0)
 
-        self.clearButton = QPushButton(' Clear Stations')
+        self.clearButton = QPushButton('Clear')
         button_font = self.clearButton.font()
         button_font.setPointSize(10)
         self.clearButton.setFont(button_font)
         self.clearButton.setIcon(self.clearIcon)
 
-        self.saveButton = QPushButton(' Save Stations')
+        self.saveButton = QPushButton('Save')
         self.saveButton.setIcon(self.saveIcon)
         self.saveButton.setFont(button_font)
 
-        self.saveAsButton = QPushButton(' Save Stations As...')
+        self.saveAsButton = QPushButton('Save As...')
         self.saveAsButton.setIcon(self.saveAsIcon)
         self.saveAsButton.setFont(button_font)
 
-        self.loadButton = QPushButton(' Load...')
+        self.loadButton = QPushButton('Load...')
         self.loadButton.setFont(button_font)
         self.loadButton.setIcon(self.openIcon)
 
-        self.reconcileButton = QPushButton(' Reconcile Stations')
+        self.reconcileButton = QPushButton('Reconcile...')
         self.reconcileButton.setFont(button_font)
         self.reconcileButton.setToolTip(self.tr('Attempt to download stations for current waveforms'))
 

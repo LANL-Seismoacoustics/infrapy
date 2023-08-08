@@ -305,6 +305,7 @@ class IPDatabaseQueryWidget(QFrame):
         tables = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
         
         wfs = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
+        
         if len(wfs) > 0:
             self.parent.ipdatabase_query_results_table.setData(wfs)
         else:
