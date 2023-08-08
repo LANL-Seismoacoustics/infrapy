@@ -29,7 +29,7 @@ class IPWaveformWidget(QWidget):
 
     _sts = None             # streams
     _sts_filtered = None    # filtered streams
-    _inv = None             # inventory
+    #_inv = None             # inventory
 
     def __init__(self, parent=None, pool=None, project=None):
         super().__init__(parent)
@@ -44,7 +44,7 @@ class IPWaveformWidget(QWidget):
         self.stationViewer = IPStationView.IPStationView(self)
         self.statsViewer = IPStatsView.IPStatsView(self)
         self.info_tabs = QTabWidget()
-        self.info_tabs.addTab(self.stationViewer, 'Station Info')
+        self.info_tabs.addTab(self.stationViewer, 'Inventory')
         self.info_tabs.addTab(self.statsViewer, 'Trace Info')
 
         self.filterSettingsWidget = IPFilterSettingsWidget.IPFilterSettingsWidget(self)
@@ -105,23 +105,21 @@ class IPWaveformWidget(QWidget):
         else:
             self._sts += newTraces
 
-        self.update_inventory(newInventory)
-
         for trace in self._sts:
             trace.data = trace.data - np.mean(trace.data)
             self._sts.merge(fill_value=0)
-
-        print("Merged traces...")
 
         # it's possible, if the open failed, that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
         if self._sts is not None:
             # TODO...is there a better way of doing this?
             self.parent.beamformingWidget.setStreams(self._sts)
-            self.stationViewer.setInventory(self._inv)
+            
             self.statsViewer.setStats(self._sts)
 
             self.update_streams(self._sts)
+
+            self.stationViewer.merge_new_inventory(newInventory, 'APPEND_KEEP_NEW')
 
             self.parent.setStatus("Ready", 5000)
 
@@ -133,32 +131,17 @@ class IPWaveformWidget(QWidget):
     def replaceTraces(self, newTraces, newInventory):
         # same as append, just clear out the old traces and inventory first
         self._sts = None
-        self._inv = None
-        self.stationViewer.setInventory(self._inv)
-
         self.appendTraces(newTraces, newInventory)
 
-    @pyqtSlot(Inventory)
-    def update_inventory(self, new_inventory):
-        if self._inv is None:
-            self._inv = new_inventory
-        else:
-            self._inv += new_inventory
-        self.stationViewer.setInventory(self._inv)
+    @pyqtSlot(Inventory, str)
+    def update_inventory(self, new_inventory, mode):
+        self.stationViewer.merge_new_inventory(new_inventory, mode)
 
-    def remove_from_inventory(self, net, sta, loc, cha, keep_empty=False):
-        new_inventory = self.inv_remove(self._inv, network=net, station=sta, location=loc, channel=cha, keep_empty=keep_empty)
-        self.set_inventory(new_inventory)
+    def remove_from_inventory(self, sta):
+        self.stationViewer.remove_station(sta)
 
-    def get_inventory(self):
-        return self._inv
-
-    def set_inventory(self, new_inv):
-        self._inv = None
-        self.update_inventory(new_inv)
 
     def clear_inventory(self):
-        self._inv = None
         self.stationViewer.clear()
 
     def get_streams(self):
@@ -174,6 +157,9 @@ class IPWaveformWidget(QWidget):
 
     def get_earliest_start_time(self):
         return self.plotViewer.pl_widget.earliest_start_time
+    
+    def get_latest_end_time(self):
+        return self.plotViewer.pl_widget.latest_end_time
 
     @pyqtSlot(Stream)
     def update_streams(self, new_stream):
@@ -314,16 +300,6 @@ class IPWaveformWidget(QWidget):
 
         self.update_streams(self._sts)
 
-    def removeStation(self, net_id, station_id):
-
-        if self._inv is not None:
-            try:
-                self._inv = self.inv_remove(self._inv, network=net_id, station=station_id)
-
-            except AttributeError as e:
-                IPUtils.errorPopup(str(e))
-
-            self.stationViewer.setInventory(self._inv)
 
     def inv_remove(self,
                    _inventory,

@@ -47,7 +47,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
     warnings.filterwarnings('ignore', message='Item already added to PlotItem, ignoring')
     
     sig_stream_changed = pyqtSignal(Stream)
-    sig_inventory_changed = pyqtSignal(Inventory)
+    sig_inventory_changed = pyqtSignal(Inventory, str)
 
     # variable to hold the reference of the loaded project object (if any)
     project = None
@@ -170,7 +170,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # new connections
         self.sig_stream_changed.connect(self.waveformWidget.update_streams)
-        self.sig_inventory_changed.connect(self.waveformWidget.update_inventory)
+        self.sig_inventory_changed.connect(self.waveformWidget.stationViewer.merge_new_inventory)
 
         #self.beamformingWidget.waveformPlot.sigXRangeChanged.connect(self.waveformWidget.plotViewer.pl_widget.adjustSignalRegionRange)
         self.beamformingWidget.detectionWidget.signal_detections_changed.connect(self.locationWidget.update_detections)
@@ -252,7 +252,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 current_trace_names = []
                 if self.waveformWidget._sts is not None:
                     for trace in self.waveformWidget._sts:
-                        current_trace_names.append(self.getTraceName(trace))
+                        current_trace_names.append(trace.id)
 
                 ipath = os.path.dirname(ifile)
                 if self.project is None:
@@ -263,23 +263,28 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                 else:
                     self.project.set_dataPath(ipath)
                 try:
+
                     new_stream = obsRead(ifile)
                     
                     for trace in new_stream:
-                        trace_name = self.getTraceName(trace)
+                        
+                        trace_name = trace.id
+
                         if trace_name in current_trace_names:
                             # redundant trace!
-                            netid, staid, locid, chaid = self.parseTraceName(trace_name)
+                            _, staid, _, _ = self.parseTraceName(trace_name)
                             self.redundant_trace_dialog.exec_(trace_name)
 
                             if  self.redundant_trace_dialog.get_result():
                                 # if accepted, they want to use the new trace so first remove the old one
-                                self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
+                                self.waveformWidget.remove_from_inventory(staid)
+                                
                             else:
                                 # if rejected, they want to keep the old trace, and ignore this one
                                 #so remove the trace from new_stream, and continue to the next trace
                                 new_stream.remove(trace)
                                 continue
+
                         # do our best to generate new inventory from the new stream
                         if new_inventory is None:
                             new_inventory = self.trace_to_inventory(trace)
@@ -293,9 +298,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
                         self.waveformWidget._sts += new_stream
                     else:
                         self.waveformWidget._sts = new_stream
-
-                except Exception:
-                    print("Unexpected error: ", sys.exc_info()[0])
+                except Exception as e:
+                    print("Unexpected error: ", str(e))
                     self.setStatus("Unexpected error: ", 5000)
                     continue
 
@@ -306,13 +310,14 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # it's possible that self.waveformWidget._sts is still None, so if it is, bail out
         # if not populate the trace stats viewer and plot the traces
+
         if self.waveformWidget._sts is not None:
             self.beamformingWidget.setStreams(self.waveformWidget._sts)
-                
             self.sig_stream_changed.emit(self.waveformWidget._sts)
 
             if new_inventory is not None:
-                self.sig_inventory_changed.emit(new_inventory)
+                
+                self.sig_inventory_changed.emit(new_inventory, 'PROMPT')
 
             self.mainTabs.setCurrentIndex(0)
 
@@ -329,17 +334,17 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         new_inventory = None
         if self.waveformWidget._sts:
             for trace in self.waveformWidget._sts:
-                current_trace_names.append(self.getTraceName(trace))
+                current_trace_names.append(trace.id)
         for trace in new_stream:
-            trace_name = self.getTraceName(trace)
+            trace_name = trace.id
             if trace_name in current_trace_names:
                 # redundant trace!
-                netid, staid, locid, chaid = self.parseTraceName(trace_name)
+                _, staid, _, _ = self.parseTraceName(trace_name)
                 self.redundant_trace_dialog.exec_(trace_name)
 
                 if  self.redundant_trace_dialog.get_result():
                     # if accepted, they want to use the new trace so first remove the old one
-                    self.waveformWidget.remove_from_inventory(netid, staid, locid, chaid)
+                    self.waveformWidget.remove_from_inventory(staid)
                 else:
                     # if rejected, they want to keep the old trace, and ignore this one
                     #so remove the trace from new_stream, and continue to the next trace
@@ -367,14 +372,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             self.sig_stream_changed.emit(self.waveformWidget._sts)
 
             if new_inventory is not None:
-                self.sig_inventory_changed.emit(new_inventory)
+                self.sig_inventory_changed.emit(new_inventory, 'PROMPT')
 
             self.mainTabs.setCurrentIndex(0)
-
-    def getTraceName(self, trace):
-        traceName = trace.stats['network'] + '.' + trace.stats['station'] + \
-            '.' + trace.stats['location'] + '.' + trace.stats['channel']
-        return traceName
 
     def parseTraceName(self, trace_name):
         bits = trace_name.split('.')
@@ -438,7 +438,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.clearWaveformPlot()
         self.waveformWidget.clearWaveforms()
         self.singleSensorWidget.clearWaveformPlots()
-
+                
     def trace_to_inventory(self, trace):
         # if sac files are opened, it's useful to extract inventory from their streams so that we can populate the 
         # stations tabs and the location widget

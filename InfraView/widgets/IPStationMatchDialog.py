@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog, QLabel,
                              QListWidget, QListWidgetItem, QPushButton,
-                             QVBoxLayout, QDialogButtonBox)
+                             QVBoxLayout, QDialogButtonBox, QCheckBox)
 from PyQt5.QtCore import Qt
 
 from obspy.clients.fdsn import Client
@@ -10,21 +10,21 @@ from obspy.clients.fdsn.header import URL_MAPPINGS
 
 class IPStationMatchDialog(QDialog):
 
-    # This dialog is used to ATTEMPT to download stations (that aren't already downloaded) for
-    # currently visible waveforms.
+    # This dialog is used to ATTEMPT to download stations for
+    # current waveforms.
 
-    inv = None
+    new_inv = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super(IPStationMatchDialog, self).__init__(parent)
-
+        self.parent = parent
         self.__buildUI__()
 
     def __buildUI__(self):
 
         self.setWindowTitle('InfraView: Reconcile Stations')
 
-        blurb = QLabel(self.tr('This will ATTEMPT to download the station info for the following Stations.'))
+        blurb = QLabel(self.tr("This will ATTEMPT to download from an FDSN service the station info for the selected Stations. A '*' by the label indicates there is alread a station loaded. Uncheck any that you don't want overwritten."))
         blurb.setWordWrap(True)
 
         # First lets populate the client drop down
@@ -33,9 +33,6 @@ class IPStationMatchDialog(QDialog):
         for key in sorted(URL_MAPPINGS.keys()):
             self.cb.addItem(key)
         self.cb.setCurrentText('IRIS')
-
-        self.stationListEdit = QListWidget()
-        self.stationListEdit.setMinimumWidth(300)
 
         self.statusLine = QLabel(' ')
 
@@ -48,11 +45,13 @@ class IPStationMatchDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
+        self.checkbox_layout = QVBoxLayout()
+
         layout = QVBoxLayout()
         layout.addWidget(blurb)
         layout.addWidget(label_service_name)
         layout.addWidget(self.cb)
-        layout.addWidget(self.stationListEdit)
+        layout.addLayout(self.checkbox_layout)
         layout.addWidget(self.attemptButton)
         layout.addWidget(self.statusLine)
         layout.addWidget(buttons)
@@ -61,13 +60,25 @@ class IPStationMatchDialog(QDialog):
 
         self.connectSignalsandSlots()
 
-    def exec_(self, stationIDs, timeRange):
+    def exec_(self, stationIDs, existing_stations, timeRange):
 
-        self.stationListEdit.clear()
+        self.new_inv = None
+        
         self.statusLine.setText('')
 
+        # clear any existing checkboxes, and load new ones
+        self.clear_checkboxes()
+
         for stationID in stationIDs:
-            self.stationListEdit.addItem(IPListItem(stationID))
+            label = stationID
+            if stationID in existing_stations:
+                label += '*'
+
+            self.checkbox_list.append(QCheckBox(label, parent=self))
+        
+        for checkbox in self.checkbox_list:
+            checkbox.setChecked(True)
+            self.checkbox_layout.addWidget(checkbox)
 
         self.timeRange = timeRange
 
@@ -75,6 +86,12 @@ class IPStationMatchDialog(QDialog):
 
     def connectSignalsandSlots(self):
         self.attemptButton.clicked.connect(self.download)
+
+    def clear_checkboxes(self):
+        self.checkbox_list = []
+        # first lets clear out the label layout, and redraw it
+        for i in reversed(range(self.checkbox_layout.count())): 
+            self.checkbox_layout.removeWidget(self.checkbox_layout.itemAt(i).widget())
 
     def download(self):
         self.statusLine.setText('Connecting...')
@@ -86,38 +103,44 @@ class IPStationMatchDialog(QDialog):
             self.statusLine.setText('Connected')
         except:
             self.statusLine.setText('Service unreachable')
+
         foundCount = 0
+        for checkbox in self.checkbox_list:
+            if checkbox.isChecked():
+                traceID = checkbox.text()
+                traceID.replace('*', '')    # remove the asterisk if it's there
 
-        for i in range(0, self.stationListEdit.count()):
-            listItem = self.stationListEdit.item(i)
-            traceID = listItem.text()
+                self.statusLine.setText('Attempting to download...' + traceID)
+                QApplication.instance().processEvents()
 
-            self.statusLine.setText('Attempting to download...' + traceID)
-            QApplication.instance().processEvents()
+                s = traceID.split('.')
+                network = s[0]
+                station = s[1]
 
-            s = traceID.split('.')
-            network = s[0]
-            station = s[1]
-            # if s[2] == '':
-            location = None
-            # else:
-            #     location = s[2]
+                inv = None
+                try:
+                    inv = client.get_stations(network=network, station=station, startbefore=UTCDateTime(self.timeRange[0]), endafter=UTCDateTime(self.timeRange[0]))
+                    foundCount += 1
+                    checkbox.setStyleSheet('QCheckBox {color: green}')
+                    
+                except Exception as e:
+                    checkbox.setStyleSheet('QCheckBox {color: red}')
 
-            try:
-                inv = client.get_stations(network=network, station=station, location=location, startbefore=UTCDateTime(self.timeRange[0]), endafter=UTCDateTime(self.timeRange[1]))
-                listItem.setForeground(Qt.darkGreen)
-                if self.inv is None:
-                    self.inv = inv
-                else:
-                    self.inv += inv
-                foundCount = foundCount + 1
-            except:
-                listItem.setForeground(Qt.red)
+                
+                if inv is not None:
+                    if self.new_inv is None:
+                        self.new_inv = inv
+                    else:
+                        self.new_inv += inv
 
-        self.statusLine.setText('Found ' + str(foundCount) + ' of ' + str(self.stationListEdit.count()) + ' stations.')
+                
+                self.statusLine.setText('Found ' + str(foundCount) + ' stations.')
 
     def getInventory(self):
-        return self.inv
+        return self.new_inv
+    
+    
+
 
 
 class IPListItem(QListWidgetItem):
