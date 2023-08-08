@@ -152,7 +152,7 @@ class IPWaveformWidget(QWidget):
 
 
     def clear_inventory(self):
-        self.stationViewer.clear()
+        self.stationViewer.clear_all()
 
     def get_streams(self):
         return self._sts
