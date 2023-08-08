@@ -36,18 +36,14 @@ class IPWaveformSelectorWidget(QWidget):
 
         self.del_button_group = QButtonGroup()
         self.del_button_group.idClicked.connect(self.del_button_clicked)
-        
-        self.title_label = QLabel("Show/Hide")
-        self.del_label = QLabel("Remove")
 
         self.grid_layout = QGridLayout()
 
         self.tooltip_label = QLabel()
-        self.grid_layout.addWidget(self.title_label, 0, 0)
-        self.grid_layout.addWidget(self.del_label, 0, 1)
-        tooltip_text = 'Note: This is for displaying/hiding plots only.  When you run the beamformer, all traces loaded will be used in the calculation. If you need to delete a trace, do it using the tabs in the trace viewer.'
+        tooltip_text = 'Select which waveforms to show/hide with the checkbox on the left. Remove the waveforms from the plot with the buttons on the right.'
         self.tooltip_label.setText(tooltip_text)
         self.tooltip_label.setWordWrap(True)
+        self.tooltip_label.setVisible(False)
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addLayout(self.grid_layout)
@@ -73,7 +69,10 @@ class IPWaveformSelectorWidget(QWidget):
         # now clear everything
         self.name_list.clear()
         self.value_list.clear()
-        self.clear_form()
+        self.clear_layout()
+
+        self.grid_layout.addWidget(QLabel("Show/Hide"), 0, 0)
+        self.grid_layout.addWidget(QLabel("Remove"), 0, 1)
 
         for i, trace in enumerate(new_stream):
             # All new traces are automatically set to display
@@ -94,6 +93,7 @@ class IPWaveformSelectorWidget(QWidget):
 
             del_button = QPushButton('x')
             del_button.setToolTip('Remove {} from plot'.format(trace.id))
+            del_button.setMaximumWidth(50) # makes it square?
             self.del_button_group.addButton(del_button)
             self.del_button_group.setId(del_button, -self.button_id)
             self.del_button_list.append(del_button)
@@ -104,12 +104,15 @@ class IPWaveformSelectorWidget(QWidget):
             self.grid_layout.addWidget(showhide_checkbox, i+1 , 0)   # the plus one is because the title is in row 0
             self.grid_layout.addWidget(del_button, i+1, 1)
 
-    def clear_form(self):
+            self.tooltip_label.setVisible(True)
+
+    def clear_layout(self):
         self.checkbox_list.clear()
+        self.tooltip_label.setVisible(False)
+
         for idx in reversed(range(self.grid_layout.count())):
-            if idx != 0 or idx != 1:    # don't delete the title row
-                item = self.grid_layout.takeAt(idx)
-                item.widget().deleteLater()
+            item = self.grid_layout.takeAt(idx)
+            item.widget().deleteLater()
 
     @pyqtSlot(int)
     def del_button_clicked(self, id):
