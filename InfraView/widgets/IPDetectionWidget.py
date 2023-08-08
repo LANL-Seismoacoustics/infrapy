@@ -57,13 +57,15 @@ class IPDetectionWidget(QWidget):
         self.loadButton.setIcon(self.openIcon)
 
         savebutton_group = QWidget()
-        savebutton_layout = QGridLayout()
+        savebutton_layout = QVBoxLayout()
 
         savebutton_group.setLayout(savebutton_layout)
-        savebutton_layout.addWidget(self.loadButton, 1, 0)
-        savebutton_layout.addWidget(self.clearButton, 1, 1)
-        savebutton_layout.addWidget(self.saveButton, 0, 0)
-        savebutton_layout.addWidget(self.saveAsButton, 0, 1)
+        savebutton_layout.addWidget(self.loadButton)
+        savebutton_layout.addWidget(self.clearButton)
+        savebutton_layout.addWidget(self.saveButton)
+        savebutton_layout.addWidget(self.saveAsButton)
+        
+        
         savebutton_layout.setSizeConstraint(QLayout.SetFixedSize)
 
         vertical_layout = QVBoxLayout()
