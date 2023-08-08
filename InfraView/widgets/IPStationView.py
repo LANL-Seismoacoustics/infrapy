@@ -1,12 +1,12 @@
 import os
 
-from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout, QLayout, 
+from PyQt5.QtWidgets import (QLabel, QHBoxLayout, QCheckBox, QDialogButtonBox,
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
-                             QVBoxLayout)
+                             QVBoxLayout, QSplitter, QDialog)
 
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDir, QSettings
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QDir, QSettings
 
 import obspy
 from obspy import read_inventory
@@ -25,19 +25,19 @@ class IPStationView(QWidget):
         is stored in the parent waveformwidget.  This widget simply gets and puts inventory 
         info from there.
     '''
+
     savefile = None
 
-    inventory_changed = pyqtSignal(obspy.core.inventory.inventory.Inventory)
+    inventory_changed = pyqtSignal(Inventory)
     sig_inventory_cleared = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__()
 
+        self.inv = None
         self.parent = parent
         self.buildUI()
-
-        # self.station_TabWidget.setTabsClosable(True)
-        # self.station_TabWidget.tabCloseRequested.connect(self.closeMyTab)
+        
         self.show()
 
     def buildUI(self):
@@ -45,51 +45,64 @@ class IPStationView(QWidget):
         self.buildIcons()
 
         self.station_TabWidget = QTabWidget()
+        self.station_TabWidget.setMinimumSize(200,0)
         self.station_TabWidget.setTabsClosable(True)
         self.station_TabWidget.tabCloseRequested.connect(self.remove_station_by_name)
         # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.arrayViewWidget = IPArrayView(self)
+        self.arrayViewWidget.setMinimumSize(200, 0)
 
         self.clearButton = QPushButton(' Clear Stations')
+        button_font = self.clearButton.font()
+        button_font.setPointSize(10)
+        self.clearButton.setFont(button_font)
         self.clearButton.setIcon(self.clearIcon)
+
         self.saveButton = QPushButton(' Save Stations')
         self.saveButton.setIcon(self.saveIcon)
+        self.saveButton.setFont(button_font)
+
         self.saveAsButton = QPushButton(' Save Stations As...')
         self.saveAsButton.setIcon(self.saveAsIcon)
+        self.saveAsButton.setFont(button_font)
 
         self.loadButton = QPushButton(' Load...')
+        self.loadButton.setFont(button_font)
         self.loadButton.setIcon(self.openIcon)
 
         self.reconcileButton = QPushButton(' Reconcile Stations')
+        self.reconcileButton.setFont(button_font)
         self.reconcileButton.setToolTip(self.tr('Attempt to download stations for current waveforms'))
 
-        savebuttonGroup = QWidget()
-        savebuttonLayout = QGridLayout()
+        savebuttonLayout = QVBoxLayout()
 
-        savebuttonGroup.setLayout(savebuttonLayout)
-        savebuttonLayout.addWidget(self.loadButton, 1, 0)
-        savebuttonLayout.addWidget(self.clearButton, 1, 1)
-        savebuttonLayout.addWidget(self.saveButton, 0, 0)
-        savebuttonLayout.addWidget(self.saveAsButton, 0, 1)
-        savebuttonLayout.addWidget(self.reconcileButton, 2, 1)
-        savebuttonLayout.setSizeConstraint(QLayout.SetFixedSize)
+        savebuttonLayout.addWidget(self.loadButton)
+        savebuttonLayout.addWidget(self.clearButton)
+        savebuttonLayout.addWidget(self.saveButton)
+        savebuttonLayout.addWidget(self.saveAsButton)
+        savebuttonLayout.addWidget(self.reconcileButton)
+        savebuttonLayout.addStretch()
 
-        verticalLayout = QVBoxLayout()
-        verticalLayout.addWidget(savebuttonGroup)
-        verticalLayout.addStretch()
+        mainHSplitter = QSplitter(Qt.Horizontal)
+        mainHSplitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
+
+        mainHSplitter.addWidget(self.station_TabWidget)
+        mainHSplitter.addWidget(self.arrayViewWidget)
+
+        mainHSplitter.setSizes([100000,100000])
 
         mainLayout = QHBoxLayout()
-        mainLayout.addWidget(self.station_TabWidget)
-        #mainLayout.addStretch()
-        mainLayout.addWidget(self.arrayViewWidget)
-        #mainLayout.addStretch()
-        mainLayout.addLayout(verticalLayout)
+        mainLayout.addWidget(mainHSplitter)
+        mainLayout.addLayout(savebuttonLayout)
 
         # go ahead and make an instance of the matchDialog for later use
-        self.matchDialog = IPStationMatchDialog.IPStationMatchDialog()
+        self.matchDialog = IPStationMatchDialog.IPStationMatchDialog(self)
 
         self.setLayout(mainLayout)
+
+        self.duplicate_sta_dialog = IPDuplicateStationDialog(self)
+
         self.connectSignalsandSlots()
 
     def buildIcons(self):
@@ -108,116 +121,101 @@ class IPStationView(QWidget):
         self.inventory_changed.connect(self.arrayViewWidget.set_data)
         self.sig_inventory_cleared.connect(self.arrayViewWidget.clear)
 
-    def setInventory(self, inventory):
-        if inventory is None:
-            self.clear()
-            return
+    def get_inventory(self):
+        return self.inv
 
-        tab_names = []
+    def populateTextEdit(self, te, sta, net_code):
+        ''' This is the code that generates the text that describes a station and its channels
+        te is the QTextEdit we are editing. Note that these are created on the fly, that's why the ref needs to be passed
+        sta is the station we are writing about
+        net_code is the network code for this particular stations network
+        '''
+        html_str = ""
+        html_str += "<b>Network:</b> " + net_code + "<br>"
+        html_str += "<b>Station:</b> " + sta.code + "<ol>"
+        sta_dictionary = {
+            'Latitude': sta.latitude,
+            'Longitude': sta.longitude,
+            'Elevation': sta.elevation,
+            'Creation Date': sta.creation_date,
+            'Termination Date': sta.termination_date,
+            'Historical Code': sta.historical_code, 
+            'Total Number of Channels': len(sta.channels)
+        }
+        for sta_k, sta_v in sta_dictionary.items():
+            # loop through the dictionary and combine the key/values
+            html_str += "<li>" +  sta_k + ": " + str(sta_v) + "</li>"
+        html_str += "</ul>"
 
-        self.station_TabWidget.clear()
+        for chan in sta.channels:
+            html_str += '<b>Channel:</b> ' + chan.code + '<ul>'
+            ch_dictionary = {
+                'Latitude': chan.latitude,
+                'Longitude': chan.longitude,
+                'Elevation': chan.elevation,
+                'Sample Rate': chan.sample_rate,
+                'Location Code:': chan.location_code,
+                'Sensor': chan.sensor,
+                'Start Date': chan.start_date,
+                'End Date': chan.end_date 
+            }
+            for ch_k, ch_v in ch_dictionary.items():
+                # loop through the dictionary and combine the key/values
+                html_str += "<li>" +  ch_k + ": " + str(ch_v) + "</li>"
+            html_str += "</ul>"
+                 
+        te.setHtml(html_str)
 
-        for network in inventory.networks:
-            for station in network.stations:
-                names = []
-                if len(station.channels) > 0:
-                    for channel in station.channels:
-                        name = network.code + '.' + station.code + '.' + channel.location_code + '.' + channel.code
+    def update_station_view(self, inv):
+        # populate the station tabs in the Station view
+        self.clear()
+        
+        self.inv = inv
 
-                        if name not in tab_names:
-                            # Ok, need at least one, so lets assemble the interesting station info for display
-                            newStationEdit = QTextEdit()
-                            contents = station.get_contents()
-                            ret = ("<b>Network:</b> {network_code}<br/>"
-                                   "<b>Station:</b> {station_name}<br/>"
-                                   "<b>Station Code:</b> {station_code}<br/>"
-                                   "<b>Location Code:</b> {location_code}<br/>"
-                                   "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
-                                   "<b>Available Dates:</b> {start_date} - {end_date}<br/>"
-                                   "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                                   "<b>Latitude:</b> {lat:.8f}<br/>"
-                                   "<b>Longitude:</b> {lng:.8f}<br/>"
-                                   "<b>Elevation:</b> {elevation:.2f} m<br/>")
-                            ret = ret.format(
-                                network_code=network.code,
-                                station_name=contents["stations"][0],
-                                station_code=station.code,
-                                location_code=channel.location_code,
-                                selected=station.selected_number_of_channels,
-                                total=station.total_number_of_channels,
-                                start_date=str(station.start_date),
-                                end_date=str(station.end_date) if station.end_date else "",
-                                restricted=station.restricted_status,
-                                lat=station.latitude, lng=station.longitude, elevation=station.elevation,
-                                alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
-                                historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
-                
-                            newStationEdit.setHtml(ret)
-                            self.station_TabWidget.addTab(newStationEdit, name)
-                else:
-                    name = network.code + '.' + station.code
-                    if name not in tab_names:
-                        # Ok, need at least one, so lets assemble the interesting station info for display
-                        newStationEdit = QTextEdit()
-                        contents = station.get_contents()
-                        ret = ("<b>Network Code:</b> {network_code} <br/>"
-                            "<b>Station Code:</b> {station_code} <br/>"
-                            "<b>Location Code:</b> {location_code} </br>"
-                            "<b>Channel Count:</b> {selected}/{total} (Selected/Total)<br/>"
-                            "<Available Dates:</b> {start_date} - {end_date}<br/>"
-                            "<b>Access:</b> {restricted} {alternate_code}{historical_code}<br/>"
-                            "<b>Latitude:</b> {lat:.8f}<br/>"
-                            "<b>Longitude:</b> {lng:.8f}<br/>"
-                            "<b>Elevation:</b> {elevation:.2f} m<br/>")
-                        ret = ret.format(
-                            network_code=network.code,
-                            station_name=contents["stations"][0],
-                            station_code=station.code,
-                            location_code='',
-                            selected=station.selected_number_of_channels,
-                            total=station.total_number_of_channels,
-                            start_date=str(station.start_date),
-                            end_date=str(station.end_date) if station.end_date else "",
-                            restricted=station.restricted_status,
-                            lat=station.latitude, lng=station.longitude, elevation=station.elevation,
-                            alternate_code="Alternate Code: %s " % station.alternate_code if station.alternate_code else "",
-                            historical_code="Historical Code: %s " % station.historical_code if station.historical_code else "")
-                            
-                        newStationEdit.setHtml(ret)
-                        self.station_TabWidget.addTab(newStationEdit, network.code + '.' + station.code)
+        # Create the Tabs, and fill with metadata
+        for network in self.inv:
+            for station in network:
+                newTextEdit = QTextEdit()
+                self.populateTextEdit(newTextEdit, station, network.code)
+                self.station_TabWidget.addTab(newTextEdit, network.code + '.' + station.code)
 
-        self.inventory_changed.emit(inventory)
-        return
+        # Signal to the array viewer to update
+        self.inventory_changed.emit(self.inv)
 
     def getStationCount(self):
+
+        if self.inv is None:
+            return 0
         cnt = 0
-        inventory = self.parent.get_inventory()
-        for network in inventory.networks:
+        for network in self.inv.networks:
             for station in network.stations:
                 cnt += 1
         return cnt
 
-    @pyqtSlot(int)
-    def closeMyTab(self, idx):
-        self.station_TabWidget.removeTab(idx)
-
-    @pyqtSlot(int)
-    def remove_station_by_name(self, idx):
-        title = self.station_TabWidget.tabText(idx)
-        parts = title.split('.')
-        self.parent.remove_from_inventory(net=parts[0], sta=parts[1], loc=parts[2], cha=parts[3], keep_empty=False)
-
     def clear(self):
+
+        self.inv = None
         for i in range(self.station_TabWidget.count()):
             self.station_TabWidget.removeTab(0)
 
         # now signal to the application that the inventory needs to be cleared
         self.sig_inventory_cleared.emit()
 
+    @pyqtSlot(int)
+    def remove_station_by_name(self, idx):
+        # get the name of the tab
+        name = self.station_TabWidget.tabText(idx)
+
+        # peel off the station name
+        sta_name = name.split('.')[1]
+
+        self.inv = self.inv.remove(station=sta_name).copy()
+        
+        self.update_station_view()
 
     def saveStations(self):
-        inventory = self.parent.get_inventory()
-        if inventory is None:
+        
+        if self.inv is None:
             IPUtils.errorPopup('Oops... There are no stations to save')
             return
         # if there is no current filename, prompt for one...
@@ -225,14 +223,13 @@ class IPStationView(QWidget):
         if self.savefile is None:
             self.saveStationsAs()
         else:
-            inventory.write(self.savefile[0], format='stationxml', validate=True)
+            self.inv.write(self.savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.savefile[0])
             settings = QSettings('LANL', 'InfraView')
             settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
-        inventory = self.parent.get_inventory()
-        if inventory is None:
+        if self.inv is None:
             IPUtils.errorPopup('Oops... There are no stations to save')
             return
 
@@ -262,33 +259,124 @@ class IPStationView(QWidget):
             # There is an open project, so make the default save location correspond to what the project wants
             previousDirectory = str(self.parent.get_project().get_stationsPath())
 
-        self.__openfile = QFileDialog.getOpenFileName(self, 'Open File', previousDirectory)
+        ifile = QFileDialog.getOpenFileName(self, 'Open File', previousDirectory)
 
-        if self.__openfile[0]:
+        if ifile[0]:
             try:
-                newinventory = read_inventory(self.__openfile[0], format='stationxml')
+                newinventory = read_inventory(ifile[0], format='stationxml')
             except Exception:
                 IPUtils.errorPopup("\nThis doesn't seem to be a valid XML file")
                 return
 
-            if self.parent._inv is not None:
-                self.parent._inv += newinventory
+            self.inv = self.merge_new_inventory(newinventory, mode='PROMPT')
+    
+    @pyqtSlot(Inventory, str)
+    def merge_new_inventory(self, new_inv, mode):
+
+        '''
+        we don't want duplicate stations in our inventory.  So we have 4 options when merging new inventories into current:
+        1. Keep current stations that have duplicates, discard new duplicates
+        2. Automatically keep new duplicate stations, overwriting current
+        3. Prompt the user for which new duplicates to keep
+        4. Replace current inventory with new inventory
+
+        options for mode are 'APPEND_KEEP_NEW', 'APPEND_KEEP_CURRENT', 'PROMPT', 'REPLACE'
+        '''
+
+        if self.inv is None or mode == 'REPLACE':
+            self.inv = new_inv.copy()
+
+        else:
+            # This is a pain.  We need to look for duplicate station codes
+            current_inv_station_codes = []
+            for network in self.inv.networks:
+                for sta in network.stations:
+                    current_inv_station_codes.append(network.code + '.' + sta.code)
+
+            duplicate_sta_codes = []
+            for network in new_inv.networks:
+                for sta in network.stations:
+                    if network.code + '.' + sta.code in current_inv_station_codes:
+                        duplicate_sta_codes.append(network.code + '.' + sta.code)
+
+            if mode == 'PROMPT':
+                # prompt the user to see which duplicate stations to overwrite
+                if self.duplicate_sta_dialog.exec_(duplicate_sta_codes):
+                    selected_codes = self.duplicate_sta_dialog.get_selected_sta_codes()
+                
+                    for code in selected_codes:
+                        trimmed_code = code.split('.')[1]
+                        self.inv = self.inv.remove(station=trimmed_code)
+                        
+                    not_selected = self.duplicate_sta_dialog.get_not_selected_sta_codes()
+                    for code in not_selected:
+                        trimmed_code = code.split('.')[1]
+                        new_inv = new_inv.remove(station=trimmed_code)
+                    
+            elif mode == 'KEEP_NEW':
+                #automatically overwrite duplicates
+                for code in duplicate_sta_codes:
+                    trimmed_code = code.split('.')[1]
+                    self.inv = self.inv.remove(station=trimmed_code)
+
+            elif mode == 'KEEP_CURRENT':
+                for code in duplicate_sta_codes:
+                    trimmed_code = code.split('.')[1]
+                    new_inv = new_inv.remove(station=trimmed_code)
+
+            self.inv += new_inv
+            
+
+        # inventories have been merged, but we might have duplicate nets, so merge them 
+        self.inv = self.merge_inv_networks(self.inv)
+
+        # ready to update the view
+        self.update_station_view(self.inv)
+
+    def remove_station(self, station):
+        print("Removing Station {}".format(station))
+        self.inv = self.inv.remove(station=station, keep_empty=False)
+        self.update_station_view()
+    
+
+    def merge_inv_networks(self, inv):
+        # This function exists because the notation inv += new_inv doesn't merge networks, which causes
+        # issues with inv.remove()
+
+        merged_inventory = Inventory(
+                # We'll add networks later.
+                networks=[],
+                # The source should be the id whoever create the file.
+                source="InfraView")
+        
+        net_code_list = []
+
+        for network in inv.networks:
+            if network.code not in net_code_list:
+                # network isnt there yet, lets add it to current
+                merged_inventory.networks.append(network)
+                net_code_list.append(network.code)
             else:
-                self.parent._inv = newinventory
-
-            self.setInventory(self.parent._inv)
-
+                # network exists, lets copy the stations from it, append them to
+                # the existing network, and dump it
+                stas = network.stations.copy()
+                # find the network with that code
+                for net in merged_inventory.networks:
+                    if net.code == network.code:
+                        for sta in stas:
+                            net.stations.append(sta)
+        
+        return merged_inventory
 
     def get_current_center(self):
         # this method will calculate the center of the current inventory and will return a [lat,lon]
 
         # TODO: This is not really setup right now to handle the (very rare) case where an array straddles the
         # international date line
-        inventory = self.parent.get_inventory()
 
         lat, lon, ele, cnt = 0, 0, 0, 0
 
-        for network in inventory:
+        for network in self.inv:
             for station in network:
                 lat += station.latitude
                 lon += station.longitude
@@ -298,12 +386,10 @@ class IPStationView(QWidget):
         return [lat / cnt, lon / cnt, ele / cnt]
 
     def reconcileStations(self):
-        needed_stations = []
-        loaded_stations = []
+        
         trace_stations = []
 
         streams = self.parent.get_streams()
-        inventory = self.parent.get_inventory()
         
         if streams is None:
             return  # Nothing to reconcile
@@ -321,38 +407,77 @@ class IPStationView(QWidget):
             if name not in trace_stations:
                 trace_stations.append(name)
 
-        if inventory is None:
-            # No inventory loaded, so we need to get everything
-            needed_stations = trace_stations
-        else:
-            # we already have inventory loaded, so we need to get the stations for waveforms that need it
-            # First find all the loaded stations
-            for network in inventory.networks:
-                for station in network.stations:
-                    name = ''
-                    if len(station.channels) > 0:
-                        for channel in station.channels:
-                            name = network.code + '.' + station.code + '.' + channel.location_code
-                    else:
-                        name = network.code + '.' + station.code
+        existing_stations = []
+        for network in self.inv.networks:
+            for station in network.stations:
+                existing_stations.append(network.code + '.' + station.code)
 
-                    if name not in loaded_stations:
-                        loaded_stations.append(name)
+        
+        if self.matchDialog.exec_(trace_stations, existing_stations, (self.parent.get_earliest_start_time(), self.parent.get_latest_end_time())):
+            new_inventory = self.matchDialog.getInventory()
+            new_inventory = self.merge_inv_networks(new_inventory)
 
-            # now find all the stations that ARENT already loaded
-            for sta in trace_stations:
-                if sta not in loaded_stations:
-                    needed_stations.append(sta)
-        if needed_stations is not None:
-            if self.matchDialog.exec_(needed_stations, (self.parent.get_earliest_start_time(), self.parent.get_earliest_start_time())):
-                new_inventory = self.matchDialog.getInventory()
-                if new_inventory is not None:
-                    if inventory is None:
-                        inventory = new_inventory
-                    else:
-                        inventory += new_inventory
-                    self.parent.set_inventory(inventory)
-                    self.setInventory(inventory)
+            if new_inventory is not None:
+
+                # since the user has already chosen to overwrite the new inventory, we set the merge mode as KEEP_NEW
+                self.inv = self.merge_new_inventory(new_inventory, mode='KEEP_NEW')
+
+
+class IPDuplicateStationDialog(QDialog):
+
+    def __init__(self, parent):
+        super(IPDuplicateStationDialog, self).__init__(parent)
+
+        self.duplicate_sta_codes = []
+        self.__buildUI__()
+
+    def __buildUI__(self):
+        self.main_layout = QVBoxLayout()
+        self.label_layout = QVBoxLayout()
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                                   Qt.Horizontal, self)
+        buttons.button(QDialogButtonBox.Ok).setText('Replace Selected')
+        buttons.button(QDialogButtonBox.Cancel).setText('Replace None')
+
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        self.main_layout.addLayout(self.label_layout)
+        self.main_layout.addWidget(buttons)
+        self.setLayout(self.main_layout)
+
+    def exec_(self, duplicate_stas):
+        self.duplicate_sta_codes = duplicate_stas
+
+        # first lets clear out the label layout, and redraw it
+        for i in reversed(range(self.label_layout.count())): 
+            self.label_layout.removeWidget(self.label_layout.itemAt(i).widget())
+
+        self.intro_label = QLabel("The following station(s) are duplicated between \nthe current inventory and the new inventory.")
+        self.label_layout.addWidget(self.intro_label)
+
+        self.checkbox_list = []
+        for dup_code in self.duplicate_sta_codes:
+            self.checkbox_list.append(QCheckBox(dup_code))
+            self.label_layout.addWidget(self.checkbox_list[-1])
+        self.label_layout.addStretch()
+
+        return super().exec_()
+    
+    def get_selected_sta_codes(self):
+        selected_codes = []
+        for idx, check in enumerate(self.checkbox_list):
+            if check.isChecked():
+                selected_codes.append(self.duplicate_sta_codes[idx].split('.')[1])
+        return selected_codes
+    
+    def get_not_selected_sta_codes(self):
+        not_selected = []
+        for idx, check in enumerate(self.checkbox_list):
+            if not check.isChecked():
+                not_selected.append(self.duplicate_sta_codes[idx].split('.')[1])
+        return not_selected
 
 
 class IPArrayView(QWidget):

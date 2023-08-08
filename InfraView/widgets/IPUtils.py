@@ -23,6 +23,7 @@ def errorPopup(message, title="Oops..."):
     msgBox.exec_()
 
 
+
 class CapsValidator(QValidator):
     # since many text fields require capitalized values only, here is a validator for the lineEdits etc
     # general usage is something like...

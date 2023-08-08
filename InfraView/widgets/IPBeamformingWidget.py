@@ -762,7 +762,7 @@ class IPBeamformingWidget(QWidget):
             IPUtils.errorPopup('You should have at least 3 waveforms loaded to run beamfinder')
             return
 
-        if self.parent.waveformWidget.get_inventory() is None:
+        if self.parent.waveformWidget.stationViewer.get_inventory() is None:
             IPUtils.errorPopup('There are no stations loaded.  Station Lat and Lon information is required to do beamforming.')
             return
 
@@ -902,7 +902,7 @@ class IPBeamformingWidget(QWidget):
                                                 self.bottomSettings.getMethod(),
                                                 self.bottomSettings.getNumSigs(),
                                                 self.bottomSettings.getSubWinLength(),
-                                                self.parent.waveformWidget.get_inventory(),
+                                                self.parent.waveformWidget.stationViewer.get_inventory(),
                                                 self._mp_pool,
                                                 self.bottomSettings.getBackAzResolution(),
                                                 self.bottomSettings.getTraceVelResolution(),
