@@ -355,7 +355,7 @@ class IPFDSNWidget(QWidget):
         if(service == 'choose...'):
             IPUtils.errorPopup('Please select a service to search')
             return
-        print(self.fdsn_dictionary[service])
+    
         client = Client(self.fdsn_dictionary[service])
 
         # Clear old streams because we don't need them anymore
@@ -400,7 +400,7 @@ class IPFDSNWidget(QWidget):
 
         # Now get the corresponding stations
         try:
-            self.inventory = client.get_stations(network=network, station=station)
+            self.inventory = client.get_stations(network=network, station=station, starttime=startTime, endtime=endTime)
         except:
             IPUtils.errorPopup('Failure loading Inventory.  \nDouble check that the values you entered are valid and the time and date are appropriate.')
             return

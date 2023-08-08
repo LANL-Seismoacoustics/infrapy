@@ -96,7 +96,7 @@ class IPWaveformWidget(QWidget):
 
     @pyqtSlot(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     def appendTraces(self, newTraces, newInventory):
-        print("appending")
+
         if newTraces is None:
             return
 
@@ -122,8 +122,7 @@ class IPWaveformWidget(QWidget):
             self.stationViewer.merge_new_inventory(newInventory, 'APPEND_KEEP_NEW')
 
             self.parent.setStatus("Ready", 5000)
-
-            print('finished appending')
+            
         else:
             return
 
