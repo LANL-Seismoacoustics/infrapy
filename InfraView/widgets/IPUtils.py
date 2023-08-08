@@ -25,10 +25,12 @@ def errorPopup(message, title="Oops..."):
 
 
 class CapsValidator(QValidator):
-    # since many text fields require capitalized values only, here is a validator for the lineEdits etc
-    # general usage is something like...
-    #     my_validator = IPUtils.CapsValidator()
-    #     my_lineedit.setValidator(my_validator)
+    ''' 
+    since many text fields require capitalized values only, here is a validator for the lineEdits etc
+    general usage is something like...
+    my_validator = IPUtils.CapsValidator()
+    my_lineedit.setValidator(my_validator)
+    '''
 
     def validate(self, string, pos):
         return QValidator.Acceptable, string.upper(), pos
