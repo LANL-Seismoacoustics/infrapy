@@ -80,6 +80,9 @@ class IPWaveformWidget(QWidget):
 
         self.statsViewer.removeTrace.connect(self.remove_trace)
 
+        self.plotViewer.waveform_selector.sig_remove_trace_by_id.connect(self.remove_trace_by_id)
+        self.plotViewer.waveform_selector.sig_remove_station_by_name.connect(self.stationViewer.remove_station_from_inv)
+
         self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setNoiseValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setSignalValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.updateWaveformRange)
@@ -131,6 +134,14 @@ class IPWaveformWidget(QWidget):
         # same as append, just clear out the old traces and inventory first
         self._sts = None
         self.appendTraces(newTraces, newInventory)
+
+    @pyqtSlot(str)
+    def remove_trace_by_id(self, trace_id):
+        for tr in self._sts:
+            if tr.id == trace_id:
+                self._sts.remove(tr)
+        self.update_streams(self._sts)
+
 
     @pyqtSlot(Inventory, str)
     def update_inventory(self, new_inventory, mode):
