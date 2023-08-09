@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
-from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal
+from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal, pyqtSlot
 
 from obspy.core.stream import Stream
 from obspy.core import UTCDateTime
@@ -131,15 +131,32 @@ class IPDatabaseQueryResultsTable(QFrame):
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.clear_button = QPushButton("Clear Table")
+        button_font = self.clear_button.font()
+        button_font.setPointSize(10)
+        self.clear_button.setFont(button_font)
+
         self.select_all_button = QPushButton("Select All")
+        self.select_all_button.setFont(button_font)
+
         self.select_none_button = QPushButton("Select None")
+        self.select_none_button.setFont(button_font)
+
         self.get_selected_rows_button = QPushButton("Get Selected")
+        self.get_selected_rows_button.setFont(button_font)
+
+        self.append_selected_button = QPushButton("Append Selected")
+        self.append_selected_button.setFont(button_font)
+
+        self.replace_with_selected_button = QPushButton("Replace with Selected")
+        self.replace_with_selected_button.setFont(button_font)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.clear_button)
         button_layout.addWidget(self.select_all_button)
         button_layout.addWidget(self.select_none_button)
         button_layout.addWidget(self.get_selected_rows_button)
+        button_layout.addWidget(self.append_selected_button)
+        button_layout.addWidget(self.replace_with_selected_button)
         button_layout.addStretch()
 
         main_layout = QVBoxLayout()
@@ -157,6 +174,9 @@ class IPDatabaseQueryResultsTable(QFrame):
         self.select_none_button.clicked.connect(self.selectNone)
         self.select_all_button.clicked.connect(self.selectAll)
         self.get_selected_rows_button.clicked.connect(self.getSelected)
+        self.append_selected_button.clicked.connect(self.getSelected_append)
+        self.replace_with_selected_button.clicked.connect(self.getSelected_replace)
+
 
     def setData(self, data):
         '''This takes Wfdisc rows, and converts it for display in our tableView'''
@@ -176,7 +196,18 @@ class IPDatabaseQueryResultsTable(QFrame):
 
     def selectNone(self):
         self.tableView.clearSelection()
+    
+    @pyqtSlot()
+    def getSelected_append(self):
+        st = self.getSelected()
+        # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
+        self.signal_new_stream_from_db.emit(st, True)
 
+    def getSelected_replace(self):
+        st = self.getSelected()
+        # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
+        self.signal_new_stream_from_db.emit(st, False)
+    
     def getSelected(self):
         # if nothing is selected, then selectionModel() will return None
         # maybe this should be in the EventQueryWidget?
@@ -220,8 +251,9 @@ class IPDatabaseQueryResultsTable(QFrame):
                                                     endtime=stoptime)
 
             st += new_stream
-        # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
-        self.signal_new_stream_from_db.emit(st, True)
+
+        return st
+        
 
     def get_session(self):
         return self.parent.ipdatabase_connect_widget.session

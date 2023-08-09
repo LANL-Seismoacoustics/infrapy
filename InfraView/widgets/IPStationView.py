@@ -170,8 +170,6 @@ class IPStationView(QWidget):
         # populate the station tabs in the Station view
         self.clear_view()
 
-        print(self.inv)
-
         # Create the Tabs, and fill with metadata
         for network in self.inv:
             for station in network:
@@ -218,8 +216,6 @@ class IPStationView(QWidget):
 
         else:
             sta_name = entry.split('.')[1]
-
-        print(sta_name)
 
         self.inv = self.inv.remove(station=sta_name)
         

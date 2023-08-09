@@ -46,15 +46,21 @@ class IPDetectionWidget(QWidget):
 
         self.clearButton = QPushButton(' Clear')
         self.clearButton.setIcon(self.clearIcon)
+        button_font = self.clearButton.font()
+        button_font.setPointSize(10)
+        self.clearButton.setFont(button_font)
 
         self.saveButton = QPushButton(' Save')
         self.saveButton.setIcon(self.saveIcon)
+        self.saveButton.setFont(button_font)
 
         self.saveAsButton = QPushButton(' Save As...')
         self.saveAsButton.setIcon(self.saveAsIcon)
+        self.saveAsButton.setFont(button_font)
 
         self.loadButton = QPushButton(' Load...')
         self.loadButton.setIcon(self.openIcon)
+        self.loadButton.setFont(button_font)
 
         savebutton_group = QWidget()
         savebutton_layout = QVBoxLayout()
@@ -69,7 +75,7 @@ class IPDetectionWidget(QWidget):
         savebutton_layout.setSizeConstraint(QLayout.SetFixedSize)
 
         vertical_layout = QVBoxLayout()
-        vertical_layout.addWidget(self.fileLabel)
+        # vertical_layout.addWidget(self.fileLabel)
         vertical_layout.addWidget(savebutton_group)
         vertical_layout.addStretch(1)
 

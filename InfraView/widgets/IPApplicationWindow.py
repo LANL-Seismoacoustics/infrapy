@@ -359,22 +359,10 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             # for now we will remove dc offset when loading the file.  Maybe should be an option?
             trace.data = trace.data - np.mean(trace.data)
         
-        if self.waveformWidget._sts is not None:   
-            self.waveformWidget._sts += new_stream
-        else:
-            self.waveformWidget._sts = new_stream
-        
-        # it's possible that self.waveformWidget._sts is still None, so if it is, bail out
-        # if not populate the trace stats viewer and plot the traces
-        if self.waveformWidget._sts is not None:
-            self.beamformingWidget.setStreams(self.waveformWidget._sts)
-                
-            self.sig_stream_changed.emit(self.waveformWidget._sts)
-
-            if new_inventory is not None:
-                self.sig_inventory_changed.emit(new_inventory, 'PROMPT')
-
-            self.mainTabs.setCurrentIndex(0)
+        if append:
+            self.waveformWidget.appendTraces(new_stream)
+        else: # Replace
+            self.waveformWidget.replaceTraces(new_stream)
 
     def parseTraceName(self, trace_name):
         bits = trace_name.split('.')
