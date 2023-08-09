@@ -360,9 +360,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
             trace.data = trace.data - np.mean(trace.data)
         
         if append:
-            self.waveformWidget.appendTraces(new_stream)
+            self.waveformWidget.appendTraces(new_stream, new_inventory)
         else: # Replace
-            self.waveformWidget.replaceTraces(new_stream)
+            self.waveformWidget.replaceTraces(new_stream, new_inventory)
 
     def parseTraceName(self, trace_name):
         bits = trace_name.split('.')
@@ -426,6 +426,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.clearWaveformPlot()
         self.waveformWidget.clearWaveforms()
         self.singleSensorWidget.clearWaveformPlots()
+        self.waveformWidget.stationViewer.clear_all()
                 
     def trace_to_inventory(self, trace):
         # if sac files are opened, it's useful to extract inventory from their streams so that we can populate the 

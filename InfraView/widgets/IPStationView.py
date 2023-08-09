@@ -27,7 +27,6 @@ class IPStationView(QWidget):
     '''
 
     savefile = None
-    inv = None
 
     inventory_changed = pyqtSignal(Inventory)
     sig_inventory_cleared = pyqtSignal()
@@ -36,6 +35,9 @@ class IPStationView(QWidget):
         super().__init__()
 
         self.parent = parent
+
+        self.inv = None
+
         self.buildUI()
         
         self.show()
@@ -224,21 +226,22 @@ class IPStationView(QWidget):
     
 
     def saveStations(self):
-        
-        if self.inv is None:
-            IPUtils.errorPopup('Oops... There are no stations to save')
-            return
+    
         # if there is no current filename, prompt for one...
         # TODO: if there is an open project, default to that
         if self.savefile is None:
             self.saveStationsAs()
         else:
+            if self.inv is None:
+                IPUtils.errorPopup('Oh my... There are no stations to save')
+                return
             self.inv.write(self.savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.savefile[0])
             settings = QSettings('LANL', 'InfraView')
             settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
+        print(self.x)
         if self.inv is None:
             IPUtils.errorPopup('Oops... There are no stations to save')
             return
@@ -254,7 +257,7 @@ class IPStationView(QWidget):
         self.savefile = QFileDialog.getSaveFileName(self, 'Save StationXML File...', previousDirectory)
 
         if self.savefile[0]:
-            self.parent._inv.write(self.savefile[0], format='stationxml', validate=True)
+            self.inv.write(self.savefile[0], format='stationxml', validate=True)
             path = os.path.dirname(self.savefile[0])
             settings = QSettings('LANL', 'InfraView')
             settings.setValue("last_stationfile_directory", path)
@@ -278,7 +281,8 @@ class IPStationView(QWidget):
                 IPUtils.errorPopup("\nThis doesn't seem to be a valid XML file")
                 return
 
-            self.inv = self.merge_new_inventory(newinventory, mode='PROMPT')
+            print("new inventory = {}".format(newinventory))
+            self.merge_new_inventory(newinventory, mode='KEEP_NEW')
     
     @pyqtSlot(Inventory, str)
     def merge_new_inventory(self, new_inv, mode):
@@ -316,6 +320,7 @@ class IPStationView(QWidget):
                 
                     for code in selected_codes:
                         trimmed_code = code.split('.')[1]
+
                         self.inv = self.inv.remove(station=trimmed_code)
                         
                     not_selected = self.duplicate_sta_dialog.get_not_selected_sta_codes()
