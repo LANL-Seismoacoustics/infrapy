@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
 
+from PyQt5.QtGui import QIcon
+
 import numpy as np
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -57,8 +59,8 @@ class IPLocationWidget(QWidget):
     def buildUI(self):
 
         # BottomTab widgets go here...
-        self.consoleBox = QTextEdit()
-        self.consoleBox.setReadOnly(True)
+        
+        self.bisl_resultsWidget = IPBISLResultsWidget(self)
 
         # set up the map widget
         self.mapWidget = IPMapWidget.IPMapWidget(self)
@@ -96,7 +98,7 @@ class IPLocationWidget(QWidget):
         self.assoc_splitter = QSplitter(Qt.Vertical)
         self.assoc_splitter.addWidget(self.dm_view)
         self.assoc_splitter.addWidget(self.dendrogram)
-        self.assoc_splitter.setSizes([100000, 100000])
+        self.assoc_splitter.setSizes([1000000, 1000000])
 
         # splitter holding the map canvas and the association plots
         self.loc_splitter = QSplitter(Qt.Horizontal)
@@ -106,7 +108,7 @@ class IPLocationWidget(QWidget):
         # large splitter holding the map, association plots, and the console
         self.mapSplitter = QSplitter(Qt.Vertical)
         self.mapSplitter.addWidget(self.loc_splitter)
-        self.mapSplitter.addWidget(self.consoleBox)
+        self.mapSplitter.addWidget(self.bisl_resultsWidget)
 
         self.mainSplitter = QSplitter(Qt.Horizontal)
         self.mainSplitter.addWidget(self.mapSplitter)
@@ -145,7 +147,7 @@ class IPLocationWidget(QWidget):
         self.detections = []
         self.dm_view.clear()
         self.dendrogram.clear_plot()
-        self.consoleBox.clear()
+        self.bisl_resultsWidget.clear()
     
     def get_detections(self):
         return self.detections
@@ -226,7 +228,7 @@ class IPLocationWidget(QWidget):
         self.bisl_workerObject.signal_runFinished.connect(self.bisl_run_finished)
 
         # start the thread
-        self.consoleBox.setText("...Calculating...")
+        self.bisl_resultsWidget.setText("...Calculating...")
         self.bislThread.start()
         self.signal_start_BISL_calc.emit()
 
@@ -234,7 +236,7 @@ class IPLocationWidget(QWidget):
     def bisl_run_finished(self, result):
         self.bisl_result = result
 
-        self.consoleBox.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
+        self.bisl_resultsWidget.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
 
         self.calc_conf_ellipse(self.bislSettings.confidence_edit.value())
 
@@ -952,11 +954,59 @@ class ClusterWorkerObject(QObject):
         self.thread_stopped = True
 
 
+class IPBISLResultsWidget(QWidget):
+    
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.buildIcons()
+        self.buildUI()
+
+    def buildUI(self):
+        self.consoleBox = QTextEdit()
+        self.consoleBox.setReadOnly(True)
+
+        self.clearButton = QPushButton('Clear')
+        button_font = self.clearButton.font()
+        button_font.setPointSize(10)
+        self.clearButton.setFont(button_font)
+        self.clearButton.setIcon(self.clearIcon)
+        self.clearButton.clicked.connect(self.clearConsole)
+
+        self.saveAsButton = QPushButton('Save As...')
+        self.saveAsButton.setFont(button_font)
+        self.saveAsButton.setIcon(self.saveAsIcon)
+
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.clearButton)
+        button_layout.addWidget(self.saveAsButton)
+        button_layout.addStretch()
+
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.consoleBox)
+        main_layout.addLayout(button_layout)
+
+        self.setLayout(main_layout)
+
+    def buildIcons(self):
+        self.clearIcon = QIcon.fromTheme("edit-clear")
+        self.openIcon = QIcon.fromTheme("document-open")
+        self.saveIcon = QIcon.fromTheme("document-save")
+        self.saveAsIcon = QIcon.fromTheme("document-save-as")
+
+    def setText(self, text):
+        self.consoleBox.setText(text)
+
+    def clearConsole(self):
+        self.consoleBox.clear()
+
+
+
 class IPDendrogramWidget(QWidget):
 
     signal_new_colors = pyqtSignal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)

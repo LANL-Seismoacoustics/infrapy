@@ -124,6 +124,10 @@ class IPWaveformWidget(QWidget):
 
             self.stationViewer.merge_new_inventory(newInventory, 'APPEND_KEEP_NEW')
 
+            self.sig_stream_changed.emit(self.waveformWidget._sts)
+
+            self.mainTabs.setCurrentIndex(0)
+
             self.parent.setStatus("Ready", 5000)
             
         else:
@@ -132,7 +136,8 @@ class IPWaveformWidget(QWidget):
     @pyqtSlot(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
     def replaceTraces(self, newTraces, newInventory):
         # same as append, just clear out the old traces and inventory first
-        self._sts = None
+        self.clearWaveforms()
+        self.stationViewer.clear_all()
         self.appendTraces(newTraces, newInventory)
 
     @pyqtSlot(str)
@@ -361,7 +366,6 @@ class IPWaveformWidget(QWidget):
         # empty out the streams
         self._sts = None
         self._sts_filtered = None
-        self.clear_inventory()
 
         # empty out the child widgets
         self.statsViewer.clear()

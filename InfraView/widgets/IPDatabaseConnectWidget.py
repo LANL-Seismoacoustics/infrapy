@@ -124,15 +124,19 @@ class IPEnvVarDialog(QDialog):
         super().reject()
 
 class IPDatabaseConnectWidget(QFrame):
+
+    session = None
+    config_filename = ""
+
     def __init__(self, parent):
         super().__init__()
+    
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
         size_policy = self.sizePolicy()
         size_policy.setHorizontalPolicy(QSizePolicy.Fixed)
         self.setSizePolicy(size_policy)
         self.parent = parent  # reference to the IPBeamformingWidget to which this belongs
-        self.session = None
-        self.config_filename = ""
+    
         self.buildUI()
         
     def buildUI(self):
@@ -141,17 +145,23 @@ class IPDatabaseConnectWidget(QFrame):
         self.title_label.setStyleSheet("QLabel {font-weight: bold; color: white; background-color: black}")
 
         self.load_config_button = QPushButton("Load Config File...")
-        self.load_config_button.setMaximumWidth(200)
+        button_font = self.load_config_button.font()
+        button_font.setPointSize(10)
+        self.load_config_button.setFont(button_font)
+        #self.load_config_button.setMaximumWidth(140)
 
         self.save_current_button = QPushButton("Save Config File...")
-        self.save_current_button.setMaximumWidth(200)
+        self.save_current_button.setFont(button_font)
+        #self.save_current_button.setMaximumWidth(140)
         self.save_current_button.setEnabled(False)
 
         self.table_dialog = IPTableDialog(self)
         self.show_tables_button = QPushButton("Tables...")
+        self.show_tables_button.setFont(button_font)
 
         self.env_vars_dialog = IPEnvVarDialog(self)
         self.show_env_vars_button = QPushButton("Env Vars...")
+        self.show_env_vars_button.setFont(button_font)
 
         self.schema_type_combo = QComboBox()
         self.schema_type_combo.addItem("KBCore")
@@ -185,19 +195,24 @@ class IPDatabaseConnectWidget(QFrame):
 
         self.url_edit = QLineEdit()
         self.url_edit.setPlaceholderText("URL")
+        self.url_edit.setMaximumWidth(250)
         self.url_edit.setToolTip("You may edit this by hand if the url generated from the pieces doesn't work")
 
         self.create_session_button = QPushButton("Create Session")
-        self.create_session_button.setMaximumWidth(200)
+        self.create_session_button.setFont(button_font)
+        #self.create_session_button.setMaximumWidth(140)
 
         self.close_session_button = QPushButton("Clear Session")
-        self.close_session_button.setMaximumWidth(200)
+        self.close_session_button.setFont(button_font)
+        #self.close_session_button.setMaximumWidth(140)
 
         self.clear_form_button = QPushButton("Clear form")
-        self.clear_form_button.setMaximumWidth(200)
+        self.clear_form_button.setFont(button_font)
+        #self.clear_form_button.setMaximumWidth(140)
 
         self.test_connection_button = QPushButton("Test Connection")
-        self.test_connection_button.setMaximumWidth(200)
+        self.test_connection_button.setFont(button_font)
+        #self.test_connection_button.setMaximumWidth(140)
 
         horiz_layout_0 = QHBoxLayout()
         horiz_layout_0.addWidget(self.load_config_button)
