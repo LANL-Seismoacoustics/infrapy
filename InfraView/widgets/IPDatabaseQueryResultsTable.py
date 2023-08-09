@@ -201,12 +201,14 @@ class IPDatabaseQueryResultsTable(QFrame):
     def getSelected_append(self):
         st = self.getSelected()
         # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
-        self.signal_new_stream_from_db.emit(st, True)
+        if st is not None:
+            self.signal_new_stream_from_db.emit(st, True)
 
     def getSelected_replace(self):
         st = self.getSelected()
         # this signal will connect to a slot in ApplicationWindow to assemble the streams and inventories and put them on the waveform widget.
-        self.signal_new_stream_from_db.emit(st, False)
+        if st is not None:
+            self.signal_new_stream_from_db.emit(st, False)
     
     def getSelected(self):
         # if nothing is selected, then selectionModel() will return None

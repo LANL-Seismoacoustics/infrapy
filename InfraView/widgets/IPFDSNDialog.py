@@ -2,6 +2,10 @@ import obspy
 from obspy.clients.fdsn import Client
 from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import URL_MAPPINGS
+from obspy.core.stream import Stream
+from obspy.core.trace import Trace
+from obspy.core.inventory import Inventory
+
 
 import numpy as np
 
@@ -24,7 +28,7 @@ class IPFDSNDialog(QDialog):
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowTitle(self.tr('InfraView: FDSN Import'))
+        self.setWindowTitle(self.tr('InfraView: FDSN Import ;-)'))
 
         self.fdsnWidget = IPFDSNWidget()
 
@@ -85,8 +89,8 @@ class IPNewFDSNDialog(QDialog):
 
 class IPFDSNWidget(QWidget):
 
-    sigTracesReplaced = pyqtSignal(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
-    sigTracesAppended = pyqtSignal(obspy.core.stream.Stream, obspy.core.inventory.inventory.Inventory)
+    sigTracesReplaced = pyqtSignal(Stream, Inventory)
+    sigTracesAppended = pyqtSignal(Stream, Inventory)
 
     stream = None
     inventory = None
