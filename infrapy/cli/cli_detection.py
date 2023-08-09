@@ -732,19 +732,21 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--signal-start", help="Start of analysis window", default=None)
 @click.option("--signal-end", help="End of analysis window", default=None)
 
+@click.option("--spectral-option", help="Spectrogram method ('spectogram', 'stft', or 'cwt'), default: " + config.defaults['SD']['spectral_option'] + ")", default=None)
+@click.option("--morlet-omega0", help="Frequency scaling for Morlet wavelet in 'cwt', default: " + config.defaults['SD']['morlet_omega0'] + ")", default=None)
+
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--window-len", help="Adaptive window length (default: " + config.defaults['SD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--window-step", help="Adaptive window step (default: " + config.defaults['SD']['window_step'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['SD']['p_value'] + ")", default=None, type=float)
-@click.option("--smoothing", help="Smoothing factor for the background and threshold (default:" + config.defaults['SD']['smoothing'], default=None, type=float)
 @click.option("--freq-tm-factor", help="Frequency/time mapping factor (sec/decade) (default: " + config.defaults['SD']['freq_tm_factor'], default=None, type=float)
 @click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'], default=None, type=float)
 @click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'], default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    local_detect_label, signal_start, signal_end, freq_min, freq_max, window_len, window_step, p_value, smoothing, freq_tm_factor,
-    cluster_eps, cluster_min_samples, cpu_cnt):
+    local_detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
+    p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cpu_cnt):
     '''
     Run spectral detection methods on a single channel to identify signals of interest.
     
@@ -834,6 +836,8 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         pl = None
 
     # Algorithm parameters
+    spectral_option = config.set_param(user_config, 'SD', 'spectral_option', spectral_option, 'string')
+    morlet_omega0 = config.set_param(user_config, 'SD', 'morlet_omega0', morlet_omega0, 'float')    
     freq_min = config.set_param(user_config, 'SD', 'freq_min', freq_min, 'float')
     freq_max = config.set_param(user_config, 'SD', 'freq_max', freq_max, 'float')
     signal_start = config.set_param(user_config, 'SD', 'signal_start', signal_start, 'string')
@@ -841,13 +845,14 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     window_len = config.set_param(user_config, 'SD', 'window_len', window_len, 'float')
     window_step = config.set_param(user_config, 'SD', 'window_step', window_step, 'float')
     p_value = config.set_param(user_config, 'SD', 'p_value', p_value, 'float')
-    smoothing = config.set_param(user_config, 'SD', 'smoothing', smoothing, 'float')
     freq_tm_factor = config.set_param(user_config, 'SD', 'freq_tm_factor', freq_tm_factor, 'float')
     cluster_eps = config.set_param(user_config, 'SD', 'cluster_eps', cluster_eps, 'float')
     cluster_min_samples = config.set_param(user_config, 'SD', 'cluster_min_samples', cluster_min_samples, 'int')
     cpu_cnt = config.set_param(user_config, 'SD', 'cpu_cnt', cpu_cnt, 'int')
 
     click.echo('\n' + "Algorithm parameters:")
+    click.echo("  spectral_option: " + spectral_option)
+    click.echo("  morlet_omega0: " + str(morlet_omega0))
     click.echo("  freq_min: " + str(freq_min))
     click.echo("  freq_max: " + str(freq_max))
     click.echo("  signal_start: " + str(signal_start))
@@ -855,7 +860,6 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo("  window_len: " + str(window_len))
     click.echo("  window_step: " + str(window_step))
     click.echo("  p_value: " + str(p_value))
-    click.echo("  smoothing: " + str(smoothing))
     click.echo("  freq_tm_factor: " + str(freq_tm_factor))
     click.echo("  cluster_eps: " + str(cluster_eps))
     click.echo("  cluster_min_samples: " + str(cluster_min_samples))
@@ -908,8 +912,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         else:
             stream.trim(t1, t2)
 
-    det_list = spectral.run_sd(stream[0], [freq_min, freq_max], 0.75, p_value, window_len, window_step, smoothing, 
-                                freq_tm_factor, cluster_eps, cluster_min_samples, pl)
+    det_list = spectral.run_sd(stream[0], spectral_option, morlet_omega0, [freq_min, freq_max], 0.8, p_value, window_len, window_step, freq_tm_factor, cluster_eps, cluster_min_samples, pl)
 
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id

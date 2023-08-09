@@ -373,6 +373,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     \b
     Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
     \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC'
+    \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --single-det-index 2
 
     '''
 

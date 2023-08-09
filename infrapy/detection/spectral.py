@@ -13,7 +13,7 @@ import numpy as np
 from obspy.core import UTCDateTime
 
 from scipy.integrate import simps
-from scipy.signal import spectrogram, savgol_filter
+from scipy.signal import spectrogram, stft, cwt, morlet2
 from scipy.stats import gaussian_kde, norm, skewnorm
 from scipy.optimize import curve_fit, minimize_scalar
 
@@ -48,7 +48,7 @@ def calc_thresh(Sxx_vals, p_val):
 
         return thresh, peak
     else:
-        return 0.0, 0.0
+        return np.inf, np.inf
 
 
 def calc_thresh_wrapper(args):
@@ -98,12 +98,16 @@ def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, time
         return det_info
 
 
-def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, smoothing_factor, 
+def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, 
             clustering_freq_scaling, clustering_eps, clustering_min_samples, pl):
     """Run the spectral detection (sd) methods
 
         trace: obspy.core.Trace
             Obspy trace containing single channel data
+        spec_option: str
+            Spectrogram method ('spectrogra', 'stft', or 'cwt')
+        morelet_omega0: float
+            Frequency scalar for Morlet waveleth used in 'cwt' option 
         freq_band: 1darray
             Iterable with minimum and maximum frequencies for analysis
         spec_overlap: float
@@ -114,8 +118,6 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
             Adaptive window length in seconds
         adaptive_window_step: float
             Adaptive window step in seconds (np.unique used to remove duplicated above-threshold points)
-        smoothing_factor: float
-            Smoothing factor (not currently used)
         clustering_freq_scaling: float
             Mapping from frequency to psuedo-time (\tau = S*log10(f))
         clustering_eps: float
@@ -123,7 +125,7 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
         clustering_min_sample: int
             Count of required members in a cluster in DBSCAN
         pl: multiprocessing.Pool
-            Multiprocessing pool for simulatenous analysis of windows
+            Multiprocessing pool for simultaneous analysis of windows
 
 
         Returns:
@@ -138,13 +140,29 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
     # Compute spectrogram from the trace
     dt = trace.stats.delta
     nperseg = int((4.0 / freq_band[0]) / dt)
+    t_skip = 1
 
-    f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap = int(nperseg * spec_overlap))
-    freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
-    Sxx_log = 10.0 * np.log10(Sxx)
+    if spec_option == "spectrogram":
+        f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
+        Sxx_log = 10.0 * np.log10(Sxx)
+    elif spec_option == "stft":
+        f, t, Sxx = stft(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
+        Sxx_log = 10.0 * np.log10(abs(Sxx))
+    elif spec_option == "cwt":
+        f, _, _ = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
+        t = trace.times()
+        t_skip = int(nperseg * (1.0 - spec_overlap))
+        
+        widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
+        Sxx_log = 10.0 * np.log10(cwt(trace.data, morlet2, widths, w=morlet_omega0))
+
+    else:
+        print("Error: unrecognized spectrogram option: " + spec_option + ".")
+        return []
 
     if freq_band[1] > f[-1]:
         print("Warning!  Maximum frequency is above Nyquist (" + str(f[-1]) + ")")
+    freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
 
     # Scan through adaptive windows to identify above-background spectrogram points
     thresh_history, peaks_history, times_history = [], [], []
@@ -160,27 +178,25 @@ def run_sd(trace, freq_band, spec_overlap, p_val, adaptive_window_length, adapti
         t_window = t[window_mask]
 
         if pl is not None:
-            args = [[Sxx_window[fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
-            temp = pl.map(calc_thresh_wrapper, args)
+            args = []
+            for fn in range(len(f)):
+                if freq_band_mask[fn]:
+                    args = args + [[Sxx_window[:, ::t_skip][fn], p_val]]
+                else:
+                    args = args + [[None, False]]
+                temp = pl.map(calc_thresh_wrapper, args)
         else:
-            temp = np.array([calc_thresh(Sxx_window[fn], p_val) if (freq_band[0] < f[fn] and f[fn] < freq_band[1]) else (0.0, 0.0) for fn in range(len(f))])
+            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (np.inf, np.inf) for fn in range(len(f))])
 
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
-
-        if smoothing_factor is not None:
-            if smoothing_factor > 2:
-                threshold[freq_band_mask] = savgol_filter(threshold[freq_band_mask], smoothing_factor * 2, smoothing_factor)
-                peaks[freq_band_mask] = savgol_filter(peaks[freq_band_mask], smoothing_factor * 2, smoothing_factor)
 
         thresh_history = thresh_history + [threshold]
         peaks_history = peaks_history + [peaks]
         times_history = times_history + [UTCDateTime(trace.stats.starttime) + (window_start + adaptive_window_length / 2.0)]
 
-        for fn in range(len(f)):
-            if freq_band[0] < f[fn] and f[fn] < freq_band[1]:
-                spec_dets = spec_dets + [[t_window[tk], f[fn], Sxx_window[fn][tk]] for tk in range(len(t_window)) if Sxx_window[fn][tk] >= threshold[fn]]                
-
+        _, thresh_grid = np.meshgrid(t_window, threshold)
+        spec_dets = spec_dets + [[t_window[k], f[j], Sxx_window[j][k]] for j, k in np.argwhere(Sxx_window > thresh_grid)]
         prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
 
     prog_bar.close()
