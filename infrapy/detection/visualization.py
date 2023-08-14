@@ -111,6 +111,7 @@ def plot_sd(trace, det_list, freq_band, spec_option="spectrogram", morlet_omega0
 
     fig, a = plt.subplots(3, sharex=True, figsize=(9, 5))
     a[0].plot(trace.times(), trace.data, '-k')
+    a[0].set_xlim(trace.times()[0], trace.times()[-1])
 
     cmap_max = np.mean(Sxx_log[Sxx_log != -np.inf]) + 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])
     cmap_min = np.mean(Sxx_log[Sxx_log != -np.inf]) - 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])

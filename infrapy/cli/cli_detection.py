@@ -719,7 +719,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 
-@click.option("--local-latlon", help="Array location information for local waveforms", default=None)
+@click.option("--local-latlon", help="Location information for local waveforms", default=None)
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
@@ -732,17 +732,17 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--signal-start", help="Start of analysis window", default=None)
 @click.option("--signal-end", help="End of analysis window", default=None)
 
-@click.option("--spectral-option", help="Spectrogram method ('spectogram', 'stft', or 'cwt'), default: " + config.defaults['SD']['spectral_option'] + ")", default=None)
-@click.option("--morlet-omega0", help="Frequency scaling for Morlet wavelet in 'cwt', default: " + config.defaults['SD']['morlet_omega0'] + ")", default=None, type=float)
+@click.option("--spectral-option", help="Spectral analysis method ('spectogram', 'stft', or 'cwt'), default: " + config.defaults['SD']['spectral_option'] + ")", default=None)
+@click.option("--morlet-omega0", help="Morlet parameter for 'cwt', default: " + config.defaults['SD']['morlet_omega0'] + ")", default=None, type=float)
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--window-len", help="Adaptive window length (default: " + config.defaults['SD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--window-step", help="Adaptive window step (default: " + config.defaults['SD']['window_step'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['SD']['p_value'] + ")", default=None, type=float)
-@click.option("--freq-tm-factor", help="Frequency/time mapping factor (sec/decade) (default: " + config.defaults['SD']['freq_tm_factor'], default=None, type=float)
-@click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'], default=None, type=float)
-@click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'], default=None, type=int)
+@click.option("--freq-tm-factor", help="Freq./time scaling (sec/decade) (def.: " + config.defaults['SD']['freq_tm_factor'] + ")", default=None, type=float)
+@click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'] + ")", default=None, type=float)
+@click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'] + ")", default=None, type=int)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
     local_detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
@@ -753,7 +753,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy run_sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
-    \tinfrapy run_sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 8 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 6 --morlet-omega0 12.0
+    \tinfrapy run_sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 5
     
     
     '''
