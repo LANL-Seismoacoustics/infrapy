@@ -1326,10 +1326,18 @@ class BeamformingWorkerObject(QtCore.QObject):
             if len(self._inv.networks) > 0:
                 for network in self._inv.networks:
                     for station in network.stations:
+                        need_latlon = True
                         station_id = network.code + '.' + station.code
                         if station_id == stream_station_id:
-                            latlon.append([station.latitude, station.longitude])
+                            # Attempt to get channel latlons first, if there are no channels, use station latlons
+                            for channel in station.channels:
+                                latlon.append([channel.latitude, channel.longitude])
+                                need_latlon = False
+                            if need_latlon:
+                                latlon.append([station.latitude, station.longitude])
                             location_count += 1
+            
+            print(latlon)
             
 
         #if location_count != len(self.streams):

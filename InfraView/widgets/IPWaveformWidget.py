@@ -136,7 +136,6 @@ class IPWaveformWidget(QWidget):
     @pyqtSlot(Stream, Inventory)
     def replaceTraces(self, newTraces, newInventory):
         # same as append, just clear out the old traces and inventory first
-        print("replacing traces")
         self.clearWaveforms()
         self.stationViewer.clear_all()
         self.appendTraces(newTraces, newInventory)

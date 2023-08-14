@@ -404,7 +404,8 @@ class IPFDSNWidget(QWidget):
 
         # Now get the corresponding stations
         try:
-            self.inventory = client.get_stations(network=network, station=station, starttime=startTime, endtime=endTime)
+            self.inventory = client.get_stations(network=network, station=station, channel=channel, starttime=startTime, endtime=endTime, level='channel')
+            print(self.inventory)
         except:
             IPUtils.errorPopup('Failure loading Inventory.  \nDouble check that the values you entered are valid and the time and date are appropriate.')
             return
