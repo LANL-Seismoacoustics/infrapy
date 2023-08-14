@@ -9,7 +9,7 @@ import numpy as np
 
 from obspy import UTCDateTime
 
-from scipy.signal import spectrogram
+from scipy.signal import spectrogram, stft, cwt, morlet2
 
 import matplotlib.pyplot as plt 
 from matplotlib import cm
@@ -87,7 +87,7 @@ def plot_fk2(times, peaks, detections=None, title=None, output_path=None, show_f
         plt.show()
 
 
-def plot_sd(trace, det_list, freq_band, title=None, output_path=None, show_fig=False):
+def plot_sd(trace, det_list, freq_band, spec_option="spectrogram", morlet_omega0=12.0, title=None, output_path=None, show_fig=False):
     '''
     Visualize multiple spectral detection (sd) results
 
@@ -97,14 +97,24 @@ def plot_sd(trace, det_list, freq_band, title=None, output_path=None, show_fig=F
 
     dt = trace.stats.delta
     nperseg = int((4.0 / freq_band[0]) / dt) 
-    f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap = int(nperseg * 0.75))
-    Sxx_log = 10.0 * np.log10(Sxx)
+    if spec_option == "spectrogram":
+        f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        Sxx_log = 10.0 * np.log10(Sxx)
+    elif spec_option == "stft":
+        f, t, Sxx = stft(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        Sxx_log = 10.0 * np.log10(abs(Sxx))
+    elif spec_option == "cwt":
+        f, _, _ = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        t = trace.times()       
+        widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
+        Sxx_log = 10.0 * np.log10(abs(cwt(trace.data, morlet2, widths, w=morlet_omega0)))
 
     fig, a = plt.subplots(3, sharex=True, figsize=(9, 5))
     a[0].plot(trace.times(), trace.data, '-k')
 
-    f_grid, t_grid = np.meshgrid(f, t)
-    a[1].scatter(t_grid.flatten(), f_grid.flatten(), c=Sxx_log.T.flatten(), marker="s", s=2.5, cmap=cm.jet)
+    cmap_max = np.mean(Sxx_log[Sxx_log != -np.inf]) + 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])
+    cmap_min = np.mean(Sxx_log[Sxx_log != -np.inf]) - 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])
+    a[1].imshow(np.flipud(Sxx_log), extent=[t[0], t[-1], f[1], f[-1]], cmap=cm.jet, aspect='auto', vmin=cmap_min, vmax=cmap_max)
 
     a[2].set_xlabel("Time [s]")
     a[2].set_ylabel("Frequency [Hz]")
@@ -114,6 +124,7 @@ def plot_sd(trace, det_list, freq_band, title=None, output_path=None, show_fig=F
     a[1].axhline(freq_band[0], color='0.5')
     a[1].axhline(freq_band[1], color='0.5')
 
+    a[2].get_shared_y_axes().join(a[2], a[1])
     a[2].set_ylim(freq_band[0], freq_band[1])
     for det in det_list:
         Sxx_pnts = np.array(det['Sxx_points'])
@@ -132,7 +143,7 @@ def plot_sd(trace, det_list, freq_band, title=None, output_path=None, show_fig=F
         plt.show()
 
 
-def plot_sd_single(trace, det_info, freq_band, title=None, output_path=None, show_fig=False):
+def plot_sd_single(trace, det_info, freq_band, spec_option="spectrogram", morlet_omega0=12.0, title=None, output_path=None, show_fig=False):
     '''
     Visualize a single spectral detection (sd) result
 
@@ -141,16 +152,28 @@ def plot_sd_single(trace, det_info, freq_band, title=None, output_path=None, sho
 
     dt = trace.stats.delta
     nperseg = int((4.0 / freq_band[0]) / dt) 
-    f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap = int(nperseg * 0.95))
-    f_grid, t_grid = np.meshgrid(f, t)
-    Sxx_log = 10.0 * np.log10(Sxx)
+    if spec_option == "spectrogram":
+        f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        Sxx_log = 10.0 * np.log10(Sxx)
+    elif spec_option == "stft":
+        f, t, Sxx = stft(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        Sxx_log = 10.0 * np.log10(abs(Sxx))
+    elif spec_option == "cwt":
+        f, _, _ = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * 0.8))
+        t = trace.times()       
+        widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
+        Sxx_log = 10.0 * np.log10(abs(cwt(trace.data, morlet2, widths, w=morlet_omega0)))
+
     Sxx_pnts = np.array(det_info['Sxx_points'])
 
     fig = plt.figure(figsize=(10, 5), layout="constrained")
     spec = fig.add_gridspec(3, 5)
 
     ax1 = fig.add_subplot(spec[1, :3])
-    ax1.scatter(t_grid.flatten() - t_shift, f_grid.flatten(), c=Sxx_log.T.flatten(), marker="s", s=2.5, cmap=cm.jet)
+    cmap_max = np.mean(Sxx_log[Sxx_log != -np.inf]) + 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])
+    cmap_min = np.mean(Sxx_log[Sxx_log != -np.inf]) - 2.0 * np.std(Sxx_log[Sxx_log != -np.inf])   
+    ax1.imshow(np.flipud(Sxx_log), extent=[t[0] - t_shift, t[-1] - t_shift, f[1], f[-1]], cmap=cm.jet, aspect='auto', vmin=cmap_min, vmax=cmap_max)
+    
     ax1.set_xlim([det_info['Start'] - 150.0, det_info['End'] + 150.0])
     ax1.axhline(freq_band[0], color='0.5')
     ax1.axhline(freq_band[1], color='0.5')

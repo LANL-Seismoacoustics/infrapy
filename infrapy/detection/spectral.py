@@ -48,7 +48,7 @@ def calc_thresh(Sxx_vals, p_val):
 
         return thresh, peak
     else:
-        return np.inf, np.inf
+        return 0.0, 0.0
 
 
 def calc_thresh_wrapper(args):
@@ -154,8 +154,7 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
         t_skip = int(nperseg * (1.0 - spec_overlap))
         
         widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
-        Sxx_log = 10.0 * np.log10(cwt(trace.data, morlet2, widths, w=morlet_omega0))
-
+        Sxx_log = 10.0 * np.log10(abs(cwt(trace.data, morlet2, widths, w=morlet_omega0)))
     else:
         print("Error: unrecognized spectrogram option: " + spec_option + ".")
         return []
@@ -178,15 +177,10 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
         t_window = t[window_mask]
 
         if pl is not None:
-            args = []
-            for fn in range(len(f)):
-                if freq_band_mask[fn]:
-                    args = args + [[Sxx_window[:, ::t_skip][fn], p_val]]
-                else:
-                    args = args + [[None, False]]
-                temp = pl.map(calc_thresh_wrapper, args)
+            args = [[Sxx_window[:, ::t_skip][fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
+            temp = pl.map(calc_thresh_wrapper, args)
         else:
-            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (np.inf, np.inf) for fn in range(len(f))])
+            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (0.0, 0.0) for fn in range(len(f))])
 
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
@@ -196,7 +190,7 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
         times_history = times_history + [UTCDateTime(trace.stats.starttime) + (window_start + adaptive_window_length / 2.0)]
 
         _, thresh_grid = np.meshgrid(t_window, threshold)
-        spec_dets = spec_dets + [[t_window[k], f[j], Sxx_window[j][k]] for j, k in np.argwhere(Sxx_window > thresh_grid)]
+        spec_dets = spec_dets + [[t_window[k], f[fn], Sxx_window[fn][k]] for fn, k in np.argwhere(Sxx_window > thresh_grid) if freq_band_mask[fn]]       
         prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
 
     prog_bar.close()
@@ -207,6 +201,7 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     peaks_history = np.array(peaks_history)
 
     # Cluster into detections
+    print("Clustering into detections...")
     spec_dets_logf = np.stack((spec_dets[:, 0], clustering_freq_scaling * np.log10(spec_dets[:, 1]))).T
     clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
     print("Identified " + str(max(clustering.labels_) + 1) + " detections." + '\n')

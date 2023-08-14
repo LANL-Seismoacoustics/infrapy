@@ -358,6 +358,8 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 @click.option("--local-detect-label", help="Local detection data files", default=None)
+@click.option("--spectral-option", help="Spectrogram method ('spectogram', 'stft', or 'cwt'), default: " + config.defaults['SD']['spectral_option'] + ")", default=None)
+@click.option("--morlet-omega0", help="Frequency scaling for Morlet wavelet in 'cwt', default: " + config.defaults['SD']['morlet_omega0'] + ")", default=None, type=float)
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['SD']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['SD']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--signal-start", help="Start of analysis window", default=None)
@@ -366,13 +368,14 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
 def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, station, location, channel, starttime, endtime,
-    local_detect_label, freq_min, freq_max, signal_start, signal_end, single_det_index, figure_out, show_figure):
+    local_detect_label, spectral_option, morlet_omega0, freq_min, freq_max, signal_start, signal_end, single_det_index, figure_out, show_figure):
     '''
     Visualize spectral detection (sd) results
 
     \b
     Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
     \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC'
+    \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --spectral-option cwt --morlet-omega0 12.0
     \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --single-det-index 2
 
     '''
@@ -445,6 +448,8 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         click.echo("  figure_out: " + figure_out)
 
     # Algorithm parameters
+    spectral_option = config.set_param(user_config, 'SD', 'spectral_option', spectral_option, 'string')
+    morlet_omega0 = config.set_param(user_config, 'SD', 'morlet_omega0', morlet_omega0, 'float')    
     freq_min = config.set_param(user_config, 'SD', 'freq_min', freq_min, 'float')
     freq_max = config.set_param(user_config, 'SD', 'freq_max', freq_max, 'float')
     signal_start = config.set_param(user_config, 'SD', 'signal_start', signal_start, 'string')
@@ -503,7 +508,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
             click.echo("Invalid detection index (" + str(single_det_index) + "), only " + str(len(det_list)) + " detections in file.")
     else:
         click.echo("Plotting spectrogram with detection info..." + '\n')
-        det_vis.plot_sd(stream[0], det_list, [freq_min, freq_max], output_path=figure_out, show_fig=show_figure)
+        det_vis.plot_sd(stream[0], det_list, [freq_min, freq_max], spec_option=spectral_option, morlet_omega0=morlet_omega0, output_path=figure_out, show_fig=show_figure)
 
 
 @click.command('dets', short_help="Plot detections on a map")
