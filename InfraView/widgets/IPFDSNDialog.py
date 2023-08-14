@@ -222,6 +222,9 @@ class IPFDSNWidget(QWidget):
         self.stationDialog = IPStationBrowser.IPStationDialog(self)
         self.add_serviceDialog = IPNewFDSNDialog(self)
 
+        self.stationDialog.stationBrowser.channel_edit.textChanged.connect(self.channel_Box.setText)
+        self.channel_Box.textChanged.connect(self.stationDialog.stationBrowser.channel_edit.textChanged)
+
     def add_service(self):
         if self.add_serviceDialog.exec_():
             name, url = self.add_serviceDialog.get_service()
@@ -405,7 +408,6 @@ class IPFDSNWidget(QWidget):
         # Now get the corresponding stations
         try:
             self.inventory = client.get_stations(network=network, station=station, channel=channel, starttime=startTime, endtime=endTime, level='channel')
-            print(self.inventory)
         except:
             IPUtils.errorPopup('Failure loading Inventory.  \nDouble check that the values you entered are valid and the time and date are appropriate.')
             return
