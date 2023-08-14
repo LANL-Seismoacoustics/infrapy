@@ -1336,9 +1336,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                             if need_latlon:
                                 latlon.append([station.latitude, station.longitude])
                             location_count += 1
-            
-            print(latlon)
-            
 
         #if location_count != len(self.streams):
         #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
