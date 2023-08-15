@@ -402,7 +402,7 @@ class IPStationView(QWidget):
 
     def reconcileStations(self):
         
-        trace_stations = []
+        trace_ids= []
 
         streams = self.parent.get_streams()
         
@@ -411,24 +411,17 @@ class IPStationView(QWidget):
 
         # populate a list of all the stations in the current stream
         for trace in streams:
-            trace_split = trace.id.split('.')
-            name = ''
-            if trace_split[2] == '':
-                name = trace_split[0] + '.' + trace_split[1]
-            else:
-                # There is a location code, so deal with it
-                name = trace_split[0] + '.' + trace_split[1] + '.' + trace_split[2]
+            if trace.id not in trace_ids:
+                trace_ids.append(trace.id)
 
-            if name not in trace_stations:
-                trace_stations.append(name)
-
-        existing_stations = []
+        existing_channels = []
         for network in self.inv.networks:
             for station in network.stations:
-                existing_stations.append(network.code + '.' + station.code)
+                for chan in station.channels:
+                    existing_channels.append(network.code + '.' + station.code + '.' + chan.location_code + '.' + chan.code)
 
         
-        if self.matchDialog.exec_(trace_stations, existing_stations, (self.parent.get_earliest_start_time(), self.parent.get_latest_end_time())):
+        if self.matchDialog.exec_(trace_ids, existing_channels, (self.parent.get_earliest_start_time(), self.parent.get_latest_end_time())):
             new_inventory = self.matchDialog.getInventory()
             new_inventory = self.merge_inv_networks(new_inventory)
 
@@ -496,12 +489,28 @@ class IPDuplicateStationDialog(QDialog):
 
 class IPArrayView(QWidget):
 
-    spi = None
-
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.station_plot = pg.PlotWidget(title='Station Geometry')
+        self.sta_spi = None
+        self.chan_spi = None
+
+        self.sta_labels = []
+        self.chan_labels = []
+
+        self.show_chans_ckbox = QCheckBox('Channels')
+        self.show_chans_ckbox.setChecked(True)
+        self.show_chans_ckbox.stateChanged.connect(self.update_visibilities)
+
+        self.show_stas_ckbox = QCheckBox('Stations')
+        self.show_stas_ckbox.stateChanged.connect(self.update_visibilities)
+
+        cbox_layout = QHBoxLayout()
+        cbox_layout.addWidget(self.show_chans_ckbox)
+        cbox_layout.addWidget(self.show_stas_ckbox)
+        cbox_layout.addStretch()
+
+        self.station_plot = pg.PlotWidget(title='Inventory Geometry')
 
         self.station_plot.showAxis('right')
         self.station_plot.getAxis('right').setTicks('')
@@ -517,34 +526,72 @@ class IPArrayView(QWidget):
         self.station_plot.setAspectLocked(True, ratio=1)
 
         main_layout = QVBoxLayout()
+        main_layout.addLayout(cbox_layout)
         main_layout.addWidget(self.station_plot)
 
         self.setLayout(main_layout)
 
 
     @pyqtSlot(Inventory)
-    def set_data(self, inv):
-        spots = []          # clear array of datas
+    def set_data(self, inv=None):
+        self.clear()
+
+        self.sta_spots = []          # clear array of datas
+        self.chan_spots = []
         self.station_plot.clear()
 
-        self.spi = pg.ScatterPlotItem()
-        self.station_plot.addItem(self.spi)
+        self.sta_spi = pg.ScatterPlotItem()
+        self.chan_spi = pg.ScatterPlotItem()
+        self.station_plot.addItem(self.sta_spi)
+        self.station_plot.addItem(self.chan_spi)
+
+
+        if inv is not None:
+            self.inv = inv
         
-        for net in inv.networks:
+        for net in self.inv.networks:
             for sta in net.stations:
                 loc = (sta.longitude, sta.latitude)
-                spots.append({'pos': loc, 'symbol': '+'})
-                self.create_label(loc, sta.code)
+                self.sta_spots.append({'pos': loc, 'symbol': '+'})
+                self.create_label(loc, sta.code, type='sta')
 
-        self.spi.addPoints(spots)
+                for chan in sta.channels:
+                    c_loc = (chan.longitude, chan.latitude)
+                    self.chan_spots.append({'pos': c_loc, 'symbol': 'x', 'pen': {'color': 'b'}})
+                    self.create_label(c_loc, sta.code + '.' + chan.code, type='chan')
+
+        self.sta_spi.addPoints(self.sta_spots)
+        self.chan_spi.addPoints(self.chan_spots)
+
+        self.update_visibilities()
+
+    @pyqtSlot()
+    def update_visibilities(self):
+        self.sta_spi.setPointsVisible(self.show_stas_ckbox.isChecked())
+        self.chan_spi.setPointsVisible(self.show_chans_ckbox.isChecked())
+        for label in self.sta_labels:
+            label.setVisible(self.show_stas_ckbox.isChecked())
+        for label in self.chan_labels:
+            label.setVisible(self.show_chans_ckbox.isChecked())
 
     def clear(self):
         self.station_plot.clear()
-        if self.spi is not None:
-            self.spi.clear()
+        if self.sta_spi is not None:
+            self.sta_spi.clear()
+        if self.chan_spi is not None:
+            self.chan_spi.clear()
+        for label in self.sta_labels:
+            self.station_plot.removeItem(label)
+        for label in self.chan_labels:
+            self.station_plot.removeItem(label)
 
         
-    def create_label(self, location, label):
+    def create_label(self, location, label, type):
+        # type can be 'sta' or 'chan'
         text_label = pg.TextItem(label)
         text_label.setPos(location[0], location[1])
         self.station_plot.addItem(text_label, ignoreBounds=True)
+        if type=='sta':
+            self.sta_labels.append(text_label)
+        elif type=='chan':
+            self.chan_labels.append(text_label)

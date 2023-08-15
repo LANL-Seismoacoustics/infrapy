@@ -60,7 +60,7 @@ class IPStationMatchDialog(QDialog):
 
         self.connectSignalsandSlots()
 
-    def exec_(self, stationIDs, existing_stations, timeRange):
+    def exec_(self, channel_ids, existing_channels, timeRange):
 
         self.new_inv = None
         
@@ -69,15 +69,18 @@ class IPStationMatchDialog(QDialog):
         # clear any existing checkboxes, and load new ones
         self.clear_checkboxes()
 
-        for stationID in stationIDs:
-            label = stationID
-            if stationID in existing_stations:
-                label += '*'
+        for chan_id in channel_ids:
+            if chan_id in existing_channels:
+                chan_id += '*'
 
-            self.checkbox_list.append(QCheckBox(label, parent=self))
+            self.checkbox_list.append(QCheckBox(chan_id, parent=self))
         
         for checkbox in self.checkbox_list:
-            checkbox.setChecked(True)
+            text = checkbox.text()
+            if '*' in text:
+                checkbox.setChecked(False)
+            else:
+                checkbox.setChecked(True)
             self.checkbox_layout.addWidget(checkbox)
 
         self.timeRange = timeRange
@@ -116,12 +119,18 @@ class IPStationMatchDialog(QDialog):
                 s = traceID.split('.')
                 network = s[0]
                 station = s[1]
+                location = s[2]
+                channel = s[3]
+
+                print("net = {}   sta = {}   loc = {}   chan = {}".format(network, station, location, channel))
 
                 inv = None
                 try:
-                    inv = client.get_stations(network=network, station=station, startbefore=UTCDateTime(self.timeRange[0]), endafter=UTCDateTime(self.timeRange[0]))
+                    inv = client.get_stations(network=network, station=station, channel=channel, level='channel', startbefore=UTCDateTime(self.timeRange[0]), endafter=UTCDateTime(self.timeRange[0]))
                     foundCount += 1
                     checkbox.setStyleSheet('QCheckBox {color: green}')
+
+                    print(inv)
                     
                 except Exception as e:
                     checkbox.setStyleSheet('QCheckBox {color: red}')
