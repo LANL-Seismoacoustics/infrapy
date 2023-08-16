@@ -1,21 +1,13 @@
 # Infrapy
 
-Infrapy is a tool for processing infrasound and seismic array data. It
-implements a database-centric approach for pipeline continuous near real-time
-analysis. The pipeline includes analysis at station and network levels (using
-beam-forming and clustering techniques, respectively) for the detection,
-association and location of events.  The pipeline relies on the interaction of
-the algorithms with a relational database structure to organize and store
-waveform data, the parameters for the analysis, and results of both levels of
-analysis. Our implementation can interact seamlessly with traditional (e.g.:
-Oracle) and serverless (e.g.: SQLite) relational databases.
+Infrapy is a python based infrasound processing toolkit. It includes an array based beamformer with location and association capabilities, along with a spectral single-sensor detector. It can, with some configuration changes, be used to process audible acoustic as well as seismic data. It includes a python library for development of applications, a command-line-interface for easy terminal based analysis, and a GUI for visualization and fast analysis of events.  Currently it can open local waveform fils in SAC and mseed format, and can load inventories from stationXML files.  Infrapy can also import data from FDSN servers such as IRIS, and from SQL databases that incorporate a CSS or KBCore shema.
+
 
 ## Citation
 [![DOI](https://zenodo.org/badge/245276537.svg)](https://zenodo.org/badge/latestdoi/245276537)
 
 ## Authorship
-Infrapy was built upon previous similar (InfraMonitor) tools and
-developed by the LANL Seismoacoustics (LANL-SA) Team.  
+Infrapy is primarily developed by the Seismo-Acoustic team at Los Alamos National Labs.  It is open source and submissions from third parties are welcome.  
 
 ## Documentation
 The complete documentation can be found at https://infrapy.readthedocs.io/en/latest/
@@ -60,23 +52,18 @@ how to activate and deactivate the new environment:
         >> conda deactivate
         
 ## Updating
-Infrapy is in continued development.  Features are added, bugs are fixed, and documentation is improved fairly continuously. It's good practice to pull the latest updates on a regular basis.  To do this in a terminal, simply navigate into the infrapy directory and run:
+Infrapy is in continuous development.  Features are added, bugs are fixed, and documentation is improved fairly often. It's good practice to reach out for the latest updates on a regular basis.  
+
+Since some updates will require newer or additional packages, it is a good idea to update your conda environment when pulling new features.  For that, we have included a script that will do this for you: 
+
+    >> update_infrapy.sh
+
+This script will do a git pull, then check the environment file to see if there are any updated/new packages that need to be installed. If there are, it will attempt to do that for you.
+
+If you are just doing a quick update for a bug-fix or something similar, you can still do the usual pull:
     
     >> git pull
 
-Occasionally, this will cause errors due to some package dependancies changing.  If that happens, try updating your conda environment via the shell script located in the root infrapy directory:
-
-    >> update_infrapy.sh
-    
-This is equivalent to running the command: 
-
-    >> conda env update --name infrapy_env --file infrapy_env.yml --prune
-    
-which will execute a git pull and the conda update in that order.
-        
-## Tutorials
-
-A series of Jupyter Notebook tutorials are located in /tutorials.  These tutorials can be used to gain familiarity with both Infrapy scripting and command line interfact (CLI).
         
 ## e1 Compression
 
@@ -117,7 +104,7 @@ We supply a GUI application to help with quick data, beamforming, and location a
 
 ## Errors/issues
 
-If you have any errors or issues related to the installation or basic functionality, the best way to get them to us is by submitting a new issue in the Issues Tab above. 
+If you have any errors or issues related to the installation or basic functionality, or if you would like to request addtional features, **the best way to get them to us is by submitting a new issue in the Issues Tab above**. 
 
 Questions and problems that might not rise to the level of an Issue can be directed to:
   
