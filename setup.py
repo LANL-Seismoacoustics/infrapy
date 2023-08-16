@@ -10,7 +10,7 @@ from distutils.core import setup
 
 setup(name = "infrapy",
       license='LANL-MIT',
-      version = '0.4.0.4',
+      version = '0.4.0.5',
       description = "A tool for processing infrasound and seismic array data.",
       keywords=['infrasound', 'geophysics', 'seismic', 'array'],
       author = "LANL Seismoacoustics Infrasound (LANL-SA) Team",
