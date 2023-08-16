@@ -1,6 +1,6 @@
 # Infrapy
 
-Infrapy is a python based infrasound processing toolkit. It includes an array based beamformer with location and association capabilities, along with a spectral single-sensor detector. It can, with some configuration changes, be used to process audible acoustic as well as seismic data. It includes a python library for development of applications, a command-line-interface for easy terminal based analysis, and a GUI for visualization and fast analysis of events.  Currently it can open local waveform fils in SAC and mseed format, and can load inventories from stationXML files.  Infrapy can also import data from FDSN servers such as IRIS, and from SQL databases that incorporate a CSS or KBCore shema.
+Infrapy is a python based infrasound processing toolkit. It includes an array based beamformer with location and association capabilities, along with a spectral single-sensor detector. It can, with some configuration changes, be used to process audible acoustic as well as seismic data. It includes a python library for development of applications, a command-line-interface for easy terminal based analysis, and a GUI for visualization and fast analysis of events.  Currently it can open local waveform files in SAC and mseed format, and can load inventories from stationXML files.  Infrapy can also import data from FDSN servers such as IRIS, and from SQL databases that incorporate a CSS or KBCore shema.
 
 
 ## Citation
