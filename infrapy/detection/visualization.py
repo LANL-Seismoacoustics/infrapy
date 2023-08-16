@@ -92,8 +92,7 @@ def plot_sd(trace, det_list, freq_band, spec_option="spectrogram", morlet_omega0
     Visualize multiple spectral detection (sd) results
 
     '''  
-    trace.filter('bandpass', freqmin=min([det['Freq Range'][0] for det in det_list]),
-                             freqmax=max([det['Freq Range'][1] for det in det_list]))
+    trace.filter('bandpass', freqmin=freq_band[0], freqmax=freq_band[1])
 
     dt = trace.stats.delta
     nperseg = int((4.0 / freq_band[0]) / dt) 
