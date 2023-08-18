@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - matplotlib-base
-  - cartopy=21.1
+  - cartopy>=21
   - numpy
   - python=3.9
   - scipy
@@ -32,6 +32,6 @@ dependencies:
 
   - pip:
     #- git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
-    - pisces==0.4.2
+    - pisces=0.4.2
     - -e .
 
