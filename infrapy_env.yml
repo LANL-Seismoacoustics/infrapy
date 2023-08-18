@@ -6,7 +6,6 @@ channels:
 
 dependencies:
   - matplotlib-base
-  - cartopy>=21
   - numpy
   - python=3.9
   - scipy
@@ -16,6 +15,7 @@ dependencies:
   - pyqtgraph=0.13.1
   - pandas
   - cx_oracle
+  - cartopy>=21.0
   - scikit-learn
   - ipython
   - joblib
