@@ -15,7 +15,7 @@ dependencies:
   - pyqtgraph=0.13.1
   - pandas
   - cx_oracle
-  - cartopy>=21.0
+  - cartopy>=0.21.0
   - scikit-learn
   - ipython
   - joblib
