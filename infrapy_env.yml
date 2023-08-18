@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - matplotlib-base
-  - cartopy
+  - cartopy=21.1
   - numpy
   - python=3.9
   - scipy
