@@ -1,11 +1,11 @@
-import sys
+import sys, json
 import matplotlib
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
                              QVBoxLayout, QDoubleSpinBox, QSpinBox,
                              QFormLayout, QFrame, QPushButton,
-                             QSplitter, QTextEdit, QComboBox)
+                             QSplitter, QTextEdit, QComboBox, QFileDialog)
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
 
@@ -235,6 +235,8 @@ class IPLocationWidget(QWidget):
     @pyqtSlot(dict)
     def bisl_run_finished(self, result):
         self.bisl_result = result
+
+        self.bisl_resultsWidget.setResults(result)
 
         self.bisl_resultsWidget.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
 
@@ -959,6 +961,8 @@ class IPBISLResultsWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.results = None
+
         self.buildIcons()
         self.buildUI()
 
@@ -976,6 +980,7 @@ class IPBISLResultsWidget(QWidget):
         self.saveAsButton = QPushButton('Save As...')
         self.saveAsButton.setFont(button_font)
         self.saveAsButton.setIcon(self.saveAsIcon)
+        self.saveAsButton.clicked.connect(self.saveResults)
 
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.clearButton)
@@ -999,7 +1004,21 @@ class IPBISLResultsWidget(QWidget):
 
     def clearConsole(self):
         self.consoleBox.clear()
+        self.results = None
 
+    def setResults(self, results):
+        self.results = results
+
+    def saveResults(self):
+        if self.results is not None:
+            save_filename = QFileDialog.getSaveFileName(self, caption="Save BISL results", filter="(*.json)")[0]
+            if save_filename == '':
+                # dialog was cancelled, just leave
+                return
+            
+            json_string = json.dumps(self.results, indent=4, default=str)
+            with open(save_filename, "w") as ofile:
+                ofile.write(json_string)
 
 
 class IPDendrogramWidget(QWidget):
