@@ -25,31 +25,42 @@ from ..utils import prog_bar
 def calc_thresh(Sxx_vals, p_val):
     if Sxx_vals is not None:
         kernel = gaussian_kde(Sxx_vals)
-
+ 
         spec_spread = np.max(Sxx_vals) - np.min(Sxx_vals)
         spec_vals = np.linspace(np.min(Sxx_vals) - 0.25 * spec_spread, np.max(Sxx_vals) + 0.25 * spec_spread, 100)
-
+ 
         mean0 = simps(spec_vals * kernel(spec_vals), spec_vals)
         stdev0 = np.sqrt(simps((spec_vals - mean0)**2 * kernel(spec_vals), spec_vals))
         thresh0 = norm.ppf(1.0 - p_val, loc=mean0, scale=stdev0)
-
+ 
         mask = np.logical_and(mean0 - 2.0 * stdev0 < spec_vals, spec_vals < mean0 + 2.0 * stdev0)
-
-        def temp(x, sk, A0, x0, sig0):
-            return A0 * skewnorm.pdf(x, sk, loc=x0, scale=sig0)
-
-        popt, _ = curve_fit(temp, spec_vals[mask], kernel(spec_vals[mask]), p0=(0.0, 1.0, mean0, stdev0))
-        thresh_fit = skewnorm.ppf(1.0 - p_val, popt[0], loc=popt[2], scale=popt[3])
-        thresh = min(thresh0, thresh_fit)
-
-        def temp2(x):
-            return -skewnorm.pdf(x, popt[0], loc=popt[2], scale=popt[3])
-        peak = minimize_scalar(temp2, bracket=(popt[2] - 2.0 * popt[3], popt[2] + 2.0 * popt[3])).x
-
+ 
+        try:
+            # Try fitting with a skew normal
+            def skew_fit(x, sk, A0, x0, sig0):
+                return A0 * skewnorm.pdf(x, sk, loc=x0, scale=sig0)
+ 
+            popt, _ = curve_fit(skew_fit, spec_vals[mask], kernel(spec_vals[mask]), p0=(0.0, 1.0, mean0, stdev0))
+            thresh_fit = skewnorm.ppf(1.0 - p_val, popt[0], loc=popt[2], scale=popt[3])
+            thresh = min(thresh0, thresh_fit)
+ 
+            def temp2(x):
+                return -skewnorm.pdf(x, popt[0], loc=popt[2], scale=popt[3])
+            peak = minimize_scalar(temp2, bracket=(popt[2] - 2.0 * popt[3], popt[2] + 2.0 * popt[3])).x
+        except:
+            # Fit using a standard normal distribution if the skew fit fails to converge
+            def norm_fit(x, A0, x0, sig0):
+                return A0 * norm.pdf(x, loc=x0, scale=sig0)
+           
+            popt, _ = curve_fit(norm_fit, spec_vals[mask], kernel(spec_vals[mask]), p0=(1.0, mean0, stdev0))
+            thresh_fit = norm.ppf(1.0 - p_val, loc=popt[1], scale=popt[2])
+ 
+            thresh = min(thresh0, thresh_fit)
+            peak = popt[1]
+ 
         return thresh, peak
     else:
         return 0.0, 0.0
-
 
 def calc_thresh_wrapper(args):
     return calc_thresh(*args)
