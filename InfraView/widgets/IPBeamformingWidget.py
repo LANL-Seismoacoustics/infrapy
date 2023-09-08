@@ -1192,8 +1192,8 @@ class IPBeamformingWidget(QWidget):
                 t_utc =[]
                 for t in xdata:
                     t_utc.append(earliest_start_time + t)
-
-                data_io.export_waveform_to_csv(wavefilename, t, ydata)
+                    
+                data_io.export_waveform_to_csv(wavefilename, t_utc, ydata)
         else:
             pass
 

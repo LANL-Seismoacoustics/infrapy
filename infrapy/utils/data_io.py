@@ -447,7 +447,7 @@ def write_json(results, output_path):
 
 
 
-def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
+def export_beam_results_to_csv(filename, time, f_stats, back_az, trace_v):
     """
     Export the results of the beamforming operation to a csv file for external analysis/plotting
     
@@ -457,7 +457,7 @@ def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
     ----------
     filename: str
         Path for file
-    t: iterable
+    time: iterable
         Analysis times
     f_stats: iterable
         Fisher statistic values
@@ -471,9 +471,8 @@ def export_beam_results_to_csv(filename, t, f_stats, back_az, trace_v):
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
         writer.writerow(["Datetime", "Fstat", "TraceV", "BackAz"])
-        for idx, t in enumerate(t):
-            writer.writerow(t[idx], f_stats[idx], trace_v[idx], back_az[idx])
-
+        for t, fs, tv, ba in zip(time, f_stats, back_az, trace_v):
+            writer.writerow([t, fs, tv, ba])
 
 def export_waveform_to_csv(filename, time, waveform_data):
     """
@@ -494,9 +493,9 @@ def export_waveform_to_csv(filename, time, waveform_data):
 
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
-        writer.writerow("DateTime", "Waveform")
+        writer.writerow(["DateTime", "Waveform"])
         for t, data in zip(time, waveform_data):
-            writer.writerow(t, data)
+            writer.writerow([t, data])
 
 
 # ####################################### #
