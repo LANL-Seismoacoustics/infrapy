@@ -698,12 +698,15 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id
 
-    click.echo("Writing detection results using label: " + local_detect_label)
-    stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
+    if len(det_list) > 0:
+        click.echo("Writing detection results using label: " + local_detect_label)
+        stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
                    os.path.commonprefix([tr.stats.station for tr in stream]),
                    os.path.commonprefix([tr.stats.channel for tr in stream])]
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
-
+        data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
+    else:
+        click.echo("No detection identified in analysis.")
+    
     if return_thresh:
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
