@@ -1110,7 +1110,7 @@ class IPBeamformingWidget(QWidget):
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
-        min_seq = round(self.detector_settings.min_peak_width.value() / self.bottomSettings.windowStep_spin.value())
+        min_seq = math.ceil(self.detector_settings.min_peak_width.value()/self.bottomSettings.windowStep_spin.value())
         if min_seq < 2:
             min_seq = 2
 
