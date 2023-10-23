@@ -10,7 +10,7 @@ from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
-import warnings
+import warnings, math
 
 import numpy as np
 from pathlib import Path
@@ -908,7 +908,8 @@ class IPBeamformingWidget(QWidget):
                                                 self.bottomSettings.getTraceVelResolution(),
                                                 self.bottomSettings.getTraceVRange(),
                                                 self.bottomSettings.getBackAzRange(),
-                                                self.detector_settings.is_auto_threshold())
+                                                self.detector_settings.is_auto_threshold(),
+                                                self.detector_settings.pval_spin.value())
 
         self.bfWorker.moveToThread(self.bfThread)
 
@@ -1096,10 +1097,9 @@ class IPBeamformingWidget(QWidget):
         num_times = np.asarray(num_times)
 
         channel_count = len(self.streams)
-        det_window_length = 300
-        det_threshold = 0.99
-        tb_prod = 400
-        back_az_lim = 10
+        det_window_length = 300 #currently not used
+        f_range = self.bottomSettings.getFreqRange()
+        tb_prod = (f_range[1]-f_range[0]) * self.bottomSettings.windowLength_spin.value()
         
         if self.detector_settings.is_auto_threshold():
             fixed_threshold = self.detector_settings.get_auto_threshold_level()
@@ -1110,14 +1110,17 @@ class IPBeamformingWidget(QWidget):
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
+        min_seq = math.ceil(self.detector_settings.min_peak_width.value()/self.bottomSettings.windowStep_spin.value())
+        print('min_seq = {}'.format(min_seq))
+
         with warnings.catch_warnings(record=True) as w_array:
-            dets = beamforming_new.detect_signals(num_times, 
+            dets = beamforming_new.run_fd(num_times, 
                                                   beam_results, 
                                                   det_window_length, 
                                                   tb_prod, 
                                                   channel_count, 
-                                                  det_p_val=det_threshold, 
-                                                  min_seq=self.detector_settings.min_peak_width.value(), 
+                                                  det_p_val=self.detector_settings.pval_spin.value(), 
+                                                  min_seq=min_seq, 
                                                   back_az_lim=self.detector_settings.back_az_limit.value(),
                                                   fixed_thresh=fixed_threshold)
 
@@ -1246,7 +1249,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
                  inventory, pool, back_az_resol, tracev_resol, tracev_range,
-                 back_az_range, auto_thresh):
+                 back_az_range, auto_thresh, p_val):
         super().__init__()
         self.resultData = resultData
         self.streams = streams
@@ -1265,6 +1268,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self._trace_v_resolution = tracev_resol
         self._trace_v_range = tracev_range
         self.is_auto_threshold = auto_thresh
+        self.det_pval = p_val
 
         self.threadStopped = True
 
@@ -1305,8 +1309,6 @@ class BeamformingWorkerObject(QtCore.QObject):
         # TODO: the trace velocity range should be added to the settings widget
         #trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
         trc_vel_vals = np.arange(self._trace_v_range[0], self._trace_v_range[1], self._trace_v_resolution)
-
-        det_p_val = 0.01
 
         latlon = []
 
@@ -1393,7 +1395,7 @@ class BeamformingWorkerObject(QtCore.QObject):
                 beam_results = np.array(beam_results)
 
             f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-            det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
 
             self.signal_threshold_calc_is_running.emit(False)
             self.signal_threshold_calculated.emit(det_thresh)

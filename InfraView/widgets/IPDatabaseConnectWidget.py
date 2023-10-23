@@ -152,7 +152,6 @@ class IPDatabaseConnectWidget(QFrame):
 
         self.save_current_button = QPushButton("Save Config File...")
         self.save_current_button.setFont(button_font)
-        #self.save_current_button.setMaximumWidth(140)
         self.save_current_button.setEnabled(False)
 
         self.table_dialog = IPTableDialog(self)
