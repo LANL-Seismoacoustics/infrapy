@@ -135,14 +135,13 @@ class IPSingleSensorWidget(QWidget):
 
         new_fmin = self.detector_settings_widget.fmin_spin.value()
         self.spec_overlap = 0.8
-        #print("fmin: {}".format(new_fmin))
-        #print("fs: {}".format(self.fs))
+
         self.nperseg = int(5. * self.fs / new_fmin)
         if self.nperseg > 512:
             self.nperseg = 512
-        #print("self.nperseg: {}".format(self.nperseg))
+
         self.noverlap = int(0.8 * self.nperseg)
-        #print("noverlap: {}".format(self.noverlap))
+
         self.nfft = self.nperseg
 
     def show_hide_spectrogram_settings(self):
@@ -475,7 +474,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     def calc_spectrogram(self, data, nfft, Fs, noverlap, nperseg, spec_type, morlet_o=None):
         if data is None:
             return
-        # print(nfft, Fs, noverlap, nperseg, spec_type)
+        
         self.calc_spec_worker_object = IPSpectrogramCalcWorker(data=data, fs=Fs, nfft=nfft, nperseg=nperseg, noverlap=noverlap, spec_type=spec_type, morlet_o=morlet_o)
         self.sig_start_spec_calc.connect(self.calc_spec_worker_object.run)
         self.calc_spec_worker_object.signal_runFinished.connect(self.run_finished)
@@ -693,12 +692,12 @@ class IPDetectorSettingsWidget(QWidget):
         #####DETECTOR SETTINGS
         pval_label = QLabel('pval: ')
         self.pval_spin = QDoubleSpinBox()
+        self.pval_spin.setDecimals(4)
         self.pval_spin.setMinimum(0.0001)
         self.pval_spin.setMaximum(1.0)
         self.pval_spin.setValue(0.002)
         self.pval_spin.setSingleStep(0.001)
-        self.pval_spin.setDecimals(3)
-        self.pval_spin.setMaximumWidth(150)
+        self.pval_spin.setMaximumWidth(180)
 
         fmin_label = QLabel("Freq min: ")
         self.fmin_spin = QDoubleSpinBox()
