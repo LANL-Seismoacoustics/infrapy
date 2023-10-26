@@ -1110,6 +1110,10 @@ class IPBeamformingWidget(QWidget):
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
+        min_seq = round(self.detector_settings.min_peak_width.value() / self.bottomSettings.windowStep_spin.value())
+        if min_seq < 2:
+            min_seq = 2
+
         with warnings.catch_warnings(record=True) as w_array:
             dets = beamforming_new.detect_signals(num_times, 
                                                   beam_results, 
@@ -1117,7 +1121,7 @@ class IPBeamformingWidget(QWidget):
                                                   tb_prod, 
                                                   channel_count, 
                                                   det_p_val=det_threshold, 
-                                                  min_seq=self.detector_settings.min_peak_width.value(), 
+                                                  min_seq=min_seq, 
                                                   back_az_lim=self.detector_settings.back_az_limit.value(),
                                                   fixed_thresh=fixed_threshold)
 

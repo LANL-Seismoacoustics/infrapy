@@ -22,17 +22,17 @@ class IPDetectorSettingsWidget(QWidget):
         self.auto_checkbox.setToolTip('If auto is selected, the program will estimate the background f-stat from the noise region selected on in the waveform window.')
 
         self.back_az_limit = QDoubleSpinBox()
-        self.back_az_limit.setSuffix(' deg')
+        self.back_az_limit.setSuffix(' deg.')
         self.back_az_limit.setValue(10.0)
         self.back_az_limit.setMinimum(1.0)
         self.back_az_limit.setMaximum(360.0)
         self.back_az_limit.setToolTip("This is the range in degrees of variation in back azimuths used to determine if a value is part of a detection.")
 
         self.min_peak_width = QSpinBox()
-        self.min_peak_width.setSuffix(' points')
+        self.min_peak_width.setSuffix(' sec.')
         self.min_peak_width.setValue(5)
         self.min_peak_width.setMinimum(1)
-        self.min_peak_width.setToolTip("This determines the number of points in the f-statistic plot required for a valid detection.")
+        self.min_peak_width.setToolTip("The amount of time the F-stat is continuously above threshold to be a detection. \nNumber of points is calculated as round(peak_duration/window_step)")
 
         self.manual_checkbox = QCheckBox()
         self.manual_value = QDoubleSpinBox()
@@ -52,7 +52,7 @@ class IPDetectorSettingsWidget(QWidget):
         form_layout_col1.addRow("Manual threshold level: ", self.manual_value)
         
         form_layout_col2.addRow("Back azimuth limit: ", self.back_az_limit)
-        form_layout_col2.addRow("Minimum peak width: ", self.min_peak_width)
+        form_layout_col2.addRow("Minimum duration: ", self.min_peak_width)
         
         main_layout.addLayout(form_layout_col1)
         main_layout.addLayout(form_layout_col2)
