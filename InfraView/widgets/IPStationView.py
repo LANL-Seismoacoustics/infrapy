@@ -2,15 +2,18 @@ import os
 
 from PyQt5.QtWidgets import (QLabel, QHBoxLayout, QCheckBox, QDialogButtonBox,
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
-                             QVBoxLayout, QSplitter, QDialog)
+                             QVBoxLayout, QSplitter, QDialog, QRadioButton, QButtonGroup)
 
 from PyQt5.QtGui import QIcon, QFont
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QDir, QSettings
 
 import obspy
+from obspy.geodetics.base import calc_vincenty_inverse
 from obspy import read_inventory
 from obspy.core.inventory import Inventory
+
+import numpy as np
 
 from InfraView.widgets import IPStationMatchDialog
 from InfraView.widgets import IPUtils
@@ -505,12 +508,27 @@ class IPArrayView(QWidget):
         self.show_stas_ckbox = QCheckBox('Stations')
         self.show_stas_ckbox.stateChanged.connect(self.update_visibilities)
 
+        # self.units_buttonGroup = QButtonGroup()
+        self.latlon_radio = QRadioButton('Lat/Lon')
+        self.latlon_radio.clicked.connect(self.set_data_from_radio)
+        self.latlon_radio.setChecked(True)
+        self.metric_radio = QRadioButton('Metric')
+        self.metric_radio.clicked.connect(self.set_data_from_radio)
+
+        
+        # self.units_buttonGroup.addButton(self.latlon_radio)
+        # self.units_buttonGroup.addButton(self.metric_radio)
+
         cbox_layout = QHBoxLayout()
         cbox_layout.addWidget(self.show_chans_ckbox)
         cbox_layout.addWidget(self.show_stas_ckbox)
         cbox_layout.addStretch()
+        cbox_layout.addWidget(self.latlon_radio)
+        cbox_layout.addWidget(self.metric_radio)
+        
 
         self.station_plot = pg.PlotWidget(title='Inventory Geometry')
+        self.station_plot.setAspectLocked()
 
         self.station_plot.showAxis('right')
         self.station_plot.getAxis('right').setTicks('')
@@ -531,6 +549,10 @@ class IPArrayView(QWidget):
 
         self.setLayout(main_layout)
 
+    
+    @pyqtSlot(bool)
+    def set_data_from_radio(self, dummy):
+        self.set_data()
 
     @pyqtSlot(Inventory)
     def set_data(self, inv=None):
@@ -549,16 +571,66 @@ class IPArrayView(QWidget):
         if inv is not None:
             self.inv = inv
         
-        for net in self.inv.networks:
-            for sta in net.stations:
-                loc = (sta.longitude, sta.latitude)
-                self.sta_spots.append({'pos': loc, 'symbol': '+'})
-                self.create_label(loc, sta.code, type='sta')
+        if self.latlon_radio.isChecked():
+            self.station_plot.getAxis('bottom').setLabel('Longitude')
+            self.station_plot.getAxis('left').setLabel('Latitude')
+            for net in self.inv.networks:
+                for sta in net.stations:
+                    loc = (sta.longitude, sta.latitude)
+                    self.sta_spots.append({'pos': loc, 'symbol': '+'})
+                    self.create_label(loc, sta.code, type='sta')
 
-                for chan in sta.channels:
-                    c_loc = (chan.longitude, chan.latitude)
-                    self.chan_spots.append({'pos': c_loc, 'symbol': 'x', 'pen': {'color': 'b'}})
-                    self.create_label(c_loc, sta.code + '.' + chan.code, type='chan')
+                    for chan in sta.channels:
+                        c_loc = (chan.longitude, chan.latitude)
+                        self.chan_spots.append({'pos': c_loc, 'symbol': 'x', 'pen': {'color': 'b'}})
+                        self.create_label(c_loc, sta.code + '.' + chan.location_code + '.' + chan.code, type='chan')
+        else:
+            # we need to covert to a metric coordinate system.  Let's set the zero of the coordinates to the min lat and min lon
+            self.station_plot.getAxis('bottom').setLabel('Distance (m)')
+            self.station_plot.getAxis('left').setLabel('Distance (m)')
+            # station lat/lons
+            s_lats = []
+            s_lons = []
+            # channel lat/lons
+            c_lats = []
+            c_lons = []
+            for net in self.inv.networks:
+                for sta in net.stations:
+                    s_lats.append(sta.latitude)
+                    s_lons.append(sta.longitude)
+
+                    for chan in sta.channels:
+                        c_lats.append(chan.latitude)
+                        c_lons.append(chan.longitude) 
+
+            x_list = []
+            y_list = []
+            for idx in range(len(s_lats)):
+                delta, az, _ = calc_vincenty_inverse(s_lats[0], s_lons[0], s_lats[idx], s_lons[idx])
+                # convert azimuth to deg from north
+                az = (450 - az) % 360
+                x_list.append(delta * np.cos(az*np.pi/180.))
+                y_list.append(delta * np.sin(az*np.pi/180.))
+
+            x_min = min(x_list)
+            y_min = min(y_list)
+            for x,y in zip(x_list, y_list):
+                self.sta_spots.append({'pos': (x - x_min ,y - y_min), 'symbol': '+'})
+                self.create_label((x - x_min, y - y_min), sta.code, type='sta')
+
+            x_list = []
+            y_list = []
+            for idx in range(len(c_lats)):
+                delta, az, _ = calc_vincenty_inverse(c_lats[0], c_lons[0], c_lats[idx], c_lons[idx])
+                az = (450 -az) % 360
+                x_list.append(delta * np.cos(az*np.pi/180.))
+                y_list.append(delta * np.sin(az*np.pi/180.))
+
+            x_min = min(x_list)
+            y_min = min(y_list)
+            for x,y in zip(x_list, y_list):
+                self.chan_spots.append({'pos': (x - x_min ,y - y_min), 'symbol': 'x', 'pen': {'color': 'b'}})
+                self.create_label((x - x_min ,y - y_min), sta.code + '.' + chan.code, type='chan')
 
         self.sta_spi.addPoints(self.sta_spots)
         self.chan_spi.addPoints(self.chan_spots)
@@ -567,8 +639,10 @@ class IPArrayView(QWidget):
 
     @pyqtSlot()
     def update_visibilities(self):
-        self.sta_spi.setPointsVisible(self.show_stas_ckbox.isChecked())
-        self.chan_spi.setPointsVisible(self.show_chans_ckbox.isChecked())
+        if self.sta_spi is not None:
+            self.sta_spi.setPointsVisible(self.show_stas_ckbox.isChecked())
+        if self.chan_spi is not None:
+            self.chan_spi.setPointsVisible(self.show_chans_ckbox.isChecked())
         for label in self.sta_labels:
             label.setVisible(self.show_stas_ckbox.isChecked())
         for label in self.chan_labels:

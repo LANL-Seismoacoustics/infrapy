@@ -23,14 +23,14 @@ class IPDetectorSettingsWidget(QWidget):
 
         self.pval_spin = QDoubleSpinBox()
         self.pval_spin.setValue(.01)
-        self.pval_spin.setDecimals(3)
+        self.pval_spin.setDecimals(4)
         self.pval_spin.setMinimum(.001)
         self.pval_spin.setMaximum(.5)
         self.pval_spin.setSingleStep(.001)
         self.pval_spin.setToolTip("P-value used by the automatic detector")
 
         self.back_az_limit = QDoubleSpinBox()
-        self.back_az_limit.setSuffix(' deg')
+        self.back_az_limit.setSuffix(' deg.')
         self.back_az_limit.setValue(10.0)
         self.back_az_limit.setMinimum(1.0)
         self.back_az_limit.setMaximum(360.0)
