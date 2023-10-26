@@ -630,7 +630,7 @@ class IPArrayView(QWidget):
             y_min = min(y_list)
             for x,y in zip(x_list, y_list):
                 self.chan_spots.append({'pos': (x - x_min ,y - y_min), 'symbol': 'x', 'pen': {'color': 'b'}})
-                self.create_label((x - x_min ,y - y_min), sta.code + '.' + chan.code, type='chan')
+                self.create_label((x - x_min ,y - y_min), sta.code + '.' + chan.location_code + '.' + chan.code, type='chan')
 
         self.sta_spi.addPoints(self.sta_spots)
         self.chan_spi.addPoints(self.chan_spots)
