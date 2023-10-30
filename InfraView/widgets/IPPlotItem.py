@@ -85,13 +85,7 @@ class IPPlotItem(pg.PlotItem):
     sigSignalRegionChanged = pyqtSignal(tuple)
     sigFreqRegionChanged = pyqtSignal(tuple)
 
-    noise_region = None
-    signal_region = None
-    freq_region = None
-
-    pickable = False
-
-    labi = None
+    
 
     def __init__(self, mode='plain', y_label_format=None, pickable=False, est=None):
         '''
@@ -99,6 +93,14 @@ class IPPlotItem(pg.PlotItem):
         est: (UTCDateTime) Earliest Start Time
         pickable: (bool) Can you click on plot to make a pick
         '''
+
+        self.noise_region = None
+        self.signal_region = None
+        self.freq_region = None
+
+        self.pickable = False
+
+        self.labi = None
 
         if y_label_format == 'nonscientific':
             super().__init__(axisItems={'left': NonScientific(orientation='left')})
@@ -113,6 +115,10 @@ class IPPlotItem(pg.PlotItem):
                 super().__init__(axisItems={'bottom': IPSpectrogramTimeAxis(est=est)})
             else:
                 super().__init__()
+
+        #self.autoDownsample = True
+        #self.setDownsampling(auto=True, ds=1000)
+        self.setClipToView(True)
 
         # this will tell the widget if you can click on it and generate a 'pick'
         self.pickable = pickable

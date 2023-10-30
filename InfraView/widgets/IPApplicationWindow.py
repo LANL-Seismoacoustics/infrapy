@@ -72,7 +72,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         # initialize the multiproccessor pool
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
-        print("cpu count = {}".format(cpu_count()))
+        #print("cpu count = {}".format(cpu_count()))
 
         self.buildUI()
 
@@ -595,19 +595,23 @@ class IPAboutDialog(QDialog):
     def buildUI(self, name, version):
         self.setWindowTitle("InfraView: About")
         
-        info_label = QLabel(name + '\nVersion: ' + version + '\nCopyright 2018 Los Alamos National Laboratory\n')
+        info_label = QLabel('\n' + name + '\nVersion: ' + version + '\nCopyright 2018 Los Alamos National Laboratory\n')
         label_font = info_label.font()
-        label_font.setPixelSize(14)
+        label_font.setPixelSize(12)
         info_label.setFont(label_font)
 
         image_path = Path(Path(__file__).parent.parent.parent, 'infrapy', 'resources', 'PNG', 'LANL_Logo_Ultramarine.png')
         logo_pixmap = QPixmap(str(image_path))
         logo_label = QLabel(self)
         logo_label.setPixmap(logo_pixmap)
+
+        cpu_label = QLabel('Total CPU Count: ' + str(cpu_count()) + '\nCPUs Used: ' + str(cpu_count() -1))
+        cpu_label.setFont(label_font)
         
         layout = QVBoxLayout()
-        layout.addWidget(info_label)
         layout.addWidget(logo_label)
+        layout.addWidget(info_label)
+        layout.addWidget(cpu_label)
         self.setLayout(layout)
 
 
