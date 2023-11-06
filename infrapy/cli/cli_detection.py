@@ -150,8 +150,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     method = config.set_param(user_config, 'FK', 'method', method, 'string')
     signal_start = config.set_param(user_config, 'FK', 'signal_start', signal_start, 'string')
     signal_end = config.set_param(user_config, 'FK', 'signal_end', signal_end, 'string')
-    noise_start = config.set_param(user_config, 'FK', 'noise_start', noise_start, 'float')
-    noise_end = config.set_param(user_config, 'FK', 'noise_end', noise_end, 'float')
+    noise_start = config.set_param(user_config, 'FK', 'noise_start', noise_start, 'string')
+    noise_end = config.set_param(user_config, 'FK', 'noise_end', noise_end, 'string')
     window_len = config.set_param(user_config, 'FK', 'window_len', window_len, 'float')
     sub_window_len = config.set_param(user_config, 'FK', 'sub_window_len', sub_window_len, 'float')
     window_step = config.set_param(user_config, 'FK', 'window_step', window_step, 'float')
@@ -169,7 +169,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo("  method: " + str(method))
     click.echo("  signal_start: " + str(signal_start))
     click.echo("  signal_end: " + str(signal_end))
-    if method == "GLS":
+    if noise_start is not None:
         click.echo("  noise_start: " + str(noise_start))
         click.echo("  noise_end: " + str(noise_end))
     click.echo("  window_len: " + str(window_len))
@@ -198,10 +198,13 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     back_az_vals = np.arange(back_az_min, back_az_max, back_az_step)
     trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
 
-    '''
-    # Check if using a noise window
+    # Check if using a noise window for analysis (only used for GLS analysis)
+    ns_covar_inv = None
     if noise_start is not None:
-        print("Analyzing noise window to compute noise covariance...")
+        click.echo('\n' + "Analyzing noise window to compute background covariance...")
+        click.echo('\t' + "noise start: " + noise_start)
+        click.echo('\t' + "noise end: " + noise_end)
+
         st_noise = stream.copy()
         st_noise.trim(UTCDateTime(noise_start), UTCDateTime(noise_end))
 
@@ -213,9 +216,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         for n in range(S.shape[2]):
             S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
             ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
-    '''
-            
-    # Check if using a signal window
+
+    # Check if using a signal window and trim accordingly
     if signal_start is not None:
         t1 = UTCDateTime(signal_start)
         t2 = UTCDateTime(signal_end)
@@ -241,7 +243,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
             stream.trim(t1, t2)
 
     # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, pl)
+    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], window_len, sub_window_len, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, 1, pl)
 
     # new save methods
     dt = np.array([(tn - np.datetime64(tr.stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
@@ -594,7 +596,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     click.echo("  method: " + str(method))
     click.echo("  signal_start: " + str(signal_start))
     click.echo("  signal_end: " + str(signal_end))
-    if method == "GLS":
+    if noise_start is not None:
         click.echo("  noise_start: " + str(noise_start))
         click.echo("  noise_end: " + str(noise_end))
     click.echo("  window_len (fk): " + str(fk_window_len))
@@ -633,6 +635,25 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
 
+    # Check if using a noise window for analysis (only used for GLS analysis)
+    ns_covar_inv = None
+    if noise_start is not None:
+        click.echo('\n' + "Analyzing noise window to compute background covariance...")
+        click.echo('\t' + "noise start: " + noise_start)
+        click.echo('\t' + "noise end: " + noise_end)
+
+        st_noise = stream.copy()
+        st_noise.trim(UTCDateTime(noise_start), UTCDateTime(noise_end))
+
+        # Compute noise covariance
+        x, t, _, _ = fkd.stream_to_array_data(st_noise, latlon=latlon)
+        _, S, _ = fkd.fft_array_data(x, t, sub_window_len=fk_window_len)
+
+        ns_covar_inv = np.empty_like(S)
+        for n in range(S.shape[2]):
+            S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
+            ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
+
     # Check if using a signal window
     if signal_start is not None:
         t1 = UTCDateTime(signal_start)
@@ -664,7 +685,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     trc_vel_vals = np.arange(trace_vel_min, trace_vel_max, trace_vel_step)
 
     # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], fk_window_len, fk_sub_window_len, fk_window_step, method, back_az_vals, trc_vel_vals, pl)
+    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [freq_min, freq_max], fk_window_len, fk_sub_window_len, fk_window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, 1, pl)
 
     print("Running adaptive f-detector..." + '\n')
     TB_prod = (freq_max - freq_min) * fk_window_len
@@ -698,11 +719,14 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id
 
-    click.echo("Writing detection results using label: " + local_detect_label)
-    stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
-                   os.path.commonprefix([tr.stats.station for tr in stream]),
-                   os.path.commonprefix([tr.stats.channel for tr in stream])]
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
+    if len(det_list) > 1:
+        click.echo("Writing detection results using label: " + local_detect_label)
+        stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
+                       os.path.commonprefix([tr.stats.station for tr in stream]),
+                       os.path.commonprefix([tr.stats.channel for tr in stream])]
+        data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
+    else:
+        click.echo("No detections identified.")
 
     if return_thresh:
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
