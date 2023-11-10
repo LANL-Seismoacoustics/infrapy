@@ -52,24 +52,16 @@ class IPSingleSensorWidget(QWidget):
         self.tool_runDetector_button.clicked.connect(self.run_spectral_detector)
 
         self.tool_settings_button = QToolButton()
-        self.tool_settings_button.setText("Spectrogram Settings...")
+        self.tool_settings_button.setText("Settings...")
         self.tool_settings_button.clicked.connect(self.show_hide_spectrogram_settings)
 
-        self.tool_det_settings_button = QToolButton()
-        self.tool_det_settings_button.setText("Detector Settings...")
-        self.tool_det_settings_button.clicked.connect(self.show_hide_detector_settings)
 
         self.toolbar.addWidget(self.tool_runDetector_button)
         self.toolbar.addWidget(self.tool_settings_button)
-        self.toolbar.addWidget(self.tool_det_settings_button)
 
         ##### SETTINGS WIDGETS
         self.spectrogram_settings_widget = IPSpectrogramSettingsWidget(self)
         self.spectrogram_settings_widget.setVisible(False)
-        
-        self.detector_settings_widget = IPDetectorSettingsWidget(self)
-        self.detector_settings_widget.fmin_spin.valueChanged.connect(self.update_values)
-        self.detector_settings_widget.setVisible(False)
 
         ##### WAVEFORM PLOTS
         self.waveformPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
@@ -88,8 +80,8 @@ class IPSingleSensorWidget(QWidget):
         self.signalSpecWidget = IPSpectrogramWidget(self)
         self.signalSpecWidget.setXLink(self.waveformPlot)
         self.signalSpecWidget.setPlotLabel('Signal')
-        self.signalSpecWidget.sig_fmax_changed.connect(self.detector_settings_widget.fmax_spin.setValue)
-        self.signalSpecWidget.sig_fmax_changed.connect(self.detector_settings_widget.fmax_spin.setMaximum)
+        self.signalSpecWidget.sig_fmax_changed.connect(self.spectrogram_settings_widget.fmax_spin.setValue)
+        self.signalSpecWidget.sig_fmax_changed.connect(self.spectrogram_settings_widget.fmax_spin.setMaximum)
         self.signalSpecWidget.setVisible(self.spectrogram_settings_widget.show_signal_spectrogram_cb.isChecked())
 
         self.noiseSpecWidget = IPSpectrogramWidget(self)
@@ -122,7 +114,6 @@ class IPSingleSensorWidget(QWidget):
 
         main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.spectrogram_settings_widget)
-        main_layout.addWidget(self.detector_settings_widget)
         main_layout.addWidget(glWidget)
 
         self.setLayout(main_layout)
@@ -133,7 +124,7 @@ class IPSingleSensorWidget(QWidget):
         # self.noverlap = self.nperseg * self.spec_overlap
         # self.nfft = self.nperseg
 
-        new_fmin = self.detector_settings_widget.fmin_spin.value()
+        new_fmin = self.spectrogram_settings_widget.fmin_spin.value()
         self.spec_overlap = 0.8
 
         self.nperseg = int(5. * self.fs / new_fmin)
@@ -145,12 +136,7 @@ class IPSingleSensorWidget(QWidget):
         self.nfft = self.nperseg
 
     def show_hide_spectrogram_settings(self):
-        self.detector_settings_widget.setVisible(False)
         self.spectrogram_settings_widget.setVisible(self.spectrogram_settings_widget.isHidden())
-
-    def show_hide_detector_settings(self):
-        self.spectrogram_settings_widget.setVisible(False)
-        self.detector_settings_widget.setVisible(self.detector_settings_widget.isHidden())
 
     def get_earliest_start_time(self):
         return self.appWidget.waveformWidget.get_earliest_start_time()
@@ -169,11 +155,11 @@ class IPSingleSensorWidget(QWidget):
             return
 
         # Pull in the detector settings
-        pval = self.detector_settings_widget.pval_spin.value()
-        freq_band = [self.detector_settings_widget.fmin_spin.value(), self.detector_settings_widget.fmax_spin.value()] 
-        clustering_freq_scaling = self.detector_settings_widget.clust_freq_scale_spin.value()
-        clustering_eps = self.detector_settings_widget.clust_eps_spin.value()
-        clustering_min_samples = self.detector_settings_widget.clust_min_samples_spin.value()
+        pval = self.spectrogram_settings_widget.pval_spin.value()
+        freq_band = [self.spectrogram_settings_widget.fmin_spin.value(), self.spectrogram_settings_widget.fmax_spin.value()] 
+        clustering_freq_scaling = self.spectrogram_settings_widget.clust_freq_scale_spin.value()
+        clustering_eps = self.spectrogram_settings_widget.clust_eps_spin.value()
+        clustering_min_samples = self.spectrogram_settings_widget.clust_min_samples_spin.value()
 
         # do a few checks
         if freq_band[0] >= freq_band[1]:
@@ -382,6 +368,7 @@ class IPSingleSensorWidget(QWidget):
 
         self.signalSpecWidget.clear_spectrogram()
         self.noiseSpecWidget.clear_spectrogram()
+        self.detectionPlot.clear()
 
         self.detectionPlot.spi.clear()
 
@@ -561,6 +548,13 @@ class IPSpectrogramSettingsWidget(QWidget):
         spec_gb = QGroupBox("Spectrogram ")
         spec_layout = QHBoxLayout()
 
+        self.update_button = QPushButton("Update")
+        self.update_button.setMaximumWidth(100)
+        self.update_button.setEnabled(False)
+        self.update_button.clicked.connect(self.deactivate_update_button)
+        self.update_button.clicked.connect(self.singleStationWidget.updateSpectrograms)
+        self.update_button.clicked.connect(self.singleStationWidget.updateVisibilities)
+
         self.spec_type_cb = QComboBox(self)
         spec_type_label = QLabel("    Spectrogram type:")
         self.spec_type_cb.addItem("Spectrogram")
@@ -610,6 +604,74 @@ class IPSpectrogramSettingsWidget(QWidget):
         color_scale_layout.addWidget(self.none_rb)
         color_scale_gb.setLayout(color_scale_layout)
 
+        #######################
+        detector_gb = QGroupBox("Detector")
+
+        pval_label = QLabel('pval: ')
+        self.pval_spin = QDoubleSpinBox()
+        self.pval_spin.valueChanged.connect(self.activate_update_button)
+        self.pval_spin.setDecimals(4)
+        self.pval_spin.setMinimum(0.0001)
+        self.pval_spin.setMaximum(1.0)
+        self.pval_spin.setValue(0.002)
+        self.pval_spin.setSingleStep(0.001)
+        self.pval_spin.setMaximumWidth(180)
+
+        fmin_label = QLabel("Freq min: ")
+        self.fmin_spin = QDoubleSpinBox()
+        self.fmin_spin.valueChanged.connect(self.activate_update_button)
+        self.fmin_spin.setMinimum(0.001)
+        self.fmin_spin.setMaximum(10000.0)
+        self.fmin_spin.setValue(5.0)    
+        self.fmin_spin.setMaximumWidth(150)
+
+        fmax_label = QLabel("Freq max: ")
+        self.fmax_spin = QDoubleSpinBox()
+        self.fmax_spin.setMinimum(1.0)
+        self.fmax_spin.setMaximum(10000.0)
+        self.fmax_spin.setValue(1.0)    # this needs to be set when a spectrogram is created
+        self.fmax_spin.setMaximumWidth(150)
+
+        clust_freq_scale_label = QLabel("Cluster Freq. Scaling: ")
+        self.clust_freq_scale_spin = QDoubleSpinBox()
+        self.clust_freq_scale_spin.valueChanged.connect(self.activate_update_button)
+        self.clust_freq_scale_spin.setMinimum(1.0)
+        self.clust_freq_scale_spin.setMaximum(10000.0)
+        self.clust_freq_scale_spin.setValue(35.0)
+        self.clust_freq_scale_spin.setMaximumWidth(150)
+
+        clust_eps_label = QLabel("Clustering EPS: ")
+        self.clust_eps_spin = QDoubleSpinBox()
+        self.clust_eps_spin.valueChanged.connect(self.activate_update_button)
+        self.clust_eps_spin.setMinimum(1.0)
+        self.clust_eps_spin.setMaximum(10000.0)
+        self.clust_eps_spin.setValue(10.0)
+        self.clust_eps_spin.setMaximumWidth(150)
+
+        clust_min_samples_label = QLabel("Clustering Min Samples: ")
+        self.clust_min_samples_spin = QSpinBox()
+        self.clust_min_samples_spin.valueChanged.connect(self.activate_update_button)
+        self.clust_min_samples_spin.setMinimum(1)
+        self.clust_min_samples_spin.setMaximum(10000)
+        self.clust_min_samples_spin.setValue(40)
+        self.clust_min_samples_spin.setMaximumWidth(150)
+
+        form2_layout = QFormLayout()
+        form2_layout.addRow(pval_label, self.pval_spin)
+        form2_layout.addRow(fmin_label, self.fmin_spin)
+        form2_layout.addRow(fmax_label, self.fmax_spin)
+
+        form3_layout = QFormLayout()
+        form3_layout.addRow(clust_freq_scale_label, self.clust_freq_scale_spin)
+        form3_layout.addRow(clust_eps_label, self.clust_eps_spin)
+        form3_layout.addRow(clust_min_samples_label, self.clust_min_samples_spin)
+        
+        det_layout = QHBoxLayout()
+        det_layout.addLayout(form2_layout)
+        det_layout.addLayout(form3_layout)
+
+        detector_gb.setLayout(det_layout)
+
         #####SHOW HIDE
         showhide_gb = QGroupBox("Show/Hide")
         self.show_signal_waveform_cb = QCheckBox("Signal Waveform: ")
@@ -635,18 +697,12 @@ class IPSpectrogramSettingsWidget(QWidget):
         showhide_layout.addWidget(self.show_noise_spectrogram_cb)
         showhide_gb.setLayout(showhide_layout)
 
-        self.update_button = QPushButton("Update")
-        self.update_button.setMaximumWidth(100)
-        self.update_button.setEnabled(False)
-        self.update_button.clicked.connect(self.deactivate_update_button)
-        self.update_button.clicked.connect(self.singleStationWidget.updateSpectrograms)
-        self.update_button.clicked.connect(self.singleStationWidget.updateVisibilities)
-
         self.hide_button = QPushButton("Hide")
         self.hide_button.setMaximumWidth(60)
         self.hide_button.clicked.connect(self.hide)
 
         h_layout = QHBoxLayout()
+        h_layout.addWidget(detector_gb)        
         h_layout.addWidget(spec_gb)
         h_layout.addWidget(color_scale_gb)
         h_layout.addWidget(showhide_gb)
@@ -677,98 +733,6 @@ class IPSpectrogramSettingsWidget(QWidget):
     def hide(self):
         self.setVisible(False)
 
-
-class IPDetectorSettingsWidget(QWidget):
-
-    sig_detector_changed = pyqtSignal()
-  
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.singleStationWidget = parent
-        self.buildUI()
-
-    def buildUI(self):
-
-        #####DETECTOR SETTINGS
-        pval_label = QLabel('pval: ')
-        self.pval_spin = QDoubleSpinBox()
-        self.pval_spin.setDecimals(4)
-        self.pval_spin.setMinimum(0.0001)
-        self.pval_spin.setMaximum(1.0)
-        self.pval_spin.setValue(0.002)
-        self.pval_spin.setSingleStep(0.001)
-        self.pval_spin.setMaximumWidth(180)
-
-        fmin_label = QLabel("Freq min: ")
-        self.fmin_spin = QDoubleSpinBox()
-        self.fmin_spin.setMinimum(0.001)
-        self.fmin_spin.setMaximum(10000.0)
-        self.fmin_spin.setValue(5.0)    
-        self.fmin_spin.setMaximumWidth(150)
-
-        fmax_label = QLabel("Freq max: ")
-        self.fmax_spin = QDoubleSpinBox()
-        self.fmax_spin.setMinimum(1.0)
-        self.fmax_spin.setMaximum(10000.0)
-        self.fmax_spin.setValue(1.0)    # this needs to be set when a spectrogram is created
-        self.fmax_spin.setMaximumWidth(150)
-
-        clust_freq_scale_label = QLabel("Cluster Freq. Scaling: ")
-        self.clust_freq_scale_spin = QDoubleSpinBox()
-        self.clust_freq_scale_spin.setMinimum(1.0)
-        self.clust_freq_scale_spin.setMaximum(10000.0)
-        self.clust_freq_scale_spin.setValue(35.0)
-        self.clust_freq_scale_spin.setMaximumWidth(150)
-
-        clust_eps_label = QLabel("Clustering EPS: ")
-        self.clust_eps_spin = QDoubleSpinBox()
-        self.clust_eps_spin.setMinimum(1.0)
-        self.clust_eps_spin.setMaximum(10000.0)
-        self.clust_eps_spin.setValue(10.0)
-        self.clust_eps_spin.setMaximumWidth(150)
-
-        clust_min_samples_label = QLabel("Clustering Min Samples: ")
-        self.clust_min_samples_spin = QSpinBox()
-        self.clust_min_samples_spin.setMinimum(1)
-        self.clust_min_samples_spin.setMaximum(10000)
-        self.clust_min_samples_spin.setValue(40)
-        self.clust_min_samples_spin.setMaximumWidth(150)
-
-        form2_layout = QFormLayout()
-        form2_layout.addRow(pval_label, self.pval_spin)
-        form2_layout.addRow(fmin_label, self.fmin_spin)
-        form2_layout.addRow(fmax_label, self.fmax_spin)
-
-        form3_layout = QFormLayout()
-        form3_layout.addRow(clust_freq_scale_label, self.clust_freq_scale_spin)
-        form3_layout.addRow(clust_eps_label, self.clust_eps_spin)
-        form3_layout.addRow(clust_min_samples_label, self.clust_min_samples_spin)
-        
-        det_layout = QHBoxLayout()
-        det_layout.addLayout(form2_layout)
-        det_layout.addLayout(form3_layout)
-
-        self.hide_button = QPushButton("Hide")
-        self.hide_button.setMaximumWidth(60)
-        self.hide_button.clicked.connect(self.hide)
-
-        h_layout = QHBoxLayout()
-        h_layout.addLayout(det_layout)
-        h_layout.addStretch()
-        h_layout.addWidget(self.hide_button)
-        h_layout.setContentsMargins(0,0,0,0)
-
-        self.setLayout(h_layout) 
-
-    def activate_update_button(self):
-        self.update_button.setEnabled(True)
-
-    def deactivate_update_button(self):
-        self.update_button.setEnabled(False)
-
-    @pyqtSlot()
-    def hide(self):
-        self.setVisible(False)
 
 class IPDetectionStatusDialog(QDialog):
     def __init__(self, parent):
@@ -839,6 +803,7 @@ class IPDetectionPlotItem(pg.PlotItem):
         self.setLabel(axis='left', text='Frequency (Hz)')
 
     def testplot(self):
+        # for testing
         spots3 = []
         for i in range(10):
             for j in range(10):
@@ -903,6 +868,7 @@ class IPDetectionPlotItem(pg.PlotItem):
         self.setLimits(xMin=t_range[0], xMax=t_range[1], yMin=f_range[0], yMax=f_range[1])
         self.full_range_y = [f_range[0], f_range[1]]
         self.set_yaxis(self.full_range_y)
+        
 
 
 class IPSpectrogramCalcWorker(QObject):
