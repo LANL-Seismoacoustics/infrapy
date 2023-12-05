@@ -97,8 +97,8 @@ def azdiff(az1,az2):
 
     # convert to numpy array of floats
     try:
-        az1=np.array(az1, dtype=np.float)
-        az2=np.array(az2, dtype=np.float)
+        az1=np.array(az1, dtype=np.float64)
+        az2=np.array(az2, dtype=np.float64)
     except (TypeError, ValueError):
         msg="AZ1 & AZ2 must be real-valued inputs!"
         raise TypeError(msg)
@@ -184,7 +184,7 @@ def azmean(az, dim=None):
 
     # convert to 2D numpy array of floats
     try:
-        az=np.atleast_2d(np.array(az, dtype=np.float))
+        az=np.atleast_2d(np.array(az, dtype=np.float64))
     except (TypeError, ValueError):
         msg="AZ must be a real-valued input!"
         raise TypeError(msg)
@@ -252,7 +252,7 @@ def fixlatlon(latlon):
     # check that latlon is Nx2
     
     # convert to 2D numpy array of floats
-    latlon=np.atleast_2d(np.array(latlon, dtype=np.float))
+    latlon=np.atleast_2d(np.array(latlon, dtype=np.float64))
 
     # wrap position
     latlon[:,[0]],px=latmod(latlon[:,[0]]);
@@ -293,10 +293,10 @@ def gc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     # check that latlona0/1 & latlonb0/1 are (N,1)x2 in shape and real
     
     # convert to 2D numpy arrays of floats
-    latlona0=np.atleast_2d(np.array(latlona0, dtype=np.float))
-    latlona1=np.atleast_2d(np.array(latlona1, dtype=np.float))
-    latlonb0=np.atleast_2d(np.array(latlonb0, dtype=np.float))
-    latlonb1=np.atleast_2d(np.array(latlonb1, dtype=np.float))
+    latlona0=np.atleast_2d(np.array(latlona0, dtype=np.float64))
+    latlona1=np.atleast_2d(np.array(latlona1, dtype=np.float64))
+    latlonb0=np.atleast_2d(np.array(latlonb0, dtype=np.float64))
+    latlonb1=np.atleast_2d(np.array(latlonb1, dtype=np.float64))
     
     # convert to xyz
     latlona0=geocentric2xyz(latlona0)
@@ -321,7 +321,7 @@ def gc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     # 6. nans if E is basically zero
     # - this occurs when A & B are equivalent
     bad=np.linalg.norm(E, axis=1)
-    bad=bad<10.*np.sqrt(np.finfo(np.float).eps)
+    bad=bad<10.*np.sqrt(np.finfo(np.float64).eps)
     if any(bad):
         latloni0[bad,:]=np.nan
         latloni1[bad,:]=np.nan
@@ -380,10 +380,10 @@ def gcarc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     # check that latlona0/1 & latlonb0/1 are (N,1)x2 in shape and real
     
     # convert to 2D numpy arrays of floats
-    latlona0=np.atleast_2d(np.array(latlona0, dtype=np.float))
-    latlona1=np.atleast_2d(np.array(latlona1, dtype=np.float))
-    latlonb0=np.atleast_2d(np.array(latlonb0, dtype=np.float))
-    latlonb1=np.atleast_2d(np.array(latlonb1, dtype=np.float))
+    latlona0=np.atleast_2d(np.array(latlona0, dtype=np.float64))
+    latlona1=np.atleast_2d(np.array(latlona1, dtype=np.float64))
+    latlonb0=np.atleast_2d(np.array(latlonb0, dtype=np.float64))
+    latlonb1=np.atleast_2d(np.array(latlonb1, dtype=np.float64))
     
     # convert to xyz
     latlona0=geocentric2xyz(latlona0)
@@ -419,7 +419,7 @@ def gcarc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     # 7. nans if E is basically zero
     # - this occurs when A & B are equivalent
     bad=np.linalg.norm(E, axis=1)
-    bad=bad<10.*np.sqrt(np.finfo(np.float).eps)
+    bad=bad<10.*np.sqrt(np.finfo(np.float64).eps)
     if any(bad):
         latloni[bad,:]=np.nan
     
@@ -464,8 +464,8 @@ def geocentric2geographiclat(lat, ecc=8.181919084262149e-02):
     # check ecc is in range (0,1]
         
     # convert to numpy array of floats
-    lat=np.array(lat, dtype=np.float)
-    ecc=np.array(ecc, dtype=np.float)
+    lat=np.array(lat, dtype=np.float64)
+    ecc=np.array(ecc, dtype=np.float64)
 
     # convert to geographic
     lat=np.deg2rad(lat)
@@ -510,8 +510,8 @@ def geocentric2xyz(latlon,radius=1.):
     # check that radius is (N,1) vector and real
     
     # convert to 2D numpy array of floats
-    latlon=np.atleast_2d(np.array(latlon, dtype=np.float))
-    radius=np.atleast_2d(np.array(radius, dtype=np.float))
+    latlon=np.atleast_2d(np.array(latlon, dtype=np.float64))
+    radius=np.atleast_2d(np.array(radius, dtype=np.float64))
     
     # force radius as a column vector
     radius=np.reshape(radius,(-1,1))
@@ -571,8 +571,8 @@ def geographic2geocentriclat(lat, ecc=8.181919084262149e-02):
     # check ecc is in range (0,1]
 
     # convert to numpy array of floats
-    lat=np.array(lat, dtype=np.float)
-    ecc=np.array(ecc, dtype=np.float)
+    lat=np.array(lat, dtype=np.float64)
+    ecc=np.array(ecc, dtype=np.float64)
 
     # convert to geocentric
     lat=np.deg2rad(lat)
@@ -619,7 +619,7 @@ def geographiclat2radius(lat, ellipsoid=None):
         ellipsoid=[6378.137, 1/298.257223563]
     
     # convert to numpy array of floats
-    lat=np.array(lat, dtype=np.float)
+    lat=np.array(lat, dtype=np.float64)
 
     # convert to radians
     lat=np.deg2rad(lat)
@@ -694,8 +694,8 @@ def haversine(latlon0,latlon1):
     # check that latlon0/latlon1 are (N,1)x2/(N,1)x2 in shape and real
     
     # convert to 2D numpy arrays of floats
-    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float))
-    latlon1=np.atleast_2d(np.array(latlon1, dtype=np.float))
+    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float64))
+    latlon1=np.atleast_2d(np.array(latlon1, dtype=np.float64))
     
     # convert from degrees to radians
     latlon0=np.deg2rad(latlon0)
@@ -752,9 +752,9 @@ def inlatlonbox(latrng, lonrng, latlon):
     # check that latrng, lonrng, latlon are Nx2 or 1x2
     
     # convert to 2D numpy array of floats
-    latrng=np.atleast_2d(np.array(latrng, dtype=np.float))
-    lonrng=np.atleast_2d(np.array(lonrng, dtype=np.float))
-    latlon=np.atleast_2d(np.array(latlon, dtype=np.float))
+    latrng=np.atleast_2d(np.array(latrng, dtype=np.float64))
+    lonrng=np.atleast_2d(np.array(lonrng, dtype=np.float64))
+    latlon=np.atleast_2d(np.array(latlon, dtype=np.float64))
     
     # find those in box
     tf=np.logical_and(latlon[:,0]>=latrng[:,0],latlon[:,0]<=latrng[:,1])
@@ -821,8 +821,8 @@ def inlonrng(rng, lon):
     # check that rng, lon are (N,1)x2 and (N,1)x1 and real
     
     # convert to numpy array of floats
-    rng=np.array(rng, dtype=np.float)
-    lon=np.array(lon, dtype=np.float)
+    rng=np.array(rng, dtype=np.float64)
+    lon=np.array(lon, dtype=np.float64)
     
     # convert rng to 2D
     rng=np.atleast_2d(rng)
@@ -903,8 +903,8 @@ def latmod(lat, wrap=90):
     # check that lat & wrap are scalar or equal size and real
 
     # convert to float
-    lat=np.array(lat, dtype=np.float)
-    wrap=np.array(wrap, dtype=np.float)
+    lat=np.array(lat, dtype=np.float64)
+    wrap=np.array(wrap, dtype=np.float64)
 
     # modulus without discontinuities
     # i.e., ramp up & ramp down rather than all ramp up
@@ -969,8 +969,8 @@ def lonmod(lon, wrap=360):
     # check that lon & wrap are scalar or equal size and real
     
     # convert to float
-    lon=np.array(lon, dtype=np.float)
-    wrap=np.array(wrap, dtype=np.float)
+    lon=np.array(lon, dtype=np.float64)
+    wrap=np.array(wrap, dtype=np.float64)
 
     # this always flips the sign of -180/180 and so we don't use it
     #wlon=lon-np.round(lon/wrap)*wrap
@@ -1128,9 +1128,9 @@ def sphericalfwd(latlon0,gcdist,az):
     # check that latlon0/gcdist/az are (N,1)x2/(N,1)/(N,1) in shape and real
     
     # convert to 2D numpy arrays of floats
-    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float))
-    gcdist=np.atleast_2d(np.array(gcdist, dtype=np.float))
-    az=np.atleast_2d(np.array(az, dtype=np.float))
+    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float64))
+    gcdist=np.atleast_2d(np.array(gcdist, dtype=np.float64))
+    az=np.atleast_2d(np.array(az, dtype=np.float64))
     
     # force gcdist & az to column vector
     gcdist=np.reshape(gcdist,[-1,1])
@@ -1209,8 +1209,8 @@ def sphericalinv(latlon0,latlon1):
     # check that latlon0/latlon1 are (N,1)x2/(N,1)x2 in shape and real
     
     # convert to 2D numpy arrays of floats
-    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float))
-    latlon1=np.atleast_2d(np.array(latlon1, dtype=np.float))
+    latlon0=np.atleast_2d(np.array(latlon0, dtype=np.float64))
+    latlon1=np.atleast_2d(np.array(latlon1, dtype=np.float64))
     
     # convert from degrees to radians
     latlon0=np.deg2rad(latlon0)
@@ -1286,7 +1286,7 @@ def xyz2geocentric(xyz):
     # check that xyz is Nx3 and real
 
     # convert to 2D numpy array of floats
-    xyz=np.atleast_2d(np.array(xyz, dtype=np.float))
+    xyz=np.atleast_2d(np.array(xyz, dtype=np.float64))
     
     # preallocate
     latlon=np.empty((np.shape(xyz)[0],2))

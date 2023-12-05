@@ -72,7 +72,7 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
 
     for n1 in range(det_cnt):
 
-        latlon1 = np.array([det_list[n1].latitude, det_list[n1].longitude], dtype=np.float)
+        latlon1 = np.array([det_list[n1].latitude, det_list[n1].longitude], dtype=np.float64)
 
         proj1 = ll.sphericalfwd(latlon1, 90, det_list[n1].back_azimuth)[0][0]
         proj1up = ll.sphericalfwd(latlon1, 90, det_list[n1].back_azimuth + bm_width)[0][0]
@@ -81,7 +81,7 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
         for n2 in range(det_cnt):
             pair_index = n1 * det_cnt + n2
 
-            latlon2 = np.array([det_list[n2].latitude, det_list[n2].longitude], dtype=np.float)
+            latlon2 = np.array([det_list[n2].latitude, det_list[n2].longitude], dtype=np.float64)
 
             if not np.array_equal(latlon1,latlon2):
                 proj2 = ll.sphericalfwd(latlon2, 90, det_list[n2].back_azimuth)[0][0]
