@@ -81,8 +81,8 @@ def set_region(det1, det2, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=
 
         """
 
-    latlon1 = np.array([det1.latitude, det1.longitude], dtype=np.float)
-    latlon2 = np.array([det2.latitude, det2.longitude], dtype=np.float)
+    latlon1 = np.array([det1.latitude, det1.longitude], dtype=np.float64)
+    latlon2 = np.array([det2.latitude, det2.longitude], dtype=np.float64)
 
     if np.allclose(latlon1, latlon2):
         # if detections are on the same array, center is the array location and radius is the maximum value
