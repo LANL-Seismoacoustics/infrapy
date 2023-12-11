@@ -60,10 +60,10 @@ class IPBeamformingWidget(QWidget):
 
     _mp_pool = None
 
-    lanl_blue = QColor(10, 44, 71)
-    lanl_light_blue = QColor(34, 77, 122)
-    lanl_green = QColor(67, 137, 23)
-    lanl_orange = QColor(255, 144, 0)
+    lanl_blue = IPUtils.lanl_primary
+    lanl_light_blue = IPUtils.lanl_blue
+    lanl_green = IPUtils.lanl_green
+    lanl_orange = IPUtils.lanl_orange
 
     def __init__(self, parent, pool):
         super().__init__()
@@ -114,13 +114,13 @@ class IPBeamformingWidget(QWidget):
 
         self.threshold_line = pg.InfiniteLine(pos=0.0, angle=0.0, pen=pg.mkPen('b', width=2, moveable=True, style=QtCore.Qt.DotLine))
         self.threshold_label = pg.InfLineLabel(line=self.threshold_line, text='', movable=True, position=0.04, anchors=[(0.5,1), (0.5,1)])
-        self.threshold_label.setColor((0,0,255))
+        self.threshold_label.setColor(IPUtils.lanl_primary)
         t_font = self.threshold_label.textItem.font()
         t_font.setPointSize(10)
         self.threshold_label.textItem.setFont(t_font)
         self.fstatPlot.addItem(self.threshold_line)
         # this is the label that pops up to alert someone that the program is calculating the threshold
-        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
+        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=IPUtils.lanl_screen_text_black)
 
         self.traceVPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.traceVPlot.hideButtons()
