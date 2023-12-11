@@ -10,6 +10,7 @@ import numpy as np
 from scipy import signal
 
 from InfraView.widgets.IPPlotItem import IPPlotItem
+import InfraView.widgets.IPUtils as utils
 
 
 class IPPSDWidget(QWidget):
@@ -22,8 +23,8 @@ class IPPSDWidget(QWidget):
     currentSignalData = None
     currentNoiseData = None
 
-    blue_pen = pg.mkPen(color=(80, 159, 250), width=1)
-    red_pen = pg.mkPen(color=(255, 71, 71), width=1)
+    blue_pen = pg.mkPen(color=utils.lanl_blue, width=1)
+    red_pen = pg.mkPen(color=utils.lanl_red, width=1)
 
     def __init__(self, parent):
         super().__init__()
