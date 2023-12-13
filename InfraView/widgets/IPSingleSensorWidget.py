@@ -62,13 +62,6 @@ class IPSingleSensorWidget(QWidget):
         ##### SETTINGS WIDGET
         self.spectrogram_settings_widget = IPSpectrogramSettingsWidget(self)
         self.spectrogram_settings_widget.setVisible(False)
-<<<<<<< HEAD
-=======
-        
-        self.detector_settings_widget = IPDetectorSettingsWidget(self)
-        self.detector_settings_widget.fmin_spin.valueChanged.connect(self.update_values)
-        self.detector_settings_widget.setVisible(False)
->>>>>>> fb37d9a (updates to settings, added cwt to single sensor)
 
         ##### WAVEFORM PLOTS
         self.waveformPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None, lris=False)
@@ -129,25 +122,6 @@ class IPSingleSensorWidget(QWidget):
         # self.nperseg = 2048
         # self.noverlap = self.nperseg * self.spec_overlap
         # self.nfft = self.nperseg
-<<<<<<< HEAD
-=======
-
-        new_fmin = self.detector_settings_widget.fmin_spin.value()
-        self.spec_overlap = 0.8
-        #print("fmin: {}".format(new_fmin))
-        #print("fs: {}".format(self.fs))
-        self.nperseg = int(5. * self.fs / new_fmin)
-        if self.nperseg > 512:
-            self.nperseg = 512
-        #print("self.nperseg: {}".format(self.nperseg))
-        self.noverlap = int(0.8 * self.nperseg)
-        #print("noverlap: {}".format(self.noverlap))
-        self.nfft = self.nperseg
-
-    def show_hide_spectrogram_settings(self):
-        self.detector_settings_widget.setVisible(False)
-        self.spectrogram_settings_widget.setVisible(self.spectrogram_settings_widget.isHidden())
->>>>>>> fb37d9a (updates to settings, added cwt to single sensor)
 
         new_fmin = self.spectrogram_settings_widget.fmin_spin.value()
         self.spec_overlap = 0.8
@@ -486,11 +460,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     def calc_spectrogram(self, data, nfft, Fs, noverlap, nperseg, spec_type, morlet_o=None):
         if data is None:
             return
-<<<<<<< HEAD
         
-=======
-        # print(nfft, Fs, noverlap, nperseg, spec_type)
->>>>>>> fb37d9a (updates to settings, added cwt to single sensor)
         self.calc_spec_worker_object = IPSpectrogramCalcWorker(data=data, fs=Fs, nfft=nfft, nperseg=nperseg, noverlap=noverlap, spec_type=spec_type, morlet_o=morlet_o)
         self.sig_start_spec_calc.connect(self.calc_spec_worker_object.run)
         self.calc_spec_worker_object.signal_runFinished.connect(self.run_finished)
@@ -576,7 +546,6 @@ class IPSpectrogramSettingsWidget(QWidget):
 
         spec_gb = QGroupBox("Spectrogram ")
         spec_layout = QHBoxLayout()
-<<<<<<< HEAD
 
         self.update_button = QPushButton("Update")
         self.update_button.setMaximumWidth(100)
@@ -584,8 +553,6 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.update_button.clicked.connect(self.deactivate_update_button)
         self.update_button.clicked.connect(self.singleStationWidget.updateSpectrograms)
         self.update_button.clicked.connect(self.singleStationWidget.updateVisibilities)
-=======
->>>>>>> fb37d9a (updates to settings, added cwt to single sensor)
 
         self.spec_type_cb = QComboBox(self)
         spec_type_label = QLabel("    Spectrogram type:")
@@ -772,101 +739,6 @@ class IPSpectrogramSettingsWidget(QWidget):
         self.setVisible(False)
 
 
-<<<<<<< HEAD
-=======
-class IPDetectorSettingsWidget(QWidget):
-
-    sig_detector_changed = pyqtSignal()
-  
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.singleStationWidget = parent
-        self.buildUI()
-
-    def buildUI(self):
-
-        #####DETECTOR SETTINGS
-        pval_label = QLabel('pval: ')
-        self.pval_spin = QDoubleSpinBox()
-        self.pval_spin.setMinimum(0.0001)
-        self.pval_spin.setMaximum(1.0)
-        self.pval_spin.setValue(0.002)
-        self.pval_spin.setSingleStep(0.001)
-        self.pval_spin.setDecimals(3)
-        self.pval_spin.setMaximumWidth(150)
-
-        fmin_label = QLabel("Freq min: ")
-        self.fmin_spin = QDoubleSpinBox()
-        self.fmin_spin.setMinimum(0.001)
-        self.fmin_spin.setMaximum(10000.0)
-        self.fmin_spin.setValue(5.0)    
-        self.fmin_spin.setMaximumWidth(150)
-
-        fmax_label = QLabel("Freq max: ")
-        self.fmax_spin = QDoubleSpinBox()
-        self.fmax_spin.setMinimum(1.0)
-        self.fmax_spin.setMaximum(10000.0)
-        self.fmax_spin.setValue(1.0)    # this needs to be set when a spectrogram is created
-        self.fmax_spin.setMaximumWidth(150)
-
-        clust_freq_scale_label = QLabel("Cluster Freq. Scaling: ")
-        self.clust_freq_scale_spin = QDoubleSpinBox()
-        self.clust_freq_scale_spin.setMinimum(1.0)
-        self.clust_freq_scale_spin.setMaximum(10000.0)
-        self.clust_freq_scale_spin.setValue(35.0)
-        self.clust_freq_scale_spin.setMaximumWidth(150)
-
-        clust_eps_label = QLabel("Clustering EPS: ")
-        self.clust_eps_spin = QDoubleSpinBox()
-        self.clust_eps_spin.setMinimum(1.0)
-        self.clust_eps_spin.setMaximum(10000.0)
-        self.clust_eps_spin.setValue(10.0)
-        self.clust_eps_spin.setMaximumWidth(150)
-
-        clust_min_samples_label = QLabel("Clustering Min Samples: ")
-        self.clust_min_samples_spin = QSpinBox()
-        self.clust_min_samples_spin.setMinimum(1)
-        self.clust_min_samples_spin.setMaximum(10000)
-        self.clust_min_samples_spin.setValue(40)
-        self.clust_min_samples_spin.setMaximumWidth(150)
-
-        form2_layout = QFormLayout()
-        form2_layout.addRow(pval_label, self.pval_spin)
-        form2_layout.addRow(fmin_label, self.fmin_spin)
-        form2_layout.addRow(fmax_label, self.fmax_spin)
-
-        form3_layout = QFormLayout()
-        form3_layout.addRow(clust_freq_scale_label, self.clust_freq_scale_spin)
-        form3_layout.addRow(clust_eps_label, self.clust_eps_spin)
-        form3_layout.addRow(clust_min_samples_label, self.clust_min_samples_spin)
-        
-        det_layout = QHBoxLayout()
-        det_layout.addLayout(form2_layout)
-        det_layout.addLayout(form3_layout)
-
-        self.hide_button = QPushButton("Hide")
-        self.hide_button.setMaximumWidth(60)
-        self.hide_button.clicked.connect(self.hide)
-
-        h_layout = QHBoxLayout()
-        h_layout.addLayout(det_layout)
-        h_layout.addStretch()
-        h_layout.addWidget(self.hide_button)
-        h_layout.setContentsMargins(0,0,0,0)
-
-        self.setLayout(h_layout) 
-
-    def activate_update_button(self):
-        self.update_button.setEnabled(True)
-
-    def deactivate_update_button(self):
-        self.update_button.setEnabled(False)
-
-    @pyqtSlot()
-    def hide(self):
-        self.setVisible(False)
-
->>>>>>> fb37d9a (updates to settings, added cwt to single sensor)
 class IPDetectionStatusDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
