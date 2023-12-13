@@ -215,10 +215,13 @@ class IPLocationWidget(QWidget):
         self.mapWidget.remove_bisl_result()
         self.mapWidget.remove_conf_ellipse()
 
+        rad_min = self.bislSettings.rng_max_edit.value() / 10.0
+        rad_max = self.bislSettings.rng_max_edit.value() / 3.0
+
         self.bisl_workerObject = BISLWorkerObject(self.trimmed_detections,
                                                   beam_width=self.bislSettings.bm_width_edit.value(),
-                                                  rad_min=self.bislSettings.rad_min_edit.value(),
-                                                  rad_max=self.bislSettings.rad_max_edit.value(),
+                                                  rad_min=rad_min,
+                                                  rad_max=rad_max,
                                                   rng_max=self.bislSettings.rng_max_edit.value(),
                                                   resol=self.bislSettings.resolution_edit.value())
 
@@ -275,11 +278,14 @@ class IPLocationWidget(QWidget):
 
         self.dist_matrix = None
 
+        rad_min = self.bislSettings.rng_max_edit.value() / 10.0
+        rad_max = self.bislSettings.rng_max_edit.value() / 3.0
+
         self.dm_workerObject = DistanceMatrixWorkerObject(self.detections,
                                                           beam_width=self.bislSettings.bm_width_edit.value(),
                                                           rng_max=self.bislSettings.rng_max_edit.value(),
-                                                          rad_min=self.bislSettings.rad_min_edit.value(),
-                                                          rad_max=self.bislSettings.rad_max_edit.value(),
+                                                          rad_min=rad_min,
+                                                          rad_max=rad_max,
                                                           resol=self.bislSettings.resolution_edit.value(),
                                                           pool=self.mp_pool)
 
@@ -417,19 +423,19 @@ class BISLSettings(QFrame):
         self.bm_width_edit.setSuffix(' deg')
         self.bm_width_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.rad_min_edit = QDoubleSpinBox()
-        self.rad_min_edit.setMinimum(50)
-        self.rad_min_edit.setMaximum(np.pi * self.earth_radius)
-        self.rad_min_edit.setValue(100.0)
-        self.rad_min_edit.setSuffix(' km')
-        self.rad_min_edit.valueChanged.connect(self.enable_update_dm_button)
+        # self.rad_min_edit = QDoubleSpinBox()
+        # self.rad_min_edit.setMinimum(50)
+        # self.rad_min_edit.setMaximum(np.pi * self.earth_radius)
+        # self.rad_min_edit.setValue(100.0)
+        # self.rad_min_edit.setSuffix(' km')
+        # self.rad_min_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.rad_max_edit = QDoubleSpinBox()
-        self.rad_max_edit.setMinimum(50)
-        self.rad_max_edit.setMaximum(np.pi * self.earth_radius)
-        self.rad_max_edit.setValue(1000.0)
-        self.rad_max_edit.setSuffix(' km')
-        self.rad_max_edit.valueChanged.connect(self.enable_update_dm_button)
+        # self.rad_max_edit = QDoubleSpinBox()
+        # self.rad_max_edit.setMinimum(50)
+        # self.rad_max_edit.setMaximum(np.pi * self.earth_radius)
+        # self.rad_max_edit.setValue(1000.0)
+        # self.rad_max_edit.setSuffix(' km')
+        # self.rad_max_edit.valueChanged.connect(self.enable_update_dm_button)
 
         self.rng_max_edit = QDoubleSpinBox()
         self.rng_max_edit.setMinimum(10)
@@ -452,8 +458,8 @@ class BISLSettings(QFrame):
 
         layout = QFormLayout()
         layout.addRow(self.tr('Beam Width: '), self.bm_width_edit)
-        layout.addRow(self.tr('Radius Min.: '), self.rad_min_edit)
-        layout.addRow(self.tr('Radius Max.: '), self.rad_max_edit)
+        #layout.addRow(self.tr('Radius Min.: '), self.rad_min_edit)
+        #layout.addRow(self.tr('Radius Max.: '), self.rad_max_edit)
         layout.addRow(self.tr('Range Max.: '), self.rng_max_edit)
         layout.addRow(self.tr('Resolution'), self.resolution_edit)
         layout.addRow(self.tr('Confidence'), self.confidence_edit)

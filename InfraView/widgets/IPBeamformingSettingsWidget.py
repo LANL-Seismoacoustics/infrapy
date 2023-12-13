@@ -35,8 +35,8 @@ class IPBeamformingSettingsWidget(QWidget):
         self.method_cb.addItem('bartlett')
         self.method_cb.addItem('gls')
         self.method_cb.addItem('bartlett_covar')
-        self.method_cb.addItem('capon')
-        self.method_cb.addItem('music')
+        #self.method_cb.addItem('capon')
+        #self.method_cb.addItem('music')
         self.method_cb.currentTextChanged.connect(self.methodChanged)
 
         self.fmin_label = QLabel("0.5 Hz") # if changed here, make sure you change in the IPPSDWidget

@@ -87,7 +87,7 @@ class IPPlotItem(pg.PlotItem):
 
     
 
-    def __init__(self, mode='plain', y_label_format=None, pickable=False, est=None):
+    def __init__(self, mode='plain', y_label_format=None, pickable=False, est=None, lris=True):
         '''
         mode: (str) can currently be 'waveform' or 'PSD' or 'Plain' or 'Spectrogram'
         est: (UTCDateTime) Earliest Start Time
@@ -104,17 +104,21 @@ class IPPlotItem(pg.PlotItem):
 
         if y_label_format == 'nonscientific':
             super().__init__(axisItems={'left': NonScientific(orientation='left')})
+        
+        if mode == 'waveform':
+            if est is None:
+                est = UTCDateTime(0)
+            super().__init__(axisItems={'bottom': IPWaveformTimeAxis(est=est)})
+        elif mode == 'spectrogram':
+            if est is None:
+                est = UTCDateTime(0)
+            super().__init__(axisItems={'bottom': IPSpectrogramTimeAxis(est=est)})
         else:
-            if mode == 'waveform':
-                if est is None:
-                    est = UTCDateTime(0)
-                super().__init__(axisItems={'bottom': IPWaveformTimeAxis(est=est)})
-            elif mode == 'spectrogram':
-                if est is None:
-                    est = UTCDateTime(0)
-                super().__init__(axisItems={'bottom': IPSpectrogramTimeAxis(est=est)})
-            else:
-                super().__init__()
+            super().__init__()
+
+        #self.autoDownsample = True
+        #self.setDownsampling(auto=True, ds=1000)
+        self.setClipToView(True)
 
         #self.autoDownsample = True
         #self.setDownsampling(auto=True, ds=1000)
@@ -134,20 +138,21 @@ class IPPlotItem(pg.PlotItem):
         # self.getAxis('left').setTickFont(font)
         # self.getAxis('bottom').setTickFont(font)
 
-        if mode == 'waveform':
-            self.noise_region = IPLinearRegionItem_Noise()
-            self.signal_region = IPLinearRegionItem_Signal()
+        if lris:
+            if mode == 'waveform':
+                self.noise_region = IPLinearRegionItem_Noise()
+                self.signal_region = IPLinearRegionItem_Signal()
 
-            self.addItem(self.noise_region)
-            self.addItem(self.signal_region)
+                self.addItem(self.noise_region)
+                self.addItem(self.signal_region)
 
-        elif mode == 'PSD':
-            self.freq_region = IPFreqLinearRegionItem()
+            elif mode == 'PSD':
+                self.freq_region = IPFreqLinearRegionItem()
 
-            self.addItem(self.freq_region)
+                self.addItem(self.freq_region)
 
-        elif mode == 'plain':
-            pass
+            elif mode == 'plain':
+                pass
 
     def setBackgroundColor(self, r, g, b):
         self.vb.setBackgroundColor(QColor(r, g, b))
