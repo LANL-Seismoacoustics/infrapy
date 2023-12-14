@@ -244,7 +244,6 @@ class IPStationView(QWidget):
             settings.setValue("last_stationfile_directory", path)
 
     def saveStationsAs(self):
-        print(self.x)
         if self.inv is None:
             IPUtils.errorPopup('Oops... There are no stations to save')
             return
@@ -284,7 +283,6 @@ class IPStationView(QWidget):
                 IPUtils.errorPopup("\nThis doesn't seem to be a valid XML file")
                 return
 
-            print("new inventory = {}".format(newinventory))
             self.merge_new_inventory(newinventory, mode='KEEP_NEW')
     
     @pyqtSlot(Inventory, str)
@@ -300,7 +298,7 @@ class IPStationView(QWidget):
         options for mode are 'APPEND_KEEP_NEW', 'APPEND_KEEP_CURRENT', 'PROMPT', 'REPLACE'
         '''
 
-        if self.inv is None or mode == 'REPLACE':
+        if self.inv is None or len(self.inv) == 0 or mode == 'REPLACE':
             self.inv = new_inv.copy()
 
         else:
@@ -458,6 +456,7 @@ class IPDuplicateStationDialog(QDialog):
         self.setLayout(self.main_layout)
 
     def exec_(self, duplicate_stas):
+
         self.duplicate_sta_codes = duplicate_stas
 
         # first lets clear out the label layout, and redraw it

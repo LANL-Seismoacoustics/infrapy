@@ -46,6 +46,8 @@ class IPPlotViewer(QSplitter):
 
     def set_streams(self, st, st_filtered, c_f_d_s):
         # c_f_d_s is the current filter display settings
+        if st is None:
+            self.clear()
         self.waveform_selector.update_selections(st)
         self.pl_widget.plot_traces(st, st_filtered, c_f_d_s)
 
@@ -55,6 +57,7 @@ class IPPlotViewer(QSplitter):
         self.pl_widget.filtered_plot_lines.clear()
         self.pl_widget.clear()
         self.waveform_selector.clear_layout()
+        self.parent.spectraWidget.clearPlot()
         self.title.setText("")
 
     @pyqtSlot(Stream, Stream)
