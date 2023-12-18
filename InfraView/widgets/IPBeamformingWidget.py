@@ -243,17 +243,11 @@ class IPBeamformingWidget(QWidget):
         self.bottomSettings_scrollarea.setWidget(self.bottomSettings)
         
         self.detector_settings = IPDetectorSettingsWidget.IPDetectorSettingsWidget(self)
-        self.detector_settings_scrollarea = QScrollArea()
-        self.detector_settings_scrollarea.setWidget(self.detector_settings)
         
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
-        self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')
-        self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings_scrollarea, 'Beamformer Settings')
-        self.det_settings_tab_idx = self.bottomTabWidget.addTab(self.detector_settings, 'Detector Settings')
-
         bottomLayout = QHBoxLayout()
-        bottomLayout.addWidget(self.bottomTabWidget)
+        bottomLayout.addWidget(self.detectionWidget)
 
         bottomWidget.setLayout(bottomLayout)
 
@@ -273,6 +267,10 @@ class IPBeamformingWidget(QWidget):
 
         self.main_layout = QVBoxLayout()
         self.main_layout.setMenuBar(self.toolbar)
+        self.main_layout.addWidget(self.detector_settings)
+        self.detector_settings.setVisible(False)
+        self.main_layout.addWidget(self.bottomSettings)
+        self.bottomSettings.setVisible(False)
         self.main_layout.addWidget(self.main_splitter)
 
         self.setLayout(self.main_layout)
@@ -290,7 +288,6 @@ class IPBeamformingWidget(QWidget):
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
-
         # self.toolbar.setStyleSheet("QToolButton:!hover { padding-left:5px; padding-right:5px; padding-top:2px; padding-bottom:2px} QToolBar {background-color: rgb(0,107,166)}")
         # self.toolbar.setStyleSheet("QToolButton:!hover {background-color:blue} QToolButton:hover { background-color: lightgray }")
 
@@ -298,6 +295,8 @@ class IPBeamformingWidget(QWidget):
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
         toolButton_export = QToolButton()
+        toolButton_bfsettings = QToolButton()
+        toolButton_detsettings = QToolButton()
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -319,11 +318,29 @@ class IPBeamformingWidget(QWidget):
         toolButton_export.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         toolButton_export.setDefaultAction(self.exportAct)
 
+        self.beamformSettingsAct = QAction("Beamformer Settings", self)
+        self.beamformSettingsAct.triggered.connect(self.showhide_bfsettings)
+        toolButton_bfsettings.setDefaultAction(self.beamformSettingsAct)
+
+        self.detectorSettingsAct = QAction("Detector Settings", self)
+        self.detectorSettingsAct.triggered.connect(self.showhide_detsettings)
+        toolButton_detsettings.setDefaultAction(self.detectorSettingsAct)
+
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(toolButton_export)
+        self.toolbar.addWidget(toolButton_bfsettings)
+        self.toolbar.addWidget(toolButton_detsettings)
+
+    def showhide_bfsettings(self):
+        self.detector_settings.setVisible(False)
+        self.bottomSettings.setVisible(self.bottomSettings.isHidden())
+
+    def showhide_detsettings(self):
+        self.detector_settings.setVisible(self.detector_settings.isHidden())
+        self.bottomSettings.setVisible(False)
 
 
     def addCrosshairs(self):
@@ -699,7 +716,7 @@ class IPBeamformingWidget(QWidget):
                 t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
                 self.timeRangeLRI.setRegion(t_region)
                 
-                self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+                #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
                 
 
@@ -1161,7 +1178,7 @@ class IPBeamformingWidget(QWidget):
         t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
         self.timeRangeLRI.setRegion(t_region)
 
-        self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+        #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
     def exportResults(self):
         if len(self._t) == 0:

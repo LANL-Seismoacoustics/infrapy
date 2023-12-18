@@ -88,16 +88,24 @@ class IPLocationWidget(QWidget):
         # right hand widgets layout holds the settings widgets
         rh_widget = QWidget()
         rh_layout = QVBoxLayout()
-        rh_layout.addWidget(self.bislSettings)
-        rh_layout.addWidget(self.assocSettings)
+        #rh_layout.addWidget(self.bislSettings)
+        #rh_layout.addWidget(self.assocSettings)
         rh_layout.addWidget(self.showgroundtruth)
         rh_layout.addStretch()
         rh_widget.setLayout(rh_layout)
 
         # splitter holding the association plots
+        self.assocWidget = QFrame()
+        self.assocWidget.setFrameStyle(QFrame.Box | QFrame.Plain)
+        assocLayout = QVBoxLayout()
+        assocLayout.addWidget(self.dendrogram)
+        assocLayout.addWidget(self.assocSettings)
+        self.assocWidget.setLayout(assocLayout)
+
         self.assoc_splitter = QSplitter(Qt.Vertical)
         self.assoc_splitter.addWidget(self.dm_view)
-        self.assoc_splitter.addWidget(self.dendrogram)
+        self.assoc_splitter.addWidget(self.assocWidget)
+
         self.assoc_splitter.setSizes([1000000, 1000000])
 
         # splitter holding the map canvas and the association plots
@@ -105,10 +113,18 @@ class IPLocationWidget(QWidget):
         self.loc_splitter.addWidget(self.mapWidget)
         self.loc_splitter.addWidget(self.assoc_splitter)
 
+        # layout holding BISL settings and results
+        self.bisl_widget = QFrame()
+        self.bisl_widget.setFrameStyle(QFrame.Box | QFrame.Plain)
+        bisl_layout = QHBoxLayout()
+        bisl_layout.addWidget(self.bislSettings)
+        bisl_layout.addWidget(self.bisl_resultsWidget)
+        self.bisl_widget.setLayout(bisl_layout)
+
         # large splitter holding the map, association plots, and the console
         self.mapSplitter = QSplitter(Qt.Vertical)
         self.mapSplitter.addWidget(self.loc_splitter)
-        self.mapSplitter.addWidget(self.bisl_resultsWidget)
+        self.mapSplitter.addWidget(self.bisl_widget)
 
         self.mainSplitter = QSplitter(Qt.Horizontal)
         self.mainSplitter.addWidget(self.mapSplitter)
@@ -147,7 +163,7 @@ class IPLocationWidget(QWidget):
         self.detections = []
         self.dm_view.clear()
         self.dendrogram.clear_plot()
-        self.bisl_resultsWidget.clear()
+        self.bisl_resultsWidget.clearConsole()
     
     def get_detections(self):
         return self.detections
@@ -398,7 +414,7 @@ class IPLocationWidget(QWidget):
         settings.endGroup()
 
 
-class BISLSettings(QFrame):
+class BISLSettings(QWidget):
 
     earth_radius = 6378.1   # km
 
@@ -479,7 +495,6 @@ class BISLSettings(QFrame):
 
         mainlayout.addLayout(buttonLayout)
 
-        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.setLayout(mainlayout)
 
     @pyqtSlot(float)
@@ -1095,7 +1110,7 @@ class IPDendrogramWidget(QWidget):
             return False
 
 
-class AssociationSettings(QFrame):
+class AssociationSettings(QWidget):
 
     def __init__(self, parent):
         super().__init__()
@@ -1106,9 +1121,9 @@ class AssociationSettings(QFrame):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        title_label = QLabel('Association Settings')
-        title_label.setStyleSheet("font-weight: bold;")
-        title_label.setAlignment(Qt.AlignCenter)
+        #title_label = QLabel('Association Settings')
+        #title_label.setStyleSheet("font-weight: bold;")
+        #title_label.setAlignment(Qt.AlignCenter)
 
         self.threshold_edit = QDoubleSpinBox()
         self.threshold_edit.setMinimum(0.0)
@@ -1127,14 +1142,13 @@ class AssociationSettings(QFrame):
         self.update_assoc_button = QPushButton('Update Associations')
 
         mainlayout = QVBoxLayout()
-        mainlayout.addWidget(title_label)
+        #mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addWidget(self.update_assoc_button)
 
         mainlayout.addLayout(buttonLayout)
-        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.setLayout(mainlayout)
 
 
