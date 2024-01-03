@@ -484,7 +484,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         return self.getAxis(name='bottom').get_start_time()
 
     def plot_spectrogram(self, f, t, Sxx):
-        print("plot_spectrogram")
+
         # calc the db of the data (ref at 1.0 - if data is in Pascals, we'll want to do 20log10(P/Pref), but not sure how to know that right now)
         Sxx = 10 * np.log10(Sxx)
         Sxx = np.transpose(Sxx)
@@ -495,17 +495,16 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         xscale = t[-1]/Sxx.shape[0]
         self.transform.scale(xscale, yscale)
         self.spec_img.setTransform(self.transform)
-        print("colormap")
+
         #####COLORMAP
         color_map_str = self.singleStationWidget.spectrogram_settings_widget.colormap_cb.currentText()
         cmap = pg.colormap.get(color_map_str, source='matplotlib')
         self.spec_img.setColorMap(cmap)
-        print("scalewidget")
+
         #####SCALE WIDGET
         scale_setting = self.singleStationWidget.spectrogram_settings_widget.get_scale_setting()
         minv, maxv = np.nanmin(np.nanmin(Sxx[Sxx != -np.inf])), np.nanmax(np.nanmax(Sxx))
-        print("minv = {}  maxv = {}".format(minv, maxv))
-        print("build colorbar")
+
         #####BUILD THE COLORBAR
         if scale_setting == 'cbar':
             if self.color_bar is None:
@@ -514,12 +513,12 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
             self.color_bar.setImageItem(self.spec_img, insert_in=self)
             self.color_bar.setLevels(low=minv, high=maxv)
             self.color_bar.setVisible(True)
-        print("hide everything")
+
         #####HIDE EVERYTHING
         if scale_setting =='none':
             if self.color_bar is not None:
                 self.color_bar.setVisible(False)
-        print("setImage")
+
         # ADD THE DATA TO MAKE THE IMAGE
         self.spec_img.setImage(Sxx)
 
@@ -528,7 +527,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
         self.full_range_y = [f[0], f[-1]]
         self.set_yaxis(self.full_range_y)
     
-        print("Plot_spectrogram finished")
+
 
 class IPSpectrogramSettingsWidget(QWidget):
 

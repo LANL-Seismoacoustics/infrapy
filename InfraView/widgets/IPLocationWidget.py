@@ -4,7 +4,7 @@ import matplotlib
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
                              QVBoxLayout, QDoubleSpinBox, QSpinBox,
-                             QFormLayout, QFrame, QPushButton,
+                             QFormLayout, QFrame, QPushButton, QSizePolicy,
                              QSplitter, QTextEdit, QComboBox, QFileDialog)
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
@@ -64,6 +64,7 @@ class IPLocationWidget(QWidget):
 
         # set up the map widget
         self.mapWidget = IPMapWidget.IPMapWidget(self)
+        self.mapWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         # set up the distance matrix viewer
         self.dm_view = IPDistanceMatrixWidget(self)
@@ -86,13 +87,13 @@ class IPLocationWidget(QWidget):
         self.assocSettings = AssociationSettings(self)
 
         # right hand widgets layout holds the settings widgets
-        rh_widget = QWidget()
-        rh_layout = QVBoxLayout()
-        #rh_layout.addWidget(self.bislSettings)
-        #rh_layout.addWidget(self.assocSettings)
-        rh_layout.addWidget(self.showgroundtruth)
-        rh_layout.addStretch()
-        rh_widget.setLayout(rh_layout)
+        # rh_widget = QWidget()
+        # rh_layout = QVBoxLayout()
+        # #rh_layout.addWidget(self.bislSettings)
+        # #rh_layout.addWidget(self.assocSettings)
+        # rh_layout.addWidget(self.showgroundtruth)
+        # rh_layout.addStretch()
+        # rh_widget.setLayout(rh_layout)
 
         # splitter holding the association plots
         self.assocWidget = QFrame()
@@ -105,6 +106,7 @@ class IPLocationWidget(QWidget):
         self.assoc_splitter = QSplitter(Qt.Vertical)
         self.assoc_splitter.addWidget(self.dm_view)
         self.assoc_splitter.addWidget(self.assocWidget)
+        self.assoc_splitter.addWidget(self.showgroundtruth)
 
         self.assoc_splitter.setSizes([1000000, 1000000])
 
@@ -116,20 +118,28 @@ class IPLocationWidget(QWidget):
         # layout holding BISL settings and results
         self.bisl_widget = QFrame()
         self.bisl_widget.setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.bisl_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         bisl_layout = QHBoxLayout()
         bisl_layout.addWidget(self.bislSettings)
         bisl_layout.addWidget(self.bisl_resultsWidget)
         self.bisl_widget.setLayout(bisl_layout)
 
+        self.lhWidget = QWidget()
+        lh_layout = QVBoxLayout()
+        lh_layout.addWidget(self.mapWidget)
+        lh_layout.addWidget(self.bisl_widget)
+        self.lhWidget.setLayout(lh_layout)
+
         # large splitter holding the map, association plots, and the console
-        self.mapSplitter = QSplitter(Qt.Vertical)
-        self.mapSplitter.addWidget(self.loc_splitter)
-        self.mapSplitter.addWidget(self.bisl_widget)
+        # self.mapSplitter = QSplitter(Qt.Vertical)
+        # self.mapSplitter.addWidget(self.loc_splitter)
+        # self.mapSplitter.addWidget(self.bisl_widget)
 
         self.mainSplitter = QSplitter(Qt.Horizontal)
-        self.mainSplitter.addWidget(self.mapSplitter)
-        self.mainSplitter.addWidget(rh_widget)
+        self.mainSplitter.addWidget(self.lhWidget)
+        self.mainSplitter.addWidget(self.assoc_splitter)
 
+        
         main_layout = QBoxLayout(QBoxLayout.TopToBottom)
         main_layout.addWidget(self.mainSplitter)
         self.setLayout(main_layout)
@@ -384,7 +394,7 @@ class IPLocationWidget(QWidget):
         settings.beginGroup('LocationWidget')
         settings.setValue("windowSize", self.size())
         settings.setValue("windowPos", self.pos())
-        settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
+        #settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
         settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
         settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
         settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
@@ -396,8 +406,8 @@ class IPLocationWidget(QWidget):
         settings.beginGroup('LocationWidget')
 
         mapSplitterSettings = settings.value("mapSplitterSettings")
-        if mapSplitterSettings:
-            self.mapSplitter.restoreState(mapSplitterSettings)
+        #if mapSplitterSettings:
+        #    self.mapSplitter.restoreState(mapSplitterSettings)
 
         mainSplitterSettings = settings.value("mainSplitterSettings")
         if mainSplitterSettings:
@@ -1119,11 +1129,7 @@ class AssociationSettings(QWidget):
 
     def buildUI(self):
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-
-        #title_label = QLabel('Association Settings')
-        #title_label.setStyleSheet("font-weight: bold;")
-        #title_label.setAlignment(Qt.AlignCenter)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self.threshold_edit = QDoubleSpinBox()
         self.threshold_edit.setMinimum(0.0)
@@ -1136,19 +1142,20 @@ class AssociationSettings(QWidget):
         self.dist_max_edit.setValue(10.0)
 
         layout = QFormLayout()
+        layout.setVerticalSpacing(5)
         layout.addRow(self.tr('Threshold: '), self.threshold_edit)
-        layout.addRow(self.tr('Maximum Distance.: '), self.dist_max_edit)
+        layout.addRow(self.tr('Max. Distance: '), self.dist_max_edit)
 
         self.update_assoc_button = QPushButton('Update Associations')
+        self.update_assoc_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        myfont = self.update_assoc_button.font()
+        myfont.setPointSize(10)
+        self.update_assoc_button.setFont(myfont)
 
         mainlayout = QVBoxLayout()
-        #mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
+        mainlayout.addWidget(self.update_assoc_button)
 
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addWidget(self.update_assoc_button)
-
-        mainlayout.addLayout(buttonLayout)
         self.setLayout(mainlayout)
 
 
