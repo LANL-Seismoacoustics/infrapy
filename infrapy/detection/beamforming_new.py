@@ -60,7 +60,7 @@ def stream_to_array_data(stream, latlon=None, t_start=None, t_end=None):
     t1 = min(np.datetime64(tr.stats.endtime) + np.timedelta64(int(tr.times()[0] * 1e3), 'ms') for tr in stream)
 
     dt = max(1.0 / tr.stats.sampling_rate for tr in stream)
-    t = np.arange(0.0, (t1 - t0).astype('m8[ms]').astype(float) * 1.0e-3, dt)
+    t = np.arange(0.0, ((t1 - t0).astype('m8[ms]').astype(float) * 1.0e-3) + dt, dt)
 
     # interpolate each channel and evaluate on common time samples
     x = np.empty((len(stream), len(t)))
