@@ -1309,13 +1309,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     @staticmethod
     def window_beamforming_map_wrapper(args):
         return window_beamforming_map(*args)
-    
 
-    # function and wrapper to beamform different windows using pool
-    # def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
-    #     X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
-    #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
-    #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
     @pyqtSlot()
     def run(self):
@@ -1331,36 +1325,9 @@ class BeamformingWorkerObject(QtCore.QObject):
         latlon = []
 
         # we want to build the latlon array so that it has the same order as the streams
-        location_count = 0
         for trace in self.streams:
-
-            id_bits = trace.id.split('.')
-            # TODO... this is a bit of a hack to help deal with horrible people who make sac files with absent network/station codes
-            #         see for instance, sac_to_inventory for the other half of this
-            if id_bits[0] == '':
-                id_bits[0] = '###'
-            if id_bits[1] == '':
-                id_bits[1] = '###'
-            stream_station_id = id_bits[0] + '.' + id_bits[1]
-
-            if len(self._inv.networks) > 0:
-                for network in self._inv.networks:
-                    for station in network.stations:
-                        need_latlon = True
-                        station_id = network.code + '.' + station.code
-                        if station_id == stream_station_id:
-                            # Attempt to get channel latlons first, if there are no channels, use station latlons
-                            for channel in station.channels:
-                                latlon.append([channel.latitude, channel.longitude])
-                                need_latlon = False
-                            if need_latlon:
-                                latlon.append([station.latitude, station.longitude])
-                            location_count += 1
-
-        #if location_count != len(self.streams):
-        #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
-        #    self.signal_reset_beamformer.emit() # currently this will just reset the buttons
-        #    return
+            metadata = self._inv.get_channel_metadata(trace.id)
+            latlon.append([metadata['latitude'], metadata['longitude']])
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
