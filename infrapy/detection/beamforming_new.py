@@ -145,7 +145,6 @@ def fft_array_data(x, t, window=None, sub_window_len=None, sub_window_overlap=0.
             raise ValueError(msg)
 
         sub_win_N = int(sub_window_len / dt)
-        sub_win_step = sub_win_N * sub_window_overlap
 
         padded_N = 2**int(np.ceil(np.log2(sub_win_N)))
         N_f = int(padded_N / 2 + 1)
