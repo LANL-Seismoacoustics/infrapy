@@ -34,10 +34,10 @@ class IPEventWidget(QWidget):
         self.buildIcons()
 
         formLayout = QFormLayout()
-        self.showGT_cb = QCheckBox("Show Event on Map")
+        self.showGT_cb = QCheckBox("Show on Map")
         self.showGT_cb.setChecked(False)
 
-        self.displayEvent_cb = QCheckBox(self.tr('Show event line on waveform plots'))
+        self.displayEvent_cb = QCheckBox(self.tr('Show on waveform plots'))
         self.displayEvent_cb.setChecked(False)
 
         self.displayArrivals_cb = QCheckBox(self.tr('Show arrival estimations on waveform plots'))
@@ -92,7 +92,7 @@ class IPEventWidget(QWidget):
         show_layout = QVBoxLayout()
         show_layout.addWidget(self.showGT_cb)
         show_layout.addWidget(self.displayEvent_cb)
-        show_layout.addWidget(self.displayArrivals_cb)
+        #show_layout.addWidget(self.displayArrivals_cb)
 
         show_layout_horiz = QHBoxLayout()
         show_layout_horiz.addStretch()
@@ -110,26 +110,24 @@ class IPEventWidget(QWidget):
         form_hbox.addLayout(formLayout)
         form_hbox.addStretch()
 
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addStretch()
+        buttonLayout = QVBoxLayout()
         buttonLayout.addWidget(self.load_button)
+        buttonLayout.addWidget(self.browse_button)
         buttonLayout.addWidget(self.save_button)
         buttonLayout.addWidget(self.clear_button)
         buttonLayout.addStretch()
 
-        browseLayout = QHBoxLayout()
-        browseLayout.addStretch()
-        browseLayout.addWidget(self.browse_button)
-        browseLayout.addStretch()
 
         verticalLayout = QVBoxLayout()
-        verticalLayout.addLayout(show_layout_horiz)
         verticalLayout.addLayout(form_hbox)
-        verticalLayout.addLayout(buttonLayout)
-        verticalLayout.addLayout(browseLayout)
+        verticalLayout.addLayout(show_layout_horiz)
         verticalLayout.addStretch()
 
-        self.setLayout(verticalLayout)
+        mainLayout = QHBoxLayout()
+        mainLayout.addLayout(verticalLayout)
+        mainLayout.addLayout(buttonLayout)
+
+        self.setLayout(mainLayout)
 
         self.eventBrowser = IPEventBrowser.IPEventDialog()
 

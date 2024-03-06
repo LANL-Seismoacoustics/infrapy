@@ -106,7 +106,6 @@ class IPLocationWidget(QWidget):
         self.assoc_splitter = QSplitter(Qt.Vertical)
         self.assoc_splitter.addWidget(self.dm_view)
         self.assoc_splitter.addWidget(self.assocWidget)
-        self.assoc_splitter.addWidget(self.showgroundtruth)
 
         self.assoc_splitter.setSizes([1000000, 1000000])
 
@@ -124,10 +123,17 @@ class IPLocationWidget(QWidget):
         bisl_layout.addWidget(self.bisl_resultsWidget)
         self.bisl_widget.setLayout(bisl_layout)
 
+        #layoutholding bisl_widget and ground truth widget
+        self.bottomRow = QWidget(self)
+        bottomRow_layout = QHBoxLayout()
+        bottomRow_layout.addWidget(self.bisl_widget)
+        bottomRow_layout.addWidget(self.showgroundtruth)
+        self.bottomRow.setLayout(bottomRow_layout)
+    
         self.lhWidget = QWidget()
         lh_layout = QVBoxLayout()
         lh_layout.addWidget(self.mapWidget)
-        lh_layout.addWidget(self.bisl_widget)
+        lh_layout.addWidget(self.bottomRow)
         self.lhWidget.setLayout(lh_layout)
 
         # large splitter holding the map, association plots, and the console
@@ -498,6 +504,7 @@ class BISLSettings(QWidget):
         mainlayout = QVBoxLayout()
         mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
+        mainlayout.addStretch()
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addWidget(self.run_bisl_button)
@@ -524,7 +531,7 @@ class ShowGroundTruth(QFrame):
         self.buildUI()
 
     def buildUI(self):
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         
         title_label = QLabel('Event/Ground Truth')
         title_label.setStyleSheet("font-weight: bold;")
