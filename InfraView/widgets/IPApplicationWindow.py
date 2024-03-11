@@ -178,6 +178,8 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
 
+        self.databaseWidget.ipevent_query_results_table.sig_origin_changed.connect(self.locationWidget.showgroundtruth.eventChanged)
+
     def setStatus(self, s, ms=0):
         self.statusBar().showMessage(s, ms)
 

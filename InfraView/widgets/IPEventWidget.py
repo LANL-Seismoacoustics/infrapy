@@ -89,7 +89,7 @@ class IPEventWidget(QWidget):
         self.browse_button = QPushButton(self.tr(' IRIS Event Browser...'))
         self.browse_button.setMaximumWidth(200)
         
-        show_layout = QVBoxLayout()
+        show_layout = QHBoxLayout()
         show_layout.addWidget(self.showGT_cb)
         show_layout.addWidget(self.displayEvent_cb)
         #show_layout.addWidget(self.displayArrivals_cb)
@@ -97,7 +97,7 @@ class IPEventWidget(QWidget):
         show_layout_horiz = QHBoxLayout()
         show_layout_horiz.addStretch()
         show_layout_horiz.addLayout(show_layout)
-        show_layout_horiz.addStretch()
+        
 
         formLayout.addRow(label_event_name, self.event_name_edit)
         formLayout.addRow(label_longitude, self.event_lon_edit)

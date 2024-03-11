@@ -1,4 +1,3 @@
-from email.errors import NonPrintableDefect
 from ssl import OP_NO_RENEGOTIATION
 from tkinter import N
 import configparser
@@ -6,7 +5,9 @@ import configparser
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout, 
                              QLabel, QLineEdit, QPushButton, QTextEdit, QVBoxLayout, QSizePolicy)
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer, Qt
+from PyQt5.QtCore import QRegExp, pyqtSlot, pyqtSignal, QTimer, Qt
+
+from sqlalchemy.orm import Session
 
 from InfraView.widgets import IPUtils
 from infrapy.utils import database
@@ -128,6 +129,8 @@ class IPEnvVarDialog(QDialog):
 
 
 class IPDatabaseConnectWidget2(QFrame):
+    sig_session_created = pyqtSignal(Session)
+        
     def __init__(self, parent):
         super().__init__()
 
@@ -215,7 +218,6 @@ class IPDatabaseConnectWidget2(QFrame):
         self.show_tables_button.clicked.connect(self.show_tables_dialog)
         self.show_env_vars_button.clicked.connect(self.show_env_vars_dialog)
         self.create_session_button.clicked.connect(self.create_session)
-        #self.clear_form_button.clicked.connect(self.clear_form)
         self.test_connection_button.pressed.connect(self.check_connection)
 
     @pyqtSlot()
@@ -226,24 +228,7 @@ class IPDatabaseConnectWidget2(QFrame):
                 config = configparser.ConfigParser()
                 config.read(self.config_filename)
                 self.schema_type_combo.setCurrentText(config['DATABASE']['schema'])
-                self.hostname_edit.setText(config['DATABASE']['hostname'])
-                self.username_edit.setText(config['DATABASE']['username'])
-                self.password_edit.setText("")
-                self.database_name.setText(config['DATABASE']['database_name'])
-                self.portnum_edit.setText(config['DATABASE']['port'])
-                self.driver_edit.setText(config['DATABASE']['driver'])
-                self.dialect_combo.setCurrentText(config['DATABASE']['dialect'])
-                if config.has_option('DATABASE', 'url'):
-                    self.url_edit.setText(config['DATABASE']['url'])
-                else:
-                    my_url = database.assemble_db_url(self.dialect_combo.currentText(), 
-                                                      self.hostname_edit.text(), 
-                                                      self.database_name.text(), 
-                                                      self.portnum_edit.text(), 
-                                                      self.username_edit.text(),
-                                                      self.password_edit.text(),
-                                                      self.driver_edit.text())
-                    self.url_edit.setText(my_url)
+                self.url_edit.setText(config['DATABASE']['url'])
 
                 self.table_dialog.set_text_from_table_dict(config['DBTABLES'])
 
@@ -282,6 +267,7 @@ class IPDatabaseConnectWidget2(QFrame):
 
         try:
             self.session = database.db_connect_url(url)
+            self.sig_session_created.emit(self.session)
             self.url_edit.setStyleSheet("color: green")
         except ValueError as e:
             self.session = None
@@ -301,6 +287,11 @@ class IPDatabaseConnectWidget2(QFrame):
 
         self.schema_type_combo.setCurrentIndex(0)
         self.url_edit.setText("")
+
+    @pyqtSlot()
+    def reset_connection_colors(self):
+        self.test_connection_button.setText('Test Connection')
+        self.test_connection_button.setStyleSheet('QPushButton {color: black}')
 
     @pyqtSlot()
     def check_connection(self):

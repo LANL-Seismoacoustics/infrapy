@@ -1,6 +1,6 @@
 
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
-                             QSplitter, QTabWidget, QAction,
+                             QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QCoreApplication, QSettings
@@ -253,15 +253,15 @@ class IPBeamformingWidget(QWidget):
 
         # ---------------------------------------------
 
-        self.splitterTop = QSplitter(Qt.Horizontal)
+        self.splitterTop = IPUtils.IPSplitter(Qt.Horizontal)
         self.splitterTop.addWidget(self.lhWidget)
         self.splitterTop.addWidget(slownessWidget)
-        self.splitterBottom = QSplitter(Qt.Horizontal)
+        self.splitterBottom = IPUtils.IPSplitter(Qt.Horizontal)
         self.splitterBottom.addWidget(bottomWidget)
 
         # ---------------------------------------------
 
-        self.main_splitter = QSplitter(Qt.Vertical)
+        self.main_splitter = IPUtils.IPSplitter(Qt.Vertical)
         self.main_splitter.addWidget(self.splitterTop)
         self.main_splitter.addWidget(self.splitterBottom)
 

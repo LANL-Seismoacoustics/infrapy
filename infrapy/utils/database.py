@@ -256,13 +256,15 @@ def eventID_query(session, eventID, db_tables, asquery):
     if asquery:
         return ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs, asquery=True)
     else:
-        events = ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs)
+        origins = ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs)
+        prefor = ps.request.get_events(session, db_tables['origin'], event=db_tables['event'], evids=evIDs, prefor=True)
 
-    if events:
-        return events
+    if origins:
+        return prefor, origins
     else:
         print("no event found")
         return None
+    
 
 def event_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
 

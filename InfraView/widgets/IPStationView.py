@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import (QLabel, QHBoxLayout, QCheckBox, QDialogButtonBox,
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
-                             QVBoxLayout, QSplitter, QDialog, QRadioButton, QButtonGroup)
+                             QVBoxLayout, QDialog, QRadioButton, QButtonGroup)
 
 from PyQt5.QtGui import QIcon, QFont
 
@@ -89,8 +89,7 @@ class IPStationView(QWidget):
         savebuttonLayout.addWidget(self.reconcileButton)
         savebuttonLayout.addStretch()
 
-        mainHSplitter = QSplitter(Qt.Horizontal)
-        mainHSplitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
+        mainHSplitter = IPUtils.IPSplitter(Qt.Horizontal,self)
 
         mainHSplitter.addWidget(self.station_TabWidget)
         mainHSplitter.addWidget(self.arrayViewWidget)

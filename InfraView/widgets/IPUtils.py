@@ -1,8 +1,10 @@
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QSplitter
 from PyQt5.QtGui import QValidator
-from PyQt5.QtCore import pyqtSlot    
+from PyQt5.QtCore import Qt, pyqtSlot
 
 import pyqtgraph as pg
+
+
     
 
 # Define some useful colors here
@@ -40,6 +42,13 @@ def errorPopup(message, title="Oops..."):
     msgBox.setText(message)
     msgBox.setWindowTitle(title)
     msgBox.exec_()
+
+class IPSplitter(QSplitter):
+
+    def __init__(self, orientation=Qt.Horizontal, parent=None):
+        super().__init__(orientation, parent)
+
+        self.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
 
 
 

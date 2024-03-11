@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTableView, QVBoxLayout, QAbstractItemView, QFrame, QLabel, QSizePolicy
-from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QVariant, pyqtSignal, pyqtSlot
 
 from obspy.core.stream import Stream
+from obspy.core.event.origin import Origin
+
 from obspy.core import UTCDateTime
 
 from infrapy.utils import database
@@ -270,11 +272,14 @@ class IPDatabaseQueryResultsTable(QFrame):
 
 class IPEventsModel(QAbstractTableModel):
 
-    def __init__(self, origins, parent=None):
+    def __init__(self, origins, prefor, parent=None):
         super().__init__()
 
         self.origins = origins
+        self.prefor = prefor
         self.col_headers = [c.name for c in self.origins[0].__table__.columns]
+
+        print(self.prefor)
 
     def rowCount(self, parent=None):
         return len(self.origins)
@@ -319,6 +324,9 @@ class IPEventQueryResultsTable(QFrame):
     """
     Table widget to view results from an sql event query (evid or name)
     """
+
+    sig_origin_changed = pyqtSignal(dict)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
@@ -362,11 +370,22 @@ class IPEventQueryResultsTable(QFrame):
         self.clear_button.clicked.connect(self.clearTable)
         self.use_selected_button.clicked.connect(self.useSelected)
 
-    def setData(self, data):
+    def setData(self, data, prefor):
         '''This takes Wfdisc rows, and converts it for display in our tableView'''
-        self.model = IPEventsModel(data)
+        self.model = IPEventsModel(data, prefor)
         self.tableView.setModel(self.model)
         self.tableView.reset()
+
+        print(prefor[0].orid)
+        start_idx = self.model.index(0,0)
+        # print(self.model.data(start_idx, Qt.DisplayRole))
+        #mdl_idxs = self.model.match(QModelIndex(), Qt.DisplayRole, prefor[0].orid)
+        #print(mdl_idxs)
+        for idx, origin in enumerate(data):
+            if origin.orid == prefor[0].orid:
+                self.tableView.selectRow(idx)
+                break
+        
 
     def clearTable(self):
         # maybe do some additional clean-up here?
@@ -375,22 +394,37 @@ class IPEventQueryResultsTable(QFrame):
 
     def useSelected(self):
         if self.tableView.selectionModel():
-            row = self.tableView.selectionModel().selectedRows()[0]
+            model_idx = self.tableView.selectionModel().selectedRows()
         else:
             return None
+        
+        for idx in model_idx:
+            selected_origin = self.model.origins[idx.row()]
+            print(type(selected_origin))
+            new_origin ={}
+            new_origin['Latitude'] = selected_origin.lat
+            new_origin['Longitude'] = selected_origin.lon
+            new_origin['UTC Date'] = UTCDateTime(selected_origin.time).date
+            new_origin['UTC Time'] = UTCDateTime(selected_origin.time).time
+            new_origin['Evid'] = selected_origin.evid
+            new_origin['Orid'] = selected_origin.orid
 
-        selected = self.model.get_data()[row.row()]
-        lat = selected[0]
-        lon = selected[1]
-        datetime = UTCDateTime(selected[3])
-        date = datetime.date
-        time = datetime.time
-        evid = selected[5]
+            self.sig_origin_changed.emit(new_origin)
 
-        event = {'Name': evid, 'UTC Date': date, 'UTC Time': time, 'Latitude': lat, 'Longitude':lon}
-        self.parent.parent.eventWidget.setEvent(event)
 
-        self.parent.parent.mainTabs.setCurrentIndex(4)
+
+        # selected = self.model.get_data()[row.row()]
+        # lat = selected[0]
+        # lon = selected[1]
+        # datetime = UTCDateTime(selected[3])
+        # date = datetime.date
+        # time = datetime.time
+        # evid = selected[5]
+
+        # event = {'Name': evid, 'UTC Date': date, 'UTC Time': time, 'Latitude': lat, 'Longitude':lon}
+        # self.parent.parent.eventWidget.setEvent(event)
+
+        # self.parent.parent.mainTabs.setCurrentIndex(4)
 
 
 

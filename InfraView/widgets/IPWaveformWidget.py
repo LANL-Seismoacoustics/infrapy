@@ -3,7 +3,7 @@ import numpy as np
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, pyqtSlot, QSettings
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QSplitter, QTabWidget)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QTabWidget)
 
 from InfraView.widgets import (IPFilterSettingsWidget,
                                IPPlotViewer,
@@ -52,18 +52,15 @@ class IPWaveformWidget(QWidget):
 
         self.plotViewer = IPPlotViewer.IPPlotViewer(self)
 
-        self.lh_splitter = QSplitter(Qt.Vertical)
-        self.lh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
+        self.lh_splitter = IPUtils.IPSplitter(parent=self)
         self.lh_splitter.addWidget(self.plotViewer)
         self.lh_splitter.addWidget(self.info_tabs)
 
-        self.rh_splitter = QSplitter(Qt.Vertical)
-        self.rh_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
+        self.rh_splitter = IPUtils.IPSplitter(orientation=Qt.Vertical, parent=self)
         self.rh_splitter.addWidget(self.spectraWidget)
         self.rh_splitter.addWidget(self.filterSettingsWidget)
 
-        self.main_splitter = QSplitter(Qt.Horizontal)
-        self.main_splitter.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
+        self.main_splitter = IPUtils.IPSplitter(orientation=Qt.Horizontal, parent=self)
         self.main_splitter.addWidget(self.lh_splitter)
         self.main_splitter.addWidget(self.rh_splitter)
 

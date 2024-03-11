@@ -3,9 +3,9 @@ import matplotlib
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
-                             QVBoxLayout, QDoubleSpinBox, QSpinBox,
-                             QFormLayout, QFrame, QPushButton, QSizePolicy,
-                             QSplitter, QTextEdit, QComboBox, QFileDialog)
+                             QVBoxLayout, QDoubleSpinBox, QSpinBox, QAction,
+                             QFormLayout, QFrame, QPushButton, QSizePolicy, QMenu,
+                             QTextEdit, QComboBox, QFileDialog, QToolBar, QToolButton)
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
 
@@ -20,6 +20,8 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, set_link_colo
 from scipy.spatial.distance import pdist, squareform
 
 import cartopy.feature as cfeature
+
+from obspy.core.event.origin import Origin
 
 from infrapy.location import bisl
 from infrapy.association import hjl
@@ -86,31 +88,21 @@ class IPLocationWidget(QWidget):
         # set up association settings widget
         self.assocSettings = AssociationSettings(self)
 
-        # right hand widgets layout holds the settings widgets
-        # rh_widget = QWidget()
-        # rh_layout = QVBoxLayout()
-        # #rh_layout.addWidget(self.bislSettings)
-        # #rh_layout.addWidget(self.assocSettings)
-        # rh_layout.addWidget(self.showgroundtruth)
-        # rh_layout.addStretch()
-        # rh_widget.setLayout(rh_layout)
-
         # splitter holding the association plots
         self.assocWidget = QFrame()
-        self.assocWidget.setFrameStyle(QFrame.Box | QFrame.Plain)
         assocLayout = QVBoxLayout()
         assocLayout.addWidget(self.dendrogram)
         assocLayout.addWidget(self.assocSettings)
         self.assocWidget.setLayout(assocLayout)
 
-        self.assoc_splitter = QSplitter(Qt.Vertical)
+        self.assoc_splitter = IPUtils.IPSplitter(Qt.Vertical, self)
         self.assoc_splitter.addWidget(self.dm_view)
         self.assoc_splitter.addWidget(self.assocWidget)
 
         self.assoc_splitter.setSizes([1000000, 1000000])
 
         # splitter holding the map canvas and the association plots
-        self.loc_splitter = QSplitter(Qt.Horizontal)
+        self.loc_splitter = IPUtils.IPSplitter(Qt.Horizontal, self)
         self.loc_splitter.addWidget(self.mapWidget)
         self.loc_splitter.addWidget(self.assoc_splitter)
 
@@ -136,12 +128,7 @@ class IPLocationWidget(QWidget):
         lh_layout.addWidget(self.bottomRow)
         self.lhWidget.setLayout(lh_layout)
 
-        # large splitter holding the map, association plots, and the console
-        # self.mapSplitter = QSplitter(Qt.Vertical)
-        # self.mapSplitter.addWidget(self.loc_splitter)
-        # self.mapSplitter.addWidget(self.bisl_widget)
-
-        self.mainSplitter = QSplitter(Qt.Horizontal)
+        self.mainSplitter = IPUtils.IPSplitter(Qt.Horizontal, self)
         self.mainSplitter.addWidget(self.lhWidget)
         self.mainSplitter.addWidget(self.assoc_splitter)
 
@@ -150,12 +137,46 @@ class IPLocationWidget(QWidget):
         main_layout.addWidget(self.mainSplitter)
         self.setLayout(main_layout)
 
+        self.make_toolbar()
+        main_layout.setMenuBar(self.toolbar)
         self.connectSignalsAndSlots()
 
         # Create threads for the distancematrix calculation, BISL, and clustering
         self.dmThread = QThread()
         self.bislThread = QThread()
         self.clusterThread = QThread()
+
+    def make_toolbar(self):
+        self.toolbar = QToolBar()
+        # self.toolbar.setStyleSheet("QToolButton:!hover { padding-left:5px; padding-right:5px; padding-top:2px; padding-bottom:2px} QToolBar {background-color: rgb(0,107,166)}")
+        # self.toolbar.setStyleSheet("QToolButton:!hover {background-color:blue} QToolButton:hover { background-color: lightgray }")
+
+        self.map_settings_act = QAction("Map Settings...", self)
+        self.map_settings_act.triggered.connect(self.mapWidget.showhide_map_settings_widget)
+
+        self.map_extent_act = QAction("Map Extent...", self)
+        self.map_extent_act.triggered.connect(self.mapWidget.showhide_extent_widget)
+
+        # The export option has a dropdown menu to select what to export
+        self.toolButton_export = QToolButton()
+        self.toolButton_export.setText("Export")
+        self.toolButton_export.setPopupMode(QToolButton.InstantPopup)
+        self.export_menu = QMenu()
+        self.export_map_act = QAction("Map", self)
+        self.export_map_act.triggered.connect(self.mapWidget.map_export_dialog.exec_)
+        self.export_assoc_act = QAction("Associations")
+        self.export_dm_act = QAction("Distance Matrix")
+        self.export_menu.addAction(self.export_map_act)
+        #self.export_menu.addAction(self.export_assoc_act)
+        #self.export_menu.addAction(self.export_dm_act)
+        self.toolButton_export.setMenu(self.export_menu)
+        #self.export_act.triggered.connect()
+
+        self.toolbar.addAction(self.map_settings_act)
+        self.toolbar.addAction(self.map_extent_act)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.toolButton_export)
+        
 
     def connectSignalsAndSlots(self):
 
@@ -522,8 +543,6 @@ class BISLSettings(QWidget):
 
 class ShowGroundTruth(QFrame):
 
-    sig_event_changed = pyqtSignal(float, float)
-
     def __init__(self, parent):
         super().__init__()
 
@@ -550,15 +569,18 @@ class ShowGroundTruth(QFrame):
     @pyqtSlot(dict)
     def eventChanged(self, event_dict):
         if event_dict['Latitude']:
-            self.lat_label.setText("{:.5f}".format(event_dict['Latitude']))
+            self.event_widget.event_lat_edit.setValue(event_dict['Latitude'])
         else:
             self.lat_label.setText("0.0")
         if event_dict['Longitude']:
-            self.lon_label.setText("{:.5f}".format(event_dict['Longitude']))
-        else:
-            self.lon_label.setText("0.0")
-        
-        self.sig_event_changed.emit(float(self.lon_label.text()), float(self.lat_label.text()))
+            self.event_widget.event_lon_edit.setValue(event_dict['Longitude'])
+        if event_dict['Evid']:
+            self.event_widget.event_name_edit.setText(str(event_dict['Evid']))
+
+
+    @pyqtSlot(dict)
+    def update_origin(self, new_origin):
+        print(new_origin)
 
     def show_gt(self):
         return self.showGT_cb.isChecked()
@@ -1163,60 +1185,6 @@ class AssociationSettings(QWidget):
         mainlayout.addLayout(layout)
         mainlayout.addWidget(self.update_assoc_button)
 
-        self.setLayout(mainlayout)
-
-
-class MapSettings(QFrame):
-    # NOT CURRENTLY USING THIS!!!!
-    def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
-        self.buildUI()
-
-    def buildUI(self):
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-
-        label_title = QLabel("Map Settings")
-        label_title.setStyleSheet("font-weight: bold;")
-
-        label_central_lon = QLabel(self.tr('Central Longitude (deg): '))
-        self.central_lon_cb = QComboBox()
-        self.central_lon_cb.addItem('0')
-        self.central_lon_cb.addItem('180')
-
-        label_resolution = QLabel(self.tr('Resolution'))
-        self.resolution_cb = QComboBox()
-        self.resolution_cb.addItem('110m')
-        self.resolution_cb.addItem('50m')
-        self.resolution_cb.addItem('10m')
-
-        label_features = QLabel(self.tr('Features'))
-        label_features.setStyleSheet("font-weight: bold")
-        self.draw_states_check = QCheckBox('States and Provences')
-        self.draw_states_check.setChecked(True)
-        self.draw_lakes_check = QCheckBox('Lakes')
-        self.draw_lakes_check.setChecked(True)
-        self.draw_rivers_check = QCheckBox('Rivers')
-        self.draw_rivers_check.setChecked(True)
-        self.draw_borders_check = QCheckBox('Borders')
-        self.draw_borders_check.setChecked(True)
-
-        layout = QFormLayout()
-        # layout.addRow(label_central_lon, self.central_lon_cb)
-        layout.addRow(label_resolution, self.resolution_cb)
-        layout.addRow(label_features)
-        layout.addRow(self.draw_states_check)
-        layout.addRow(self.draw_lakes_check)
-        layout.addRow(self.draw_rivers_check)
-        layout.addRow(self.draw_borders_check)
-
-        mainlayout = QVBoxLayout()
-        mainlayout.setAlignment(Qt.AlignCenter)
-        mainlayout.addWidget(label_title)
-        mainlayout.addLayout(layout)
-
-        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.setLayout(mainlayout)
 
 

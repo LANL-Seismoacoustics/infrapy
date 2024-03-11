@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDateEdit, QDateTimeEdit, QDoubleSpinBox, QFormLayo
 from PyQt5.QtCore import QDate, QTime, pyqtSlot, Qt
 
 from obspy.core.utcdatetime import UTCDateTime
+from sqlalchemy.orm import Session
 
 from infrapy.utils import database
 
@@ -101,6 +102,10 @@ class IPEventQueryWidget(QFrame):
 
         self.connect_signals_and_slots()
 
+    @pyqtSlot(Session)
+    def set_settion(self, session):
+        self.session = session
+
     def connect_signals_and_slots(self):
         self.clear_button.clicked.connect(self.clear_form)
         self.evid_edit.textEdited.connect(self.update_query_text)
@@ -114,8 +119,8 @@ class IPEventQueryWidget(QFrame):
         q = self.query_database(asquery=True)
         self.query_textEdit.setPlainText(str(q))
 
-    def get_current_session(self):
-        return self.parent.ipdatabase_connect_widget.session
+    # def get_current_session(self):
+    #     return self.parent.ipdatabase_connect_widget.session
 
     def get_tables(self):
         table_dictionary= self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
@@ -125,8 +130,7 @@ class IPEventQueryWidget(QFrame):
         return self.parent.ipdatabase_connect_widget.schema_type_combo.currentText()
 
     def query_database(self, asquery=False):
-        session = self.get_current_session()
-        if session is None:
+        if self.session is None:
             IPUtils.errorPopup("No current active session")
             return
 
@@ -135,10 +139,10 @@ class IPEventQueryWidget(QFrame):
         db_tables = database.make_tables_from_dict(tables=tables, schema=self.get_schema())
 
         if asquery:
-            return database.eventID_query(session, self.evid_edit.text(), db_tables, asquery=True)
+            return database.eventID_query(self.session, self.evid_edit.text(), db_tables, asquery=True)
         else:
-            origins = database.eventID_query(session, self.evid_edit.text(), db_tables, asquery=False)
-            self.parent.ipevent_query_results_table.setData(origins) 
+            prefor, origins = database.eventID_query(self.session, self.evid_edit.text(), db_tables, asquery=False)
+            self.parent.ipevent_query_results_table.setData(origins, prefor) 
 
 
 class IPDatabaseQueryWidget(QFrame):
@@ -242,9 +246,13 @@ class IPDatabaseQueryWidget(QFrame):
         self.duration_edit.setValue(600)
         self.query_textEdit.setPlainText("")
 
+    @pyqtSlot(Session)
+    def set_session(self, session):
+        self.session = session
+
     def update_query_string(self):
-        session = self.get_current_session()
-        if session is None:
+        
+        if self.session is None:
             IPUtils.errorPopup("No current active session")
             return
 
@@ -268,13 +276,10 @@ class IPDatabaseQueryWidget(QFrame):
 
         tables = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
         try:
-            new_query = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows', asquery=True)
+            new_query = database.query_db(self.session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows', asquery=True)
             self.query_textEdit.setPlainText(str(new_query))
         except KeyError as e:
             IPUtils.errorPopup(str(e) + " is not defined.  Have you defined all your tables?")
-
-    def get_current_session(self):
-        return self.parent.ipdatabase_connect_widget.session
 
     def get_startstop_times(self):
         # returns UTCDateTime objects of the start and stop times
@@ -285,8 +290,7 @@ class IPDatabaseQueryWidget(QFrame):
 
     def query_database(self):
 
-        session = self.get_current_session()
-        if session is None:
+        if self.session is None:
             IPUtils.errorPopup("No current active session")
             return
 
@@ -314,7 +318,7 @@ class IPDatabaseQueryWidget(QFrame):
 
         tables = self.parent.ipdatabase_connect_widget.table_dialog.get_tables_from_text()
         
-        wfs = database.query_db(session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
+        wfs = database.query_db(self.session, tables, start_time=start_time, end_time=end_time, sta=sta, cha=cha, return_type='wfdisc_rows')
         
         if len(wfs) > 0:
             self.parent.ipdatabase_query_results_table.setData(wfs)

@@ -5,21 +5,22 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (QWidget, QDoubleSpinBox, QLabel, 
                              QHBoxLayout, QVBoxLayout,
-                             QScrollArea, QSplitter)
+                             QScrollArea)
 
 from InfraView.widgets import IPPlotItem
 from InfraView.widgets import IPWaveformSelectorWidget
 from InfraView.widgets import IPEventLine
+from InfraView.widgets import IPUtils
 
 from obspy.core import UTCDateTime
 from obspy.core.stream import Stream
 
 import pyproj
 
-class IPPlotViewer(QSplitter):
+class IPPlotViewer(IPUtils.IPSplitter):
 
     def __init__(self, parent):
-        super().__init__(parent)
+        super().__init__(parent=parent)
         self.parent = parent
         self.buildUI()
 
