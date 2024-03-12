@@ -29,30 +29,33 @@ from InfraView.widgets import IPUtils
 
 class IPMapWidget(QWidget):
 
-    fig = None
-    axes = None
-    transform = None
-    projection = None
-    detections = []
-    resolution = ''
-    extent = None
-
-    current_linecolor='gray'
-
-    gt_marker = None
-
-    toolbar = None
-
-    sta_lats = []
-    sta_lons = []
-    evt_lat = None
-    evt_lon = None
-
-    bisl_rslt = (None,None)  #(lat, lon)
-    conf_ellipse = (None, None) #(dx, dy)
+    
 
     def __init__(self, parent):
         super().__init__()
+
+        self.fig = None
+        self.axes = None
+        self.transform = None
+        self.projection = None
+        self.detections = []
+        self.resolution = ''
+        self.extent = None
+
+        self.current_linecolor='gray'
+
+        self.gt_marker = None
+
+        self.toolbar = None
+
+        self.sta_lats = []
+        self.sta_lons = []
+        self.evt_lat = None
+        self.evt_lon = None
+
+        self.bisl_rslt = (None,None)  #(lat, lon)
+        self.conf_ellipse = (None, None) #(dx, dy)
+
         self.parent = parent
         self.buildUI()
 
@@ -200,8 +203,6 @@ class IPMapWidget(QWidget):
     def hide_map_settings_widget(self):
         self.map_settings_widget.setVisible(False)
 
-    
-
     @pyqtSlot(list)
     def set_map_extent(self, extent):
         self.axes.set_extent(extent)
@@ -215,7 +216,6 @@ class IPMapWidget(QWidget):
         self.update_map()
 
     def update_feature_visibilities(self):
-        print("updating features")
         try:
             # This shows/hides the various features shown on the map
             self.states.set_visible(self.map_settings_widget.states_checkbox.isChecked())
@@ -513,18 +513,20 @@ class IPMapWidget(QWidget):
         if maxLon != minLon:
             width = abs(maxLon - minLon)
         else:
-            width = 20
+            width = 50
 
         if maxLat != minLat:
             height = abs(maxLat - minLat)
         else:
-            height = 20
+            height = 50
+
+        width, height = self.fix_aspect(width, height)
 
         width_adj = width * 0.10
         height_adj = height * 0.10
 
         if maxLat == minLat and maxLon == minLon:
-            # there is only one point, so behave accordingly
+            # there is only one point, so try to be reasonable
             new_extent = [minLon - width_adj, maxLon + width_adj, minLat - height_adj, maxLat + height_adj]
             self.set_map_extent(new_extent)
         else:
@@ -536,6 +538,22 @@ class IPMapWidget(QWidget):
 
         # now redraw the gridlines since the extent has changed
         #self.update_map()
+
+    def fix_aspect(self, w, h):
+        golden_ratio = 1.618
+        #try to make the extent aspect ration to be something normal
+        print(abs(w/h))
+        if abs(w/h) >= 2:
+            new_h = w/golden_ratio
+            new_w = w
+        elif abs(w/h) <= 0.5:
+            new_w = h/golden_ratio
+            new_h = h
+            print(w, h, new_w, new_h)
+        else:
+            return w, h
+        return new_w, new_h
+
 
     def motion_notify_callback(self, event):
         if event.xdata is None or event.inaxes != self.axes:

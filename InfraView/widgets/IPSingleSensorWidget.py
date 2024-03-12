@@ -45,7 +45,7 @@ class IPSingleSensorWidget(QWidget):
 
         ##### TOOLBAR
         self.toolbar = QToolBar()
-        self.toolbar.setStyleSheet("QToolBar{background-color: silver; }")
+        
         #self.toolbar.setStyleSheet("QToolBar { border-bottom: 1px solid; } ")
         self.tool_runDetector_button = QToolButton()
         self.tool_runDetector_button.setText("Run Detector")

@@ -86,7 +86,7 @@ class IPEventWidget(QWidget):
         self.save_button.setMaximumWidth(100)
         self.clear_button.setIcon(self.clearIcon)
         
-        self.browse_button = QPushButton(self.tr(' IRIS Event Browser...'))
+        self.browse_button = QPushButton(self.tr(' Event Browser...'))
         self.browse_button.setMaximumWidth(200)
         
         show_layout = QHBoxLayout()
