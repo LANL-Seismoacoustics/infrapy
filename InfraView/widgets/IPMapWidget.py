@@ -478,7 +478,7 @@ class IPMapWidget(QWidget):
     def update_range_max(self, new_range):
         self.update_detections(preserve_colors=True)
 
-    def autoscale_plot(self, source_location=None):
+    def autoscale_plot(self):
         # make an attempt to scale the plot so all relavent info is shown
 
         detections = self.parent.get_trimmed_detections()
@@ -496,9 +496,6 @@ class IPMapWidget(QWidget):
             lons.append(detection.longitude)
             lats.append(detection.latitude)
 
-        """ if source_location is not None:
-            lons.append(source_location[0])
-            lats.append(source_location[1]) """
 
         if self.parent.showgroundtruth.event_widget.showGT_cb.isChecked():
             lons.append(self.parent.showgroundtruth.event_widget.event_lon_edit.value())
@@ -506,9 +503,14 @@ class IPMapWidget(QWidget):
 
         maxLat = max(lats + self.end_lats)
         minLat = min(lats + self.end_lats)
+        center_lat = minLat + (maxLat - minLat)/2.
 
         maxLon = max(lons + self.end_lons)
         minLon = min(lons + self.end_lons)
+        center_lon = minLon + (maxLon - minLon)/2.
+
+        print("lats: {}  {}".format(minLat, maxLat))
+        print("lons: {}  {}".format(minLon, maxLon))
 
         if maxLon != minLon:
             width = abs(maxLon - minLon)
@@ -525,42 +527,39 @@ class IPMapWidget(QWidget):
         width_adj = width * 0.10
         height_adj = height * 0.10
 
-        if maxLat == minLat and maxLon == minLon:
-            # there is only one point, so try to be reasonable
-            new_extent = [minLon - width_adj, maxLon + width_adj, minLat - height_adj, maxLat + height_adj]
-            self.set_map_extent(new_extent)
-        else:
-            # the normal case
-            new_extent = [minLon - width_adj, maxLon + width_adj, minLat - height_adj, maxLat + height_adj]
-            self.set_map_extent(new_extent)
-        
-        self.extentWidget.set_extent_spin_values(new_extent)     # update extentWidget
+        print("clat = {} clon = {}".format(center_lat, center_lon))
+        print(width, height)
 
-        # now redraw the gridlines since the extent has changed
-        #self.update_map()
+        minLat = center_lat - height/2. - height_adj
+        maxLat = center_lat + height/2. + height_adj
+        minLon = center_lon - width/2. - width_adj
+        maxLon = center_lon + width/2. + width_adj
 
-    def fix_aspect(self, w, h):
+        # if there is only one detection, or they are all in line, the map could come up very thin, so 
+        # we want to jump through some hoops to make sure the map is at least a little normal
+        self.set_map_extent([minLon, maxLon, minLat, maxLat])
+
+        self.extentWidget.set_extent_spin_values([minLon, maxLon, minLat, maxLat])     # update extentWidget
+
+
+    def fix_aspect(self, w: float, h: float) -> tuple[float, float]:
         golden_ratio = 1.618
         #try to make the extent aspect ration to be something normal
-        print(abs(w/h))
-        if abs(w/h) >= 2:
+        if abs(w/h) >= golden_ratio:
             new_h = w/golden_ratio
             new_w = w
-        elif abs(w/h) <= 0.5:
+        elif abs(w/h) <= 1./golden_ratio:
             new_w = h/golden_ratio
             new_h = h
-            print(w, h, new_w, new_h)
         else:
             return w, h
         return new_w, new_h
-
 
     def motion_notify_callback(self, event):
         if event.xdata is None or event.inaxes != self.axes:
             self.axes.set_title('')
             self.fig.canvas.draw()
             return
-
         elif event.button == 1:     # make sure the left button is clicked for a drag
             pass
         else:
