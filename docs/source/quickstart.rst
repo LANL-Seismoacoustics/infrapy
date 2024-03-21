@@ -503,11 +503,11 @@ Network-Level Analyses
         :align: center
 
 
-- For above-ground explosive sources for which source models such as the Kinney & Graham blastwave scaling laws can be used to relate acoustic power to yield, InfraPy's Spectral Yield Estimate (SpYE) methods can be applied.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository):
+- Infrasonic signals produced by above-ground explosive sources can be used to estimate the explosive yield via source models such as the Kinney & Graham blastwave scaling laws. InfraPy's Spectral Yield Estimate (SpYE) methods can be applied to relate regional infrasonic signal spectral amplitude to a near-source estimate and then the blastwave model to estimate yield.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository).  In the case of regional propagation for which the same transmission loss statistics are appropriate for all detections, the SpYE methods can be run via:
 
     .. code:: bash
 
-        infrapy run_yield --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
+        infrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
 
     As with other analysis methods, parameter information will be summarized and high level results:
 
@@ -608,6 +608,24 @@ Network-Level Analyses
     .. image:: _static/_images/spye_result.png
         :width: 1200px
         :align: center
+
+    In the case that propagation is larger in spatial extent, a unique transmission loss model might be appropriate for each detecting station (e.g., when propagation extends >1000 km north to one station and >1000 east to another).  In such a case, SpYE can be run for each station individually to compute the near-source spectral amplitude PDF:
+
+    .. code:: bash
+
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
+        ...
+
+    Each of the above calls creates a :code:`[...].spye_pdf.npz` file containing the frequency-spectral PDF (right panel of the above figure) computed for that single detection.  In this case, the TLM label specified is the same, but it can be different for station-specific TLMs.  Once this is completed for the entire set of detections, the final yield PDF can be computed via:
+
+    .. code:: bash
+
+        infrapy run_spye combine --local-pdf-label 'HRR-5*.npz' --local-yld-label HRR_5-combined
+
+    Once combined, the result can be visualized using the same syntax as above, :code:`infrapy plot yield --local-yld-label "HRR_5-combined"`, and should produce an identical result (assuming you've run all of the detections through the :code:`single-station` method).  This method is also useful if you want to run analysis on a subset of the detections from an event.
+    
 
 *************************************
 Scripting and Notebook-Based Analysis 
