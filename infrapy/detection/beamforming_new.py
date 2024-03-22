@@ -571,7 +571,7 @@ def run(X, S, f, dxdy, delays, freq_band, method="bartlett", ns_covar_inv=None, 
 
     f_cnt = f_msk.shape[0]
     if pool:
-        if method == "bartlett_covar" or method == "capon" or method == "music":
+        if method == "bartlett_covar" or method == "capon" or method == "mvdr" or method == "MVDR" or method == "music" or method == "MUSIC":
             args = [(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)]
         else:
             if ns_covar_inv is not None:
@@ -581,7 +581,7 @@ def run(X, S, f, dxdy, delays, freq_band, method="bartlett", ns_covar_inv=None, 
         beam_power = np.array(pool.map(compute_beam_power_wrapper, args))
 
     else:
-        if method == "bartlett_covar" or method == "capon" or method == "music":
+        if method == "bartlett_covar" or method == "capon" or method == "mvdr" or method == "MVDR" or method == "music" or method == "MUSIC":
             beam_power = np.array([compute_beam_power(S_msk[:, :, nf], np.exp(2.0j * np.pi * f_msk[nf] * delays) / np.sqrt(X_msk.shape[0]), method, None, signal_cnt) for nf in range(f_cnt)])
         else:
             if ns_covar_inv is not None:
@@ -685,7 +685,7 @@ def find_peaks(beam_power, slowness_vals1, slowness_vals2, signal_cnt=1, freq_we
     # Determine the number of peaks on the grid and compare with
     # the specified signal count
     peaks = []
-    if signal_cnt == 1:
+    if signal_cnt < 2 :
         x = np.argwhere(avg_beam == avg_beam.max())
         m = x[0][0]
         n = x[0][1]
@@ -869,9 +869,9 @@ def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=
 #    Combined Methods    #
 #         For CLI        #
 # ###################### #
-def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays, back_az_vals, trc_vel_vals, prog_n):
+def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_n):
     X, S, f = fft_array_data(x, t, window, sub_window_len=sub_window_length)
-    beam_power = run(X, S, f, geom, delays, freq_band, method=method, normalize_beam=True)
+    beam_power = run(X, S, f, geom, delays, freq_band, method=method, ns_covar_inv=ns_covar_inv, signal_cnt=signal_cnt, normalize_beam=True)
     prog_bar.increment(prog_n)
     return find_peaks(beam_power, back_az_vals, trc_vel_vals)
 
@@ -880,7 +880,7 @@ def beam_window_wrapper(args):
     return beam_window(*args)
 
 
-def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, pl):
+def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, pl):
     """Run the beamforming (fk) analysis on a stream with various parameter specifications
 
         Convert a stream to an array data set on a consistent set of time samples
@@ -904,15 +904,17 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
         window_step: float
             Time step between adjacent analysis windows
         method: string
-            Beamforming method (options are "bartlett", "capon", "GLS", "bartlett_covar", and "music")
+            Beamforming method (options are "bartlett", "capon"/"mvdr", "GLS"/"gls", "bartlett_covar", and "MUSIC"/"music")
         back_az_vals: 1darray
             List of back azimuth values in the slowness grid
         trc_vel_vals: 1darray
             List of trace velocity values in the slowness grid
+        ns_covar_inv: ndarray
+            Noise covariance inverse used in GLS beam
+        signal_cnt: int
+            Number of assumed signals for MUSIC beam            
         pl: multiprocessing.Pool
             Multiprocessing pool for simulatenous analysis of windows
-        cpu_cnt: integer
-            Number of CPUs to utilize in the multiprocessing pool
 
 
         Returns:
@@ -943,7 +945,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
                 break
 
             beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
-            args = args + [[x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, prog_bar.set_step(win_n, win_cnt, prog_bar_len)]]
+            args = args + [[x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len)]]
         beam_peaks = np.array(pl.map(beam_window_wrapper, args)).reshape(len(beam_times), 3)
     else:
         beam_peaks = []
@@ -951,7 +953,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
             if window_start + window_length > t[-1]:
                 break
             
-            peaks = beam_window(x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, prog_bar.set_step(win_n, win_cnt, prog_bar_len))
+            peaks = beam_window(x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len))
             beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
             beam_peaks = beam_peaks + [[peaks[0][0], peaks[0][1], peaks[0][2]]]
         beam_peaks = np.array(beam_peaks)
