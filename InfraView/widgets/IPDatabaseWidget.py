@@ -17,6 +17,7 @@ class IPDatabaseWidget(QWidget):
         self.buildUI()
 
     def buildUI(self):
+        self.ipdatabase_connect_widget2 = IPDatabaseConnectWidget.IPDatabaseConnectWidget2(self)
 
         self.ipdatabase_connect_widget = IPDatabaseConnectWidget.IPDatabaseConnectWidget(self)
         self.ipdatabase_connect_widget.setMinimumWidth(400)
@@ -26,8 +27,7 @@ class IPDatabaseWidget(QWidget):
         
         self.ipevent_query_results_table = IPDatabaseQueryResultsTable.IPEventQueryResultsTable(self)
         hlayout = QHBoxLayout()
-        hlayout.addWidget(self.ipdatabase_connect_widget)
-        hlayout.addWidget(self.ipdatabase_query_widget)
+        #hlayout.addWidget(self.ipdatabase_connect_widget)
         hlayout.addWidget(self.ipevent_query_widget)
         hlayout.addWidget(self.ipevent_query_results_table)
         
@@ -35,14 +35,21 @@ class IPDatabaseWidget(QWidget):
         top_widget = QWidget()
         top_widget.setLayout(hlayout)
 
+        wave_widget = QWidget()
+        wave_layout = QHBoxLayout()
+        wave_layout.addWidget(self.ipdatabase_query_widget)
+        wave_layout.addWidget(self.ipdatabase_query_results_table)
+        wave_widget.setLayout(wave_layout)
+
         vertical_splitter = QSplitter(Qt.Vertical)
         vertical_splitter.addWidget(top_widget)
-        vertical_splitter.addWidget(self.ipdatabase_query_results_table)
+        vertical_splitter.addWidget(wave_widget)
 
         #vlayout = QVBoxLayout()
         #vlayout.addLayout(hlayout)
         #vlayout.addWidget(self.ipdatabase_query_results_table)
         
         main_layout = QVBoxLayout()
+        main_layout.addWidget(self.ipdatabase_connect_widget2)
         main_layout.addWidget(vertical_splitter)
         self.setLayout(main_layout)

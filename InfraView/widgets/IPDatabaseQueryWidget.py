@@ -77,7 +77,12 @@ class IPEventQueryWidget(QFrame):
         self.query_textEdit.setPlaceholderText("Query string...")
 
         self.clear_button = QPushButton("Clear")
+        button_font = self.clear_button.font()
+        button_font.setPointSize(10)
+        self.clear_button.setFont(button_font)
+
         self.query_button = QPushButton("Query Events")
+        self.query_button.setFont(button_font)
 
         # this bit centers the query button...
         horiz_layout = QHBoxLayout()
@@ -196,8 +201,13 @@ class IPDatabaseQueryWidget(QFrame):
         self.query_textEdit.setPlaceholderText("Query string...")
 
         self.clear_button = QPushButton("Clear")
-        self.query_button = QPushButton("Query Database")
+        button_font = self.clear_button.font()
+        button_font.setPointSize(10)
+        self.clear_button.setFont(button_font)
 
+        self.query_button = QPushButton("Query Database")
+        self.query_button.setFont(button_font)
+        
         # this bit centers the query button...
         horiz_layout = QHBoxLayout()
         horiz_layout.addStretch()

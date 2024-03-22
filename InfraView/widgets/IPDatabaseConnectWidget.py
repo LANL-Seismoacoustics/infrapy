@@ -11,6 +11,9 @@ from PyQt5.QtCore import QRegExp, pyqtSlot, QTimer, Qt
 from InfraView.widgets import IPUtils
 from infrapy.utils import database
 
+
+
+
 class IPTableDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -123,6 +126,199 @@ class IPEnvVarDialog(QDialog):
         self.reset()
         super().reject()
 
+
+class IPDatabaseConnectWidget2(QFrame):
+    def __init__(self, parent):
+        super().__init__()
+
+        self.session = None
+        self.config_filename = ""
+
+        self.buildUI()
+        
+    def buildUI(self):
+
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
+
+        self.title_label = QLabel("\tDatabase Connection")
+        self.title_label.setStyleSheet("QLabel {font-weight: bold; color: white; background-color: black}")
+
+        self.load_config_button = QPushButton("Load Config...")
+        # This will be the font we will use through the widget...
+        button_font = self.load_config_button.font()
+        button_font.setPointSize(10)
+        self.load_config_button.setFont(button_font)
+
+        self.save_current_button = QPushButton("Save Config...")
+        self.save_current_button.setFont(button_font)
+        self.save_current_button.setEnabled(False)
+
+        self.table_dialog = IPTableDialog(self)
+        self.show_tables_button = QPushButton("Tables...")
+        self.show_tables_button.setFont(button_font)
+
+        self.env_vars_dialog = IPEnvVarDialog(self)
+        self.show_env_vars_button = QPushButton("Env Vars...")
+        self.show_env_vars_button.setFont(button_font)
+
+        self.schema_type_combo = QComboBox()
+        self.schema_type_combo.setFont(button_font)
+        self.schema_type_combo.addItem("KBCore")
+        self.schema_type_combo.addItem("CSS3")
+
+        self.url_edit = QLineEdit()
+        self.url_edit.setPlaceholderText("URL")
+        self.url_edit.setMinimumWidth(300)
+        self.url_edit.setMaximumWidth(300)
+
+        self.create_session_button = QPushButton("Create Session")
+        self.create_session_button.setFont(button_font)
+
+        self.close_session_button = QPushButton("Clear Session")
+        self.close_session_button.setFont(button_font)
+
+        self.test_connection_button = QPushButton("Test Connection")
+        self.test_connection_button.setFont(button_font)
+
+        top_button_layout = QHBoxLayout()
+        top_button_layout.addWidget(self.load_config_button)
+        top_button_layout.addWidget(self.save_current_button)
+        top_button_layout.addWidget(self.show_tables_button)
+        top_button_layout.addWidget(self.show_env_vars_button)
+        top_button_layout.addWidget(self.schema_type_combo)
+        top_button_layout.addWidget(self.url_edit)
+        top_button_layout.addWidget(self.create_session_button)
+        top_button_layout.addWidget(self.test_connection_button)
+        top_button_layout.addStretch()
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.title_label)
+        main_layout.addLayout(top_button_layout)
+
+        self.setLayout(main_layout)
+
+        # create dialogs here
+        self.config_file_dialog = QFileDialog()
+        self.config_file_dialog.setFileMode(QFileDialog.ExistingFile)
+        self.config_file_dialog.setNameFilter("(*.ini)")
+
+        self.table_dialog = IPTableDialog(self)
+
+        self.env_vars_dialog = IPEnvVarDialog(self)
+
+        # connect signals and slots
+        self.connect_signals_and_slots()
+
+    def connect_signals_and_slots(self):
+        self.load_config_button.clicked.connect(self.load_config_file)
+        self.save_current_button.clicked.connect(self.save_current_config)
+        self.show_tables_button.clicked.connect(self.show_tables_dialog)
+        self.show_env_vars_button.clicked.connect(self.show_env_vars_dialog)
+        self.create_session_button.clicked.connect(self.create_session)
+        #self.clear_form_button.clicked.connect(self.clear_form)
+        self.test_connection_button.pressed.connect(self.check_connection)
+
+    @pyqtSlot()
+    def load_config_file(self):
+        if self.config_file_dialog.exec_():
+            self.config_filename = self.config_file_dialog.selectedFiles()[0]
+            try:
+                config = configparser.ConfigParser()
+                config.read(self.config_filename)
+                self.schema_type_combo.setCurrentText(config['DATABASE']['schema'])
+                self.hostname_edit.setText(config['DATABASE']['hostname'])
+                self.username_edit.setText(config['DATABASE']['username'])
+                self.password_edit.setText("")
+                self.database_name.setText(config['DATABASE']['database_name'])
+                self.portnum_edit.setText(config['DATABASE']['port'])
+                self.driver_edit.setText(config['DATABASE']['driver'])
+                self.dialect_combo.setCurrentText(config['DATABASE']['dialect'])
+                if config.has_option('DATABASE', 'url'):
+                    self.url_edit.setText(config['DATABASE']['url'])
+                else:
+                    my_url = database.assemble_db_url(self.dialect_combo.currentText(), 
+                                                      self.hostname_edit.text(), 
+                                                      self.database_name.text(), 
+                                                      self.portnum_edit.text(), 
+                                                      self.username_edit.text(),
+                                                      self.password_edit.text(),
+                                                      self.driver_edit.text())
+                    self.url_edit.setText(my_url)
+
+                self.table_dialog.set_text_from_table_dict(config['DBTABLES'])
+
+                self.env_vars_dialog.set_text_from_vars_dict(config['DBENVIRONMENTVARS'])
+
+                self.save_current_button.setEnabled(False)
+
+            except Exception as e:
+                IPUtils.errorPopup("Error reading config file \n{}".format(str(e)))
+
+    @pyqtSlot()
+    def save_current_config(self):
+        pass
+
+    @pyqtSlot()
+    def show_tables_dialog(self):
+        if self.table_dialog.exec_():
+            self.save_current_button.setEnabled(True)
+
+    @pyqtSlot()
+    def show_env_vars_dialog(self):
+        if self.env_vars_dialog.exec_():
+            self.save_current_button.setEnabled(True)
+
+    @pyqtSlot()
+    def create_session(self):
+        # first, if there is already an active session, close it...
+        self.close_session()
+
+        # make sure any environment variables are loaded.
+        env_vars = self.env_vars_dialog.get_vars_from_text()
+        if env_vars:
+            database.set_db_env_variables(env_vars)
+
+        url = self.url_edit.text()
+
+        try:
+            self.session = database.db_connect_url(url)
+            self.url_edit.setStyleSheet("color: green")
+        except ValueError as e:
+            self.session = None
+            self.url_edit.setStyleSheet("color: red")
+            IPUtils.errorPopup("Error creating session.  \nMake sure you can reach the database and that the displayed url is correct.")
+    
+    def close_session(self):
+        if self.session is not None:
+            self.session.close()
+            self.url_edit.setStyleSheet("color: black")
+            self.session = None
+
+    @pyqtSlot()
+    def clear_form(self):
+        if self.session is not None:
+            self.close_session()
+
+        self.schema_type_combo.setCurrentIndex(0)
+        self.url_edit.setText("")
+
+    @pyqtSlot()
+    def check_connection(self):
+        if self.session is not None:
+            if database.check_connection(self.session):
+                self.test_connection_button.setText("Good Connection")
+                self.test_connection_button.setStyleSheet('QPushButton {color: green}')
+                QTimer.singleShot(3000, self.reset_connection_colors)
+            else:
+                self.test_connection_button.setText("Bad Connection")
+                self.test_connection_button.setStyleSheet('QPushButton {color: red}')
+
+                QTimer.singleShot(3000, self.reset_connection_colors)
+        else:
+            self.test_connection_button.setText("No active session")
+            QTimer.singleShot(3000, self.reset_connection_colors)
+
+
 class IPDatabaseConnectWidget(QFrame):
 
     session = None
@@ -152,7 +348,6 @@ class IPDatabaseConnectWidget(QFrame):
 
         self.save_current_button = QPushButton("Save Config File...")
         self.save_current_button.setFont(button_font)
-        #self.save_current_button.setMaximumWidth(140)
         self.save_current_button.setEnabled(False)
 
         self.table_dialog = IPTableDialog(self)

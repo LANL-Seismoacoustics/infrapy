@@ -5,8 +5,27 @@ from PyQt5.QtCore import pyqtSlot
 import pyqtgraph as pg
     
 
+# Define some useful colors here
 reb_blue = pg.mkColor(80, 159, 250)
 reb_red = pg.mkColor(255, 71, 71)   
+
+lanl_primary = pg.mkColor("#000F7E")
+lanl_gradient = pg.mkColor("#090238")
+lanl_secondary = pg.mkColor("#0070C1")
+lanl_secondary_tint = pg.mkColor("#3296DC")
+lanl_screen_text_black = pg.mkColor("#0C0D17")
+lanl_dark_grey = pg.mkColor("#555962")
+lanl_light_grey = pg.mkColor("#CDD1E2")
+lanl_background_accent = pg.mkColor("#F1EFF7")
+
+lanl_blue = pg.mkColor("#0070C1")
+lanl_blue_tint = pg.mkColor("#3296DC")
+lanl_red = pg.mkColor("#EB0F1E")
+lanl_red_tint = pg.mkColor("#FF474D")
+lanl_orange = pg.mkColor("#E17800")
+lanl_orange_tint = pg.mkColor("#FF9129")
+lanl_green = pg.mkColor("#00AA64")
+lanl_green_tint = pg.mkColor("#2CC486")
 
 # arrays of QColors
 # blue to red... one white color removed

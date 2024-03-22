@@ -10,7 +10,7 @@ from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
-import warnings
+import warnings, math
 
 import numpy as np
 from pathlib import Path
@@ -60,10 +60,10 @@ class IPBeamformingWidget(QWidget):
 
     _mp_pool = None
 
-    lanl_blue = QColor(10, 44, 71)
-    lanl_light_blue = QColor(34, 77, 122)
-    lanl_green = QColor(67, 137, 23)
-    lanl_orange = QColor(255, 144, 0)
+    lanl_blue = IPUtils.lanl_primary
+    lanl_light_blue = IPUtils.lanl_blue
+    lanl_green = IPUtils.lanl_green
+    lanl_orange = IPUtils.lanl_orange
 
     def __init__(self, parent, pool):
         super().__init__()
@@ -114,13 +114,13 @@ class IPBeamformingWidget(QWidget):
 
         self.threshold_line = pg.InfiniteLine(pos=0.0, angle=0.0, pen=pg.mkPen('b', width=2, moveable=True, style=QtCore.Qt.DotLine))
         self.threshold_label = pg.InfLineLabel(line=self.threshold_line, text='', movable=True, position=0.04, anchors=[(0.5,1), (0.5,1)])
-        self.threshold_label.setColor((0,0,255))
+        self.threshold_label.setColor(IPUtils.lanl_primary)
         t_font = self.threshold_label.textItem.font()
         t_font.setPointSize(10)
         self.threshold_label.textItem.setFont(t_font)
         self.fstatPlot.addItem(self.threshold_line)
         # this is the label that pops up to alert someone that the program is calculating the threshold
-        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=(0,0,0))
+        self.threshold_calculating_label = pg.TextItem('Calculating Threshold...', color=IPUtils.lanl_screen_text_black)
 
         self.traceVPlot = IPPlotItem.IPPlotItem(mode='waveform', est=None)
         self.traceVPlot.hideButtons()
@@ -243,17 +243,11 @@ class IPBeamformingWidget(QWidget):
         self.bottomSettings_scrollarea.setWidget(self.bottomSettings)
         
         self.detector_settings = IPDetectorSettingsWidget.IPDetectorSettingsWidget(self)
-        self.detector_settings_scrollarea = QScrollArea()
-        self.detector_settings_scrollarea.setWidget(self.detector_settings)
         
         self.detectionWidget = IPDetectionWidget.IPDetectionWidget(self)
 
-        self.detectiontab_idx = self.bottomTabWidget.addTab(self.detectionWidget, 'Detections')
-        self.settingstab_idx = self.bottomTabWidget.addTab(self.bottomSettings_scrollarea, 'Beamformer Settings')
-        self.det_settings_tab_idx = self.bottomTabWidget.addTab(self.detector_settings, 'Detector Settings')
-
         bottomLayout = QHBoxLayout()
-        bottomLayout.addWidget(self.bottomTabWidget)
+        bottomLayout.addWidget(self.detectionWidget)
 
         bottomWidget.setLayout(bottomLayout)
 
@@ -273,6 +267,10 @@ class IPBeamformingWidget(QWidget):
 
         self.main_layout = QVBoxLayout()
         self.main_layout.setMenuBar(self.toolbar)
+        self.main_layout.addWidget(self.detector_settings)
+        self.detector_settings.setVisible(False)
+        self.main_layout.addWidget(self.bottomSettings)
+        self.bottomSettings.setVisible(False)
         self.main_layout.addWidget(self.main_splitter)
 
         self.setLayout(self.main_layout)
@@ -290,7 +288,6 @@ class IPBeamformingWidget(QWidget):
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
-
         # self.toolbar.setStyleSheet("QToolButton:!hover { padding-left:5px; padding-right:5px; padding-top:2px; padding-bottom:2px} QToolBar {background-color: rgb(0,107,166)}")
         # self.toolbar.setStyleSheet("QToolButton:!hover {background-color:blue} QToolButton:hover { background-color: lightgray }")
 
@@ -298,6 +295,8 @@ class IPBeamformingWidget(QWidget):
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
         toolButton_export = QToolButton()
+        toolButton_bfsettings = QToolButton()
+        toolButton_detsettings = QToolButton()
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -319,11 +318,29 @@ class IPBeamformingWidget(QWidget):
         toolButton_export.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         toolButton_export.setDefaultAction(self.exportAct)
 
+        self.beamformSettingsAct = QAction("Beamformer Settings", self)
+        self.beamformSettingsAct.triggered.connect(self.showhide_bfsettings)
+        toolButton_bfsettings.setDefaultAction(self.beamformSettingsAct)
+
+        self.detectorSettingsAct = QAction("Detector Settings", self)
+        self.detectorSettingsAct.triggered.connect(self.showhide_detsettings)
+        toolButton_detsettings.setDefaultAction(self.detectorSettingsAct)
+
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(toolButton_export)
+        self.toolbar.addWidget(toolButton_bfsettings)
+        self.toolbar.addWidget(toolButton_detsettings)
+
+    def showhide_bfsettings(self):
+        self.detector_settings.setVisible(False)
+        self.bottomSettings.setVisible(self.bottomSettings.isHidden())
+
+    def showhide_detsettings(self):
+        self.detector_settings.setVisible(self.detector_settings.isHidden())
+        self.bottomSettings.setVisible(False)
 
 
     def addCrosshairs(self):
@@ -699,7 +716,7 @@ class IPBeamformingWidget(QWidget):
                 t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
                 self.timeRangeLRI.setRegion(t_region)
                 
-                self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+                #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
                 
 
@@ -908,7 +925,8 @@ class IPBeamformingWidget(QWidget):
                                                 self.bottomSettings.getTraceVelResolution(),
                                                 self.bottomSettings.getTraceVRange(),
                                                 self.bottomSettings.getBackAzRange(),
-                                                self.detector_settings.is_auto_threshold())
+                                                self.detector_settings.is_auto_threshold(),
+                                                self.detector_settings.pval_spin.value())
 
         self.bfWorker.moveToThread(self.bfThread)
 
@@ -1096,10 +1114,9 @@ class IPBeamformingWidget(QWidget):
         num_times = np.asarray(num_times)
 
         channel_count = len(self.streams)
-        det_window_length = 300
-        det_threshold = 0.99
-        tb_prod = 400
-        back_az_lim = 10
+        det_window_length = 300 #currently not used
+        f_range = self.bottomSettings.getFreqRange()
+        tb_prod = (f_range[1]-f_range[0]) * self.bottomSettings.windowLength_spin.value()
         
         if self.detector_settings.is_auto_threshold():
             fixed_threshold = self.detector_settings.get_auto_threshold_level()
@@ -1110,14 +1127,18 @@ class IPBeamformingWidget(QWidget):
         self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
+        min_seq = math.ceil(self.detector_settings.min_peak_width.value()/self.bottomSettings.windowStep_spin.value())
+        if min_seq < 2:
+            min_seq = 2
+
         with warnings.catch_warnings(record=True) as w_array:
-            dets = beamforming_new.detect_signals(num_times, 
+            dets = beamforming_new.run_fd(num_times, 
                                                   beam_results, 
                                                   det_window_length, 
                                                   tb_prod, 
                                                   channel_count, 
-                                                  det_p_val=det_threshold, 
-                                                  min_seq=self.detector_settings.min_peak_width.value(), 
+                                                  det_p_val=self.detector_settings.pval_spin.value(), 
+                                                  min_seq=min_seq, 
                                                   back_az_lim=self.detector_settings.back_az_limit.value(),
                                                   fixed_thresh=fixed_threshold)
 
@@ -1157,7 +1178,7 @@ class IPBeamformingWidget(QWidget):
         t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
         self.timeRangeLRI.setRegion(t_region)
 
-        self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+        #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
     def exportResults(self):
         if len(self._t) == 0:
@@ -1246,7 +1267,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     def __init__(self, streams, resultData, noiseRange, sigRange, freqRange,
                  win_length, win_step, method, signal_cnt, sub_window_len,
                  inventory, pool, back_az_resol, tracev_resol, tracev_range,
-                 back_az_range, auto_thresh):
+                 back_az_range, auto_thresh, p_val):
         super().__init__()
         self.resultData = resultData
         self.streams = streams
@@ -1265,6 +1286,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self._trace_v_resolution = tracev_resol
         self._trace_v_range = tracev_range
         self.is_auto_threshold = auto_thresh
+        self.det_pval = p_val
 
         self.threadStopped = True
 
@@ -1287,13 +1309,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     @staticmethod
     def window_beamforming_map_wrapper(args):
         return window_beamforming_map(*args)
-    
 
-    # function and wrapper to beamform different windows using pool
-    # def window_beamforming(self, x, t, window, geom, delays, ns_covar_inv):
-    #     X, S, f = beamforming_new.fft_array_data(x, t, window, sub_window_len=sub_window_len, sub_window_overlap=sub_window_overlap, fft_window=fft_window, normalize_windowing=normalize_windowing)
-    #     beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method=beam_method, ns_covar_inv=ns_covar_inv, signal_cnt=sig_cnt, normalize_beam=normalize_beam)
-    #     return beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=sig_cnt)
 
     @pyqtSlot()
     def run(self):
@@ -1306,41 +1322,12 @@ class BeamformingWorkerObject(QtCore.QObject):
         #trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
         trc_vel_vals = np.arange(self._trace_v_range[0], self._trace_v_range[1], self._trace_v_resolution)
 
-        det_p_val = 0.01
-
         latlon = []
 
         # we want to build the latlon array so that it has the same order as the streams
-        location_count = 0
         for trace in self.streams:
-
-            id_bits = trace.id.split('.')
-            # TODO... this is a bit of a hack to help deal with horrible people who make sac files with absent network/station codes
-            #         see for instance, sac_to_inventory for the other half of this
-            if id_bits[0] == '':
-                id_bits[0] = '###'
-            if id_bits[1] == '':
-                id_bits[1] = '###'
-            stream_station_id = id_bits[0] + '.' + id_bits[1]
-
-            if len(self._inv.networks) > 0:
-                for network in self._inv.networks:
-                    for station in network.stations:
-                        need_latlon = True
-                        station_id = network.code + '.' + station.code
-                        if station_id == stream_station_id:
-                            # Attempt to get channel latlons first, if there are no channels, use station latlons
-                            for channel in station.channels:
-                                latlon.append([channel.latitude, channel.longitude])
-                                need_latlon = False
-                            if need_latlon:
-                                latlon.append([station.latitude, station.longitude])
-                            location_count += 1
-
-        #if location_count != len(self.streams):
-        #    self.signal_error_popup.emit("Trace IDs don't seem to match with the inventory station list. Please check each carefully and make sure you have a matching inventory entry for each stream \n Aborting", "Inventory and Stream mismatch")
-        #    self.signal_reset_beamformer.emit() # currently this will just reset the buttons
-        #    return
+            metadata = self._inv.get_channel_metadata(trace.id)
+            latlon.append([metadata['latitude'], metadata['longitude']])
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
@@ -1393,7 +1380,7 @@ class BeamformingWorkerObject(QtCore.QObject):
                 beam_results = np.array(beam_results)
 
             f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-            det_thresh = beamforming_new.calc_det_thresh(f_vals, det_p_val, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
 
             self.signal_threshold_calc_is_running.emit(False)
             self.signal_threshold_calculated.emit(det_thresh)

@@ -140,21 +140,39 @@ class IPWaveformWidget(QWidget):
         self.stationViewer.clear_all()
         self.appendTraces(newTraces, newInventory)
 
+    @QtCore.pyqtSlot(str)
+    def remove_trace(self, trace_id):
+
+        for trace in self._sts.select(id=trace_id):
+            self._sts.remove(trace)
+            self.removeStation(trace.stats['network'], trace.stats['station'])
+
+        self.statsViewer.setStats(self._sts)
+
+        if len(self._sts) == 0:
+            self._sts = None
+        self.update_streams(self._sts)
+
     @pyqtSlot(str)
     def remove_trace_by_id(self, trace_id):
-        for tr in self._sts:
-            if tr.id == trace_id:
-                self._sts.remove(tr)
-        self.update_streams(self._sts)
+
+        if self._sts is not None:
+            for tr in self._sts:
+                if tr.id == trace_id:
+                    self._sts.remove(tr)
+                    self.remove_from_inventory(trace_id)
+                if len(self._sts) == 0:
+                    self._sts = None
+
+            self.update_streams(self._sts)
 
 
     @pyqtSlot(Inventory, str)
     def update_inventory(self, new_inventory, mode):
         self.stationViewer.merge_new_inventory(new_inventory, mode)
 
-    def remove_from_inventory(self, sta):
-        self.stationViewer.remove_station(sta)
-
+    def remove_from_inventory(self, id):
+        self.stationViewer.remove_station_from_inv(id)
 
     def clear_inventory(self):
         self.stationViewer.clear_all()
@@ -301,19 +319,7 @@ class IPWaveformWidget(QWidget):
 
         settings.endGroup()
 
-    @QtCore.pyqtSlot(str)
-    def remove_trace(self, trace_id):
-
-        for trace in self._sts.select(id=trace_id):
-            self._sts.remove(trace)
-            self.removeStation(trace.stats['network'], trace.stats['station'])
-
-        self.statsViewer.setStats(self._sts)
-
-        if len(self._sts) == 0:
-            self._sts = None
-
-        self.update_streams(self._sts)
+    
 
 
     def inv_remove(self,

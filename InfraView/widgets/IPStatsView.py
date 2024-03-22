@@ -18,31 +18,33 @@ class IPStatsView(QTabWidget):
 
         self.clear()
 
-        for idx, trace in enumerate(streamList):
-            newTab = QTextEdit()
-            self.addTab(newTab, trace.id)
+        if streamList is not None:
 
-            # build the string to show...
-            statString = ''
-            for key, value in trace.stats.items():
-                if str(key) == 'mseed':
-                    statString = statString + '<b>MSEED info:</b>'
-                    for mkey, mvalue in value.items():
-                        statString = statString + '<li>' + str(mkey) + ': ' + str(mvalue) + '</li>'
-                    statString = statString + '</ul>'
-                elif str(key) == 'sac':
-                    statString = statString + '<b>SAC info:</b>'
-                    statString = statString + '<ul>'
-                    for mkey, mvalue in value.items():
-                        statString = statString + '<li>' + str(mkey) + ': ' + str(mvalue) + '</li>'
-                    statString = statString + '</ul>'
-                else:
-                    statString = statString + '<b>' + str(key) + '</b>: ' + str(value) + '<br>'
+            for idx, trace in enumerate(streamList):
+                newTab = QTextEdit()
+                self.addTab(newTab, trace.id)
 
-                # add the newly built string to the view
-                # First get the QTextEdit in the current tab
-                textEdit = self.widget(idx)
-                textEdit.setHtml(statString)
+                # build the string to show...
+                statString = ''
+                for key, value in trace.stats.items():
+                    if str(key) == 'mseed':
+                        statString = statString + '<b>MSEED info:</b>'
+                        for mkey, mvalue in value.items():
+                            statString = statString + '<li>' + str(mkey) + ': ' + str(mvalue) + '</li>'
+                        statString = statString + '</ul>'
+                    elif str(key) == 'sac':
+                        statString = statString + '<b>SAC info:</b>'
+                        statString = statString + '<ul>'
+                        for mkey, mvalue in value.items():
+                            statString = statString + '<li>' + str(mkey) + ': ' + str(mvalue) + '</li>'
+                        statString = statString + '</ul>'
+                    else:
+                        statString = statString + '<b>' + str(key) + '</b>: ' + str(value) + '<br>'
+
+                    # add the newly built string to the view
+                    # First get the QTextEdit in the current tab
+                    textEdit = self.widget(idx)
+                    textEdit.setHtml(statString)
 
         return
 

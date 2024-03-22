@@ -154,7 +154,7 @@ class IPDatabaseQueryResultsTable(QFrame):
         button_layout.addWidget(self.clear_button)
         button_layout.addWidget(self.select_all_button)
         button_layout.addWidget(self.select_none_button)
-        button_layout.addWidget(self.get_selected_rows_button)
+        # button_layout.addWidget(self.get_selected_rows_button)
         button_layout.addWidget(self.append_selected_button)
         button_layout.addWidget(self.replace_with_selected_button)
         button_layout.addStretch()
@@ -336,6 +336,10 @@ class IPEventQueryResultsTable(QFrame):
 
         self.use_selected_button = QPushButton("Get Selected")
         self.clear_button = QPushButton("Clear Table")
+        button_font = self.clear_button.font()
+        button_font.setPointSize(10)
+        self.use_selected_button.setFont(button_font)
+        self.clear_button.setFont(button_font)
 
         self.tableView = QTableView(self)
         self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)

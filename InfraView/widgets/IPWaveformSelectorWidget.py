@@ -118,7 +118,6 @@ class IPWaveformSelectorWidget(QWidget):
     def del_button_clicked(self, id):
         clicked_checkbox = self.showhide_button_group.button(-id)
         self.sig_remove_trace_by_id.emit(clicked_checkbox.text())
-        print("removing station {}".format(clicked_checkbox.text()))
         self.sig_remove_station_by_name.emit(clicked_checkbox.text())
 
     @pyqtSlot(int)

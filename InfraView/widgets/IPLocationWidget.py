@@ -4,7 +4,7 @@ import matplotlib
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QCheckBox, QLabel, QWidget, QBoxLayout, QHBoxLayout,
                              QVBoxLayout, QDoubleSpinBox, QSpinBox,
-                             QFormLayout, QFrame, QPushButton,
+                             QFormLayout, QFrame, QPushButton, QSizePolicy,
                              QSplitter, QTextEdit, QComboBox, QFileDialog)
 
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, pyqtSlot, QSettings
@@ -64,6 +64,7 @@ class IPLocationWidget(QWidget):
 
         # set up the map widget
         self.mapWidget = IPMapWidget.IPMapWidget(self)
+        self.mapWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         # set up the distance matrix viewer
         self.dm_view = IPDistanceMatrixWidget(self)
@@ -86,18 +87,27 @@ class IPLocationWidget(QWidget):
         self.assocSettings = AssociationSettings(self)
 
         # right hand widgets layout holds the settings widgets
-        rh_widget = QWidget()
-        rh_layout = QVBoxLayout()
-        rh_layout.addWidget(self.bislSettings)
-        rh_layout.addWidget(self.assocSettings)
-        rh_layout.addWidget(self.showgroundtruth)
-        rh_layout.addStretch()
-        rh_widget.setLayout(rh_layout)
+        # rh_widget = QWidget()
+        # rh_layout = QVBoxLayout()
+        # #rh_layout.addWidget(self.bislSettings)
+        # #rh_layout.addWidget(self.assocSettings)
+        # rh_layout.addWidget(self.showgroundtruth)
+        # rh_layout.addStretch()
+        # rh_widget.setLayout(rh_layout)
 
         # splitter holding the association plots
+        self.assocWidget = QFrame()
+        self.assocWidget.setFrameStyle(QFrame.Box | QFrame.Plain)
+        assocLayout = QVBoxLayout()
+        assocLayout.addWidget(self.dendrogram)
+        assocLayout.addWidget(self.assocSettings)
+        self.assocWidget.setLayout(assocLayout)
+
         self.assoc_splitter = QSplitter(Qt.Vertical)
         self.assoc_splitter.addWidget(self.dm_view)
-        self.assoc_splitter.addWidget(self.dendrogram)
+        self.assoc_splitter.addWidget(self.assocWidget)
+        self.assoc_splitter.addWidget(self.showgroundtruth)
+
         self.assoc_splitter.setSizes([1000000, 1000000])
 
         # splitter holding the map canvas and the association plots
@@ -105,15 +115,31 @@ class IPLocationWidget(QWidget):
         self.loc_splitter.addWidget(self.mapWidget)
         self.loc_splitter.addWidget(self.assoc_splitter)
 
+        # layout holding BISL settings and results
+        self.bisl_widget = QFrame()
+        self.bisl_widget.setFrameStyle(QFrame.Box | QFrame.Plain)
+        self.bisl_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        bisl_layout = QHBoxLayout()
+        bisl_layout.addWidget(self.bislSettings)
+        bisl_layout.addWidget(self.bisl_resultsWidget)
+        self.bisl_widget.setLayout(bisl_layout)
+
+        self.lhWidget = QWidget()
+        lh_layout = QVBoxLayout()
+        lh_layout.addWidget(self.mapWidget)
+        lh_layout.addWidget(self.bisl_widget)
+        self.lhWidget.setLayout(lh_layout)
+
         # large splitter holding the map, association plots, and the console
-        self.mapSplitter = QSplitter(Qt.Vertical)
-        self.mapSplitter.addWidget(self.loc_splitter)
-        self.mapSplitter.addWidget(self.bisl_resultsWidget)
+        # self.mapSplitter = QSplitter(Qt.Vertical)
+        # self.mapSplitter.addWidget(self.loc_splitter)
+        # self.mapSplitter.addWidget(self.bisl_widget)
 
         self.mainSplitter = QSplitter(Qt.Horizontal)
-        self.mainSplitter.addWidget(self.mapSplitter)
-        self.mainSplitter.addWidget(rh_widget)
+        self.mainSplitter.addWidget(self.lhWidget)
+        self.mainSplitter.addWidget(self.assoc_splitter)
 
+        
         main_layout = QBoxLayout(QBoxLayout.TopToBottom)
         main_layout.addWidget(self.mainSplitter)
         self.setLayout(main_layout)
@@ -147,7 +173,7 @@ class IPLocationWidget(QWidget):
         self.detections = []
         self.dm_view.clear()
         self.dendrogram.clear_plot()
-        self.bisl_resultsWidget.clear()
+        self.bisl_resultsWidget.clearConsole()
     
     def get_detections(self):
         return self.detections
@@ -215,10 +241,13 @@ class IPLocationWidget(QWidget):
         self.mapWidget.remove_bisl_result()
         self.mapWidget.remove_conf_ellipse()
 
+        rad_min = self.bislSettings.rng_max_edit.value() / 10.0
+        rad_max = self.bislSettings.rng_max_edit.value() / 3.0
+
         self.bisl_workerObject = BISLWorkerObject(self.trimmed_detections,
                                                   beam_width=self.bislSettings.bm_width_edit.value(),
-                                                  rad_min=self.bislSettings.rad_min_edit.value(),
-                                                  rad_max=self.bislSettings.rad_max_edit.value(),
+                                                  rad_min=rad_min,
+                                                  rad_max=rad_max,
                                                   rng_max=self.bislSettings.rng_max_edit.value(),
                                                   resol=self.bislSettings.resolution_edit.value())
 
@@ -275,11 +304,14 @@ class IPLocationWidget(QWidget):
 
         self.dist_matrix = None
 
+        rad_min = self.bislSettings.rng_max_edit.value() / 10.0
+        rad_max = self.bislSettings.rng_max_edit.value() / 3.0
+
         self.dm_workerObject = DistanceMatrixWorkerObject(self.detections,
                                                           beam_width=self.bislSettings.bm_width_edit.value(),
                                                           rng_max=self.bislSettings.rng_max_edit.value(),
-                                                          rad_min=self.bislSettings.rad_min_edit.value(),
-                                                          rad_max=self.bislSettings.rad_max_edit.value(),
+                                                          rad_min=rad_min,
+                                                          rad_max=rad_max,
                                                           resol=self.bislSettings.resolution_edit.value(),
                                                           pool=self.mp_pool)
 
@@ -362,7 +394,7 @@ class IPLocationWidget(QWidget):
         settings.beginGroup('LocationWidget')
         settings.setValue("windowSize", self.size())
         settings.setValue("windowPos", self.pos())
-        settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
+        #settings.setValue("mapSplitterSettings", self.mapSplitter.saveState())
         settings.setValue("mainSplitterSettings", self.mainSplitter.saveState())
         settings.setValue("assocSplitterSettings", self.assoc_splitter.saveState())
         settings.setValue("loc_splitterSettings", self.loc_splitter.saveState())
@@ -374,8 +406,8 @@ class IPLocationWidget(QWidget):
         settings.beginGroup('LocationWidget')
 
         mapSplitterSettings = settings.value("mapSplitterSettings")
-        if mapSplitterSettings:
-            self.mapSplitter.restoreState(mapSplitterSettings)
+        #if mapSplitterSettings:
+        #    self.mapSplitter.restoreState(mapSplitterSettings)
 
         mainSplitterSettings = settings.value("mainSplitterSettings")
         if mainSplitterSettings:
@@ -392,7 +424,7 @@ class IPLocationWidget(QWidget):
         settings.endGroup()
 
 
-class BISLSettings(QFrame):
+class BISLSettings(QWidget):
 
     earth_radius = 6378.1   # km
 
@@ -417,19 +449,19 @@ class BISLSettings(QFrame):
         self.bm_width_edit.setSuffix(' deg')
         self.bm_width_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.rad_min_edit = QDoubleSpinBox()
-        self.rad_min_edit.setMinimum(50)
-        self.rad_min_edit.setMaximum(np.pi * self.earth_radius)
-        self.rad_min_edit.setValue(100.0)
-        self.rad_min_edit.setSuffix(' km')
-        self.rad_min_edit.valueChanged.connect(self.enable_update_dm_button)
+        # self.rad_min_edit = QDoubleSpinBox()
+        # self.rad_min_edit.setMinimum(50)
+        # self.rad_min_edit.setMaximum(np.pi * self.earth_radius)
+        # self.rad_min_edit.setValue(100.0)
+        # self.rad_min_edit.setSuffix(' km')
+        # self.rad_min_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.rad_max_edit = QDoubleSpinBox()
-        self.rad_max_edit.setMinimum(50)
-        self.rad_max_edit.setMaximum(np.pi * self.earth_radius)
-        self.rad_max_edit.setValue(1000.0)
-        self.rad_max_edit.setSuffix(' km')
-        self.rad_max_edit.valueChanged.connect(self.enable_update_dm_button)
+        # self.rad_max_edit = QDoubleSpinBox()
+        # self.rad_max_edit.setMinimum(50)
+        # self.rad_max_edit.setMaximum(np.pi * self.earth_radius)
+        # self.rad_max_edit.setValue(1000.0)
+        # self.rad_max_edit.setSuffix(' km')
+        # self.rad_max_edit.valueChanged.connect(self.enable_update_dm_button)
 
         self.rng_max_edit = QDoubleSpinBox()
         self.rng_max_edit.setMinimum(10)
@@ -452,8 +484,8 @@ class BISLSettings(QFrame):
 
         layout = QFormLayout()
         layout.addRow(self.tr('Beam Width: '), self.bm_width_edit)
-        layout.addRow(self.tr('Radius Min.: '), self.rad_min_edit)
-        layout.addRow(self.tr('Radius Max.: '), self.rad_max_edit)
+        #layout.addRow(self.tr('Radius Min.: '), self.rad_min_edit)
+        #layout.addRow(self.tr('Radius Max.: '), self.rad_max_edit)
         layout.addRow(self.tr('Range Max.: '), self.rng_max_edit)
         layout.addRow(self.tr('Resolution'), self.resolution_edit)
         layout.addRow(self.tr('Confidence'), self.confidence_edit)
@@ -473,7 +505,6 @@ class BISLSettings(QFrame):
 
         mainlayout.addLayout(buttonLayout)
 
-        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.setLayout(mainlayout)
 
     @pyqtSlot(float)
@@ -1089,7 +1120,7 @@ class IPDendrogramWidget(QWidget):
             return False
 
 
-class AssociationSettings(QFrame):
+class AssociationSettings(QWidget):
 
     def __init__(self, parent):
         super().__init__()
@@ -1098,11 +1129,7 @@ class AssociationSettings(QFrame):
 
     def buildUI(self):
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-
-        title_label = QLabel('Association Settings')
-        title_label.setStyleSheet("font-weight: bold;")
-        title_label.setAlignment(Qt.AlignCenter)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self.threshold_edit = QDoubleSpinBox()
         self.threshold_edit.setMinimum(0.0)
@@ -1115,20 +1142,20 @@ class AssociationSettings(QFrame):
         self.dist_max_edit.setValue(10.0)
 
         layout = QFormLayout()
+        layout.setVerticalSpacing(5)
         layout.addRow(self.tr('Threshold: '), self.threshold_edit)
-        layout.addRow(self.tr('Maximum Distance.: '), self.dist_max_edit)
+        layout.addRow(self.tr('Max. Distance: '), self.dist_max_edit)
 
         self.update_assoc_button = QPushButton('Update Associations')
+        self.update_assoc_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        myfont = self.update_assoc_button.font()
+        myfont.setPointSize(10)
+        self.update_assoc_button.setFont(myfont)
 
         mainlayout = QVBoxLayout()
-        mainlayout.addWidget(title_label)
         mainlayout.addLayout(layout)
+        mainlayout.addWidget(self.update_assoc_button)
 
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addWidget(self.update_assoc_button)
-
-        mainlayout.addLayout(buttonLayout)
-        self.setFrameStyle(QFrame.Box | QFrame.Plain)
         self.setLayout(mainlayout)
 
 

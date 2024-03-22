@@ -1122,6 +1122,6 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
         return dets
 
 
-def detect_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
+def detect_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
     return run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq, back_az_lim, fixed_thresh, return_thresh)
 

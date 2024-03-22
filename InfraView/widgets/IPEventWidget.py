@@ -74,11 +74,11 @@ class IPEventWidget(QWidget):
         self.event_time_edit.setFixedWidth(125)
         self.event_time_edit.setDisplayFormat('HH:mm:ss.zzz')        
 
-        self.load_button = QPushButton(self.tr(' Load Event...'))
+        self.load_button = QPushButton(self.tr(' Load...'))
         self.load_button.setMaximumWidth(100)
         self.load_button.setIcon(self.openIcon)
 
-        self.save_button = QPushButton(self.tr(' Save Event...'))
+        self.save_button = QPushButton(self.tr(' Save...'))
         self.save_button.setMaximumWidth(100)
         self.save_button.setIcon(self.saveAsIcon)
 
