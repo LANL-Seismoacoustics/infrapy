@@ -625,6 +625,7 @@ class IPSpectrogramSettingsWidget(QWidget):
 
         fmax_label = QLabel("Freq max: ")
         self.fmax_spin = QDoubleSpinBox()
+        self.fmax_spin.valueChanged.connect(self.activate_update_button)
         self.fmax_spin.setMinimum(1.0)
         self.fmax_spin.setMaximum(10000.0)
         self.fmax_spin.setValue(10.0)    # this needs to be set when a spectrogram is created
