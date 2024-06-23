@@ -1,6 +1,6 @@
 import pandas as pd
 
-from PyQt5.QtWidgets import QMenu, QTableView
+from PyQt5.QtWidgets import QMenu, QTableView, QAbstractItemView
 from PyQt5 import QtCore
 from PyQt5.QtCore import QAbstractTableModel, Qt, pyqtSignal, pyqtSlot
 
@@ -49,7 +49,7 @@ class IPDetectionTableView(QTableView):
                                     'header to delete the detections')
 
         # set up a selection model for the table
-        self.selectionModel = self.selectionModel()
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         # connect signals and slots
         self.connect_signals_and_slots()

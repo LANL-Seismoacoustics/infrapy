@@ -1,34 +1,33 @@
 from PyQt5.QtWidgets import (QWidget, QComboBox, QCheckBox, QLabel, QDoubleSpinBox, QSpinBox,
-                             QHBoxLayout, QFormLayout, QFrame)
+                             QHBoxLayout, QFormLayout, QFrame, QPushButton)
 from PyQt5 import QtCore
 
+from InfraView.widgets import IPBaseWidgets
 
-class IPBeamformingSettingsWidget(QWidget):
+class IPBeamformingSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
     def __init__(self, parent):
         super().__init__()
+
         self.buildUI()
 
     def buildUI(self):
-
+    
         self.windowLength_spin = QDoubleSpinBox()
         self.windowLength_spin.setMaximumWidth(60)
         self.windowLength_spin.setSuffix(' s')
         self.windowLength_spin.setMinimum(0.0)
         self.windowLength_spin.setMaximum(1000000)
-        self.windowLength_spin.setValue(10.0)
 
         self.windowStep_spin = QDoubleSpinBox()
         self.windowStep_spin.setMaximumWidth(60)
         self.windowStep_spin.setSuffix(' s')
         self.windowStep_spin.setMinimum(0.0)
         self.windowStep_spin.setMaximum(1000000)
-        self.windowStep_spin.setValue(2.5)
 
         self.numSigs_spin = QSpinBox()
         self.numSigs_spin.setMaximumWidth(40)
         self.numSigs_spin.setMinimum(1)
-        self.numSigs_spin.setValue(1)
         self.numSigs_spin.setEnabled(False)
 
         self.method_cb = QComboBox()
@@ -51,61 +50,55 @@ class IPBeamformingSettingsWidget(QWidget):
         self.sigDuration_label = QLabel()
 
         self.subwindow_cb = QCheckBox()
-        self.subwindow_cb.setEnabled(False)
         self.subwindow_cb.stateChanged.connect(self.updateSubwindow)
 
         self.subWinLength_spin = QDoubleSpinBox()
         self.subWinLength_spin.setMaximumWidth(60)
         self.subWinLength_spin.setMinimum(0.0)
         self.subWinLength_spin.setMaximum(1000000)
-        self.subWinLength_spin.setValue(self.windowLength_spin.value())
         self.subWinLength_spin.setSuffix(' s')
         self.subWinLength_spin.setEnabled(False)
 
         self.backaz_resol_spin = QDoubleSpinBox()
         self.backaz_resol_spin.setMinimum(0.1)
         self.backaz_resol_spin.setMaximum(20.)
-        self.backaz_resol_spin.setValue(3.0)
         self.backaz_resol_spin.setSuffix(' deg')
 
         self.tracev_resol_spin = QDoubleSpinBox()
         self.tracev_resol_spin.setMinimum(0.1)
         self.tracev_resol_spin.setMaximum(500.)
-        self.tracev_resol_spin.setValue(5.0)
         self.tracev_resol_spin.setSuffix(' m/s')
 
         self.backaz_start_spin = QDoubleSpinBox()
         self.backaz_start_spin.setMinimum(-180.0)
         self.backaz_start_spin.setMaximum(179.0)
-        self.backaz_start_spin.setValue(-180.0)
         self.backaz_start_spin.setSuffix(' deg')
         self.backaz_start_spin.editingFinished.connect(self.checkBackAzRange)
 
         self.backaz_end_spin = QDoubleSpinBox()
         self.backaz_end_spin.setMinimum(-179.0)
         self.backaz_end_spin.setMaximum(180.0)
-        self.backaz_end_spin.setValue(180.0)
         self.backaz_end_spin.setSuffix(' deg')
         self.backaz_end_spin.editingFinished.connect(self.checkBackAzRange)
 
         self.tracev_min_spin = QDoubleSpinBox()
         self.tracev_min_spin.setMinimum(1)
         self.tracev_min_spin.setMaximum(20000.)
-        self.tracev_min_spin.setValue(300.0)
         self.tracev_min_spin.setSuffix(' m/s')
         self.tracev_min_spin.editingFinished.connect(self.checkTraceVRange)
         
         self.tracev_max_spin = QDoubleSpinBox()
         self.tracev_max_spin.setMinimum(2)
         self.tracev_max_spin.setMaximum(20000.)
-        self.tracev_max_spin.setValue(750.0)
         self.tracev_max_spin.setSuffix(' m/s')
         self.tracev_max_spin.editingFinished.connect(self.checkTraceVRange)
 
+        # set everything to default settings
+        self.set_defaults()
 
-        formlayout_col1 = QFormLayout()
-        formlayout_col1.addRow("Method: ", self.method_cb)
-        formlayout_col1.addRow("Num. of Signals: ", self.numSigs_spin)
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.setToolTip("Reset to default values")
+        self.reset_button.clicked.connect(self.set_defaults)
 
         formlayout_col2 = QFormLayout()
         formlayout_col2.addRow("Window Length: ", self.windowLength_spin)
@@ -137,16 +130,50 @@ class IPBeamformingSettingsWidget(QWidget):
         formlayout_col7.addRow("Trace Vel Min: ", self.tracev_min_spin)
         formlayout_col7.addRow("Trace Vel Max: ", self.tracev_max_spin)
 
+        formlayout_col8 = QFormLayout()
+        formlayout_col8.addRow("Method: ", self.method_cb)
+        formlayout_col8.addRow("", self.reset_button)
+
         horizLayout = QHBoxLayout()
-        horizLayout.addLayout(formlayout_col1)
         horizLayout.addLayout(formlayout_col2)
         horizLayout.addLayout(formlayout_col4)
         horizLayout.addLayout(formlayout_col5)
         horizLayout.addLayout(formlayout_col6)
         horizLayout.addLayout(formlayout_col7)
+        horizLayout.addLayout(formlayout_col8)
         horizLayout.addStretch()
 
         self.setLayout(horizLayout)
+
+    def set_defaults(self):
+        default_settings = {'winlen_spin': 10.0,
+                    'winstep_spin': 2.5,
+                    'numSigs_spin': 1,
+                    'method_cb': 'bartlett',
+                    'subwin_cb_enabled': False,
+                    'backazRes_spin': 3.0,
+                    'backazStart_spin': -180.0,
+                    'backazEnd_spin': 180.0,
+                    'traceVelRes_spin': 5.0,
+                    'traceVelmin_spin': 300.0,
+                    'traceVelmax_spin': 750.0
+                    }
+        
+        self.windowLength_spin.setValue(default_settings['winlen_spin'])
+        self.windowStep_spin.setValue(default_settings['winstep_spin'])
+        self.numSigs_spin.setValue(default_settings['numSigs_spin'])
+        self.method_cb.setCurrentText(default_settings['method_cb'])
+        self.subwindow_cb.setEnabled(default_settings['subwin_cb_enabled'])
+
+        self.subWinLength_spin.setValue(self.windowLength_spin.value())
+        self.backaz_resol_spin.setValue(default_settings['backazRes_spin'])
+        self.backaz_start_spin.setValue(default_settings['backazStart_spin'])
+        self.backaz_end_spin.setValue(default_settings['backazEnd_spin'])
+        self.tracev_resol_spin.setValue(default_settings['traceVelRes_spin'])
+        self.tracev_min_spin.setValue(default_settings['traceVelmin_spin'])
+        self.tracev_max_spin.setValue(default_settings['traceVelmax_spin'])
+        
+
 
     def HLine(self):
         hl = QFrame()

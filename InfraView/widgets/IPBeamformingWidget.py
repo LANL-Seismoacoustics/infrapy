@@ -55,6 +55,7 @@ class IPBeamformingWidget(QWidget):
     _trace_vel = []
     _back_az = []
     _f_stats = []
+    region_range = (0,1.)
 
     waveform_data_item = None
 
@@ -295,8 +296,10 @@ class IPBeamformingWidget(QWidget):
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
         toolButton_export = QToolButton()
-        toolButton_bfsettings = QToolButton()
-        toolButton_detsettings = QToolButton()
+        self.toolButton_bfsettings = QToolButton()
+        self.toolButton_detsettings = QToolButton()
+        toolButton_runDetector = QToolButton()
+        toolButton_resetZoom = QToolButton()
 
         self.runAct = QAction(QIcon.fromTheme("media-playback-start"), "Run Beamforming", self)
         self.runAct.triggered.connect(self.runBeamforming)
@@ -320,28 +323,52 @@ class IPBeamformingWidget(QWidget):
 
         self.beamformSettingsAct = QAction("Beamformer Settings", self)
         self.beamformSettingsAct.triggered.connect(self.showhide_bfsettings)
-        toolButton_bfsettings.setDefaultAction(self.beamformSettingsAct)
+        self.toolButton_bfsettings.setDefaultAction(self.beamformSettingsAct)
 
         self.detectorSettingsAct = QAction("Detector Settings", self)
         self.detectorSettingsAct.triggered.connect(self.showhide_detsettings)
-        toolButton_detsettings.setDefaultAction(self.detectorSettingsAct)
+        self.toolButton_detsettings.setDefaultAction(self.detectorSettingsAct)
+
+        self.runDetectorAct = QAction("Run Detector")
+        self.runDetectorAct.triggered.connect(self.run_detector)
+        toolButton_runDetector.setDefaultAction(self.runDetectorAct)
+        toolButton_runDetector.setToolTip("Run/Rerun Detector")
+
+        self.resetZoomAct = QAction("Reset Zoom")
+        self.resetZoomAct.triggered.connect(self.reset_zoom)
+        toolButton_resetZoom.setDefaultAction(self.resetZoomAct)
 
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
+        self.toolbar.addWidget(self.toolButton_bfsettings)
         self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.toolButton_detsettings)
+        self.toolbar.addWidget(toolButton_runDetector)
+
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(toolButton_resetZoom)
         self.toolbar.addWidget(toolButton_export)
-        self.toolbar.addWidget(toolButton_bfsettings)
-        self.toolbar.addWidget(toolButton_detsettings)
 
     def showhide_bfsettings(self):
         self.detector_settings.setVisible(False)
+        self.toolButton_detsettings.setStyleSheet("color: rgba(20,20,20,255);")
         self.bottomSettings.setVisible(self.bottomSettings.isHidden())
+        if self.bottomSettings.isHidden():
+            # change font color of button
+            self.toolButton_bfsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        else:
+            self.toolButton_bfsettings.setStyleSheet("color: rgba(0,0,180,255)")
 
     def showhide_detsettings(self):
         self.detector_settings.setVisible(self.detector_settings.isHidden())
         self.bottomSettings.setVisible(False)
-
+        self.toolButton_bfsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        
+        if self.detector_settings.isHidden():
+            self.toolButton_detsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        else:
+            self.toolButton_detsettings.setStyleSheet("color: rgba(0,0,180,255);")
 
     def addCrosshairs(self):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
@@ -498,14 +525,21 @@ class IPBeamformingWidget(QWidget):
             self.waveformPlot.addItem(self.waveform_data_item)
         if plot_label is not None:
             self.waveformPlot.setPlotLabel(plot_label)
+        
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
+        self.region_range = region
 
     @pyqtSlot(tuple)
     def updateWaveformRange(self, new_range):
+        self.region_range = new_range
         self.waveformPlot.setXRange(new_range[0], new_range[1], padding=0)
         # we want to set the title of the plot to reflect the current start time of the view
         self.start_time = self.get_earliest_start_time() + new_range[0]
         self.waveformPlot.setTitle(str(self.start_time))
+
+    def reset_zoom(self):
+        self.waveformPlot.setXRange(self.region_range[0], self.region_range[1], padding=0)
+
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -1092,55 +1126,93 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot()
     def runFinished(self):
+        '''The beamformer is finished, so we need to run the detector, update slowness, update projection plot and update the time region.'''
+
         if len(self._f_stats) < 1:
-            # we haven't finished a single step, so bail out
+            # For some reason the beamformer didn't get any points. There's nothing to do, bail out.  
             return
 
         self.reset_run_buttons()
 
-        # add a detection at the place were fstat was a maximum
-        center = self.parent.waveformWidget.stationViewer.get_current_center()
+        self.run_detector()
 
-        # Gather data for input into the beamforming peak detector
+        # make the slowness plot show the data at the time of fstat max
+        # find peak F-value location and the corresponding back azimuth and trace velocity
+        f_max = max(self._f_stats)
+        f_max_idx = self._f_stats.index(f_max)
+        f_max_time = self._t[f_max_idx]
 
-        # can this be done in one line?
-        beam_results = np.array([self._back_az, self._trace_vel, self._f_stats])
-        beam_results = beam_results.T 
-        # beamforming_new uses numpy datetime64 to hold the times, so we have to 
-        # convert our times to that format
-        num_times = []
-        for t in self._t:
-            num_times.append(np.datetime64(self.get_earliest_start_time() + t))
-        num_times = np.asarray(num_times)
+        self.plot_slowness_at_idx(f_max_idx)
 
-        channel_count = len(self.streams)
-        det_window_length = 300 #currently not used
-        f_range = self.bottomSettings.getFreqRange()
-        tb_prod = (f_range[1]-f_range[0]) * self.bottomSettings.windowLength_spin.value()
-        
-        if self.detector_settings.is_auto_threshold():
-            fixed_threshold = self.detector_settings.get_auto_threshold_level()
-        else:
-            fixed_threshold = self.detector_settings.get_manual_threshold_level()
+        # make the projection plot show the data at the time of fstat max
+        if self._max_projection_data is not None:
+            self.projectionCurve.setData(self._max_projection_data)
 
-        self.threshold_line.setPos(fixed_threshold)
-        self.threshold_label.setText('Threshold = {:.1f}'.format(fixed_threshold))
+        # move the waveform time region to reflect the location of the f_max
+        t_range = self.timeRangeLRI.getRegion()
+        t_half_width = (t_range[1] - t_range[0]) / 2.
+        t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
+        self.timeRangeLRI.setRegion(t_region)
+
+
+    def plot_threshold_line(self, threshold):
+        '''draw the threshold line on the fstat plot'''
+        self.threshold_line.setPos(threshold)
+        self.threshold_label.setText('Threshold = {:.1f}'.format(threshold))
         self.fstatPlot.addItem(self.threshold_line)
 
+    def run_detector(self):
+        ''' collect required info, run the detector, and add results to the detection widget'''
+
+        if len(self._f_stats) < 1:
+            # No points in f-stats. There's nothing to do, bail out.  
+            return
+
+        # gather the beam results into a single matrix
+        beam_results = np.array([self._back_az, self._trace_vel, self._f_stats]).T
+
+        # the detections will be placed at the center of the array
+        center = self.parent.waveformWidget.stationViewer.get_current_center()
+
+        # beamforming_new uses numpy datetime64 to hold the times, so we have to 
+        # convert our times to that format
+        numpy_times = []
+        for t in self._t:
+            numpy_times.append(np.datetime64(self.get_earliest_start_time() + t))
+        numpy_times = np.asarray(numpy_times)
+
+        det_window_length = 300 #currently not used
+
+        # Calculate the tb_prod using the frequency range and the window length
+        f_range = self.bottomSettings.getFreqRange()
+        tb_prod = (f_range[1]-f_range[0]) * self.bottomSettings.windowLength_spin.value()
+
+        # channel count is the number of sensors used in the detection calculation
+        channel_count = len(self.streams)
+
+        # minimum number of points above threshold to get a detection
         min_seq = math.ceil(self.detector_settings.min_peak_width.value()/self.bottomSettings.windowStep_spin.value())
         if min_seq < 2:
             min_seq = 2
 
+        # get the threshold and add line to the plot
+        if self.detector_settings.is_auto_threshold():
+            threshold = self.detector_settings.get_auto_threshold_level()
+        else:
+            threshold = self.detector_settings.get_manual_threshold_level()
+
+        self.plot_threshold_line(threshold=threshold)
+
         with warnings.catch_warnings(record=True) as w_array:
-            dets = beamforming_new.run_fd(num_times, 
-                                                  beam_results, 
-                                                  det_window_length, 
-                                                  tb_prod, 
-                                                  channel_count, 
-                                                  det_p_val=self.detector_settings.pval_spin.value(), 
-                                                  min_seq=min_seq, 
-                                                  back_az_lim=self.detector_settings.back_az_limit.value(),
-                                                  fixed_thresh=fixed_threshold)
+            dets = beamforming_new.run_fd(numpy_times, 
+                                            beam_results, 
+                                            det_window_length, 
+                                            tb_prod, 
+                                            channel_count, 
+                                            det_p_val=self.detector_settings.pval_spin.value(), 
+                                            min_seq=min_seq, 
+                                            back_az_lim=self.detector_settings.back_az_limit.value(),
+                                            fixed_thresh=threshold)
 
             
             for w in w_array:
@@ -1159,26 +1231,6 @@ class IPBeamformingWidget(QWidget):
                                             element_cnt=len(self.streams),
                                             method=self.bottomSettings.getMethod(),
                                             fr=self.bottomSettings.getFreqRange())
-        
-        # find peak F-value location and the corresponding back azimuth and trace velocity
-        f_max = max(self._f_stats)
-        f_max_idx = self._f_stats.index(f_max)
-        f_max_time = self._t[f_max_idx]
-
-        # make the slowness plot show the data at the time of fstat max
-        self.plot_slowness_at_idx(f_max_idx)
-
-        # make the projection plot show the data at the time of fstat max
-        if self._max_projection_data is not None:
-            self.projectionCurve.setData(self._max_projection_data)
-
-        # move the waveform time region to reflect the location of the f_max
-        t_range = self.timeRangeLRI.getRegion()
-        t_half_width = (t_range[1] - t_range[0]) / 2.
-        t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
-        self.timeRangeLRI.setRegion(t_region)
-
-        #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
 
     def exportResults(self):
         if len(self._t) == 0:

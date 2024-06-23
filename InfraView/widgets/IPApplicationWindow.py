@@ -74,6 +74,9 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
         #print("cpu count = {}".format(cpu_count()))
 
+        font = self.font()
+        font.setFamily('monospace')
+
         self.buildUI()
 
     def buildUI(self):

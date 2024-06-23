@@ -22,6 +22,7 @@ class IPPlotViewer(IPUtils.IPSplitter):
     def __init__(self, parent):
         super().__init__(parent=parent)
         self.parent = parent
+
         self.buildUI()
 
     def buildUI(self):
@@ -34,6 +35,7 @@ class IPPlotViewer(IPUtils.IPSplitter):
         self.lr_settings_widget = IPLinearRegionSettingsWidget(self)
         
         rhs_widget = QWidget()
+        rhs_widget.setStyleSheet("background-color:white;")
         rhs_layout = QVBoxLayout()
 
         rhs_layout.addWidget(self.title)

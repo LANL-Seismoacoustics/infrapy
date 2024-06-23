@@ -53,7 +53,6 @@ class IPStationView(QWidget):
         self.station_TabWidget.setMinimumSize(200,0)
         self.station_TabWidget.setTabsClosable(True)
         self.station_TabWidget.tabCloseRequested.connect(self.remove_station_from_inv)
-        # self.station_TabWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.arrayViewWidget = IPArrayView(self)
         self.arrayViewWidget.setMinimumSize(200, 0)
@@ -492,6 +491,8 @@ class IPArrayView(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
+
+        self.setStyleSheet("background-color:white;")
 
         self.sta_spi = None
         self.chan_spi = None

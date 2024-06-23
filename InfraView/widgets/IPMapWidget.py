@@ -25,6 +25,7 @@ import numpy as np
 matplotlib.use('Qt5Agg')
 
 from InfraView.widgets import IPUtils
+from InfraView.widgets import IPBaseWidgets
 
 
 class IPMapWidget(QWidget):
@@ -794,7 +795,7 @@ class IPMapExportDialog(QDialog):
         time.sleep(1.2)
         self.close()
 
-class IPMapSettingsWidget(QWidget):
+class IPMapSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
     signal_colors_changed = pyqtSignal()
     signal_background_changed = pyqtSignal()
@@ -805,14 +806,13 @@ class IPMapSettingsWidget(QWidget):
     land_color = QColor(222, 222, 222)
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super(IPMapSettingsWidget, self).__init__(parent)
         self.parent = parent
-        self.setMinimumWidth(400)
         self.setWindowTitle("InfraView: Map Settings")
+
         self.buildUI()
 
     def buildUI(self):
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         ###   feature settings   ###
         features_gb = QGroupBox("Features")
         self.borders_checkbox = QCheckBox('Countries  ')
@@ -844,7 +844,6 @@ class IPMapSettingsWidget(QWidget):
         colors_gb.setLayout(colors_layout)
 
         ###   grid settings
-        # grid_gb = QGroupBox("Grid Lines")
         self.show_grid_checkbox = QCheckBox("Show Grid Lines ")
 
         ###   resolution settings   ###
@@ -966,176 +965,176 @@ class IPMapSettingsWidget(QWidget):
         settings.endGroup()
 
 
-class IPMapSettingsDialog(QDialog):
+# class IPMapSettingsDialog(QDialog):
 
-    signal_colors_changed = pyqtSignal()
-    signal_background_changed = pyqtSignal()
-    signal_offline_directory_changed = pyqtSignal()
-    signal_map_settings_changed = pyqtSignal()
+#     signal_colors_changed = pyqtSignal()
+#     signal_background_changed = pyqtSignal()
+#     signal_offline_directory_changed = pyqtSignal()
+#     signal_map_settings_changed = pyqtSignal()
     
-    ocean_color = QColor(0, 107, 166)
-    land_color = QColor(222, 222, 222)
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
-        self.setMinimumWidth(400)
-        self.setWindowTitle("InfraView: Map Settings")
-        self.buildUI()
+#     ocean_color = QColor(0, 107, 166)
+#     land_color = QColor(222, 222, 222)
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
+#         self.parent = parent
+#         self.setMinimumWidth(400)
+#         self.setWindowTitle("InfraView: Map Settings")
+#         self.buildUI()
 
-    def buildUI(self):
+#     def buildUI(self):
 
-        ###   feature settings   ###
-        features_gb = QGroupBox("Features")
-        self.borders_checkbox = QCheckBox('Countries  ')
-        self.states_checkbox = QCheckBox('States and Provinces  ')
-        self.lakes_checkbox = QCheckBox('Lakes  ')
-        self.rivers_checkbox = QCheckBox('Rivers  ')
-        self.coast_checkbox = QCheckBox('Coastline  ')
+#         ###   feature settings   ###
+#         features_gb = QGroupBox("Features")
+#         self.borders_checkbox = QCheckBox('Countries  ')
+#         self.states_checkbox = QCheckBox('States and Provinces  ')
+#         self.lakes_checkbox = QCheckBox('Lakes  ')
+#         self.rivers_checkbox = QCheckBox('Rivers  ')
+#         self.coast_checkbox = QCheckBox('Coastline  ')
 
-        features_layout = QVBoxLayout()
-        features_layout.addWidget(self.borders_checkbox)
-        features_layout.addWidget(self.states_checkbox)
-        features_layout.addWidget(self.lakes_checkbox)
-        features_layout.addWidget(self.rivers_checkbox)
-        features_layout.addWidget(self.coast_checkbox)
+#         features_layout = QVBoxLayout()
+#         features_layout.addWidget(self.borders_checkbox)
+#         features_layout.addWidget(self.states_checkbox)
+#         features_layout.addWidget(self.lakes_checkbox)
+#         features_layout.addWidget(self.rivers_checkbox)
+#         features_layout.addWidget(self.coast_checkbox)
         
-        features_gb.setLayout(features_layout)
+#         features_gb.setLayout(features_layout)
 
-        ###   color settings   ###
-        colors_gb = QGroupBox("Colors")
-        ocean_color_label = QLabel("Oceans: ")
-        self.ocean_color_button = IPColorButton(self.ocean_color)
-        land_color_label = QLabel("Land: ")
-        self.land_color_button = IPColorButton(self.land_color)
+#         ###   color settings   ###
+#         colors_gb = QGroupBox("Colors")
+#         ocean_color_label = QLabel("Oceans: ")
+#         self.ocean_color_button = IPColorButton(self.ocean_color)
+#         land_color_label = QLabel("Land: ")
+#         self.land_color_button = IPColorButton(self.land_color)
 
-        colors_layout = QFormLayout()
-        colors_layout.addRow(ocean_color_label, self.ocean_color_button)
-        colors_layout.addRow(land_color_label, self.land_color_button)
+#         colors_layout = QFormLayout()
+#         colors_layout.addRow(ocean_color_label, self.ocean_color_button)
+#         colors_layout.addRow(land_color_label, self.land_color_button)
 
-        colors_gb.setLayout(colors_layout)
+#         colors_gb.setLayout(colors_layout)
 
-        ###   grid settings
-        # grid_gb = QGroupBox("Grid Lines")
-        self.show_grid_checkbox = QCheckBox("Show Grid Lines ")
+#         ###   grid settings
+#         # grid_gb = QGroupBox("Grid Lines")
+#         self.show_grid_checkbox = QCheckBox("Show Grid Lines ")
 
-        ###   resolution settings   ###
-        label_resolution = QLabel(self.tr('Resolution'))
-        self.resolution_cb = QComboBox()
-        self.resolution_cb.addItem('50m')
-        self.resolution_cb.addItem('110m')
-        self.resolution_cb.setCurrentIndex(1)
+#         ###   resolution settings   ###
+#         label_resolution = QLabel(self.tr('Resolution'))
+#         self.resolution_cb = QComboBox()
+#         self.resolution_cb.addItem('50m')
+#         self.resolution_cb.addItem('110m')
+#         self.resolution_cb.setCurrentIndex(1)
 
-        resolution_layout = QHBoxLayout()
-        resolution_layout.addWidget(label_resolution)
-        resolution_layout.addWidget(self.resolution_cb)
+#         resolution_layout = QHBoxLayout()
+#         resolution_layout.addWidget(label_resolution)
+#         resolution_layout.addWidget(self.resolution_cb)
 
-        ### background image ##
-        self.backgroud_image_checkbox = QCheckBox('Use background image  ')
+#         ### background image ##
+#         self.backgroud_image_checkbox = QCheckBox('Use background image  ')
 
-        ###   offline maps settings   ###
-        self.offline_checkbox = QCheckBox('Use offline maps  ')
-        self.offline_directory_label = QLabel("Use offline maps")
-        # read in the offline_director from settings if there is one
-        settings = QSettings('LANL', 'InfraView')
-        settings.beginGroup('LocationWidget')
-        odd = settings.value('offline_maps_dir', '')
-        odd_isChecked_str = settings.value('use_offline_cb', 'False')
-        if type(odd_isChecked_str) is str:
-            odd_isChecked = odd_isChecked_str.lower() == 'true'
-        else:
-            odd_isChecked = odd_isChecked_str
-        settings.endGroup()
+#         ###   offline maps settings   ###
+#         self.offline_checkbox = QCheckBox('Use offline maps  ')
+#         self.offline_directory_label = QLabel("Use offline maps")
+#         # read in the offline_director from settings if there is one
+#         settings = QSettings('LANL', 'InfraView')
+#         settings.beginGroup('LocationWidget')
+#         odd = settings.value('offline_maps_dir', '')
+#         odd_isChecked_str = settings.value('use_offline_cb', 'False')
+#         if type(odd_isChecked_str) is str:
+#             odd_isChecked = odd_isChecked_str.lower() == 'true'
+#         else:
+#             odd_isChecked = odd_isChecked_str
+#         settings.endGroup()
 
-        self.offline_directory_label.setText(odd)
-        # for now, if there is a directory in the offline_directory_label, assume they want to use that, and activate checkbox
-        self.offline_checkbox.setChecked(odd_isChecked)
-        self.offline_directory_label.setEnabled(odd_isChecked)
+#         self.offline_directory_label.setText(odd)
+#         # for now, if there is a directory in the offline_directory_label, assume they want to use that, and activate checkbox
+#         self.offline_checkbox.setChecked(odd_isChecked)
+#         self.offline_directory_label.setEnabled(odd_isChecked)
 
-        self.offline_directory_select_button = QPushButton("Select Folder...")
-        self.offline_directory_select_button.setEnabled(odd_isChecked)
+#         self.offline_directory_select_button = QPushButton("Select Folder...")
+#         self.offline_directory_select_button.setEnabled(odd_isChecked)
 
-        self.offline_file_dialog = QFileDialog()
-        self.offline_file_dialog.setFileMode(QFileDialog.Directory)
+#         self.offline_file_dialog = QFileDialog()
+#         self.offline_file_dialog.setFileMode(QFileDialog.Directory)
 
-        offline_layout = QHBoxLayout()
-        offline_layout.addWidget(self.offline_checkbox)
-        offline_layout.addWidget(self.offline_directory_label)
-        offline_layout.addWidget(self.offline_directory_select_button)
+#         offline_layout = QHBoxLayout()
+#         offline_layout.addWidget(self.offline_checkbox)
+#         offline_layout.addWidget(self.offline_directory_label)
+#         offline_layout.addWidget(self.offline_directory_select_button)
 
-        ###   dialog buttons   ###
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok,
-                                   Qt.Horizontal,
-                                   self)
-        buttons.accepted.connect(self.accept)
+#         ###   dialog buttons   ###
+#         buttons = QDialogButtonBox(QDialogButtonBox.Ok,
+#                                    Qt.Horizontal,
+#                                    self)
+#         buttons.accepted.connect(self.accept)
 
-        ###   layouts   ###
-        boxes_layout = QHBoxLayout()
-        boxes_layout.addWidget(features_gb)
-        boxes_layout.addWidget(colors_gb)
+#         ###   layouts   ###
+#         boxes_layout = QHBoxLayout()
+#         boxes_layout.addWidget(features_gb)
+#         boxes_layout.addWidget(colors_gb)
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(boxes_layout)
-        main_layout.addWidget(self.backgroud_image_checkbox)
-        #main_layout.addWidget(self.show_grid_checkbox)
-        main_layout.addLayout(resolution_layout)
-        main_layout.addLayout(offline_layout)
-        main_layout.addStretch()
-        main_layout.addWidget(buttons)
+#         main_layout = QVBoxLayout()
+#         main_layout.addLayout(boxes_layout)
+#         main_layout.addWidget(self.backgroud_image_checkbox)
+#         #main_layout.addWidget(self.show_grid_checkbox)
+#         main_layout.addLayout(resolution_layout)
+#         main_layout.addLayout(offline_layout)
+#         main_layout.addStretch()
+#         main_layout.addWidget(buttons)
 
-        self.setLayout(main_layout)
+#         self.setLayout(main_layout)
 
-        self.connect_signals_and_slots()
+#         self.connect_signals_and_slots()
 
-    def connect_signals_and_slots(self):
-        self.offline_checkbox.clicked.connect(self.offline_directory_select_button.setEnabled)
-        self.offline_checkbox.clicked.connect(self.offline_directory_label.setEnabled)
-        self.offline_checkbox.clicked.connect(self.update_settings)
+#     def connect_signals_and_slots(self):
+#         self.offline_checkbox.clicked.connect(self.offline_directory_select_button.setEnabled)
+#         self.offline_checkbox.clicked.connect(self.offline_directory_label.setEnabled)
+#         self.offline_checkbox.clicked.connect(self.update_settings)
 
-        self.ocean_color_button.clicked.connect(self.update_ocean_color)
-        self.land_color_button.clicked.connect(self.update_land_color)
+#         self.ocean_color_button.clicked.connect(self.update_ocean_color)
+#         self.land_color_button.clicked.connect(self.update_land_color)
 
-        self.backgroud_image_checkbox.clicked.connect(self.toggle_background_image)
-        self.show_grid_checkbox.clicked.connect(self.update_grid_lines)
-        self.offline_directory_select_button.clicked.connect(self.select_offline_maps_directory)
+#         self.backgroud_image_checkbox.clicked.connect(self.toggle_background_image)
+#         self.show_grid_checkbox.clicked.connect(self.update_grid_lines)
+#         self.offline_directory_select_button.clicked.connect(self.select_offline_maps_directory)
 
-    def toggle_background_image(self):
-        self.land_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
-        self.ocean_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
-        self.signal_background_changed.emit()
+#     def toggle_background_image(self):
+#         self.land_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
+#         self.ocean_color_button.setDisabled(self.backgroud_image_checkbox.isChecked())
+#         self.signal_background_changed.emit()
 
-    def update_grid_lines(self):
-        self.signal_map_settings_changed.emit()
+#     def update_grid_lines(self):
+#         self.signal_map_settings_changed.emit()
 
-    def update_ocean_color(self):
-        new_color = QColorDialog.getColor(self.ocean_color_button.color())
-        if new_color.isValid():
-            self.ocean_color_button.set_color(new_color)
-            self.signal_colors_changed.emit()
+#     def update_ocean_color(self):
+#         new_color = QColorDialog.getColor(self.ocean_color_button.color())
+#         if new_color.isValid():
+#             self.ocean_color_button.set_color(new_color)
+#             self.signal_colors_changed.emit()
 
-    def update_land_color(self):
-        new_color = QColorDialog.getColor(self.land_color_button.color())
-        if new_color.isValid(): 
-            self.land_color_button.set_color(new_color)
-            self.signal_colors_changed.emit()
+#     def update_land_color(self):
+#         new_color = QColorDialog.getColor(self.land_color_button.color())
+#         if new_color.isValid(): 
+#             self.land_color_button.set_color(new_color)
+#             self.signal_colors_changed.emit()
 
-    def select_offline_maps_directory(self):
-        curr_dir = self.offline_directory_label.text()
+#     def select_offline_maps_directory(self):
+#         curr_dir = self.offline_directory_label.text()
         
-        new_dir = QFileDialog.getExistingDirectory()
+#         new_dir = QFileDialog.getExistingDirectory()
         
-        self.offline_directory_label.setText(new_dir) 
-        self.signal_offline_directory_changed.emit()
+#         self.offline_directory_label.setText(new_dir) 
+#         self.signal_offline_directory_changed.emit()
         
-        settings = QSettings('LANL', 'InfraView')
-        settings.beginGroup('LocationWidget')
-        settings.setValue('offline_maps_dir', new_dir)
-        settings.endGroup()
+#         settings = QSettings('LANL', 'InfraView')
+#         settings.beginGroup('LocationWidget')
+#         settings.setValue('offline_maps_dir', new_dir)
+#         settings.endGroup()
 
-    def update_settings(self):
-        settings = QSettings('LANL', 'InfraView')
-        settings.beginGroup('LocationWidget')
-        settings.setValue('use_offline_cb', self.offline_checkbox.isChecked())
-        settings.endGroup()
+#     def update_settings(self):
+#         settings = QSettings('LANL', 'InfraView')
+#         settings.beginGroup('LocationWidget')
+#         settings.setValue('use_offline_cb', self.offline_checkbox.isChecked())
+#         settings.endGroup()
 
 
 class IPColorButton(QPushButton):
@@ -1163,7 +1162,7 @@ class IPColorButton(QPushButton):
         return QColor(self.current_color)
 
 
-class IPExtentSettingsWidget(QWidget):
+class IPExtentSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
     sig_extent_changed = pyqtSignal(list)
     sig_set_to_global = pyqtSignal()
@@ -1174,11 +1173,6 @@ class IPExtentSettingsWidget(QWidget):
         self.buildUI()
 
     def buildUI(self):
-
-        # pal = QPalette()
-        # pal.setColor(QPalette.Window, Qt.lightGray)
-        # self.setAutoFillBackground(True)
-        # self.setPalette(pal)
 
         ll_groupbox = QGroupBox("Lower left coordinates")
         ur_groupbox = QGroupBox("Upper right coordinates")
