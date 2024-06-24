@@ -7,12 +7,13 @@ from PyQt5.QtCore import QDir, QTime, QDate, QSettings, pyqtSignal
 from PyQt5.QtGui import QIcon
 
 from InfraView.widgets import IPEventBrowser
+from InfraView.widgets import IPBaseWidgets
 
 from obspy.core import UTCDateTime
 import pyproj
 
 
-class IPEventWidget(QWidget):
+class IPEventWidget(IPBaseWidgets.IPSettingsWidget):
 
     sigEventWidgetChanged = pyqtSignal(dict)
     sigEventCleared = pyqtSignal()

@@ -117,7 +117,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.main_widget)
 
-        # go ahead and create dialogs here
+        # Instantiate dialogs here
         self.fill_sta_info_dialog = IPFillStationInfoDialog()
         self.redundant_trace_dialog = IPRedundantTraceDialog()
         self.aboutDialog = IPAboutDialog(self.progname, self.progversion)
