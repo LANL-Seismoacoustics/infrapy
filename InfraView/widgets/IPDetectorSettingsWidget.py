@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (QCheckBox, QDoubleSpinBox, QSpinBox,
 from PyQt5.QtCore import pyqtSlot
 
 from InfraView.widgets import IPBaseWidgets
+# import infrapy modules here
+from infrapy.detection import beamforming_new
 
 class IPDetectorSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
@@ -93,6 +95,10 @@ class IPDetectorSettingsWidget(IPBaseWidgets.IPSettingsWidget):
     @pyqtSlot(float)
     def set_auto_threshold_level(self, level):
         self.auto_threshold_level = level
+
+    @pyqtSlot(dict)
+    def calculate_auto_threshold_level(self, fstat_dict):
+        self.auto_threshold_level = beamforming_new.calc_det_thresh(fstat_dict['fvals'], fstat_dict['det_pval'], fstat_dict['tb_prod'], fstat_dict['ch_cnt'])
 
     def get_auto_threshold_level(self):
         return self.auto_threshold_level

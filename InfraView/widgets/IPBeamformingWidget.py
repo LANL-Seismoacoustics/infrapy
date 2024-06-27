@@ -975,6 +975,7 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.signal_runFinished.connect(self.runFinished)
         self.bfWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
         self.bfWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
+        self.bfWorker.signal_noise_fvals_complete.connect(self.detector_settings.calculate_auto_threshold_level)
         self.bfWorker.signal_error_popup.connect(IPUtils.errorPopup)
         self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
 
@@ -1304,6 +1305,119 @@ class IPBeamformingWidget(QWidget):
         self.waveformPlot.setYRange(0, 1, padding=0)
         self.clearResultPlots()     # it doesn't make sense to have results and no waveform
 
+class ThresholdWorkerObject(QtCore.QObject):
+
+    signal_threshold_calc_is_running = pyqtSignal(bool)
+    signal_threshold_calculated = pyqtSignal(float)
+    signal_noise_fvals_complete = pyqtSignal(object)
+
+    def __init__(self, auto_thresh, pool, method,
+                 noiseRange, freqRange, sub_window_len,
+                 win_length, win_step, signal_cnt
+                 tracev_range, tracev_resol,
+                 back_az_range, back_az_resol):
+        super().__init__()
+        self.pool = pool
+        self.method = method
+        self.is_auto_threshold = auto_thresh
+        self.noiseRange = noiseRange
+        self.freqRange = freqRange
+        self.win_length = win_length
+        self.win_step = win_step
+        self.signal_cnt = signal_cnt
+        self.back_az_resolution = back_az_resol
+        self.back_az_start = back_az_range[0]
+        self.back_az_end = back_az_range[1]
+        self.trace_v_resolution = tracev_resol
+        self.trace_v_range = tracev_range
+
+        if sub_window_len is None:
+            self.sub_window_len = self.win_length
+        else:
+            self.sub_window_len = sub_window_len
+
+        # Items below could be added to the beamformer settings
+        self.sub_window_overlap = 0.5
+        self.fft_window = 'hanning'
+        self.normalize_windowing = False
+        self.normalize_beam = True
+
+    @pyqtSlot()
+    def run(self):
+
+        x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
+        M, _ = x.shape
+
+        # define slowness_grid... these are the x,y values that correspond to the beam_power values
+        slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
+        delays = beamforming_new.compute_delays(geom, slowness)
+
+        back_az_vals = np.arange(self.back_az_start, self.back_az_end, self.back_az_resolution)
+        trc_vel_vals = np.arange(self.trace_v_range[0], self.trace_v_range[1], self.trace_v_resolution)
+
+        # Compute the noise covariance if using GLS and the detection threshold
+        if self.method == "gls":
+            _, S, _ = beamforming_new.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
+            ns_covar_inv = np.empty_like(S)
+            for n in range(S.shape[2]):
+                S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
+                ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
+        else:
+            ns_covar_inv = None
+
+        # #################################################### 
+        # Compute detection threshold
+        if self.is_auto_threshold:
+            self.signal_threshold_calc_is_running.emit(True)
+            if self.pool:
+                args = []
+                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                    if window_start + self.win_length > self.noiseRange[1]:
+                        break
+
+                    args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
+                                        self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
+                                        self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
+
+                try:
+                    beam_results = np.array(self.pool.map(self.window_beamforming_map_wrapper, args))[:, 0, :]
+                except IndexError:
+                    IPUtils.errorPopup('Index Error...This usually occurs because the width \n'
+                                       'of your noise window is less than the length of your \n'
+                                       'beamforming window.  Correct that and try rerunning.')
+                    self.stop()
+                    return
+
+            else:
+                beam_results = []
+                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
+                    if window_start + self.win_length > self.noiseRange[1]:
+                        break
+                    peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
+                    for j in range(self.signal_cnt):
+                        beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
+                beam_results = np.array(beam_results)
+
+            f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
+            tb_prod = self.win_length * (self.freqRange[1] - self.freqRange[0])
+            ch_cnt = M
+
+            #print("Fval type: {}".format(type(f_vals)))
+            #det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            
+            # thresh_dict is a dictionary containing info needed to calculate the threshold
+            thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': ch_cnt}
+
+            self.signal_noise_fvals_complete.emit(thresh_dict)
+            self.signal_threshold_calc_is_running.emit(False)
+            #self.signal_threshold_calculated.emit(det_thresh)
+
+        # ########## Finished calculating threshold ######################
+
+    @staticmethod
+    def window_beamforming_map_wrapper(args):
+        return window_beamforming_map(*args)
+        
 
 class BeamformingWorkerObject(QtCore.QObject):
 
@@ -1314,6 +1428,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_timeWindowChanged = pyqtSignal(tuple)
     signal_threshold_calc_is_running = pyqtSignal(bool)
     signal_threshold_calculated = pyqtSignal(float)
+    signal_noise_fvals_complete = pyqtSignal(object)
     signal_error_popup = pyqtSignal(str, str)
     signal_reset_beamformer = pyqtSignal()
 
@@ -1433,10 +1548,18 @@ class BeamformingWorkerObject(QtCore.QObject):
                 beam_results = np.array(beam_results)
 
             f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-            det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            tb_prod = self.win_length * (self.freqRange[1] - self.freqRange[0])
+            ch_cnt = M
 
+            #print("Fval type: {}".format(type(f_vals)))
+            #det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            
+            # thresh_dict is a dictionary containing info needed to calculate the threshold
+            thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': ch_cnt}
+
+            self.signal_noise_fvals_complete.emit(thresh_dict)
             self.signal_threshold_calc_is_running.emit(False)
-            self.signal_threshold_calculated.emit(det_thresh)
+            #self.signal_threshold_calculated.emit(det_thresh)
 
         # ########## Finished calculating threshold ######################
 
