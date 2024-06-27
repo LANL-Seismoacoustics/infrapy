@@ -1058,12 +1058,12 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             while np.all(det_mask[n:n + (det_len + 1)]) and n + (det_len + 1) < len(det_mask):
                 det_len += 1
 
-            # back_az_min = np.min(back_az_vals[n:n + det_len])
-            # back_az_max = np.max(back_az_vals[n:n + det_len])
+            # # back_az_min = np.min(back_az_vals[n:n + det_len])
+            # # back_az_max = np.max(back_az_vals[n:n + det_len])
 
-            # back_az_diff = abs(back_az_max - back_az_min)
-            # if back_az_diff > 180.0:
-            #     back_az_diff = abs(back_az_diff - 360.0)
+            # # back_az_diff = abs(back_az_max - back_az_min)
+            # # if back_az_diff > 180.0:
+            # #     back_az_diff = abs(back_az_diff - 360.0)
 
             # if back_az_diff < back_az_lim:
             
