@@ -118,11 +118,7 @@ class IPPlotItem(pg.PlotItem):
 
         #self.autoDownsample = True
         #self.setDownsampling(auto=True, ds=1000)
-        self.setClipToView(True)
-
-        #self.autoDownsample = True
-        #self.setDownsampling(auto=True, ds=1000)
-        self.setClipToView(True)
+        ###self.setClipToView(True)
 
         # this will tell the widget if you can click on it and generate a 'pick'
         self.pickable = pickable

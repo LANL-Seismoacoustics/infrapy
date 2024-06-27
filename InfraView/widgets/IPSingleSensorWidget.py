@@ -17,6 +17,7 @@ from obspy.core import UTCDateTime
 
 from InfraView.widgets import IPPlotItem
 from InfraView.widgets import IPUtils
+from InfraView.widgets import IPBaseWidgets
 
 from infrapy.detection import spectral
 
@@ -529,7 +530,7 @@ class IPSpectrogramWidget(IPPlotItem.IPPlotItem):
     
 
 
-class IPSpectrogramSettingsWidget(QWidget):
+class IPSpectrogramSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
     sig_spectrogram_changed = pyqtSignal()
   

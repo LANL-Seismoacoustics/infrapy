@@ -65,8 +65,8 @@ class IPMapWidget(QWidget):
         self.fig = Figure()
         self.zoom = 1
         self.mapCanvas = FigureCanvas(self.fig)
-        self.mapCanvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Expanding)
+        # self.mapCanvas.setSizePolicy(QtWidgets.QSizePolicy.Ignored,
+        #                              QtWidgets.QSizePolicy.Ignored)
 
         self.map_export_dialog = IPMapExportDialog(self, self.fig)
         self.missing_maps_dialog = IPMissingMapsDialog(self)
@@ -510,6 +510,12 @@ class IPMapWidget(QWidget):
         minLon = min(lons + self.end_lons)
         center_lon = minLon + (maxLon - minLon)/2.
 
+<<<<<<< HEAD
+=======
+        #print("lats: {}  {}".format(minLat, maxLat))
+        #print("lons: {}  {}".format(minLon, maxLon))
+
+>>>>>>> 6c104b1 (first addition of variance based detector)
         if maxLon != minLon:
             width = abs(maxLon - minLon)
         else:
@@ -525,6 +531,12 @@ class IPMapWidget(QWidget):
         width_adj = width * 0.10
         height_adj = height * 0.10
 
+<<<<<<< HEAD
+=======
+        #print("clat = {} clon = {}".format(center_lat, center_lon))
+        #print(width, height)
+
+>>>>>>> 6c104b1 (first addition of variance based detector)
         minLat = center_lat - height/2. - height_adj
         maxLat = center_lat + height/2. + height_adj
         minLon = center_lon - width/2. - width_adj

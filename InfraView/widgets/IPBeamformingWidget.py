@@ -1212,7 +1212,8 @@ class IPBeamformingWidget(QWidget):
                                             det_p_val=self.detector_settings.pval_spin.value(), 
                                             min_seq=min_seq, 
                                             back_az_lim=self.detector_settings.back_az_limit.value(),
-                                            fixed_thresh=threshold)
+                                            fixed_thresh=threshold,
+                                            merge_dets=self.detector_settings.merge_detections_cb.isChecked())
 
             
             for w in w_array:

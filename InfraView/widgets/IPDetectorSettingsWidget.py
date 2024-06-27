@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QWidget, QCheckBox, QDoubleSpinBox, QSpinBox,
+from PyQt5.QtWidgets import (QCheckBox, QDoubleSpinBox, QSpinBox,
                              QFormLayout, QHBoxLayout, QButtonGroup)
 
 from PyQt5.QtCore import pyqtSlot
@@ -49,11 +49,16 @@ class IPDetectorSettingsWidget(IPBaseWidgets.IPSettingsWidget):
         self.manual_value.setValue(1.0)
         self.manual_value.setEnabled(False)
 
+        self.merge_detections_cb = QCheckBox()
+        self.merge_detections_cb.setChecked(True)
+        self.merge_detections_cb.setToolTip("Merge detections if they are close in time.")
+
         main_layout = QHBoxLayout()
 
         form_layout_col1 = QFormLayout()
         form_layout_col2 = QFormLayout()
         form_layout_col3 = QFormLayout()
+        form_layout_col4 = QFormLayout()
 
         self.det_type_group.addButton(self.auto_checkbox)
         self.det_type_group.addButton(self.manual_checkbox)
@@ -66,12 +71,14 @@ class IPDetectorSettingsWidget(IPBaseWidgets.IPSettingsWidget):
         
         form_layout_col3.addRow("Back azimuth scatter limit: ", self.back_az_limit)
         form_layout_col3.addRow("Minimum peak width: ", self.min_peak_width)
+
+        form_layout_col4.addRow("Merge nearby detections", self.merge_detections_cb)
         
         main_layout.addLayout(form_layout_col1)
         main_layout.addLayout(form_layout_col2)
         main_layout.addLayout(form_layout_col3)
+        main_layout.addLayout(form_layout_col4)
         main_layout.addStretch()
-        main_layout.insertSpacing(2, 20)
 
         self.setLayout(main_layout)
 

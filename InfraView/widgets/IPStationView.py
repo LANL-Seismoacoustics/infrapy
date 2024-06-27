@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QLabel, QHBoxLayout, QCheckBox, QDialogButtonBox,
                              QPushButton, QWidget, QTextEdit, QTabWidget, QFileDialog,
                              QVBoxLayout, QDialog, QRadioButton, QButtonGroup)
 
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon, QPalette
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QDir, QSettings
 
@@ -492,7 +492,9 @@ class IPArrayView(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setStyleSheet("background-color:white;")
+        pal = self.palette()
+        pal.setColor(QPalette.Window, Qt.white)
+        self.setPalette(pal)
 
         self.sta_spi = None
         self.chan_spi = None
@@ -514,20 +516,14 @@ class IPArrayView(QWidget):
         self.metric_radio = QRadioButton('Metric')
         self.metric_radio.clicked.connect(self.set_data_from_radio)
 
-        
-        # self.units_buttonGroup.addButton(self.latlon_radio)
-        # self.units_buttonGroup.addButton(self.metric_radio)
-
         cbox_layout = QHBoxLayout()
         cbox_layout.addWidget(self.show_chans_ckbox)
         cbox_layout.addWidget(self.show_stas_ckbox)
         cbox_layout.addStretch()
         cbox_layout.addWidget(self.latlon_radio)
         cbox_layout.addWidget(self.metric_radio)
-        
 
         self.station_plot = pg.PlotWidget(title='Inventory Geometry')
-        self.station_plot.setAspectLocked()
 
         self.station_plot.showAxis('right')
         self.station_plot.getAxis('right').setTicks('')
