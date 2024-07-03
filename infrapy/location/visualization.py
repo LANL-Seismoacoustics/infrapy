@@ -144,7 +144,7 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
     ax = _setup_map(fig, [[lat_min, lat_max], [lon_min, lon_max]])
     
     spatial_pdf = np.array(bisl_result['spatial_pdf'])
-    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=2.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=5.0, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
     ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
     if not zoom:

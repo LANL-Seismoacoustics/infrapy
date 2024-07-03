@@ -25,13 +25,15 @@ from ..utils import data_io
 @click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
-@click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['LOC']['resolution'] + ")", default=None, type=int)
+@click.option("--latlon-resol", help="Resolution of latitude/longitude grid (default: " + config.defaults['LOC']['latlon_resol'] + ")", default=None, type=float)
+@click.option("--tm-resol", help="Resolution of origin time grid (default: " + config.defaults['LOC']['tm_resol'] + ")", default=None, type=float)
+
 @click.option("--src-est", help="Estimated source location and radius of region to consider (default: None)", default=None)
 @click.option("--rcel-wts", help="Custom reciprocal celerity model weights", default=None)
 @click.option("--rcel-mns", help="Custom reciprocal celerity model means", default=None)
 @click.option("--rcel-sds", help="Custom reciprocal celerity model standard deviations", default=None)
 @click.option("--pgm-file", help="Path geometry model (PGM) file (default: None)", default=None)
-def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, range_max, resolution, src_est, rcel_wts, rcel_mns, rcel_sds, pgm_file):
+def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, range_max, latlon_resol, tm_resol, src_est, rcel_wts, rcel_mns, rcel_sds, pgm_file):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -75,7 +77,8 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
     # Algorithm parameters
     back_az_width = config.set_param(user_config, 'LOC', 'back_az_width', back_az_width, 'float')
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
-    resolution = config.set_param(user_config, 'LOC', 'resolution', resolution, 'int')
+    latlon_resol = config.set_param(user_config, 'LOC', 'latlon_resol', latlon_resol, 'float')
+    tm_resol = config.set_param(user_config, 'LOC', 'tm_resol', tm_resol, 'float')
     src_est = config.set_param(user_config, 'LOC', 'src_est', src_est, 'string')
     pgm_file = config.set_param(user_config, 'LOC', 'pgm_file', pgm_file, 'str')
 
@@ -85,7 +88,8 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
     click.echo('\n' + "Parameter summary:")
     click.echo("  back_az_width: " + str(back_az_width))
     click.echo("  range_max: " + str(range_max))
-    click.echo("  resolution: " + str(resolution))
+    click.echo("  latlon_resol: " + str(latlon_resol))
+    click.echo("  tm_resol: " + str(tm_resol))
     click.echo("  src_est: " + str(src_est))
 
     if rcel_wts is not None:
@@ -113,7 +117,7 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
         # run localization analysis for multiple detection sets
         for j, det_list in enumerate(events):
             click.echo('\n' + "Running BISL on event " + str(j + 1) + " of " + str(len(events)))
-            result = bisl.run(det_list, path_geo_model=pgm, custom_region=src_est, resol=resolution, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
+            result = bisl.run(det_list, path_geo_model=pgm, custom_region=src_est, latlon_resol=latlon_resol, tm_resol=tm_resol, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
 
             # Determine output format for BISL results
             click.echo('\n' + "BISL Summary:")
@@ -125,7 +129,7 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
     else:
         # run a single localization analysis
         click.echo("")
-        result = bisl.run(events, path_geo_model=pgm, custom_region=src_est, resol=resolution, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
+        result = bisl.run(events, path_geo_model=pgm, custom_region=src_est, latlon_resol=latlon_resol, tm_resol=tm_resol, bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=range_max/4.0)
 
         # Determine output format for BISL results
         click.echo('\n' + "BISL Summary:")
