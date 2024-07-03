@@ -131,7 +131,6 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
         click.echo('\n' + "BISL Summary:")
         click.echo(bisl.summarize(result))
 
-
         if ".loc.json" not in local_loc_label:
             local_loc_label = local_loc_label + ".loc.json"
         click.echo("Writing localization result into " + local_loc_label)

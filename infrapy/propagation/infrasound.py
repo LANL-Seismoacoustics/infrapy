@@ -416,31 +416,31 @@ class PathGeometryModel(object):
         if smooth:
             print("Loading propagation model parameters from " + model_file + " with smoothing.")
             for n_az in range(self.az_bin_cnt):
-                self.az_dev_mns[n_az] = interp1d(fit_params[0], savgol_filter(fit_params[1][n_az], 9, 3), kind='cubic')
-                self.az_dev_vrs[n_az] = interp1d(fit_params[0], savgol_filter(fit_params[2][n_az], 9, 3), kind='cubic')
+                self.az_dev_mns[n_az] = interp1d(fit_params[0], savgol_filter(fit_params[1][n_az], 9, 3), kind='cubic', bounds_error=False, fill_value=(fit_params[1][n_az][0], fit_params[1][n_az][-1]))
+                self.az_dev_vrs[n_az] = interp1d(fit_params[0], savgol_filter(fit_params[2][n_az], 9, 3), kind='cubic', bounds_error=False, fill_value=(fit_params[2][n_az][0], fit_params[2][n_az][-1]))
 
                 self.rcel_mns[n_az] = [0] * 3
                 self.rcel_vrs[n_az] = [0] * 3
                 self.rcel_wts[n_az] = [0] * 3
 
                 for j in range(3):
-                    self.rcel_mns[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[3][n_az][:, j], 9, 3), kind='cubic')
-                    self.rcel_vrs[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[4][n_az][:, j], 9, 3), kind='cubic')
-                    self.rcel_wts[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[5][n_az][:, j], 9, 3), kind='cubic')
+                    self.rcel_mns[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[3][n_az][:, j], 9, 3), kind='cubic', bounds_error=False, fill_value=(fit_params[3][n_az][:, j][0], fit_params[3][n_az][:, j][-1]))
+                    self.rcel_vrs[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[4][n_az][:, j], 9, 3), kind='cubic', bounds_error=False, fill_value=(fit_params[4][n_az][:, j][0], fit_params[4][n_az][:, j][-1]))
+                    self.rcel_wts[n_az][j] = interp1d(fit_params[0], savgol_filter(fit_params[5][n_az][:, j], 9, 3), kind='cubic', bounds_error=False, fill_value=(fit_params[5][n_az][:, j][0], fit_params[5][n_az][:, j][-1]))
         else:
             print("Loading propagation model parameters from " + model_file + " without smoothing.")
             for n_az in range(self.az_bin_cnt):
-                self.az_dev_mns[n_az] = interp1d(fit_params[0], fit_params[1][n_az], kind='cubic')
-                self.az_dev_vrs[n_az] = interp1d(fit_params[0], fit_params[2][n_az], kind='cubic')
+                self.az_dev_mns[n_az] = interp1d(fit_params[0], fit_params[1][n_az], kind='cubic', bounds_error=False, fill_value=(fit_params[1][n_az][0], fit_params[1][n_az][-1]))
+                self.az_dev_vrs[n_az] = interp1d(fit_params[0], fit_params[2][n_az], kind='cubic', bounds_error=False, fill_value=(fit_params[2][n_az][0], fit_params[2][n_az][-1]))
 
                 self.rcel_mns[n_az] = [0] * 3
                 self.rcel_vrs[n_az] = [0] * 3
                 self.rcel_wts[n_az] = [0] * 3
 
                 for j in range(3):
-                    self.rcel_mns[n_az][j] = interp1d(fit_params[0], fit_params[3][n_az][:, j], kind='cubic')
-                    self.rcel_vrs[n_az][j] = interp1d(fit_params[0], fit_params[4][n_az][:, j], kind='cubic')
-                    self.rcel_wts[n_az][j] = interp1d(fit_params[0], fit_params[5][n_az][:, j], kind='cubic')
+                    self.rcel_mns[n_az][j] = interp1d(fit_params[0], fit_params[3][n_az][:, j], kind='cubic', bounds_error=False, fill_value=(fit_params[3][n_az][:, j][0], fit_params[3][n_az][:, j][-1]))
+                    self.rcel_vrs[n_az][j] = interp1d(fit_params[0], fit_params[4][n_az][:, j], kind='cubic', bounds_error=False, fill_value=(fit_params[4][n_az][:, j][0], fit_params[4][n_az][:, j][-1]))
+                    self.rcel_wts[n_az][j] = interp1d(fit_params[0], fit_params[5][n_az][:, j], kind='cubic', bounds_error=False, fill_value=(fit_params[5][n_az][:, j][0], fit_params[5][n_az][:, j][-1]))
 
     def display(self, file_id=None, hold_fig=None):
         resol = 100
