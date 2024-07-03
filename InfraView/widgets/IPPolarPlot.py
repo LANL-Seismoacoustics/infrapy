@@ -3,6 +3,25 @@ import math
 
 import pyqtgraph as pg
 
+class IPSlownessPlot(pg.PlotItem):
+
+    def __init__(self):
+        super().__init__()
+
+        self.image_item = pg.ImageItem()
+
+        self.addItem(self.image_item)
+
+        self.hideAxis('top')
+        self.hideAxis('bottom')
+        self.hideAxis('right')
+        self.hideAxis('left')
+        self.vb.setAspectLocked(lock=True, ratio=1)
+
+        cmap = pg.colormap.get('jet', source='matplotlib')
+        self.image_item.setColorMap(cmap)
+
+
 
 class IPPolarPlot(pg.PlotItem):
 

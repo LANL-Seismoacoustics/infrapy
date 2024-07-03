@@ -3,10 +3,11 @@ import json
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QPushButton,
-                             QLabel, QGridLayout, QHBoxLayout,
+                             QLabel, QDialog, QDialogButtonBox, QHBoxLayout,
                              QVBoxLayout, QLayout)
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSettings
+from PyQt5.QtCore import Qt
 
 import pandas as pd
 
@@ -15,6 +16,21 @@ from obspy import UTCDateTime
 from InfraView.widgets import IPDetectionTableView, IPPickItem, IPNewDetectionDialog, IPPickLine
 from InfraView.widgets import IPUtils
 
+class IPDuplicateDetectionDialog(QDialog):
+    def __init__(self, parent=None):
+        super(IPDuplicateDetectionDialog, self).__init__(parent)
+
+    def buildUI(self):
+        self.setWindowTitle("Duplicate Detection")
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok,
+                                   Qt.Horizontal,
+                                   self)
+        buttons.button(QDialogButtonBox.Ok).setText("Finish")
+        buttons.accepted.connect(self.accept)
+
+    def exec_(self, detection, idx):
+        pass
 
 class IPDetectionWidget(QWidget):
 
@@ -153,8 +169,6 @@ class IPDetectionWidget(QWidget):
             notes = self.new_detections_dialog.get_notes()
 
             for idx, detection in enumerate(detections):
-
-
 
                 new_detection = IPPickItem.IPPickItem(names[idx])
                 new_detection.set_peakF_UTCtime(detection[0])

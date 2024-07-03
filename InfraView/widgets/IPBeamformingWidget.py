@@ -48,7 +48,8 @@ class IPBeamformingWidget(QWidget):
 
     _plot_list = []     # list to hold references to the four main plots
 
-    _slowness_collection = []   # This will hold the slowness plots for the current run
+    slowness = []
+    _beam_collection = []   # This will hold the slowness plots for the current run
     _max_projection_data = None
 
     _t = []
@@ -188,7 +189,9 @@ class IPBeamformingWidget(QWidget):
         slownessWidget = pg.GraphicsLayoutWidget()
 
         # Create the slowness plot and its dataitem
-        self.slownessPlot = IPPolarPlot.IPPolarPlot()
+        # self.slownessPlot = IPPolarPlot.IPPolarPlot()
+        self.slownessPlot = IPPolarPlot.IPSlownessPlot()
+
         self.spi = pg.ScatterPlotItem(pxMode=False, pen=pg.mkPen(None))
         slowness_pen = pg.mkPen(color=(60, 60, 60), width=2)
         self.max_line = pg.PlotDataItem(x=[],
@@ -196,7 +199,7 @@ class IPBeamformingWidget(QWidget):
                                         pen=slowness_pen,
                                         symbol=None)
         self.max_line.setZValue(20)
-        self.slownessPlot.addItem(self.max_line)
+        #self.slownessPlot.addItem(self.max_line)
 
         # Create the slowness widget and its dataitem
         self.projectionPlot = IPPlotItem.IPPlotItem()
@@ -280,8 +283,9 @@ class IPBeamformingWidget(QWidget):
 
         self.connectSignalsAndSlots()
 
-        # Create a thread for the beamforming to run in
+        # Create a thread for the beamforming and threshold to run in
         self.bfThread = QThread()
+        self.threshThread = QThread()
 
         #Temporary
         self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
@@ -851,7 +855,7 @@ class IPBeamformingWidget(QWidget):
         self.max_projection_index = None
 
         # add the slownessPlotItem to the slowness plot
-        self.slownessPlot.addItem(self.spi)
+        #self.slownessPlot.addItem(self.spi)
 
         self.resultData = {'t': self._t,
                            'tracev': self._trace_vel,
@@ -942,6 +946,28 @@ class IPBeamformingWidget(QWidget):
             IPUtils.errorPopup('The minimum trace velocity must be less than the max.  Please correct this in the Beamformer Settings tab.')
             self.bottomTabWidget.setCurrentIndex(self.settingstab_idx)
             return
+        
+        # setup the Threshold worker
+        self.thWorker = ThresholdWorkerObject(self.detector_settings.is_auto_threshold(),
+                                              self._mp_pool,
+                                              self.bottomSettings.getMethod(),
+                                              self.streams,
+                                              self.bottomSettings.getNoiseRange(),
+                                              self.bottomSettings.getFreqRange(),
+                                              self.bottomSettings.getSubWinLength(),
+                                              self.bottomSettings.getWinLength(),
+                                              self.bottomSettings.getWinStep(),
+                                              self.bottomSettings.getNumSigs(),
+                                              self.bottomSettings.getTraceVRange(),
+                                              self.bottomSettings.getTraceVelResolution(),
+                                              self.bottomSettings.getBackAzRange(),
+                                              self.bottomSettings.getBackAzResolution(),
+                                              self.parent.waveformWidget.stationViewer.get_inventory(),
+                                              self.detector_settings.pval_spin.value())
+        
+        self.thWorker.moveToThread(self.threshThread)
+        self.thWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
+        self.thWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
 
         self.bfWorker = BeamformingWorkerObject(self.streams,
                                                 self.resultData,
@@ -965,16 +991,16 @@ class IPBeamformingWidget(QWidget):
         self.bfWorker.moveToThread(self.bfThread)
 
         self.signal_startBeamforming.connect(self.bfWorker.run)
-        # self.stopButton.clicked.connect(self.bfWorker.stop)
+        self.signal_startBeamforming.connect(self.thWorker.run)
+
         self.stopAct.triggered.connect(self.bfWorker.stop)
 
         self.bfWorker.signal_dataUpdated.connect(self.updateCurves)
         self.bfWorker.signal_slownessUpdated.connect(self.updateSlowness)
+        self.bfWorker.signal_beamUpdated.connect(self.updateBeam)
         self.bfWorker.signal_projectionUpdated.connect(self.updateProjection)
         self.bfWorker.signal_timeWindowChanged.connect(self.updateWaveformTimeWindow)
         self.bfWorker.signal_runFinished.connect(self.runFinished)
-        self.bfWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
-        self.bfWorker.signal_threshold_calculated.connect(self.detector_settings.set_auto_threshold_level)
         self.bfWorker.signal_noise_fvals_complete.connect(self.detector_settings.calculate_auto_threshold_level)
         self.bfWorker.signal_error_popup.connect(IPUtils.errorPopup)
         self.bfWorker.signal_reset_beamformer.connect(self.reset_run_buttons)
@@ -993,7 +1019,9 @@ class IPBeamformingWidget(QWidget):
         # reset the run_step
         self.run_step = 0
 
-        # start the thread
+        # start threshold calc thread
+        self.threshThread.start()
+        # start the beamformer thread
         self.bfThread.start()
 
         self.signal_startBeamforming.emit()
@@ -1024,13 +1052,36 @@ class IPBeamformingWidget(QWidget):
     @pyqtSlot(np.ndarray)
     def updateSlowness(self, slowness):
         # adds slowness to the slowness_collection
-        save_slowness = True
-        if save_slowness:
-            self._slowness_collection.append(slowness[:])
-            slowness = []
-
+        self.slowness = slowness
+        
+    @pyqtSlot(np.ndarray)
+    def updateBeam(self, avg_beam_power):
+        self._beam_collection.append(avg_beam_power)
 
     def plot_slowness_at_idx(self, idx):
+
+        resolution = 200
+        sj_vals = np.linspace(np.min(self.slowness), np.max(self.slowness), resolution)
+        
+        sx_proj, sy_proj = np.meshgrid(sj_vals, sj_vals)
+        sx_proj = sx_proj.flatten()
+        sy_proj = sy_proj.flatten()
+    
+        avg_beam_power = self._beam_collection[idx].flatten()
+        beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - sx_proj[j])**2 + (self.slowness[:,1] - sy_proj[j])**2))] for j in range(len(sx_proj))])
+        tr_vel = 1.0 / np.sqrt(sx_proj**2 + sy_proj**2)
+        beam_proj[np.logical_or(self.bottomSettings.tracev_min_spin.value() > tr_vel, tr_vel > self.bottomSettings.tracev_max_spin.value())] = np.nan
+        beam_proj = np.reshape(beam_proj, (resolution, resolution)).T
+        
+        self.slownessPlot.image_item.setImage(beam_proj)
+
+        self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
+        self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
+        self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
+
+
+
+    def plot_slowness_at_idx_old(self, idx):
         pg.setConfigOptions(antialias=True)
 
         self.dots = []
@@ -1041,9 +1092,9 @@ class IPBeamformingWidget(QWidget):
         max_slowness_idx = np.argmax(slowness[:,-1])
         min_slowness = np.min(slowness[:, -1])
 
-        self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
-        if self.max_line not in self.slownessPlot.items:
-            self.slownessPlot.addItem(self.max_line)
+        #self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
+        #if self.max_line not in self.slownessPlot.items:
+        #    self.slownessPlot.addItem(self.max_line)
 
         method = self.bottomSettings.getMethod()
         if method == "music" or method == "capon":
@@ -1072,7 +1123,7 @@ class IPBeamformingWidget(QWidget):
         self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
         self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
-        self.slownessPlot.setRange(self.bottomSettings.tracev_min_spin.value())
+        #self.slownessPlot.setRange(self.bottomSettings.tracev_min_spin.value())
 
         self.fstat_slowness_marker.setData([self._t[idx]], [self._f_stats[idx]])
         self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
@@ -1284,8 +1335,8 @@ class IPBeamformingWidget(QWidget):
         self.projectionCurve.clear()
         self.max_projectionCurve.clear()
 
-        self.slownessPlot.clear()
-        self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
+        #self.slownessPlot.clear()
+        #self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
         self.spi.clear()
 
         self._t.clear()
@@ -1311,14 +1362,16 @@ class ThresholdWorkerObject(QtCore.QObject):
     signal_threshold_calculated = pyqtSignal(float)
     signal_noise_fvals_complete = pyqtSignal(object)
 
-    def __init__(self, auto_thresh, pool, method,
+    def __init__(self, auto_thresh, pool, method, streams,
                  noiseRange, freqRange, sub_window_len,
-                 win_length, win_step, signal_cnt
+                 win_length, win_step, signal_cnt,
                  tracev_range, tracev_resol,
-                 back_az_range, back_az_resol):
+                 back_az_range, back_az_resol, inventory, p_val):
         super().__init__()
         self.pool = pool
         self.method = method
+        self.inv = inventory
+        self.streams = streams
         self.is_auto_threshold = auto_thresh
         self.noiseRange = noiseRange
         self.freqRange = freqRange
@@ -1330,6 +1383,7 @@ class ThresholdWorkerObject(QtCore.QObject):
         self.back_az_end = back_az_range[1]
         self.trace_v_resolution = tracev_resol
         self.trace_v_range = tracev_range
+        self.det_pval = p_val
 
         if sub_window_len is None:
             self.sub_window_len = self.win_length
@@ -1344,16 +1398,22 @@ class ThresholdWorkerObject(QtCore.QObject):
 
     @pyqtSlot()
     def run(self):
+        # Compute the detection threshold
+
+        # we want to build the latlon array so that it has the same order as the streams
+        latlon = []
+        for trace in self.streams:
+            metadata = self.inv.get_channel_metadata(trace.id)
+            latlon.append([metadata['latitude'], metadata['longitude']])
 
         x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
 
         # define slowness_grid... these are the x,y values that correspond to the beam_power values
-        slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
-        delays = beamforming_new.compute_delays(geom, slowness)
-
         back_az_vals = np.arange(self.back_az_start, self.back_az_end, self.back_az_resolution)
         trc_vel_vals = np.arange(self.trace_v_range[0], self.trace_v_range[1], self.trace_v_resolution)
+        slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
+        delays = beamforming_new.compute_delays(geom, slowness)
 
         # Compute the noise covariance if using GLS and the detection threshold
         if self.method == "gls":
@@ -1365,8 +1425,7 @@ class ThresholdWorkerObject(QtCore.QObject):
         else:
             ns_covar_inv = None
 
-        # #################################################### 
-        # Compute detection threshold
+
         if self.is_auto_threshold:
             self.signal_threshold_calc_is_running.emit(True)
             if self.pool:
@@ -1400,20 +1459,18 @@ class ThresholdWorkerObject(QtCore.QObject):
 
             f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
             tb_prod = self.win_length * (self.freqRange[1] - self.freqRange[0])
-            ch_cnt = M
 
             #print("Fval type: {}".format(type(f_vals)))
-            #det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
-            
+            det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+
             # thresh_dict is a dictionary containing info needed to calculate the threshold
-            thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': ch_cnt}
+            thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': M}
 
             self.signal_noise_fvals_complete.emit(thresh_dict)
             self.signal_threshold_calc_is_running.emit(False)
-            #self.signal_threshold_calculated.emit(det_thresh)
+            self.signal_threshold_calculated.emit(det_thresh)
 
-        # ########## Finished calculating threshold ######################
-
+    # Function wrapper for mpi
     @staticmethod
     def window_beamforming_map_wrapper(args):
         return window_beamforming_map(*args)
@@ -1424,6 +1481,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_runFinished = pyqtSignal()
     signal_dataUpdated = pyqtSignal()
     signal_slownessUpdated = pyqtSignal(np.ndarray)
+    signal_beamUpdated = pyqtSignal(np.ndarray)
     signal_projectionUpdated = pyqtSignal(np.ndarray, np.ndarray)
     signal_timeWindowChanged = pyqtSignal(tuple)
     signal_threshold_calc_is_running = pyqtSignal(bool)
@@ -1456,6 +1514,7 @@ class BeamformingWorkerObject(QtCore.QObject):
         self.is_auto_threshold = auto_thresh
         self.det_pval = p_val
 
+        self._threshold_complete = False
         self.threadStopped = True
 
         if sub_window_len is None:
@@ -1485,14 +1544,10 @@ class BeamformingWorkerObject(QtCore.QObject):
         self.threadStopped = False
 
         back_az_vals = np.arange(self._back_az_start, self._back_az_end, self._back_az_resolution)
-        # note if you make the 300 and 750 into a control, then you need to do that when you calculate the slowness size as well
-        # TODO: the trace velocity range should be added to the settings widget
-        #trc_vel_vals = np.arange(300.0, 750.0, self._trace_v_resolution)
         trc_vel_vals = np.arange(self._trace_v_range[0], self._trace_v_range[1], self._trace_v_resolution)
 
-        latlon = []
-
         # we want to build the latlon array so that it has the same order as the streams
+        latlon = []
         for trace in self.streams:
             metadata = self._inv.get_channel_metadata(trace.id)
             latlon.append([metadata['latitude'], metadata['longitude']])
@@ -1501,7 +1556,9 @@ class BeamformingWorkerObject(QtCore.QObject):
         M, _ = x.shape
 
         # define slowness_grid... these are the x,y values that correspond to the beam_power values
+
         slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
+        self.signal_slownessUpdated.emit(slowness)
         delays = beamforming_new.compute_delays(geom, slowness)
 
         # Compute the noise covariance if using GLS and the detection threshold
@@ -1513,55 +1570,6 @@ class BeamformingWorkerObject(QtCore.QObject):
                 ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
         else:
             ns_covar_inv = None
-
-        # #################################################### 
-        # Compute detection threshold here...
-        if self.is_auto_threshold:
-            self.signal_threshold_calc_is_running.emit(True)
-            if self._pool:
-                args = []
-                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
-                    if window_start + self.win_length > self.noiseRange[1]:
-                        break
-
-                    args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
-                                        self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
-                                        self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
-
-                try:
-                    beam_results = np.array(self._pool.map(self.window_beamforming_map_wrapper, args))[:, 0, :]
-                except IndexError:
-                    IPUtils.errorPopup('Index Error...This usually occurs because the width \n'
-                                    'of your noise window is less than the length of your \n'
-                                    'beamforming window.  Correct that and try rerunning.')
-                    self.stop()
-                    return
-
-            else:
-                beam_results = []
-                for window_start in np.arange(self.noiseRange[0], self.noiseRange[1], self.win_step):
-                    if window_start + self.win_length > self.noiseRange[1]:
-                        break
-                    peaks = self.window_beamforming(x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv)
-                    for j in range(self.signal_cnt):
-                        beam_results = beam_results + [[peaks[j][0], peaks[j][1], peaks[j][2]]]
-                beam_results = np.array(beam_results)
-
-            f_vals = beam_results[:, 2] / (1.0 - beam_results[:, 2]) * (x.shape[0] - 1)
-            tb_prod = self.win_length * (self.freqRange[1] - self.freqRange[0])
-            ch_cnt = M
-
-            #print("Fval type: {}".format(type(f_vals)))
-            #det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
-            
-            # thresh_dict is a dictionary containing info needed to calculate the threshold
-            thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': ch_cnt}
-
-            self.signal_noise_fvals_complete.emit(thresh_dict)
-            self.signal_threshold_calc_is_running.emit(False)
-            #self.signal_threshold_calculated.emit(det_thresh)
-
-        # ########## Finished calculating threshold ######################
 
         # Run beamforming in windowed data and write to file
 
@@ -1593,7 +1601,7 @@ class BeamformingWorkerObject(QtCore.QObject):
                                              signal_cnt=self.signal_cnt,
                                              pool=self._pool,
                                              ns_covar_inv=ns_covar_inv)
-
+            
             # Compute relative beam power and average over frequencies
             avg_beam_power = np.average(beam_power, axis=0)
 
@@ -1610,7 +1618,6 @@ class BeamformingWorkerObject(QtCore.QObject):
             if self.method == "bartlett_covar" or self.method == "bartlett" or self.method == "gls":
                 fisher_val = peaks[0][2] / (1.0 - peaks[0][2]) * (M - 1)
                 self.resultData['fstats'].append(fisher_val)
-
             else:
                 self.resultData['fstats'].append(peaks[0][2])
 
@@ -1621,15 +1628,21 @@ class BeamformingWorkerObject(QtCore.QObject):
             az_proj, _ = beamforming_new.project_beam(beam_power, back_az_vals, trc_vel_vals)
             projection = np.c_[back_az_vals, az_proj]
 
+            
+            
+            
+
             # signal projection plot to update
             self.signal_projectionUpdated.emit(projection, avg_beam_power)
 
             # signal slowness plot to update
-            self.signal_slownessUpdated.emit(np.c_[slowness, avg_beam_power])
+        
+            self.signal_beamUpdated.emit(avg_beam_power)
 
-    # the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
-    # as a result we must make this a static method and pass all variables through the call instead of using the
-    # standard "self.x" way.
+
+# the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
+# as a result we must make this a static method and pass all variables through the call instead of using the
+# standard "self.x" way.
 
 def window_beamforming_map(x, 
                            t, 

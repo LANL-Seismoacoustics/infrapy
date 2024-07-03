@@ -1068,7 +1068,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             # if back_az_diff < back_az_lim:
             
             back_az_95conf = stats.circstd(back_az_vals[n:n+det_len], high=360.0) * 2.0
-            print('baz limit: {} \t baz 95conf: {}'.format(back_az_lim, back_az_95conf))
+            
             if back_az_95conf < back_az_lim:
                 pk_index = np.argmax(fstat_vals[n:n + det_len]) 
 
