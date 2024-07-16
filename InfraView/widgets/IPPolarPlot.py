@@ -3,22 +3,106 @@ import math
 
 import pyqtgraph as pg
 
+from PyQt5.QtWidgets import QComboBox, QLabel, QPushButton, QHBoxLayout, QFormLayout
+from PyQt5.QtCore import Qt
+
+from InfraView.widgets import IPBaseWidgets
+
+class IPSlownessSettingsWidget(IPBaseWidgets.IPSettingsWidget):
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.beamformingWidget = parent
+        
+        self.buildUI()
+
+    def buildUI(self):
+        self.update_button = QPushButton("Update")
+        self.update_button.setMaximumWidth(100)
+        self.update_button.setEnabled(False)
+        self.update_button.clicked.connect(self.deactivate_update_button)
+        self.update_button.clicked.connect(self.beamformingWidget.slownessPlot.update)
+
+        colormap_label = QLabel("Color Map: ")
+        self.colormap_cb = QComboBox()
+
+        available_maps = pg.colormap.listMaps(source='matplotlib')
+        self.colormap_cb.addItems(available_maps)
+        self.colormap_cb.setCurrentText('jet')
+        self.colormap_cb.currentTextChanged.connect(self.activate_update_button)
+
+        form1_layout = QFormLayout()
+        form1_layout.addRow(colormap_label, self.colormap_cb)
+
+        main_layout = QHBoxLayout()
+        main_layout.addLayout(form1_layout)
+        main_layout.addWidget(self.update_button)
+
+        self.setLayout(main_layout)
+
+    def settings(self):
+        '''returns the current settings'''
+        settings = {'cmap': self.colormap_cb.currentText()}
+
+        return settings
+
+    def activate_update_button(self):
+        self.update_button.setEnabled(True)
+
+    def deactivate_update_button(self):
+        self.update_button.setEnabled(False)
+
 class IPSlownessPlot(pg.PlotItem):
 
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
 
+        self.parent = parent
+
         self.image_item = pg.ImageItem()
+        self.resolution = 0
 
         self.addItem(self.image_item)
 
-        self.hideAxis('top')
-        self.hideAxis('bottom')
-        self.hideAxis('right')
-        self.hideAxis('left')
+        self.showAxis('top')
+        self.showAxis('right')
+
         self.vb.setAspectLocked(lock=True, ratio=1)
 
         cmap = pg.colormap.get('jet', source='matplotlib')
+        self.image_item.setColorMap(cmap)
+    
+    def set_image(self, image, resolution):
+
+        self.resolution = resolution
+        self.image_item.setImage(image)
+        self.setXRange(0, resolution, padding=0)
+        self.setYRange(0, resolution, padding=0)
+
+        ax = self.getAxis('bottom')
+        ax.setTicks([])
+        ax = self.getAxis('top')
+        ax.setTicks([])
+        ax = self.getAxis('right')
+        ax.setTicks([])
+        ax = self.getAxis('left')
+        ax.setTicks([])
+
+        self.draw_radials()
+
+    def draw_radials(self):
+        count = 8
+        hr  = self.resolution/2.  # half of the resolution
+        angles = np.arange(0, 360, 360./count)
+
+        for angle in angles:
+            r_line = pg.InfiniteLine(pos=(hr,hr), angle=angle, pen=pg.mkPen((100,100,100), width=1, style=Qt.DotLine))
+            self.addItem(r_line)
+
+    def update(self):
+        settings = self.parent.slownessSettings.settings()
+        cmap = pg.colormap.get(settings['cmap'], source='matplotlib')
         self.image_item.setColorMap(cmap)
 
 

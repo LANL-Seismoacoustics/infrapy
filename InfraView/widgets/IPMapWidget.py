@@ -42,7 +42,7 @@ class IPMapWidget(QWidget):
         self.detections = []
         self.resolution = ''
         self.extent = None
-
+  
         self.current_linecolor='gray'
 
         self.gt_marker = None

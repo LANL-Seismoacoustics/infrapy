@@ -13,6 +13,8 @@ from pyqtgraph import ViewBox
 import warnings, math
 
 import numpy as np
+import scipy.ndimage as ndi
+import scipy.signal as scs
 from pathlib import Path
 
 # import infraview widgets here
@@ -190,7 +192,8 @@ class IPBeamformingWidget(QWidget):
 
         # Create the slowness plot and its dataitem
         # self.slownessPlot = IPPolarPlot.IPPolarPlot()
-        self.slownessPlot = IPPolarPlot.IPSlownessPlot()
+        self.slownessPlot = IPPolarPlot.IPSlownessPlot(self)
+        self.slownessSettings = IPPolarPlot.IPSlownessSettingsWidget(self)
 
         self.spi = pg.ScatterPlotItem(pxMode=False, pen=pg.mkPen(None))
         slowness_pen = pg.mkPen(color=(60, 60, 60), width=2)
@@ -275,6 +278,8 @@ class IPBeamformingWidget(QWidget):
         self.detector_settings.setVisible(False)
         self.main_layout.addWidget(self.bottomSettings)
         self.bottomSettings.setVisible(False)
+        self.main_layout.addWidget(self.slownessSettings)
+        self.slownessSettings.setVisible(False)
         self.main_layout.addWidget(self.main_splitter)
 
         self.setLayout(self.main_layout)
@@ -286,6 +291,7 @@ class IPBeamformingWidget(QWidget):
         # Create a thread for the beamforming and threshold to run in
         self.bfThread = QThread()
         self.threshThread = QThread()
+        self.calc_proj_index_thread = QThread()
 
         #Temporary
         self.new_detections_dialog = IPNewDetectionDialog.IPNewDetectionsDialog(self)
@@ -302,6 +308,7 @@ class IPBeamformingWidget(QWidget):
         toolButton_export = QToolButton()
         self.toolButton_bfsettings = QToolButton()
         self.toolButton_detsettings = QToolButton()
+        self.toolButton_slowsettings = QToolButton()
         toolButton_runDetector = QToolButton()
         toolButton_resetZoom = QToolButton()
 
@@ -342,6 +349,10 @@ class IPBeamformingWidget(QWidget):
         self.resetZoomAct.triggered.connect(self.reset_zoom)
         toolButton_resetZoom.setDefaultAction(self.resetZoomAct)
 
+        self.slownessSettingsAct = QAction("Slowness Settings", self)
+        self.slownessSettingsAct.triggered.connect(self.showhide_slownessSettings)
+        self.toolButton_slowsettings.setDefaultAction(self.slownessSettingsAct)
+
         self.toolbar.addWidget(toolButton_start)
         self.toolbar.addWidget(toolButton_stop)
         self.toolbar.addWidget(toolButton_clear)
@@ -354,9 +365,28 @@ class IPBeamformingWidget(QWidget):
         self.toolbar.addWidget(toolButton_resetZoom)
         self.toolbar.addWidget(toolButton_export)
 
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.toolButton_slowsettings)
+
+    def showhide_slownessSettings(self):
+        self.detector_settings.setVisible(False)
+        self.toolButton_detsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        self.bottomSettings.setVisible(False)
+        self.toolButton_bfsettings.setStyleSheet("color: rgba(20,20,20,255);")
+
+        self.slownessSettings.setVisible(self.slownessSettings.isHidden())
+
+        if self.slownessSettings.isHidden():
+            self.toolButton_slowsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        else:
+            self.toolButton_slowsettings.setStyleSheet("color: rgba(0,0,180,255);")
+
     def showhide_bfsettings(self):
         self.detector_settings.setVisible(False)
         self.toolButton_detsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        self.slownessSettings.setVisible(False)
+        self.toolButton_slowsettings.setStyleSheet("color: rgba(20,20,20,255);")
+
         self.bottomSettings.setVisible(self.bottomSettings.isHidden())
         if self.bottomSettings.isHidden():
             # change font color of button
@@ -367,6 +397,8 @@ class IPBeamformingWidget(QWidget):
     def showhide_detsettings(self):
         self.detector_settings.setVisible(self.detector_settings.isHidden())
         self.bottomSettings.setVisible(False)
+        self.toolButton_slowsettings.setStyleSheet("color: rgba(20,20,20,255);")
+        self.slownessSettings.setVisible(False)
         self.toolButton_bfsettings.setStyleSheet("color: rgba(20,20,20,255);")
         
         if self.detector_settings.isHidden():
@@ -930,6 +962,7 @@ class IPBeamformingWidget(QWidget):
         self.backAzPlot.addItem(self.backaz_curve)
 
         self._slowness_collection = []  # Clear this array for the new run
+        self._beam_collection = []
 
         # do any checks of the input here before you create the worker object.
         # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
@@ -997,7 +1030,7 @@ class IPBeamformingWidget(QWidget):
 
         self.bfWorker.signal_dataUpdated.connect(self.updateCurves)
         self.bfWorker.signal_slownessUpdated.connect(self.updateSlowness)
-        self.bfWorker.signal_beamUpdated.connect(self.updateBeam)
+        self.bfWorker.signal_beamUpdated.connect(self.updateBeam_collection)
         self.bfWorker.signal_projectionUpdated.connect(self.updateProjection)
         self.bfWorker.signal_timeWindowChanged.connect(self.updateWaveformTimeWindow)
         self.bfWorker.signal_runFinished.connect(self.runFinished)
@@ -1053,90 +1086,56 @@ class IPBeamformingWidget(QWidget):
     def updateSlowness(self, slowness):
         # adds slowness to the slowness_collection
         self.slowness = slowness
+
+        self.beam_resolution = 400
+
+        sj_vals = np.linspace(-1/self.bottomSettings.tracev_min_spin.value(), 1/self.bottomSettings.tracev_min_spin.value(), self.beam_resolution)
+        self.sx_proj, self.sy_proj = np.meshgrid(sj_vals, sj_vals)
+        self.sx_proj = self.sx_proj.flatten()
+        self.sy_proj = self.sy_proj.flatten()
+
+        self.tr_vel = 1.0 / np.sqrt(self.sx_proj**2 + self.sy_proj**2)
+        self.backaz = np.degrees(np.arctan2(self.sx_proj, self.sy_proj))
+
+        self.calc_proj_index_worker = Calc_Proj_Index_Worker(self.slowness, self.sx_proj, self.sy_proj)
         
+        self.calc_proj_index_worker.sig_finished.connect(self.calc_proj_index_thread.quit)
+
+        self.calc_proj_index_worker.sig_finished.connect(self.update_proj_index)
+
+        self.calc_proj_index_worker.moveToThread(self.calc_proj_index_thread)
+        
+        self.calc_proj_index_thread.started.connect(self.calc_proj_index_worker.run)
+        
+        self.proj_indexing = None
+        self.calc_proj_index_thread.start()
+
+
     @pyqtSlot(np.ndarray)
-    def updateBeam(self, avg_beam_power):
-        self._beam_collection.append(avg_beam_power)
+    def update_proj_index(self, proj_indexes):
+        self.proj_indexing = proj_indexes
+
+
+    @pyqtSlot(np.ndarray)
+    def updateBeam_collection(self, avg_beam_power):
+        self._beam_collection.append(avg_beam_power.flatten())
 
     def plot_slowness_at_idx(self, idx):
 
-        resolution = 200
-        sj_vals = np.linspace(np.min(self.slowness), np.max(self.slowness), resolution)
-        
-        sx_proj, sy_proj = np.meshgrid(sj_vals, sj_vals)
-        sx_proj = sx_proj.flatten()
-        sy_proj = sy_proj.flatten()
-    
-        avg_beam_power = self._beam_collection[idx].flatten()
-        beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - sx_proj[j])**2 + (self.slowness[:,1] - sy_proj[j])**2))] for j in range(len(sx_proj))])
-        tr_vel = 1.0 / np.sqrt(sx_proj**2 + sy_proj**2)
-        beam_proj[np.logical_or(self.bottomSettings.tracev_min_spin.value() > tr_vel, tr_vel > self.bottomSettings.tracev_max_spin.value())] = np.nan
-        beam_proj = np.reshape(beam_proj, (resolution, resolution)).T
-        
-        self.slownessPlot.image_item.setImage(beam_proj)
+        # while self.proj_indexing is None:
+
+        #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
+        beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
+        beam_proj[np.logical_or(self.bottomSettings.tracev_min_spin.value() > self.tr_vel, self.tr_vel > self.bottomSettings.tracev_max_spin.value())] = np.nan
+        beam_proj[np.logical_or(self.bottomSettings.backaz_start_spin.value() > self.backaz, self.backaz > self.bottomSettings.backaz_end_spin.value())] = np.nan
+        beam_proj = np.reshape(beam_proj, (self.beam_resolution, self.beam_resolution)).T
+
+        self.slownessPlot.set_image(beam_proj, self.beam_resolution)
 
         self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
         self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
 
-
-
-    def plot_slowness_at_idx_old(self, idx):
-        pg.setConfigOptions(antialias=True)
-
-        self.dots = []
-
-        slowness = self._slowness_collection[idx]
-
-        max_slowness = np.max(slowness[:, -1])
-        max_slowness_idx = np.argmax(slowness[:,-1])
-        min_slowness = np.min(slowness[:, -1])
-
-        #self.max_line.setData([0, slowness[max_slowness_idx, 0]], [0, slowness[max_slowness_idx, 1]])
-        #if self.max_line not in self.slownessPlot.items:
-        #    self.slownessPlot.addItem(self.max_line)
-
-        method = self.bottomSettings.getMethod()
-        if method == "music" or method == "capon":
-            max_slowness = np.max(slowness[:, -1])
-            min_slowness = np.min(slowness[:, -1])
-            scaled_slowness = 100 * (1.0 - (slowness[:, -1] - min_slowness) / (max_slowness - min_slowness))
-        elif method == "gls":
-            scaled_slowness = 100 * (1.0 - (slowness[:, -1]) / np.max(slowness[:, -1]))
-
-        # need to auto adjust the size of the dots so they fill up the slowness nicely
-        # the largest value on the plot will be 1/minimum_trace velocity
-        lv = 1.0/self.bottomSettings.tracev_min_spin.value()
-        dot_size = lv/15.
-
-        for i in range(slowness.shape[0]):
-            if method == "bartlett_covar" or method == "bartlett":
-                brush = pg.intColor(100 * (slowness[i, -1]), hues=100, values=1)
-            else:
-                brush = pg.intColor(scaled_slowness[i], hues=100, values=1)
-
-            self.dots.append({'pos': (slowness[i, 0], slowness[i, 1]), 'brush': brush, 'size': dot_size})
-        
-        self.spi.clear()
-        self.spi.addPoints(self.dots)
-
-        self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
-        self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
-        self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
-        #self.slownessPlot.setRange(self.bottomSettings.tracev_min_spin.value())
-
-        self.fstat_slowness_marker.setData([self._t[idx]], [self._f_stats[idx]])
-        self.backAz_slowness_marker.setData([self._t[idx]], [self._back_az[idx]])
-        self.traceV_slowness_marker.setData([self._t[idx]], [self._trace_vel[idx]])
-
-        if self.fstat_slowness_marker not in self.fstatPlot.items:
-            self.fstatPlot.addItem(self.fstat_slowness_marker)
-        if self.backAz_slowness_marker not in self.backAzPlot.items:
-            self.backAzPlot.addItem(self.backAz_slowness_marker)
-        if self.traceV_slowness_marker not in self.traceVPlot.items:
-            self.traceVPlot.addItem(self.traceV_slowness_marker)
-
-        pg.setConfigOptions(antialias=False)
 
     @pyqtSlot(np.ndarray, np.ndarray)
     def updateProjection(self, projection, avg_beam_power):
@@ -1474,7 +1473,20 @@ class ThresholdWorkerObject(QtCore.QObject):
     @staticmethod
     def window_beamforming_map_wrapper(args):
         return window_beamforming_map(*args)
+    
+class Calc_Proj_Index_Worker(QtCore.QObject):
+    sig_finished = pyqtSignal(np.ndarray)
+
+    def __init__(self, slowness, sx_proj, sy_proj):
+        super().__init__()
+        self.slowness = slowness
+        self.sx_proj = sx_proj
+        self.sy_proj = sy_proj
         
+    def run(self):
+        print("slow shape: {}    sx shape: {}  sy shape: {} ".format(self.slowness.shape, self.sx_proj.shape, self.sy_proj.shape))
+        proj_indexing = np.array([np.argmin(np.sqrt((self.slowness[:, 0] - self.sx_proj[j])**2 + (self.slowness[:, 1] - self.sy_proj[j])**2)) for j in range(len(self.sx_proj))])
+        self.sig_finished.emit(proj_indexing)
 
 class BeamformingWorkerObject(QtCore.QObject):
 
@@ -1559,6 +1571,7 @@ class BeamformingWorkerObject(QtCore.QObject):
 
         slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
         self.signal_slownessUpdated.emit(slowness)
+
         delays = beamforming_new.compute_delays(geom, slowness)
 
         # Compute the noise covariance if using GLS and the detection threshold
@@ -1628,15 +1641,10 @@ class BeamformingWorkerObject(QtCore.QObject):
             az_proj, _ = beamforming_new.project_beam(beam_power, back_az_vals, trc_vel_vals)
             projection = np.c_[back_az_vals, az_proj]
 
-            
-            
-            
-
             # signal projection plot to update
             self.signal_projectionUpdated.emit(projection, avg_beam_power)
-
-            # signal slowness plot to update
         
+            # signal beam_power update+
             self.signal_beamUpdated.emit(avg_beam_power)
 
 

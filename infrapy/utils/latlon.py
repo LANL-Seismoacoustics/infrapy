@@ -33,7 +33,7 @@
 # Last Modified     Mar.  1, 2016
 
 import numpy as np
-from numpy.core.umath_tests import inner1d
+# from numpy.core.umath_tests import inner1d
 
 # functions to port immediately:
 # sph_poly_in
@@ -405,11 +405,11 @@ def gcarc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     E=np.cross(M,N, axis=1)
     
     # 5. get intersection point directions relative to gc end points
-    # FIXME - endpoints don't count towards intersection
-    d=np.sign(inner1d(np.cross(M,latlona0, axis=1),E))
-    d+=np.sign(inner1d(np.cross(latlona1,M, axis=1),E))
-    d+=np.sign(inner1d(np.cross(N,latlonb0, axis=1),E))
-    d+=np.sign(inner1d(np.cross(latlonb1,N, axis=1),E))
+    # FIXME - endpoints don't count towards intersectionß
+    d = np.sign((np.cross(M, latlona0, axis=1) * E).sum(axis=1))
+    d += np.sign((np.cross(latlona1, M, axis=1) * E).sum(axis=1))
+    d += np.sign((np.cross(N, latlonb0, axis=1) * E).sum(axis=1))
+    d += np.sign((np.cross(latlonb1, N, axis=1) * E).sum(axis=1))
     d=d[:,np.newaxis]
     
     # 6. intersects if directions all agree

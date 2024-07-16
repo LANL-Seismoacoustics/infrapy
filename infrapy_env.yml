@@ -10,7 +10,7 @@ dependencies:
   - python=3.9
   - scipy
   - numba
-  - obspy
+  - obspy>=1.4.1
   - pyqt=5.15.7
   - pyqtgraph=0.13.7
   - pandas
