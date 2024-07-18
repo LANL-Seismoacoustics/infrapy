@@ -65,7 +65,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
 
         pg.setConfigOption('background', 'w')
         pg.setConfigOption('foreground', 'k')
-        pg.setConfigOptions(antialias=False)
+        pg.setConfigOptions(antialias=True)
 
         self.progname = progname
         self.progversion = progversion

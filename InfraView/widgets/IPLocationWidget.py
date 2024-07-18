@@ -152,16 +152,21 @@ class IPLocationWidget(QWidget):
         # self.toolbar.setStyleSheet("QToolButton:!hover { padding-left:5px; padding-right:5px; padding-top:2px; padding-bottom:2px} QToolBar {background-color: rgb(0,107,166)}")
         # self.toolbar.setStyleSheet("QToolButton:!hover {background-color:blue} QToolButton:hover { background-color: lightgray }")
 
+        self.toolButton_settings = QToolButton()
         self.map_settings_act = QAction("Map Settings...", self)
         self.map_settings_act.triggered.connect(self.mapWidget.showhide_map_settings_widget)
+        self.toolButton_settings.setDefaultAction(self.map_settings_act)
 
+        self.toolButton_extent = QToolButton()
         self.map_extent_act = QAction("Map Extent...", self)
         self.map_extent_act.triggered.connect(self.mapWidget.showhide_extent_widget)
+        self.toolButton_extent.setDefaultAction(self.map_extent_act)
 
         # The export option has a dropdown menu to select what to export
         self.toolButton_export = QToolButton()
         self.toolButton_export.setText("Export")
         self.toolButton_export.setPopupMode(QToolButton.InstantPopup)
+
         self.export_menu = QMenu()
         self.export_map_act = QAction("Map", self)
         self.export_map_act.triggered.connect(self.mapWidget.map_export_dialog.exec_)
@@ -173,8 +178,8 @@ class IPLocationWidget(QWidget):
         self.toolButton_export.setMenu(self.export_menu)
         #self.export_act.triggered.connect()
 
-        self.toolbar.addAction(self.map_settings_act)
-        self.toolbar.addAction(self.map_extent_act)
+        self.toolbar.addWidget(self.toolButton_settings)
+        self.toolbar.addWidget(self.toolButton_extent)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.toolButton_export)
         

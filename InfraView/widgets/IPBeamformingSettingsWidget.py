@@ -22,7 +22,7 @@ class IPBeamformingSettingsWidget(IPBaseWidgets.IPSettingsWidget):
         self.windowStep_spin = QDoubleSpinBox()
         self.windowStep_spin.setMaximumWidth(60)
         self.windowStep_spin.setSuffix(' s')
-        self.windowStep_spin.setMinimum(0.0)
+        self.windowStep_spin.setMinimum(0.01)
         self.windowStep_spin.setMaximum(1000000)
 
         self.numSigs_spin = QSpinBox()

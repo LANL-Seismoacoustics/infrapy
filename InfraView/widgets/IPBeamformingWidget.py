@@ -10,7 +10,7 @@ from PyQt5.QtGui import QIcon, QPainterPath, QColor, QCursor
 import pyqtgraph as pg
 from pyqtgraph import ViewBox
 
-import warnings, math
+import warnings, math, time
 
 import numpy as np
 import scipy.ndimage as ndi
@@ -1087,10 +1087,14 @@ class IPBeamformingWidget(QWidget):
         # adds slowness to the slowness_collection
         self.slowness = slowness
 
-        self.beam_resolution = 400
+        self.beam_resolution = self.slownessSettings.resolution_spin.value()
 
-        sj_vals = np.linspace(-1/self.bottomSettings.tracev_min_spin.value(), 1/self.bottomSettings.tracev_min_spin.value(), self.beam_resolution)
+        sj_vals = np.linspace(-1/self.bottomSettings.tracev_min_spin.value(), 
+                               1/self.bottomSettings.tracev_min_spin.value(), 
+                               self.beam_resolution)
+        
         self.sx_proj, self.sy_proj = np.meshgrid(sj_vals, sj_vals)
+        
         self.sx_proj = self.sx_proj.flatten()
         self.sy_proj = self.sy_proj.flatten()
 
@@ -1122,7 +1126,8 @@ class IPBeamformingWidget(QWidget):
 
     def plot_slowness_at_idx(self, idx):
 
-        # while self.proj_indexing is None:
+        while self.proj_indexing is None:
+            time.sleep(0.1)
 
         #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
@@ -1130,7 +1135,7 @@ class IPBeamformingWidget(QWidget):
         beam_proj[np.logical_or(self.bottomSettings.backaz_start_spin.value() > self.backaz, self.backaz > self.bottomSettings.backaz_end_spin.value())] = np.nan
         beam_proj = np.reshape(beam_proj, (self.beam_resolution, self.beam_resolution)).T
 
-        self.slownessPlot.set_image(beam_proj, self.beam_resolution)
+        self.slownessPlot.set_image(beam_proj, self.beam_resolution, (self.bottomSettings.tracev_min_spin.value(), self.bottomSettings.tracev_max_spin.value()))
 
         self.slowness_time_label.setText('t = {:.2f}'.format(self._t[idx]))
         self.slowness_backAz_label.setText('Back Azimuth (deg) =  {:.2f}'.format(self._back_az[idx]))
@@ -1484,7 +1489,6 @@ class Calc_Proj_Index_Worker(QtCore.QObject):
         self.sy_proj = sy_proj
         
     def run(self):
-        print("slow shape: {}    sx shape: {}  sy shape: {} ".format(self.slowness.shape, self.sx_proj.shape, self.sy_proj.shape))
         proj_indexing = np.array([np.argmin(np.sqrt((self.slowness[:, 0] - self.sx_proj[j])**2 + (self.slowness[:, 1] - self.sy_proj[j])**2)) for j in range(len(self.sx_proj))])
         self.sig_finished.emit(proj_indexing)
 

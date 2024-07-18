@@ -24,7 +24,7 @@ import numpy as np
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
 
-from InfraView.widgets import IPUtils
+from InfraView.widgets import IPUtilsß
 from InfraView.widgets import IPBaseWidgets
 
 
@@ -42,7 +42,7 @@ class IPMapWidget(QWidget):
         self.detections = []
         self.resolution = ''
         self.extent = None
-  
+
         self.current_linecolor='gray'
 
         self.gt_marker = None
@@ -510,12 +510,6 @@ class IPMapWidget(QWidget):
         minLon = min(lons + self.end_lons)
         center_lon = minLon + (maxLon - minLon)/2.
 
-<<<<<<< HEAD
-=======
-        #print("lats: {}  {}".format(minLat, maxLat))
-        #print("lons: {}  {}".format(minLon, maxLon))
-
->>>>>>> 6c104b1 (first addition of variance based detector)
         if maxLon != minLon:
             width = abs(maxLon - minLon)
         else:
@@ -531,12 +525,6 @@ class IPMapWidget(QWidget):
         width_adj = width * 0.10
         height_adj = height * 0.10
 
-<<<<<<< HEAD
-=======
-        #print("clat = {} clon = {}".format(center_lat, center_lon))
-        #print(width, height)
-
->>>>>>> 6c104b1 (first addition of variance based detector)
         minLat = center_lat - height/2. - height_adj
         maxLat = center_lat + height/2. + height_adj
         minLon = center_lon - width/2. - width_adj

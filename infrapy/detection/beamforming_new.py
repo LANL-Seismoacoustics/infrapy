@@ -1094,7 +1094,6 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             n += 1
 
     if merge_dets:
-        print("Merging detections...")
         while True:
             for j in range(len(dets) - 1):
                 back_az_diff = abs(dets[j][3] - dets[j + 1][3])
