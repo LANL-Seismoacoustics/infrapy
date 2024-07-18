@@ -84,13 +84,13 @@ class IPSlownessPlot(pg.PlotItem):
         self.vb.setAspectLocked(lock=True, ratio=1)
 
         ax = self.getAxis('bottom')
-        # ax.setTicks([])
+        ax.setTicks([])
         ax = self.getAxis('top')
         ax.setTicks([])
         ax = self.getAxis('right')
         ax.setTicks([])
         ax = self.getAxis('left')
-        # ax.setTicks([])
+        ax.setTicks([])
 
         cmap = pg.colormap.get('jet', source='matplotlib')
         self.image_item.setColorMap(cmap)
