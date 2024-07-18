@@ -414,7 +414,7 @@ def gcarc_intersect(latlona0,latlona1,latlonb0,latlonb1):
     
     # 6. intersects if directions all agree
     # FIXME - endpoints don't count towards intersection
-    latloni,_=xyz2geocentric(np.where(d==-4,-E,np.where(d==4,E,np.nan)))
+    latloni, _ = xyz2geocentric(np.where(d==-4,-E,np.where(d==4,E,np.nan)))
     
     # 7. nans if E is basically zero
     # - this occurs when A & B are equivalent

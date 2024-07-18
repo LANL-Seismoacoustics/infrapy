@@ -240,7 +240,7 @@ def find_confidence(func, lims, conf_lvl):
     return bnds, conf, thresh
 
 
-def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm_resol = 60.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, angle=[-180,180],rad_max=1000.0):
+def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm_resol = 60.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, angle=[-180,180],rad_max=1000.0, verbose=True):
     """Run analysis of the posterior pdf for BISL
 
         Compute the marginal disribution...
@@ -285,7 +285,9 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
                 'MaP_val' : Maximum a Posteriori value
         """
 
-    print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
+    if verbose:
+        print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
+    
     # Determine region of interest and define the polar <--> latlon grid definition
     if custom_region:
         center = (custom_region[0], custom_region[1])
@@ -299,7 +301,8 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
             raise ValueError(msg)
 
     resol = 200
-    print('\t' + "Identifying integration region...")
+    if verbose:
+        print('\t' + "Identifying integration region...")
     rngs = np.linspace(0.0, radius, resol)
     angles = np.linspace(angle[0], angle[1] - 1, resol)
     
@@ -313,7 +316,8 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
     lon_vals = np.arange(np.min(proj_lons), np.max(proj_lons), latlon_resol)
     
     if len([det for det in det_list if det.peakF_UTCtime < UTCDateTime("9999-01-01T00:00:00")]) > 0:
-        print('\t' + "Defining grid and evaluating likelihoods...")
+        if verbose:
+            print('\t' + "Defining grid and evaluating likelihoods...")
         t_mins, t_maxs = [], []
         for det in det_list:
             rngs = np.array(sph_proj.inv(det.longitude * np.ones_like(proj_lons), det.latitude * np.ones_like(proj_lats), proj_lons, proj_lats, radians=False))[2] / 1000.0             
@@ -326,13 +330,17 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
 
         lat_grid, lon_grid, tm_grid = np.meshgrid(lat_vals, lon_vals, tm_vals, indexing='ij')     
 
-        print('\t\t Progress: ', end='')
-        prog_bar.prep(5 * len(det_list))
-        pdf = np.array([det.pdf(lat_grid, lon_grid, tm_grid, path_geo_model=path_geo_model, prog_step=5) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
-        prog_bar.close()
+        if verbose:
+            print('\t\t Progress: ', end='')
+            prog_bar.prep(5 * len(det_list))
+            pdf = np.array([det.pdf(lat_grid, lon_grid, tm_grid, path_geo_model=path_geo_model, prog_step=5) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
+            prog_bar.close()
+        else:
+            pdf = np.array([det.pdf(lat_grid, lon_grid, tm_grid, path_geo_model=path_geo_model) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
 
-        print('\t' + "Analyzing localization pdf...")
-        print('\t\t' + "Normalizing and marginalizing...")
+        if verbose:
+            print('\t' + "Analyzing localization pdf...")
+            print('\t\t' + "Normalizing and marginalizing...")
         spatial_pdf = simps(pdf, x=dt_vals)
         tm_pdf = simps(simps(pdf * np.cos(np.radians(lat_grid)), x=lon_vals, axis=1), x=lat_vals, axis=0)
 
@@ -340,7 +348,8 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
         spatial_pdf = spatial_pdf / norm
         tm_pdf = tm_pdf / norm
 
-        print('\t\t' + "Analyzing spatial PDF...")
+        if verbose:
+            print('\t\t' + "Analyzing spatial PDF...")
         def simps_spatial(vals):
             result = simps(vals, x=lon_vals)
             result = simps(result * np.cos(np.radians(lat_vals)), x=lat_vals)
@@ -355,7 +364,8 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
         x_stdev, y_stdev = [np.sqrt(simps_spatial(diff**2 * spatial_pdf)) for diff in [dx, dy]]
         covar = simps_spatial(dx * dy * spatial_pdf) / (x_stdev * y_stdev)
 
-        print('\t\t' + "Analyzing temporal PDF...")
+        if verbose:
+            print('\t\t' + "Analyzing temporal PDF...")
         dt_mean = simps(dt_vals * tm_pdf, x=dt_vals)
         dt_stdev = np.sqrt(simps((dt_vals - dt_mean)**2 * tm_pdf, x=dt_vals))
 
@@ -379,15 +389,20 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
                     'temporal_pdf' : [tm_vals, tm_pdf]}
 
     else:
-        print('\t' + "Defining grid and evaluating likelihoods...")
+        if verbose:
+            print('\t' + "Defining grid and evaluating likelihoods...")
         lat_grid, lon_grid = np.meshgrid(lat_vals, lon_vals, indexing='ij')
 
-        print('\t\t Progress: ', end='')
-        prog_bar.prep(8 * len(det_list))
-        pdf = np.array([det.az_pdf(lat_grid, lon_grid, path_geo_model=path_geo_model, prog_step=8) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
-        prog_bar.close()
+        if verbose:
+            print('\t\t Progress: ', end='')
+            prog_bar.prep(5 * len(det_list))
+            pdf = np.array([det.az_pdf(lat_grid, lon_grid, path_geo_model=path_geo_model, prog_step=5) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
+            prog_bar.close()
+        else:
+            pdf = np.array([det.az_pdf(lat_grid, lon_grid, path_geo_model=path_geo_model) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
 
-        print('\t' + "Analyzing localization pdf...")
+        if verbose:
+            print('\t' + "Analyzing localization pdf...")
         def simps_2dim(vals):
             result = simps(vals, x=lon_vals)
             result = simps(result, x=lat_vals)
