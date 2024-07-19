@@ -23,8 +23,8 @@ from InfraView.widgets import IPDetectorSettingsWidget
 from InfraView.widgets import IPNewDetectionDialog
 from InfraView.widgets import IPPickLine
 from InfraView.widgets import IPPlotItem
-from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPPolarPlot
+from InfraView.widgets import IPBeamformingSettingsWidget
 from InfraView.widgets import IPSaveBeamformingResultsDialog
 from InfraView.widgets import IPUtils
 
@@ -52,6 +52,7 @@ class IPBeamformingWidget(QWidget):
 
     slowness = []
     _beam_collection = []   # This will hold the slowness plots for the current run
+    _projection_collection = []
     _max_projection_data = None
 
     _t = []
@@ -182,7 +183,7 @@ class IPBeamformingWidget(QWidget):
 
         self.timeRangeLRI = pg.LinearRegionItem()
         self.timeRangeLRI.setMovable(False)
-        brush = QtGui.QBrush(QtGui.QColor(50, 50, 50, 50))
+        brush = QtGui.QBrush(QtGui.QColor(50, 50, 50, 50)) 
         self.timeRangeLRI.setBrush(brush)
 
         # --------------------------------------------
@@ -191,7 +192,6 @@ class IPBeamformingWidget(QWidget):
         slownessWidget = pg.GraphicsLayoutWidget()
 
         # Create the slowness plot and its dataitem
-        # self.slownessPlot = IPPolarPlot.IPPolarPlot()
         self.slownessPlot = IPPolarPlot.IPSlownessPlot(self)
         self.slownessSettings = IPPolarPlot.IPSlownessSettingsWidget(self)
 
@@ -209,11 +209,14 @@ class IPBeamformingWidget(QWidget):
         
         self.projectionCurve = pg.PlotDataItem(x=[],
                                                y=[],
-                                               pen=(60, 60, 60),
+                                               pen=(150, 150, 150),
+                                               width=1,
                                                symbol=None)
+        
         self.max_projectionCurve = pg.PlotDataItem(x=[],
                                                    y=[],
-                                                   pen=(100, 100, 100),
+                                                   pen=(40, 40, 40),
+                                                   width=2,
                                                    symbol=None)
 
         self.projectionPlot.showGrid(x=True, y=True, alpha=0.3)
@@ -496,6 +499,7 @@ class IPBeamformingWidget(QWidget):
                                                 self._back_az[nearest_idx], 
                                                 self._trace_vel[nearest_idx])
         self.plot_slowness_at_idx(nearest_idx)
+        self.plot_projection_at_idx(nearest_idx)
 
         t_nearest = self._t[nearest_idx]
         f_nearest = self._f_stats[nearest_idx]
@@ -714,6 +718,7 @@ class IPBeamformingWidget(QWidget):
                 nearest_idx = self.nearest_in_t(mouse_point_x)
 
                 self.plot_slowness_at_idx(nearest_idx)
+                self.plot_projection_at_idx(nearest_idx)
 
                 t_nearest = self._t[nearest_idx]
                 f_nearest = self._f_stats[nearest_idx]
@@ -751,6 +756,7 @@ class IPBeamformingWidget(QWidget):
 
                 # plot the slowness plot for that index
                 self.plot_slowness_at_idx(nearest_idx)
+                self.plot_projection_at_idx(nearest_idx)
 
                 t_nearest = self._t[nearest_idx]
                 f_nearest = self._f_stats[nearest_idx]
@@ -963,6 +969,7 @@ class IPBeamformingWidget(QWidget):
 
         self._slowness_collection = []  # Clear this array for the new run
         self._beam_collection = []
+        self._projection_collection = []
 
         # do any checks of the input here before you create the worker object.
         # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
@@ -1126,8 +1133,8 @@ class IPBeamformingWidget(QWidget):
 
     def plot_slowness_at_idx(self, idx):
 
-        while self.proj_indexing is None:
-            time.sleep(0.1)
+        if self.proj_indexing is None:
+            return
 
         #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
@@ -1142,10 +1149,11 @@ class IPBeamformingWidget(QWidget):
         self.slowness_traceV_label.setText('Trace Velocity (m/s) = {:.2f}'.format(self._trace_vel[idx]))
 
 
-    @pyqtSlot(np.ndarray, np.ndarray)
-    def updateProjection(self, projection, avg_beam_power):
-
+    @pyqtSlot(np.ndarray)
+    def updateProjection(self, projection):
+        self._projection_collection.append(projection)
         self.projectionCurve.setData(projection)
+
         if self.max_projection is None:
             self.max_projection = np.amax(projection[:, 1])
             self._max_projection_data = projection.copy()
@@ -1166,6 +1174,12 @@ class IPBeamformingWidget(QWidget):
             pass
 
         self.projectionPlot.setXRange(-180, 180)
+
+    def plot_projection_at_idx(self, idx):
+        if len(self._projection_collection) > 0:
+            self.projectionCurve.setData(self._projection_collection[idx])
+
+
 
     @pyqtSlot(tuple)
     def updateWaveformTimeWindow(self, window):
@@ -1199,10 +1213,7 @@ class IPBeamformingWidget(QWidget):
         f_max_time = self._t[f_max_idx]
 
         self.plot_slowness_at_idx(f_max_idx)
-
-        # make the projection plot show the data at the time of fstat max
-        if self._max_projection_data is not None:
-            self.projectionCurve.setData(self._max_projection_data)
+        self.plot_projection_at_idx(f_max_idx)
 
         # move the waveform time region to reflect the location of the f_max
         t_range = self.timeRangeLRI.getRegion()
@@ -1498,7 +1509,7 @@ class BeamformingWorkerObject(QtCore.QObject):
     signal_dataUpdated = pyqtSignal()
     signal_slownessUpdated = pyqtSignal(np.ndarray)
     signal_beamUpdated = pyqtSignal(np.ndarray)
-    signal_projectionUpdated = pyqtSignal(np.ndarray, np.ndarray)
+    signal_projectionUpdated = pyqtSignal(np.ndarray)
     signal_timeWindowChanged = pyqtSignal(tuple)
     signal_threshold_calc_is_running = pyqtSignal(bool)
     signal_threshold_calculated = pyqtSignal(float)
@@ -1646,7 +1657,7 @@ class BeamformingWorkerObject(QtCore.QObject):
             projection = np.c_[back_az_vals, az_proj]
 
             # signal projection plot to update
-            self.signal_projectionUpdated.emit(projection, avg_beam_power)
+            self.signal_projectionUpdated.emit(projection)
         
             # signal beam_power update+
             self.signal_beamUpdated.emit(avg_beam_power)
