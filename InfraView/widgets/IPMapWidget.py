@@ -24,7 +24,7 @@ import numpy as np
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
 
-from InfraView.widgets import IPUtilsß
+from InfraView.widgets import IPUtils
 from InfraView.widgets import IPBaseWidgets
 
 
