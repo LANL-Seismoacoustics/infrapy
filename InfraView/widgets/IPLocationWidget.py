@@ -282,7 +282,9 @@ class IPLocationWidget(QWidget):
                                                   rad_min=rad_min,
                                                   rad_max=rad_max,
                                                   rng_max=self.bislSettings.rng_max_edit.value(),
-                                                  resol=self.bislSettings.resolution_edit.value())
+                                                  latlon_resol=self.bislSettings.resolution_edit.value(),
+                                                  tm_resol=self.bislSettings.tm_resolution_edit.value()
+                                                  )
 
         self.bisl_workerObject.moveToThread(self.bislThread)
 
@@ -345,7 +347,6 @@ class IPLocationWidget(QWidget):
                                                           rng_max=self.bislSettings.rng_max_edit.value(),
                                                           rad_min=rad_min,
                                                           rad_max=rad_max,
-                                                          resol=self.bislSettings.resolution_edit.value(),
                                                           pool=self.mp_pool)
 
         self.dm_workerObject.moveToThread(self.dmThread)
@@ -489,11 +490,17 @@ class BISLSettings(IPBaseWidgets.IPSettingsWidget):
         self.rng_max_edit.setSuffix(' km')
         self.rng_max_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.resolution_edit = QSpinBox()
-        self.resolution_edit.setMinimum(10)
-        self.resolution_edit.setMaximum(10000)
-        self.resolution_edit.setValue(180)
+        self.resolution_edit = QDoubleSpinBox()
+        self.resolution_edit.setMinimum(.01)
+        self.resolution_edit.setMaximum(10)
+        self.resolution_edit.setValue(.05)
         self.resolution_edit.valueChanged.connect(self.enable_update_dm_button)
+
+        self.tm_resolution_edit = QSpinBox()
+        self.tm_resolution_edit.setMinimum(1)
+        self.tm_resolution_edit.setMaximum(600)
+        self.tm_resolution_edit.setValue(60)
+        self.tm_resolution_edit.valueChanged.connect(self.enable_update_dm_button)
 
         self.confidence_edit = QSpinBox()
         self.confidence_edit.setMinimum(1)
@@ -504,7 +511,8 @@ class BISLSettings(IPBaseWidgets.IPSettingsWidget):
         layout = QFormLayout()
         layout.addRow(self.tr('Beam Width: '), self.bm_width_edit)
         layout.addRow(self.tr('Range Max.: '), self.rng_max_edit)
-        layout.addRow(self.tr('Resolution'), self.resolution_edit)
+        layout.addRow(self.tr('Lat/Lon Resolution'), self.resolution_edit)
+        layout.addRow(self.tr('Time Resolution'), self.tm_resolution_edit)
         layout.addRow(self.tr('Confidence'), self.confidence_edit)
 
         self.run_bisl_button = QPushButton('Run BISL')
@@ -648,13 +656,6 @@ class IPDistanceMatrixWidget(QWidget):
         max_dist = np.amax(dist_data, axis=(0, 1))
         self.dm_plotitem.setXRange(0, self.N, padding=0)
         self.dm_plotitem.setYRange(0, self.N, padding=0)
-
-        # pos = [0.0, 0.5*max_dist, 0.25*max_dist, 0.75*max_dist, max_dist]
-        # colors = np.array([[50,50,50,255], [255,50,50,255], [50,255,50,255], [50,50,255,255], (255,255,255,255)], dtype=np.ubyte)
-        # cmap = pg.ColorMap(pos, colors)
-        # map_colors = cmap.map(dist_data)
-
-        # testcm = cm.get_cmap("nipy_spectral")
 
         for i in range(self.N):
             for j in range(self.N):
@@ -924,7 +925,8 @@ class BISLWorkerObject(QObject):
                  rad_min=100.,
                  rad_max=1000.,
                  rng_max=np.pi / 2.0 * 6370.0,
-                 resol=180):
+                 latlon_resol = 0.05,
+                 tm_resol = 60):
 
         super().__init__()
         self.detections = detections
@@ -932,7 +934,8 @@ class BISLWorkerObject(QObject):
         self.rng_max = rng_max
         self.rad_min = rad_min
         self.rad_max = rad_max
-        self.resol = resol
+        self.latlon_resol = latlon_resol
+        self.tm_resol = tm_resol
 
         self.thread_stopped = True
 
@@ -950,7 +953,9 @@ class BISLWorkerObject(QObject):
                                          rad_min=self.rad_min,
                                          rad_max=self.rad_max,
                                          rng_max=self.rng_max,
-                                         resol=self.resol)
+                                         latlon_resol=self.latlon_resol,
+                                         tm_resol=self.tm_resol,
+                                         verbose=False)
         except Exception:
             IPUtils.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True

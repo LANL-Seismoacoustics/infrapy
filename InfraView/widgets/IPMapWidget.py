@@ -1,12 +1,11 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QWidget, QColorDialog, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, 
-                             QLineEdit, QSizePolicy, QToolButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton, QDoubleSpinBox)
+                             QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QLabel, QPushButton, QDoubleSpinBox)
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSlot, pyqtSignal, QSettings
 
-from PyQt5.QtGui import QPainter, QPaintEvent, QColor, QPalette
+from PyQt5.QtGui import QPainter, QPaintEvent, QColor
 
 import matplotlib
-from matplotlib import cm
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -17,7 +16,7 @@ import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
-from pyproj import Geod, transform
+from pyproj import Geod
 
 import numpy as np
 
