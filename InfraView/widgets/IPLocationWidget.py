@@ -494,10 +494,11 @@ class BISLSettings(IPBaseWidgets.IPSettingsWidget):
         self.bm_width_edit.setSuffix(' deg')
         self.bm_width_edit.valueChanged.connect(self.enable_update_dm_button)
 
-        self.rng_max_edit = QDoubleSpinBox()
-        self.rng_max_edit.setMinimum(10)
+        self.rng_max_edit = QSpinBox()
+        self.rng_max_edit.setMinimum(100)
+        self.rng_max_edit.setSingleStep(100)
         self.rng_max_edit.setMaximum(np.pi * self.earth_radius)
-        self.rng_max_edit.setValue(3000.0)
+        self.rng_max_edit.setValue(3000)
         self.rng_max_edit.setSuffix(' km')
         self.rng_max_edit.valueChanged.connect(self.enable_update_dm_button)
 

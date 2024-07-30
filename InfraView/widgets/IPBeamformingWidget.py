@@ -580,6 +580,17 @@ class IPBeamformingWidget(QWidget):
     def reset_zoom(self):
         self.waveformPlot.setXRange(self.region_range[0], self.region_range[1], padding=0)
 
+    def keyPressEvent(self, evt):
+        if evt.key() == Qt.Key_Left:
+            new_idx = self.idx - 1
+        elif evt.key() == Qt.Key_Right:
+            new_idx = self.idx + 1
+
+        self.plot_projection_at_idx(new_idx)
+        self.plot_slowness_at_idx(new_idx)
+        self.update_markers(new_idx)
+        self.update_time_range(new_idx)
+        
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -720,24 +731,30 @@ class IPBeamformingWidget(QWidget):
                 self.plot_slowness_at_idx(nearest_idx)
                 self.plot_projection_at_idx(nearest_idx)
 
-                t_nearest = self._t[nearest_idx]
-                f_nearest = self._f_stats[nearest_idx]
-                ba_nearest = self._back_az[nearest_idx]
-                tv_nearest = self._trace_vel[nearest_idx]
+                self.update_markers(nearest_idx)
+                self.update_time_range(nearest_idx)
 
-                self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
-                self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
-                self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+    def update_markers(self, idx):
+        t_nearest = self._t[idx]
+        f_nearest = self._f_stats[idx]
+        ba_nearest = self._back_az[idx]
+        tv_nearest = self._trace_vel[idx]
 
-                self.fstatPlot.addItem(self.fstat_slowness_marker)
-                self.backAzPlot.addItem(self.backAz_slowness_marker)
-                self.traceVPlot.addItem(self.traceV_slowness_marker)
+        self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+        self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+        self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
 
-                # move the waveform time region to reflect the location of the current selected point
-                t_range = self.timeRangeLRI.getRegion()
-                t_half_width = (t_range[1] - t_range[0]) / 2.
-                t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
-                self.timeRangeLRI.setRegion(t_region)
+        self.fstatPlot.addItem(self.fstat_slowness_marker)
+        self.backAzPlot.addItem(self.backAz_slowness_marker)
+        self.traceVPlot.addItem(self.traceV_slowness_marker)
+
+    def update_time_range(self, idx):
+        # move the waveform time region to reflect the location of the current selected point
+        t_nearest = self._t[idx]
+        t_range = self.timeRangeLRI.getRegion()
+        t_half_width = (t_range[1] - t_range[0]) / 2.
+        t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+        self.timeRangeLRI.setRegion(t_region)
 
     def mouseClick_ControlLeft(self, evt):
         # TODO: a lot of this is redundant with mouseClick_left, can they be combined in any way?
@@ -1141,6 +1158,14 @@ class IPBeamformingWidget(QWidget):
             time.sleep(0.1)
 >>>>>>> 7dbf761 (the slowness plot is mostly good now, correctly reflects partial backaz scans.  Also fixed bug where you can have a window step of 0.0')
 
+        if idx < 0:
+            return
+        
+        if idx > len(self.proj_indexing):
+            return
+        
+        self.idx = idx
+
         #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
         beam_proj[np.logical_or(self.bottomSettings.tracev_min_spin.value() > self.tr_vel, self.tr_vel > self.bottomSettings.tracev_max_spin.value())] = np.nan
@@ -1181,6 +1206,15 @@ class IPBeamformingWidget(QWidget):
         self.projectionPlot.setXRange(-180, 180)
 
     def plot_projection_at_idx(self, idx):
+        if self.proj_indexing is None:
+            return
+
+        if idx < 0:
+            return
+        
+        if idx > len(self.proj_indexing):
+            return
+        
         if len(self._projection_collection) > 0:
             self.projectionCurve.setData(self._projection_collection[idx])
 

@@ -64,8 +64,6 @@ class IPMapWidget(QWidget):
         self.fig = Figure()
         self.zoom = 1
         self.mapCanvas = FigureCanvas(self.fig)
-        # self.mapCanvas.setSizePolicy(QtWidgets.QSizePolicy.Ignored,
-        #                              QtWidgets.QSizePolicy.Ignored)
 
         self.map_export_dialog = IPMapExportDialog(self, self.fig)
         self.missing_maps_dialog = IPMissingMapsDialog(self)
