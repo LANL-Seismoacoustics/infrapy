@@ -137,6 +137,7 @@ class IPSlownessPlot(pg.PlotItem):
         self.draw_circles()
 
         self.setAutoVisible(y=True, x=True)
+        self.getViewBox().autoRange()
 
     def draw_radials(self):
         count = 8
@@ -175,3 +176,6 @@ class IPSlownessPlot(pg.PlotItem):
         settings = self.parent.slownessSettings.settings()
         cmap = pg.colormap.get(settings['cmap'], source='matplotlib')
         self.image_item.setColorMap(cmap)
+
+    def clear_slowness(self):
+        self.image_item.clear()

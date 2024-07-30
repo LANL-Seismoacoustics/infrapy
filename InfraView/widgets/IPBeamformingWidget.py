@@ -582,8 +582,12 @@ class IPBeamformingWidget(QWidget):
 
     def keyPressEvent(self, evt):
         if evt.key() == Qt.Key_Left:
+            if self.idx == 0:
+                return
             new_idx = self.idx - 1
         elif evt.key() == Qt.Key_Right:
+            if self.idx == len(self.proj_indexing):
+                return
             new_idx = self.idx + 1
 
         self.plot_projection_at_idx(new_idx)
@@ -591,6 +595,7 @@ class IPBeamformingWidget(QWidget):
         self.update_markers(new_idx)
         self.update_time_range(new_idx)
         
+        evt.accept()
 
     def myMouseMoved(self, evt):
         # This takes care of the crosshairs
@@ -734,28 +739,6 @@ class IPBeamformingWidget(QWidget):
                 self.update_markers(nearest_idx)
                 self.update_time_range(nearest_idx)
 
-    def update_markers(self, idx):
-        t_nearest = self._t[idx]
-        f_nearest = self._f_stats[idx]
-        ba_nearest = self._back_az[idx]
-        tv_nearest = self._trace_vel[idx]
-
-        self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
-        self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
-        self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
-
-        self.fstatPlot.addItem(self.fstat_slowness_marker)
-        self.backAzPlot.addItem(self.backAz_slowness_marker)
-        self.traceVPlot.addItem(self.traceV_slowness_marker)
-
-    def update_time_range(self, idx):
-        # move the waveform time region to reflect the location of the current selected point
-        t_nearest = self._t[idx]
-        t_range = self.timeRangeLRI.getRegion()
-        t_half_width = (t_range[1] - t_range[0]) / 2.
-        t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
-        self.timeRangeLRI.setRegion(t_region)
-
     def mouseClick_ControlLeft(self, evt):
         # TODO: a lot of this is redundant with mouseClick_left, can they be combined in any way?
 
@@ -775,14 +758,7 @@ class IPBeamformingWidget(QWidget):
                 self.plot_slowness_at_idx(nearest_idx)
                 self.plot_projection_at_idx(nearest_idx)
 
-                t_nearest = self._t[nearest_idx]
-                f_nearest = self._f_stats[nearest_idx]
-                ba_nearest = self._back_az[nearest_idx]
-                tv_nearest = self._trace_vel[nearest_idx]
-
-                self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
-                self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
-                self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+                self.update_markers(nearest_idx)
 
                 center = self.parent.waveformWidget.stationViewer.get_current_center()
                 # since we are manually adding a detection, the start and end need to be estimated...
@@ -791,6 +767,11 @@ class IPBeamformingWidget(QWidget):
                 window_width = window_range[0][1] - window_range[0][0]
                 det_start = -window_width/20.0
                 det_end = window_width/20.0
+
+                t_nearest = self._t[nearest_idx]
+                f_nearest = self._f_stats[nearest_idx]
+                ba_nearest = self._back_az[nearest_idx]
+                tv_nearest = self._trace_vel[nearest_idx]
 
                 det_time = self.get_earliest_start_time() + t_nearest
                 dets = [[det_time, det_start, det_end, ba_nearest, tv_nearest, f_nearest]]
@@ -803,15 +784,8 @@ class IPBeamformingWidget(QWidget):
                                     method='manual',
                                     fr=self.bottomSettings.getFreqRange())
 
-                # move the waveform time region to reflect the location of the f_max
-                t_range = self.timeRangeLRI.getRegion()
-                t_half_width = (t_range[1] - t_range[0]) / 2.
-                t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
-                self.timeRangeLRI.setRegion(t_region)
-                
-                #self.bottomTabWidget.setCurrentIndex(self.detectiontab_idx)
+                self.update_time_range(nearest_idx)
 
-                
 
     def nearest_in_t(self, value):
         if len(self._t) < 1:
@@ -909,9 +883,6 @@ class IPBeamformingWidget(QWidget):
         self.max_projection_curve = None
         self.max_projection_index = None
 
-        # add the slownessPlotItem to the slowness plot
-        #self.slownessPlot.addItem(self.spi)
-
         self.resultData = {'t': self._t,
                            'tracev': self._trace_vel,
                            'backaz': self._back_az,
@@ -981,10 +952,8 @@ class IPBeamformingWidget(QWidget):
                                                symbolBrush=bcolor,
                                                symbolSize=symbol_size)
 
-        # self.backaz_curve.sigClicked.connect(self.pointsClicked)
         self.backAzPlot.addItem(self.backaz_curve)
 
-        self._slowness_collection = []  # Clear this array for the new run
         self._beam_collection = []
         self._projection_collection = []
 
@@ -1148,6 +1117,28 @@ class IPBeamformingWidget(QWidget):
     def updateBeam_collection(self, avg_beam_power):
         self._beam_collection.append(avg_beam_power.flatten())
 
+    def update_markers(self, idx):
+        t_nearest = self._t[idx]
+        f_nearest = self._f_stats[idx]
+        ba_nearest = self._back_az[idx]
+        tv_nearest = self._trace_vel[idx]
+
+        self.fstat_slowness_marker.setData([t_nearest], [f_nearest])
+        self.backAz_slowness_marker.setData([t_nearest], [ba_nearest])
+        self.traceV_slowness_marker.setData([t_nearest], [tv_nearest])
+
+        self.fstatPlot.addItem(self.fstat_slowness_marker)
+        self.backAzPlot.addItem(self.backAz_slowness_marker)
+        self.traceVPlot.addItem(self.traceV_slowness_marker)
+
+    def update_time_range(self, idx):
+        # move the waveform time region to reflect the location of the current selected point
+        t_nearest = self._t[idx]
+        t_range = self.timeRangeLRI.getRegion()
+        t_half_width = (t_range[1] - t_range[0]) / 2.
+        t_region = [t_nearest - t_half_width, t_nearest + t_half_width]
+        self.timeRangeLRI.setRegion(t_region)
+
     def plot_slowness_at_idx(self, idx):
 
 <<<<<<< HEAD
@@ -1166,7 +1157,6 @@ class IPBeamformingWidget(QWidget):
         
         self.idx = idx
 
-        #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
         beam_proj[np.logical_or(self.bottomSettings.tracev_min_spin.value() > self.tr_vel, self.tr_vel > self.bottomSettings.tracev_max_spin.value())] = np.nan
         beam_proj[np.logical_or(self.bottomSettings.backaz_start_spin.value() > self.backaz, self.backaz > self.bottomSettings.backaz_end_spin.value())] = np.nan
@@ -1389,7 +1379,9 @@ class IPBeamformingWidget(QWidget):
         self.projectionCurve.clear()
         self.max_projectionCurve.clear()
 
-        #self.slownessPlot.clear()
+        self.slownessPlot.clear_slowness()
+        self._beam_collection = []
+        self._projection_collection = []
         #self.slownessPlot.drawPlot(self.bottomSettings.tracev_min_spin.value())
         self.spi.clear()
 
