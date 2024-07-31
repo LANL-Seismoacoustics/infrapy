@@ -296,15 +296,26 @@ class IPLocationWidget(QWidget):
         self.bislThread.start()
         self.signal_start_BISL_calc.emit()
 
-    @pyqtSlot(dict)
-    def bisl_run_finished(self, result):
+    @pyqtSlot(dict, Exception)
+    def bisl_run_finished(self, result, exception=None):
+        
         self.bisl_result = result
 
-        self.bisl_resultsWidget.setResults(result)
+        if exception is not None:
+            # bisl exited with and exception.  Pop up window with possible useful info.
+            IPUtils.errorPopup(str(exception))
+            return
+        
+        if result:
+            # if result has data, then bisl ran and found a location
+            self.bisl_resultsWidget.setResults(result)
 
-        self.bisl_resultsWidget.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
+            self.bisl_resultsWidget.setText(bisl.summarize(result, self.bislSettings.confidence_edit.value()))
 
-        self.calc_conf_ellipse(self.bislSettings.confidence_edit.value())
+            self.calc_conf_ellipse(self.bislSettings.confidence_edit.value())
+        else:
+            # An empty result says that BISL ran and finished without exceptions, but didn't find a result.
+            IPUtils.errorPopup("BISL returned no results")
 
     @pyqtSlot(int)
     def calc_conf_ellipse(self, confidence):
@@ -918,7 +929,7 @@ class DistanceMatrixWorkerObject(QObject):
 
 class BISLWorkerObject(QObject):
 
-    signal_runFinished = pyqtSignal(dict)
+    signal_runFinished = pyqtSignal(dict, Exception)
 
     def __init__(self, detections,
                  beam_width=10,
@@ -941,6 +952,7 @@ class BISLWorkerObject(QObject):
 
     @pyqtSlot()
     def run(self):
+
         if len(self.detections) == 0:
             return  # nothing to do
 
@@ -956,12 +968,15 @@ class BISLWorkerObject(QObject):
                                          latlon_resol=self.latlon_resol,
                                          tm_resol=self.tm_resol,
                                          verbose=False)
-        except Exception:
-            IPUtils.errorPopup("Error while running BISL: {}".format(sys.exc_info()[0]))
+
+        except Exception as e:
+            # if there is an exception, emit an empty dictionary, and the exception
+            self.signal_runFinished.emit({}, e)
             self.thread_stopped = True
             return
-
-        self.signal_runFinished.emit(self.bisl_result)
+        # if bisl.run returns, emit the dictionary, and None for the exception
+        self.thread_stopped = True
+        self.signal_runFinished.emit(self.bisl_result, None)
 
     @pyqtSlot()
     def stop(self):

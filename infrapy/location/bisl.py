@@ -100,9 +100,11 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
                 beam_intersects[pair_index * 8 + 5] = ll.gcarc_intersect(latlon1, proj1dn, latlon2, proj2dn)[0]
                 beam_intersects[pair_index * 8 + 6] = ll.gcarc_intersect(latlon1, proj1up, latlon2, proj2dn)[0]
                 beam_intersects[pair_index * 8 + 7] = ll.gcarc_intersect(latlon1, proj1dn, latlon2, proj2up)[0]
-
+    
     all_intersects = np.vstack((main_intersects, beam_intersects))
-
+    if np.all(np.isnan(all_intersects)):
+        raise ValueError('Detection set contains no beam intersects. Can not run BISL')
+    
     # Compute geographic mean of the intersections to define the center of the region
     x, y, z = 0.0, 0.0, 0.0
     for n in range (9):
@@ -287,19 +289,22 @@ def run(det_list, path_geo_model=None, custom_region=None, latlon_resol=0.05, tm
 
     if verbose:
         print("Running Bayesian Infrasonic Source Localization (BISL) Analysis...")
-    
-    # Determine region of interest and define the polar <--> latlon grid definition
-    if custom_region:
-        center = (custom_region[0], custom_region[1])
-        radius = custom_region[2]
-    else:
-        az_cnt = sum(det.back_azimuth is not None for det in det_list)
-        if az_cnt > 2:
-            center, radius = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max)
-        else:
-            msg = "Detection set doesn't include at least 3 direction-of-arrival detections.  Analysis requires source region definition: --src-est '(lat, lon, radius)'"
-            raise ValueError(msg)
 
+    try:
+        # Determine region of interest and define the polar <--> latlon grid definition
+        if custom_region:
+            center = (custom_region[0], custom_region[1])
+            radius = custom_region[2]
+        else:
+            az_cnt = sum(det.back_azimuth is not None for det in det_list)
+            if az_cnt > 1:
+                center, radius = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max)
+            else:
+                msg = "Detection set doesn't include at least 3 direction-of-arrival detections.  Analysis requires source region definition: --src-est '(lat, lon, radius)'"
+                raise ValueError(msg)
+    except Exception as e:
+        raise ValueError(str(e)) from e
+    
     resol = 200
     if verbose:
         print('\t' + "Identifying integration region...")
