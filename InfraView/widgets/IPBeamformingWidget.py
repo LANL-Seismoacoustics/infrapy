@@ -591,7 +591,8 @@ class IPBeamformingWidget(QWidget):
             new_idx = self.idx + 1
         else:
             evt.accept()
-            
+            return
+
         self.plot_projection_at_idx(new_idx)
         self.plot_slowness_at_idx(new_idx)
         self.update_markers(new_idx)
