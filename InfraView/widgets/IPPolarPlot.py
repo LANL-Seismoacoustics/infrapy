@@ -83,6 +83,7 @@ class IPSlownessPlot(pg.PlotItem):
 
         self.vb.setAspectLocked(lock=True, ratio=1)
 
+<<<<<<< HEAD
         # initialize circles
         self.i_circle = pg.QtWidgets.QGraphicsEllipseItem(0 , 0, 0, 0)
         self.i_circle.setPen(pg.mkPen(width=3, color='k'))
@@ -94,14 +95,28 @@ class IPSlownessPlot(pg.PlotItem):
 
         self.radial_list = []
 
+=======
+>>>>>>> 7dbf761 (the slowness plot is mostly good now, correctly reflects partial backaz scans.  Also fixed bug where you can have a window step of 0.0')
         ax = self.getAxis('bottom')
-        ax.setTicks([])
+        # ax.setTicks([])
         ax = self.getAxis('top')
         ax.setTicks([])
         ax = self.getAxis('right')
         ax.setTicks([])
         ax = self.getAxis('left')
-        ax.setTicks([])
+        # ax.setTicks([])
+
+        cmap = pg.colormap.get('jet', source='matplotlib')
+        self.image_item.setColorMap(cmap)
+    
+    def set_image(self, image, resolution, tracev_range):
+
+        self.resolution = resolution
+        self.tracev_range = tracev_range
+
+        self.image_item.setImage(image)
+        self.setXRange(0, resolution, padding=0)
+        self.setYRange(0, resolution, padding=0)
 
         self.enableAutoRange()
 

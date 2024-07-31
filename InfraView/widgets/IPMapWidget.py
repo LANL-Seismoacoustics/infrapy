@@ -183,25 +183,36 @@ class IPMapWidget(QWidget):
             self.extentWidget.set_extent_spin_values(current_extent)
 
     def showhide_extent_widget(self):
+        # toggle the visibility
+        self.extentWidget.setVisible(self.extentWidget.isHidden())
+        # set button color and hide other widgets
         if self.extentWidget.isVisible():
-            self.extentWidget.setVisible(False)
-        else:
-            self.extentWidget.setVisible(True)
+            style = "color: rgba(0,0,180,255);"
             self.hide_map_settings_widget()
-
-    def hide_extent_widget(self):
-        self.extentWidget.setVisible(False)
-
+        else:
+            style = "color: rgba(20,20,20,255);"
+        self.parent.toolButton_extent.setStyleSheet(style)    
 
     def showhide_map_settings_widget(self):
+        # toggle the visibility 
+        self.map_settings_widget.setVisible(self.map_settings_widget.isHidden())
+        # set button color and hide other widgets
         if self.map_settings_widget.isVisible():
-            self.map_settings_widget.setVisible(False)
-        else:
+            style = "color: rgba(0,0,180,255);"
             self.hide_extent_widget()
-            self.map_settings_widget.setVisible(True)
+        else:
+            style = "color: rgba(20,20,20,255);"
+        self.parent.toolButton_settings.setStyleSheet(style)
 
     def hide_map_settings_widget(self):
+        # hide widget and reset the button color
         self.map_settings_widget.setVisible(False)
+        self.parent.toolButton_settings.setStyleSheet("color: rgba(20,20,20,255);")
+
+    def hide_extent_widget(self):
+        # hide widget and reset the button color
+        self.extentWidget.setVisible(False)
+        self.parent.toolButton_extent.setStyleSheet("color: rgba(20,20,20,255);")
 
     @pyqtSlot(list)
     def set_map_extent(self, extent):
@@ -215,7 +226,7 @@ class IPMapWidget(QWidget):
         self.extentWidget.set_extent_spin_values(global_extent)
         self.update_map()
 
-    def update_feature_visibilities(self):
+    def update_feature_visibilities(self): 
         try:
             # This shows/hides the various features shown on the map
             self.states.set_visible(self.map_settings_widget.states_checkbox.isChecked())

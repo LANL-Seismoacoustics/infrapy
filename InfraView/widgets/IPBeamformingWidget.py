@@ -1133,8 +1133,13 @@ class IPBeamformingWidget(QWidget):
 
     def plot_slowness_at_idx(self, idx):
 
+<<<<<<< HEAD
         if self.proj_indexing is None:
             return
+=======
+        while self.proj_indexing is None:
+            time.sleep(0.1)
+>>>>>>> 7dbf761 (the slowness plot is mostly good now, correctly reflects partial backaz scans.  Also fixed bug where you can have a window step of 0.0')
 
         #beam_proj = np.array([avg_beam_power[np.argmin(np.sqrt((self.slowness[:,0] - self.sx_proj[j])**2 + (self.slowness[:,1] - self.sy_proj[j])**2))] for j in range(len(self.sx_proj))])
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
