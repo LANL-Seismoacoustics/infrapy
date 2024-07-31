@@ -1239,13 +1239,13 @@ class IPBeamformingWidget(QWidget):
 
         self.plot_slowness_at_idx(f_max_idx)
         self.plot_projection_at_idx(f_max_idx)
-
-        # move the waveform time region to reflect the location of the f_max
-        t_range = self.timeRangeLRI.getRegion()
-        t_half_width = (t_range[1] - t_range[0]) / 2.
-        t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
-        self.timeRangeLRI.setRegion(t_region)
-
+        self.update_markers(f_max_idx)
+        # # move the waveform time region to reflect the location of the f_max
+        # t_range = self.timeRangeLRI.getRegion()
+        # t_half_width = (t_range[1] - t_range[0]) / 2.
+        # t_region = [f_max_time - t_half_width, f_max_time + t_half_width]
+        # self.timeRangeLRI.setRegion(t_region)
+        self.update_time_range(f_max_idx)
 
     def plot_threshold_line(self, threshold):
         '''draw the threshold line on the fstat plot'''

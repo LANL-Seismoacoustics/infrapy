@@ -296,14 +296,14 @@ class IPLocationWidget(QWidget):
         self.bislThread.start()
         self.signal_start_BISL_calc.emit()
 
-    @pyqtSlot(dict, Exception)
-    def bisl_run_finished(self, result, exception=None):
+    @pyqtSlot(dict, str)
+    def bisl_run_finished(self, result, exception_str):
         
         self.bisl_result = result
 
-        if exception is not None:
+        if exception_str != "":
             # bisl exited with and exception.  Pop up window with possible useful info.
-            IPUtils.errorPopup(str(exception))
+            IPUtils.errorPopup(exception_str)
             return
         
         if result:
@@ -930,7 +930,8 @@ class DistanceMatrixWorkerObject(QObject):
 
 class BISLWorkerObject(QObject):
 
-    signal_runFinished = pyqtSignal(dict, Exception)
+    signal_runFinished = pyqtSignal(dict, str)
+    
 
     def __init__(self, detections,
                  beam_width=10,
@@ -972,12 +973,12 @@ class BISLWorkerObject(QObject):
 
         except Exception as e:
             # if there is an exception, emit an empty dictionary, and the exception
-            self.signal_runFinished.emit({}, e)
+            self.signal_runFinished.emit({}, str(e))
             self.thread_stopped = True
             return
         # if bisl.run returns, emit the dictionary, and None for the exception
         self.thread_stopped = True
-        self.signal_runFinished.emit(self.bisl_result, None)
+        self.signal_runFinished.emit(self.bisl_result, "")
 
     @pyqtSlot()
     def stop(self):
