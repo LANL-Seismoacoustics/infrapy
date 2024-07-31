@@ -27,13 +27,11 @@ class IPEventBrowser(QWidget):
 
         self.startDateTime_edit = QDateTimeEdit()
         self.startDateTime_edit.setDisplayFormat('yyyy-MM-ddTHH:mm:ss.zzz')
-        self.startDateTime_edit.setDateTime(self.startDateTime_edit.minimumDateTime())
-        # self.startDateTime_edit.setSpecialValueText('yyyy-MM-ddTHH:mm:ss.zzz')
+        self.startDateTime_edit.setDate(QDateTime.currentDateTime().date().addDays(-1))
 
         self.endDateTime_edit = QDateTimeEdit()
         self.endDateTime_edit.setDisplayFormat('yyyy-MM-ddTHH:mm:ss.zzz')
-        self.endDateTime_edit.setDateTime(self.endDateTime_edit.minimumDateTime())
-        # self.endDateTime_edit.setSpecialValueText('yyyy-MM-ddTHH:mm:ss.zzz')
+        self.endDateTime_edit.setDateTime(QDateTime.currentDateTime().toUTC())
 
         self.lat_edit = QDoubleSpinBox()
         self.lat_edit.setRange(-90.1,90.0)  # the -90.1 is used as the "unset" value 

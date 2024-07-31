@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QWidget, QAbstractItemVi
                              QGroupBox, QPushButton, QDateEdit, QTimeEdit,
                              QSizePolicy, QSpinBox, QListWidget)
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QDate, Qt, QDateTime, QTime
 
 from InfraView.widgets import IPStationBrowser
 from InfraView.widgets import IPUtils
@@ -162,10 +162,11 @@ class IPFDSNWidget(QWidget):
         self.startDate_edit.setMinimumWidth(170)
         self.startDate_edit.setMinimumDate(QDate(1900, 1, 1))
         self.startDate_edit.setDisplayFormat('yyyy-MM-dd')
-        self.startDate_edit.setDate(self.startDate_edit.minimumDate())
+        self.startDate_edit.setDate(QDateTime.currentDateTimeUtc().date().addDays(-1))
 
         label_startTime = QLabel(self.tr('Start Time (UTC):'))
         self.startTime_edit = QTimeEdit()
+        self.startTime_edit.setTime(QTime())
         self.startTime_edit.setMinimumWidth(170)
         self.startTime_edit.setDisplayFormat('HH:mm:ss.zzz')
 

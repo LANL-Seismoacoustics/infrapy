@@ -1121,6 +1121,9 @@ class IPBeamformingWidget(QWidget):
         self._beam_collection.append(avg_beam_power.flatten())
 
     def update_markers(self, idx):
+        if idx < 0 or idx > len(self._t)-1:
+            return
+        
         t_nearest = self._t[idx]
         f_nearest = self._f_stats[idx]
         ba_nearest = self._back_az[idx]
@@ -1135,6 +1138,9 @@ class IPBeamformingWidget(QWidget):
         self.traceVPlot.addItem(self.traceV_slowness_marker)
 
     def update_time_range(self, idx):
+        if idx < 0 or idx > len(self._t)-1:
+            return
+        
         # move the waveform time region to reflect the location of the current selected point
         t_nearest = self._t[idx]
         t_range = self.timeRangeLRI.getRegion()
@@ -1150,7 +1156,7 @@ class IPBeamformingWidget(QWidget):
         if idx < 0:
             return
         
-        if idx > len(self.proj_indexing):
+        if idx > len(self._beam_collection)-1:
             return
         
         self.idx = idx
@@ -1194,13 +1200,14 @@ class IPBeamformingWidget(QWidget):
         self.projectionPlot.setXRange(-180, 180)
 
     def plot_projection_at_idx(self, idx):
+
         if self.proj_indexing is None:
             return
 
         if idx < 0:
             return
         
-        if idx > len(self._projection_collection):
+        if idx > len(self._projection_collection)-1:
             return
         
         if len(self._projection_collection) > 0:
