@@ -589,7 +589,9 @@ class IPBeamformingWidget(QWidget):
             if self.idx == len(self.proj_indexing):
                 return
             new_idx = self.idx + 1
-
+        else:
+            evt.accept()
+            
         self.plot_projection_at_idx(new_idx)
         self.plot_slowness_at_idx(new_idx)
         self.update_markers(new_idx)
@@ -1202,13 +1204,11 @@ class IPBeamformingWidget(QWidget):
         if idx < 0:
             return
         
-        if idx > len(self.proj_indexing):
+        if idx > len(self._projection_collection):
             return
         
         if len(self._projection_collection) > 0:
             self.projectionCurve.setData(self._projection_collection[idx])
-
-
 
     @pyqtSlot(tuple)
     def updateWaveformTimeWindow(self, window):
