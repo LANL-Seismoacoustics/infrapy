@@ -3,7 +3,7 @@ import os, json
 from PyQt5.QtWidgets import (QDateEdit, QPushButton, QLabel, QLineEdit, QFileDialog, QHBoxLayout,
                              QFormLayout, QDoubleSpinBox, QVBoxLayout, QTimeEdit, QWidget,
                              QCheckBox)
-from PyQt5.QtCore import QDir, QTime, QDate, QSettings, pyqtSignal
+from PyQt5.QtCore import QDir, QTime, QDate, QSettings, pyqtSignal, QDateTime
 from PyQt5.QtGui import QIcon
 
 from InfraView.widgets import IPEventBrowser
@@ -67,6 +67,7 @@ class IPEventWidget(IPBaseWidgets.IPSettingsWidget):
 
         label_event_date = QLabel(self.tr('Date (UTC):'))
         self.event_date_edit = QDateEdit()
+        self.event_date_edit.setDate(QDateTime.currentDateTimeUtc().date().addDays(-1))
         self.event_date_edit.setFixedWidth(125)
         self.event_date_edit.setDisplayFormat("yyyy-MM-dd")
 

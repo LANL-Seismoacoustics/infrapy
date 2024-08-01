@@ -2,7 +2,7 @@ import obspy
 from obspy.clients.fdsn import Client
 from obspy.clients.fdsn.header import URL_MAPPINGS
 
-from PyQt5 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import (QApplication, QWidget,
@@ -398,7 +398,9 @@ class IPStationBrowser(QWidget):
     def populateEventInfo(self):
         # find out if there is a valid event in the eventwidget, if there is, proceed
         #lol...there's got to be a better way
-        event_widget = self.parentWidget().parentWidget().parentWidget().parentWidget().eventWidget
+        mw = self.parentWidget().parentWidget().parentWidget().parentWidget()
+        event_widget = mw.locationWidget.showgroundtruth.event_widget
+        # event_widget = self.parentWidget().parentWidget().parentWidget().parentWidget().eventWidget
         if event_widget.hasValidEvent():
             event_dict = event_widget.Dict()
             date = event_dict['UTC Date']
