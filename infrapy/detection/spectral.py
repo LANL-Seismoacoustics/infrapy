@@ -109,16 +109,18 @@ def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, time
         return det_info
 
 
-def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, 
-            clustering_freq_scaling, clustering_eps, clustering_min_samples, pl):
+def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step,
+            clustering_freq_scaling, clustering_eps, clustering_min_samples, pl, t_skip, verbose=False):
     """Run the spectral detection (sd) methods
-
+ 
+        NEED TO UPDATE THIS NOW THAT WE'VE SEPARATED FUNCTIONS
+ 
         trace: obspy.core.Trace
             Obspy trace containing single channel data
         spec_option: str
             Spectrogram method ('spectrogra', 'stft', or 'cwt')
         morelet_omega0: float
-            Frequency scalar for Morlet waveleth used in 'cwt' option 
+            Frequency scalar for Morlet waveleth used in 'cwt' option
         freq_band: 1darray
             Iterable with minimum and maximum frequencies for analysis
         spec_overlap: float
@@ -137,22 +139,80 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
             Count of required members in a cluster in DBSCAN
         pl: multiprocessing.Pool
             Multiprocessing pool for simultaneous analysis of windows
-
-
+ 
         Returns:
         ----------
         dets: iterable of dicts
             List of dictionaries containing detection info
         """
-
-
-    print('\n' + "Running spectral detection (sd) analysis...")
-
+ 
+    if verbose:
+        print('\n' + "Running spectral detection (sd) analysis...")
+ 
+    if freq_band[1] > f[-1]:
+        print("Warning!  Maximum frequency is above Nyquist (" + str(f[-1]) + ")")
+    freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
+ 
+    # Scan through adaptive windows to identify above-background spectrogram points
+    thresh_history, peaks_history, times_history = [], [], []
+    spec_dets = []
+ 
+    prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step)
+    if verbose:
+        print('\t' + "Progress: ", end = '')
+        prog_bar.prep(prog_bar_len)
+ 
+    for win_n, window_start in enumerate(np.arange(t[0], t[-1], adaptive_window_step)):
+        window_mask = np.logical_and(window_start <= t, t <= window_start + adaptive_window_length)
+        Sxx_window = Sxx_log[:, window_mask]
+        t_window = t[window_mask]
+ 
+        if pl is not None:
+            args = [[Sxx_window[:, ::t_skip][fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
+            temp = pl.map(calc_thresh_wrapper, args)
+        else:
+            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (0.0, 0.0) for fn in range(len(f))])
+ 
+        threshold = np.array(temp)[:, 0]
+        peaks = np.array(temp)[:, 1]
+ 
+        thresh_history = thresh_history + [threshold]
+        peaks_history = peaks_history + [peaks]
+        times_history = times_history + [(window_start + adaptive_window_length / 2.0)]
+ 
+        _, thresh_grid = np.meshgrid(t_window, threshold)
+        spec_dets = spec_dets + [[t_window[k], f[fn], Sxx_window[fn][k]] for fn, k in np.argwhere(Sxx_window > thresh_grid) if freq_band_mask[fn]]      
+        if verbose:
+            prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
+ 
+    if verbose:
+        prog_bar.close()
+ 
+    # Remove duplicate above-threshold points and convert histories to numpy arrays
+    spec_dets = np.unique(np.array(spec_dets), axis=0)
+    thresh_history = np.array(thresh_history)
+    peaks_history = np.array(peaks_history)
+ 
+    history_info = [peaks_history, thresh_history, times_history]
+ 
+    # Cluster into detections
+    if verbose:
+        print("Clustering into detections...")
+    spec_dets_logf = np.stack((spec_dets[:, 0], clustering_freq_scaling * np.log10(spec_dets[:, 1]))).T
+    clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
+ 
+    if verbose:
+        print("Identified " + str(max(clustering.labels_) + 1) + " detections." + '\n')
+ 
+    return spec_dets, clustering, history_info
+ 
+def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, pl):
+ 
     # Compute spectrogram from the trace
     dt = trace.stats.delta
     nperseg = int((4.0 / freq_band[0]) / dt)
     t_skip = 1
-
+ 
     if spec_option == "spectrogram":
         f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
         Sxx_log = 10.0 * np.log10(Sxx)
@@ -163,60 +223,16 @@ def run_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
         f, _, _ = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
         t = trace.times()
         t_skip = int(nperseg * (1.0 - spec_overlap))
-        
+       
         widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
         Sxx_log = 10.0 * np.log10(abs(cwt(trace.data, morlet2, widths, w=morlet_omega0)))
     else:
         print("Error: unrecognized spectrogram option: " + spec_option + ".")
         return []
-
-    if freq_band[1] > f[-1]:
-        print("Warning!  Maximum frequency is above Nyquist (" + str(f[-1]) + ")")
-    freq_band_mask = np.logical_and(freq_band[0] < f, f < freq_band[1])
-
-    # Scan through adaptive windows to identify above-background spectrogram points
-    thresh_history, peaks_history, times_history = [], [], []
-    spec_dets = []
-
-    prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step)
-    print('\t' + "Progress: ", end = '')
-    prog_bar.prep(prog_bar_len)
-
-    for win_n, window_start in enumerate(np.arange(t[0], t[-1], adaptive_window_step)):
-        window_mask = np.logical_and(window_start <= t, t <= window_start + adaptive_window_length)
-        Sxx_window = Sxx_log[:, window_mask]
-        t_window = t[window_mask]
-
-        if pl is not None:
-            args = [[Sxx_window[:, ::t_skip][fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
-            temp = pl.map(calc_thresh_wrapper, args)
-        else:
-            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (0.0, 0.0) for fn in range(len(f))])
-
-        threshold = np.array(temp)[:, 0]
-        peaks = np.array(temp)[:, 1]
-
-        thresh_history = thresh_history + [threshold]
-        peaks_history = peaks_history + [peaks]
-        times_history = times_history + [UTCDateTime(trace.stats.starttime) + (window_start + adaptive_window_length / 2.0)]
-
-        _, thresh_grid = np.meshgrid(t_window, threshold)
-        spec_dets = spec_dets + [[t_window[k], f[fn], Sxx_window[fn][k]] for fn, k in np.argwhere(Sxx_window > thresh_grid) if freq_band_mask[fn]]       
-        prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
-
-    prog_bar.close()
-
-    # Remove duplicate above-threshold points and convert histories to numpy arrays
-    spec_dets = np.unique(np.array(spec_dets), axis=0)
-    thresh_history = np.array(thresh_history)
-    peaks_history = np.array(peaks_history)
-
-    # Cluster into detections
-    print("Clustering into detections...")
-    spec_dets_logf = np.stack((spec_dets[:, 0], clustering_freq_scaling * np.log10(spec_dets[:, 1]))).T
-    clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
-    print("Identified " + str(max(clustering.labels_) + 1) + " detections." + '\n')
-
-    det_list = [det2dict(f, t, Sxx_log, spec_dets[clustering.labels_ == k], trace, peaks_history, thresh_history, times_history) for k in range(max(clustering.labels_) + 1)]
-
-    return det_list 
+   
+    spec_dets, clustering, history = run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, pl, t_skip, verbose=True)
+ 
+    times_history = [UTCDateTime(trace.stats.starttime) + tn for tn in history[2]]
+    det_list = [det2dict(f, t, Sxx_log, spec_dets[clustering.labels_ == k], trace, history[0], history[1], times_history) for k in range(max(clustering.labels_) + 1)]
+ 
+    return det_list

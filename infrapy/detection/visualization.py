@@ -124,7 +124,7 @@ def plot_sd(trace, det_list, freq_band, spec_option="spectrogram", morlet_omega0
     a[1].axhline(freq_band[0], color='0.5')
     a[1].axhline(freq_band[1], color='0.5')
 
-    a[2].get_shared_y_axes().join(a[2], a[1])
+    a[2].sharey(a[1])
     a[2].set_ylim(freq_band[0], freq_band[1])
     for det in det_list:
         Sxx_pnts = np.array(det['Sxx_points'])

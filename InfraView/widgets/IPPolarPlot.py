@@ -4,7 +4,7 @@ import math
 import pyqtgraph as pg
 
 from PyQt5.QtWidgets import QComboBox, QLabel, QPushButton, QHBoxLayout, QFormLayout, QSpinBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 
 from InfraView.widgets import IPBaseWidgets
 
@@ -65,6 +65,40 @@ class IPSlownessSettingsWidget(IPBaseWidgets.IPSettingsWidget):
     def deactivate_update_button(self):
         self.update_button.setEnabled(False)
 
+class IPSlownessImageItem(pg.ImageItem):
+    sig_info_changed = pyqtSignal(str)
+
+    def __init__(self, parent):
+        super().__init__()
+
+        self.parent = parent
+        self.resolution = 0
+        self.hr = 1.
+        self.pps = 1.
+        self.tracev_range = ()
+
+    def set_params(self, resolution, tracev_range, pps):
+        self.resolution = resolution
+        self.hr = resolution/2.
+        self.pps = pps
+        self.tracev_range = tracev_range
+
+    def hoverEvent(self, event):
+        if not event.isExit():
+            pos = event.pos()
+
+            x = (pos.x() - self.hr)/self.pps
+            y = (pos.y() - self.hr)/self.pps
+
+            slow = np.sqrt(x**2 + y**2)
+            vel = 1./slow
+
+            az = np.degrees(np.arctan2(x, y))
+
+            if vel > self.tracev_range[0] and vel < self.tracev_range[1]:
+                info_str = 'Velocity: {:3.2f} m/s \n Azimuth: {:3.2f} deg.'.format(vel, az)
+                self.sig_info_changed.emit(info_str)
+
 class IPSlownessPlot(pg.PlotItem):
 
     def __init__(self, parent):
@@ -72,8 +106,10 @@ class IPSlownessPlot(pg.PlotItem):
 
         self.parent = parent
 
-        self.image_item = pg.ImageItem()
         self.resolution = 0
+        self.hr = 1.
+        self.image_item = IPSlownessImageItem(self)
+        self.image_item.sig_info_changed.connect(self.update_info_label)
         self.tracev_range = ()
 
         self.addItem(self.image_item)
@@ -92,14 +128,17 @@ class IPSlownessPlot(pg.PlotItem):
         self.o_circle.setPen(pg.mkPen(width=3, color='k'))
         self.addItem(self.o_circle)
 
+        self.info_label = pg.TextItem(color=(0, 0, 0), html=None, anchor=(1, 0))
+        self.addItem(self.info_label, ignoreBounds=True)
+
         self.radial_list = []
 
         ax = self.getAxis('bottom')
         # ax.setTicks([])
         ax = self.getAxis('top')
-        ax.setTicks([])
+        # ax.setTicks([])
         ax = self.getAxis('right')
-        ax.setTicks([])
+        # ax.setTicks([])
         ax = self.getAxis('left')
         # ax.setTicks([])
 
@@ -109,26 +148,16 @@ class IPSlownessPlot(pg.PlotItem):
     def set_image(self, image, resolution, tracev_range):
 
         self.resolution = resolution
+        self.hr  = self.resolution/2.
         self.tracev_range = tracev_range
 
-        self.image_item.setImage(image)
-        self.setXRange(0, resolution, padding=0)
-        self.setYRange(0, resolution, padding=0)
-
-        self.enableAutoRange()
-
-        cmap = pg.colormap.get('jet', source='matplotlib')
-        self.image_item.setColorMap(cmap)
-    
-    def set_image(self, image, resolution, tracev_range):
-
-        self.resolution = resolution
-        self.tracev_range = tracev_range
+        self.pps = self.resolution / (2./self.tracev_range[0]) # points per 1/vel unit (points per slowness)
 
         self.setXRange(0, resolution)
         self.setYRange(0, resolution)
 
         self.image_item.setImage(image)
+        self.image_item.set_params(self.resolution, self.tracev_range, self.pps)
 
         self.draw_radials()
         self.draw_circles()
@@ -136,9 +165,15 @@ class IPSlownessPlot(pg.PlotItem):
         self.setAutoVisible(y=True, x=True)
         self.getViewBox().autoRange()
 
+        myRange = self.viewRange()
+        self.info_label.setPos(myRange[0][1], myRange[1][1])
+
+    def update_info_label(self, info_str):
+        self.info_label.setText(info_str)
+
     def draw_radials(self):
         count = 8
-        hr  = self.resolution/2.  # half of the resolution
+
         angles = np.arange(0, 360, 360./count)
 
         # clear old radials
@@ -146,20 +181,18 @@ class IPSlownessPlot(pg.PlotItem):
             self.removeItem(rline)
 
         for angle in angles:
-            r_line = pg.InfiniteLine(pos=(hr,hr), angle=angle, pen=pg.mkPen((100,100,100), width=1, style=Qt.DotLine))
+            r_line = pg.InfiniteLine(pos=(self.hr, self.hr), angle=angle, pen=pg.mkPen((100,100,100), width=1, style=Qt.DotLine))
             self.radial_list.append(r_line)
             self.addItem(r_line)
 
     def draw_circles(self):
 
-        pps = self.resolution / (2./self.tracev_range[0]) # points per 1/vel unit (points per slowness)                           
-
         # outer circle
         self.o_circle.setRect(0, 0, self.resolution, self.resolution)
 
         # inner circle
-        lx =  (1/self.tracev_range[0] - 1/self.tracev_range[1]) * pps   # lower x coord
-        w = 2. * pps/self.tracev_range[1]                               # circle width
+        lx =  (1/self.tracev_range[0] - 1/self.tracev_range[1]) * self.pps   # lower x coord
+        w = 2. * self.pps/self.tracev_range[1]                               # circle width
         self.i_circle.setRect(lx,lx,w,w)
 
         # circle_count = 5
@@ -176,3 +209,6 @@ class IPSlownessPlot(pg.PlotItem):
 
     def clear_slowness(self):
         self.image_item.clear()
+        self.resolution = 0
+        self.hr = 1.
+        self.tracev_range = ()

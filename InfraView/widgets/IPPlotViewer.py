@@ -230,6 +230,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.v_lines.clear()
         self.h_lines.clear()
         for idx, my_plot in enumerate(self.plot_list):
+            
             self.v_lines.append(pg.InfiniteLine(angle=90, movable=False, pen='k'))
             self.h_lines.append(pg.InfiniteLine(angle=0, movable=False, pen='k'))
             self.v_lines[idx].setZValue(10)

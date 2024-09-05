@@ -84,7 +84,7 @@ class IPWaveformWidget(QWidget):
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.bottomSettings.setSignalValues)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.beamformingWidget.updateWaveformRange)
         self.plotViewer.lr_settings_widget.signalSpinsChanged.connect(self.parent.singleSensorWidget.updateSignalRange)
-        self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.singleSensorWidget.updateNoiseRange)
+        # self.plotViewer.lr_settings_widget.noiseSpinsChanged.connect(self.parent.singleSensorWidget.updateNoiseRange)
         self.plotViewer.pl_widget.sig_active_plot_changed.connect(self.update_widgets)
 
         self.spectraWidget.f1_Spin.valueChanged.connect(self.parent.beamformingWidget.bottomSettings.setFmin)
@@ -432,10 +432,10 @@ class IPWaveformWidget(QWidget):
             if current_filter_display_settings['apply']:
                 self.parent.beamformingWidget.setWaveform(filtered_lines[index], signal_region, plot_label=plot_title)
                 self.parent.singleSensorWidget.setSignalWaveform(filtered_lines[index], signal_region, plot_label=plot_title)
-                self.parent.singleSensorWidget.setNoiseWaveform(filtered_lines[index], noise_region, plot_label=plot_title)
+                # self.parent.singleSensorWidget.setNoiseWaveform(filtered_lines[index], noise_region, plot_label=plot_title)
             else:
                 self.parent.beamformingWidget.setWaveform(lines[index], signal_region, plot_label=plot_title)
                 self.parent.singleSensorWidget.setSignalWaveform(lines[index], signal_region, plot_label=plot_title)
-                self.parent.singleSensorWidget.setNoiseWaveform(lines[index], noise_region, plot_label=plot_title)
+                # self.parent.singleSensorWidget.setNoiseWaveform(lines[index], noise_region, plot_label=plot_title)
 
             

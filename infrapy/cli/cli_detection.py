@@ -938,7 +938,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         else:
             stream.trim(t1, t2)
 
-    det_list = spectral.run_sd(stream[0], spectral_option, morlet_omega0, [freq_min, freq_max], 0.8, p_value, window_len, window_step, freq_tm_factor, cluster_eps, cluster_min_samples, pl)
+    det_list = spectral.cli_sd(stream[0], spectral_option, morlet_omega0, [freq_min, freq_max], 0.8, p_value, window_len, window_step, freq_tm_factor, cluster_eps, cluster_min_samples, pl)
 
     if local_detect_label is None or local_detect_label == "auto":
         local_detect_label = output_id
