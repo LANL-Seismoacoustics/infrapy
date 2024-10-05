@@ -5,12 +5,9 @@ import configparser as cnfg
 from click.utils import echo
 from pathlib import Path
 
-# Note, if you move this file, you might need to change this line
-root_path = Path(__file__).parent
-
 # Set up default configuation
 defaults = cnfg.ConfigParser()
-defaults.read(root_path / "resources" / "default.config")
+defaults.read(Path(__file__).parent / "resources" / "default.config")
 
 def set_param(user_config, section, param, cli_val, format='float'):
     if cli_val is not None:
