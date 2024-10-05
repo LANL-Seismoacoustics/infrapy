@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
-import imp 
-
 import configparser as cnfg
 
 from click.utils import echo
+from pathlib import Path
+
+# Note, if you move this file, you might need to change this line
+root_path = Path(__file__).parent
 
 # Set up default configuation
 defaults = cnfg.ConfigParser()
-defaults.read(imp.find_module('infrapy')[1] + '/resources/default.config')
+defaults.read(root_path / "resources" / "default.config")
 
 def set_param(user_config, section, param, cli_val, format='float'):
     if cli_val is not None:
