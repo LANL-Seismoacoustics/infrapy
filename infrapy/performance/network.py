@@ -8,7 +8,6 @@
 
 
 import itertools
-import imp 
 
 import numpy as np
 
@@ -18,6 +17,7 @@ from scipy.integrate import simps
 from ..characterization import spye
 
 from pyproj import Geod
+from pathlib import Path
 
 
 sph_proj = Geod(ellps='sphere')
@@ -26,8 +26,11 @@ ref_dB = 10.0 * np.log10(20.e-6)
 # ########################## #
 #      IMS Noise Models      #
 # ########################## #
-ims_low_ns = np.loadtxt(imp.find_module('infrapy')[1] + '/resources/noise_models/IMSnoisemodel_low.txt')
-ims_high_ns = np.loadtxt(imp.find_module('infrapy')[1] + '/resources/noise_models/IMSnoisemodel_high.txt')
+lowns_file = str(Path(__file__).parent / "resources" / "noise_models" / "IMSnoisemodel_low.txt")
+highns_file = str(Path(__file__).parent / "resources" / "noise_models" / "IMSnoisemodel_high.txt")
+
+ims_low_ns = np.loadtxt(lowns_file)
+ims_high_ns = np.loadtxt(highns_file)
 
 low_ns_interp = interp1d(ims_low_ns[:, 0], 10.0 * ims_low_ns[:,1] - 2.0 * ref_dB)
 high_ns_interp = interp1d(ims_high_ns[:, 0], 10.0 * ims_high_ns[:,1] - 2.0 * ref_dB)

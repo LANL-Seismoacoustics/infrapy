@@ -186,10 +186,12 @@ def get_plugins(options):
 			except ValueError:
 				msg = "Must specify plugin like: path/to/modulename:plugin_function"
 				raise ValueError(msg)
+
 			pth = pth.split(os.path.sep)
 			modname = pth.pop(-1)
 			f, pathname, descr = imp.find_module(modname, pth)
 			mod = imp.load_module(modname, f, pathname, descr)
+			
 			plugin_functions.append(getattr(mod, fn))
 
 	return plugin_functions

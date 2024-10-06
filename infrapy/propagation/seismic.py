@@ -6,13 +6,13 @@
 
 import sys
 import pickle
-import imp
 import time
 import itertools
 
 import numpy as np
 
 from pyproj import Geod
+from pathlib import Path
 
 from scipy.interpolate import interp1d
 
@@ -30,7 +30,8 @@ ak135_s_sigma = 6.0
 
 # load ak135 travel time tabl and interpolate
 # file format: arc [deg] : p_time [s] : s_time [s]
-ak135_tbls = np.loadtxt(imp.find_module('infrapy')[1] + '/resources/travelTimeTables/ak135_1st_arrivals.dat', skiprows=1)
+arrivals_file = str(Path(__file__).parent / "resources" / "travelTimeTables" / "ak135_1st_arrivals.dat")
+ak135_tbls = np.loadtxt(arrivals_file, skiprows=1)
 
 ak135_p_tr_time_interp = interp1d(np.radians(ak135_tbls[:, 0]) * 6370.997, ak135_tbls[:, 1], kind='cubic')
 ak135_s_tr_time_interp = interp1d(np.radians(ak135_tbls[:, 0]) * 6370.997, ak135_tbls[:, 2], kind='cubic')
