@@ -9,7 +9,6 @@ Author: pblom@lanl.gov
 
 import os
 import pickle
-import imp 
 import click
 
 import warnings
@@ -21,6 +20,7 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import gaussian_kde, norm
 from scipy.optimize import curve_fit
+from pathlib import Path
 
 import numpy as np
 
@@ -114,7 +114,14 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, rcvr, celerity_
     if rcvr is not None:
         click.echo('\n' + "  User specified reference receiver: " + str(rcvr))
 
-        IMS_info = pickle.load(open(imp.find_module('infrapy')[1] + '/resources/IMS_infrasound_locs.pkl', 'rb'), encoding='latin1')
+        try:
+            ims_locs_file = str(Path(__file__).parent / "resources" / "IMS_infrasound_locs.pkl")
+            with open(ims_locs_file, 'rb') as infile:
+                IMS_info = pickle.load(infile, encoding='latin1')
+        except FileNotFoundError:
+            warning_message = " IMS locations file (IMS_infrasound_locs.pkl) is not found"
+            warnings.warn(warning_message)
+
         for line in IMS_info:
             if rcvr in line[0]:
                 click.echo("  Reference IMS station match: " + line[0])

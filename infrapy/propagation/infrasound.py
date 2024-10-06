@@ -8,7 +8,6 @@
 
 import sys
 import pickle
-import imp
 import time
 import itertools
 import warnings
@@ -16,6 +15,7 @@ import warnings
 import numpy as np
 
 from sklearn import mixture
+from pathlib import Path
 
 from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
 from scipy.optimize import curve_fit
@@ -451,7 +451,7 @@ class PathGeometryModel(object):
         bias_color = 'Blue'
         var_color = 'LightBlue'
 
-        compass_file = imp.find_module('infrapy')[1] + '/propagation/compass.png'
+        compass_file = str(Path(__file__).parent / "propagation" / "compass.png")
 
         f1, ax = plt.subplots(3, 3, figsize=(12, 9))
 
@@ -738,8 +738,9 @@ class TLossModel(object):
 
     def display(self, title="Transmission Loss Statistics", file_id=None, hold_fig=None):
         scale_max = 0.1
-        compass_file = imp.find_module('infrapy')[1] + '/propagation/compass.png'
         
+        compass_file = str(Path(__file__).parent / "propagation" / "compass.png")
+
         resol = 100
         rngs = np.linspace(0.0, 1000.0, resol)
         tloss_min, tloss_max = -60.0, 0.0
