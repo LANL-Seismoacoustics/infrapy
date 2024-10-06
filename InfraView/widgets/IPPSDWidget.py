@@ -35,20 +35,16 @@ class IPPSDWidget(QWidget):
         self.show()
 
     def buildUI(self):
-        self.setMinimumSize(100, 100)
+
         self.plotLayoutWidget = pg.GraphicsLayoutWidget()
         self.psdPlot = IPPlotItem(mode='PSD')
 
-        self.psdPlot.enableAutoRange(self.psdPlot.xaxis(), enable=True)
-        self.psdPlot.enableAutoRange(self.psdPlot.yaxis(), enable=True)
+        #self.psdPlot.getAxis('bottom').setRange(5, 20)
         
-        self.psdPlot.getAxis('bottom').setRange(.1, 10)
-        
+
         self.psdPlot.setLabel('bottom', 'f (Hz)')
-        self.psdPlot.setLabel('left', 'Power Spectral Density (dB)')
+        self.psdPlot.setLabel('left', 'Power Spectrßal Density (dB)')
         self.psdPlot.setTitle("...")
-        
-        self.psdPlot.setLogMode(x=True, y=False)
 
         initdata = np.array([1])
 

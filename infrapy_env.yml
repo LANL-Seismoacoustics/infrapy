@@ -28,10 +28,11 @@ dependencies:
   - sphinx_rtd_theme
   - pandoc
   - jupyterlab
+  - libtiff
   - pip
 
   - pip:
     #- git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
-    - pisces==0.4.2
+    - pisces==0.4.4
     - -e .
 

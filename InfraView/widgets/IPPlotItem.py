@@ -113,6 +113,15 @@ class IPPlotItem(pg.PlotItem):
             if est is None:
                 est = UTCDateTime(0)
             super().__init__(axisItems={'bottom': IPSpectrogramTimeAxis(est=est)})
+        elif mode == 'PSD':
+            super().__init__()
+
+            self.enableAutoRange(self.xaxis(), enable=True)
+            self.enableAutoRange(self.yaxis(), enable=True)
+        
+            self.setLogMode(x=True, y=False)
+            self.setXRange(np.log(1), np.log(2))
+
         else:
             super().__init__()
 
