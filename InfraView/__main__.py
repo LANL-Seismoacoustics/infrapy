@@ -7,6 +7,7 @@ import os
 import sys
 import platform
 
+from pathlib import Path
 from InfraView.widgets.IPApplicationWindow import *
 
 
@@ -14,13 +15,8 @@ def main():
     progname = "InfraView"
     progversion = "0.4.0"
 
-    here = os.path.abspath(__file__)
-    here = os.path.dirname(here)
-
     qApp = QtWidgets.QApplication(sys.argv)
-
-    #icon_file = here + '/graphics/infraViewIcon.svg'
-    icon_file = here + '/graphics/icons/start_64.png'
+    icon_file = str(Path(__file__).parent / 'graphics' / 'icons' / 'start_64')
     qApp.setWindowIcon(QIcon(icon_file))
 
     my_system = platform.system()

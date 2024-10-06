@@ -115,7 +115,8 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, rcvr, celerity_
         click.echo('\n' + "  User specified reference receiver: " + str(rcvr))
 
         try:
-            ims_locs_file = str(Path(__file__).parent / "resources" / "IMS_infrasound_locs.pkl")
+            ims_locs_file = str(Path(__file__).parent.parent / "resources" / "IMS_infrasound_locs.pkl")
+            
             with open(ims_locs_file, 'rb') as infile:
                 IMS_info = pickle.load(infile, encoding='latin1')
         except FileNotFoundError:

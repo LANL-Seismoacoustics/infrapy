@@ -451,7 +451,7 @@ class PathGeometryModel(object):
         bias_color = 'Blue'
         var_color = 'LightBlue'
 
-        compass_file = str(Path(__file__).parent / "propagation" / "compass.png")
+        compass_file = str(Path(__file__).parent.parent / "propagation" / "compass.png")
 
         f1, ax = plt.subplots(3, 3, figsize=(12, 9))
 
@@ -739,7 +739,7 @@ class TLossModel(object):
     def display(self, title="Transmission Loss Statistics", file_id=None, hold_fig=None):
         scale_max = 0.1
         
-        compass_file = str(Path(__file__).parent / "propagation" / "compass.png")
+        compass_file = str(Path(__file__).parent.parent / "propagation" / "compass.png")
 
         resol = 100
         rngs = np.linspace(0.0, 1000.0, resol)
