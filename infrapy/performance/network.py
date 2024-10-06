@@ -26,8 +26,8 @@ ref_dB = 10.0 * np.log10(20.e-6)
 # ########################## #
 #      IMS Noise Models      #
 # ########################## #
-lowns_file = str(Path(__file__).parent / "resources" / "noise_models" / "IMSnoisemodel_low.txt")
-highns_file = str(Path(__file__).parent / "resources" / "noise_models" / "IMSnoisemodel_high.txt")
+lowns_file = str(Path(__file__).parent.parent / "resources" / "noise_models" / "IMSnoisemodel_low.txt")
+highns_file = str(Path(__file__).parent.parent / "resources" / "noise_models" / "IMSnoisemodel_high.txt")
 
 ims_low_ns = np.loadtxt(lowns_file)
 ims_high_ns = np.loadtxt(highns_file)

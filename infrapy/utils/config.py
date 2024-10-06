@@ -7,7 +7,8 @@ from pathlib import Path
 
 # Set up default configuation
 defaults = cnfg.ConfigParser()
-defaults.read(str(Path(__file__).parent / "resources" / "default.config"))
+print(str(Path(__file__).parent.parent / "resources" / "default.config"))
+defaults.read(str(Path(__file__).parent.parent / "resources" / "default.config"))
 
 def set_param(user_config, section, param, cli_val, format='float'):
     if cli_val is not None:
