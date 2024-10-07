@@ -315,7 +315,7 @@ def _fkMUSIC(streamOR,sps,slow,mult_vectors,fN,x,y,timeSTAMP,func,freqN,number_s
     for w_i in range(int(num_win)):
         streamS=stream[:,int(sps)*win_l*w_i:int(sps*win_lf*(w_i+1))]
         nn_s,mm_s=streamS.shape
-        val_TA=signal.tukey(mm_s, alpha=0.25, sym=True)
+        val_TA=signal.windows.tukey(mm_s, alpha=0.25, sym=True)
         for ii in range(nn_s):
             streamS[ii,:]=streamS[ii,:]*val_TA
         streamF=np.fft.rfft(streamS,axis=1)
@@ -516,7 +516,7 @@ def svdAV_wv(stream,sps,slow,mult_vectors,fN,x,y,timeSTAMP,func,freqN,number_div
     for w_i in range(int(num_win)):
         streamS=stream[:,int(sps)*win_l*w_i:int(sps*win_lf*(w_i+1))]
         nn_s,mm_s=streamS.shape
-        val_TA=signal.tukey(mm_s, alpha=0.1, sym=True)
+        val_TA=signal.windows.tukey(mm_s, alpha=0.1, sym=True)
         for ii in range(nn_s):
             streamS[ii,:]=streamS[ii,:]*val_TA
         streamF=np.fft.rfft(streamS,axis=1)
@@ -554,7 +554,7 @@ def _fkCAPON_AV(stream,sps,slow,mult_vectors,fN,x,y,timeSTAMP,func,freqN,number_
     for w_i in range(int(num_win)):
         streamS=stream[:,int(sps)*win_l*w_i:int(sps*win_lf*(w_i+1))]
         nn_s,mm_s=streamS.shape
-        val_TA=signal.tukey(mm_s, alpha=0.1, sym=True)
+        val_TA=signal.windows.tukey(mm_s, alpha=0.1, sym=True)
         for ii in range(nn_s):
             streamS[ii,:]=streamS[ii,:]*val_TA
         streamF=np.fft.rfft(streamS,axis=1)

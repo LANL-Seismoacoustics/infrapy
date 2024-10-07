@@ -179,9 +179,9 @@ def fft_array_data(x, t, window=None, sub_window_len=None, sub_window_overlap=0.
                 if normalize_windowing:
                     temp /= np.mean(np.hamming(sub_win_N))
             elif fft_window == "tukey":
-                temp[:, 0 : sub_win_N] *= np.array([signal.tukey(sub_win_N)] * M)
+                temp[:, 0 : sub_win_N] *= np.array([signal.windows.tukey(sub_win_N)] * M)
                 if normalize_windowing:
-                    temp /= np.mean(signal.tukey(sub_win_N))
+                    temp /= np.mean(signal.windows.tukey(sub_win_N))
             elif fft_window == "boxcar":
                 temp[:, 0 : sub_win_N] *= 1.0
             else:
@@ -228,7 +228,7 @@ def fft_array_data(x, t, window=None, sub_window_len=None, sub_window_overlap=0.
             if normalize_windowing:
                 temp /= np.mean(np.hamming(win_N))
         elif fft_window == "tukey":
-            temp[:, 0 : win_N] *= np.array([signal.tukey(win_N)] * M)
+            temp[:, 0 : win_N] *= np.array([signal.windows.tukey(win_N)] * M)
             if normalize_windowing:
                 temp /= np.mean(signal.tukey(win_N))
         elif fft_window == "boxcar":
