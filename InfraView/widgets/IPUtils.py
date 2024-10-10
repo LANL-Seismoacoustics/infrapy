@@ -45,11 +45,11 @@ def errorPopup(message, title="Oops..."):
 
 class IPSplitter(QSplitter):
 
-    def __init__(self, orientation=Qt.Horizontal, parent=None):
+    def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
 
         self.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
-
+        self.setHandleWidth(20)
 
 
 class CapsValidator(QValidator):

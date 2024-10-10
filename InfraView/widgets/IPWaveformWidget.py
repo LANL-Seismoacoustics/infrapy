@@ -52,7 +52,7 @@ class IPWaveformWidget(QWidget):
 
         self.plotViewer = IPPlotViewer.IPPlotViewer(self)
 
-        self.lh_splitter = IPUtils.IPSplitter(parent=self)
+        self.lh_splitter = IPUtils.IPSplitter(orientation=Qt.Vertical, parent=self)
         self.lh_splitter.addWidget(self.plotViewer)
         self.lh_splitter.addWidget(self.info_tabs)
 

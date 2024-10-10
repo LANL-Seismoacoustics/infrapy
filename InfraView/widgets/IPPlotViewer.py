@@ -20,7 +20,7 @@ import pyproj
 class IPPlotViewer(IPUtils.IPSplitter):
 
     def __init__(self, parent):
-        super().__init__(parent=parent)
+        super().__init__(orientation=Qt.Horizontal, parent=parent)
         self.parent = parent
 
         self.buildUI()
