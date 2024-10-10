@@ -49,7 +49,6 @@ class IPSplitter(QSplitter):
         super().__init__(orientation, parent)
 
         self.setStyleSheet("QSplitter::handle{ background-color: #DDD}")
-        self.setHandleWidth(20)
 
 
 class CapsValidator(QValidator):
