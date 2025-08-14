@@ -4,21 +4,295 @@ import os
 import warnings 
 
 import click
+
 import json
+import gzip
+
 import configparser as cnfg
-from matplotlib.pyplot import figure
 import numpy as np
 
 from obspy import UTCDateTime
 
 from multiprocessing import Pool
 
-from infrapy.location import bisl
+from ..utils import config
+from ..utils import data_io
+from ..detection import visualization as det_vis
+from ..location import visualization as loc_vis
+from ..location import bisl
 
-from infrapy.utils import config
-from infrapy.utils import data_io
-from infrapy.detection import visualization as det_vis
-from infrapy.location import visualization as loc_vis
+
+@click.command('beam_detect', short_help="Plot detections from updated JSON format output")
+@click.option("--det-file", help="Detection GZIP file", default=None)
+@click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
+@click.option("--plot-all-dets", help="Plot all detections", default=False)
+@click.option("--param-set-index", help="Index of a parameter set (merged dets)", default=None, type=int)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Print figure to screen", default=True)
+def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figure_out, show_figure):
+    '''
+    Summarize the contents of a JSON detections file
+
+    Example usage (requires 'infrapy beam_detect --config-file config/detection_local.config' run first):
+    \tinfrapy plot beam_detect --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz
+    \tinfrapy plot beam_detect --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 3
+    '''
+
+    click.echo("")
+    click.echo("###############################")
+    click.echo("##                           ##")
+    click.echo("##          InfraPy          ##")
+    click.echo("##       Beam Detection      ##")
+    click.echo("##       Visualization       ##")
+    click.echo("##                           ##")
+    click.echo("###############################")
+    click.echo("")    
+
+    if os.path.splitext(det_file)[-1] == ".gz":
+        det_data = json.load(gzip.open(det_file, 'rt'))
+    else:
+        det_data = json.load(open(det_file))
+    
+    if "wvfrm_info" in det_data:
+        click.echo('\n' + "waveform summary:")
+        for wvfrm in det_data['wvfrm_info'][0]:
+            print('\t' + wvfrm['trace id'], end="")
+            print('\t' + wvfrm['starttime'] + ' - ' + wvfrm['endtime'])
+
+        click.echo('\n' + "fk (beam) parameters:")
+        for key in det_data['fk_params'][0].keys():
+            click.echo("  " + key + ": " + str(det_data['fk_params'][0][key]))
+
+        click.echo('\n' + "detection parameters:")
+        for key in det_data['det_params'][0].keys():
+            click.echo("  " + key + ": " + str(det_data['det_params'][0][key]))
+
+        if single_det_index is not None:
+            if single_det_index > len(det_data["det_info"]):
+                click.echo('\n' + "detection index (" + str(single_det_index) + ") doesn't correspond to a detection in this file.")
+
+                click.echo('\n' + "detection summary:")
+                for nd, det in enumerate(det_data['det_info']):
+                    print("   index: " + str(nd), end='\t')
+                    print("   time: " + det['peak f-stat time'], end='\t')
+                    print("   f-stat: " + str(np.round(det['f-stat'], 1)), end='\t')
+                    print("   back azimuth: " + str(np.round(det['back az'], 1)), end='\t')
+                    print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')
+                    print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]))
+                print("")
+
+            else:
+                det = det_data['det_info'][single_det_index]
+
+                click.echo('\n' + "detection summary (index = " + str(single_det_index) + "):")
+                print("   time: " + det['peak f-stat time'])
+                print("   f-stat: " + str(np.round(det['f-stat'], 1)))
+                print("   back azimuth: " + str(np.round(det['back az'], 1)) + " deg (rel. N)")
+                print("   trace velocity: " + str(np.round(det['tr vel'], 1)) + "m/s")
+                print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]) + " sec")
+
+                click.echo('\n' + "Plotting detection index " + str(single_det_index))
+                det_vis.plot_det_json(det_data, single_det_index, output_path=figure_out, show_fig=show_figure)
+
+        else:
+            click.echo('\n' + "detection summary:")
+            for nd, det in enumerate(det_data['det_info']):
+                print("   index: " + str(nd), end='\t')
+                print("   time: " + det['peak f-stat time'], end='\t')
+                print("   f-stat: " + str(np.round(det['f-stat'], 1)), end='\t')
+                print("   back azimuth: " + str(np.round(det['back az'], 1)), end='\t')
+                print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')                
+                print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]))
+            if plot_all_dets:
+                click.echo('\n' + "Plotting all detections...")
+                for k in range(len(det_data['det_info'])):
+                    det_vis.plot_det_json(det_data, k, output_path=figure_out + "_det" + str(k), show_fig=False)
+                if show_figure:
+                    plt.show()
+
+            else:
+                click.echo('\n' + "Plotting full set of fk results and windowed detections...")
+                det_vis.plot_fk_json(det_data, output_path=figure_out, show_fig=show_figure)
+
+    else: 
+        if single_det_index is None:
+            single_det_index = 0
+
+        if plot_all_dets:
+            click.echo('\n' + "Plotting all detections...")
+            for k in range(len(det_data['det_info'])):
+                click.echo('\n' + "detection summary (index = " + str(k) + "):")
+
+                det = det_data["det_info"][k]
+
+                click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+                click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+                click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+                click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+                click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+                click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+            
+
+                det_vis.plot_det_json(det_data, k, output_path=figure_out + "_det" + str(k), show_fig=False)
+            if show_figure:
+                plt.show()
+
+        else:
+            click.echo('\n' + "detection summary (index = " + str(single_det_index) + "):")
+
+            det = det_data["det_info"][single_det_index]
+
+            click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+            click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+            click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+            click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+            click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+            click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+            
+            click.echo('\n' + "Plotting detection...")
+            det_vis.plot_det_json(det_data, single_det_index, param_set_index, output_path=figure_out, show_fig=show_figure)
+
+
+
+@click.command('wvfrms', short_help="Plot detections from updated JSON format output")
+@click.option("--det-file", help="Detection GZIP file", default=None)
+@click.option("--single-det-index", help="Index of a single detection", default=0)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Print figure to screen", default=True)
+def wvfrms(det_file, single_det_index, figure_out, show_figure):
+    '''
+    Summarize the contents of a JSON detections file
+
+    Example usage (requires 'infrapy run_fkd --config-file config/detection_local.config' run first):
+    \tinfrapy plot fd_json --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59-update.dets.json.gz
+    \tinfrapy plot fd_json --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59-update.dets.json.gz --single-det-index 3
+    '''
+
+    if os.path.splitext(det_file)[-1] == ".gz":
+        det_data = json.load(gzip.open(det_file, 'rt'))
+    else:
+        det_data = json.load(open(det_file))
+
+    det = det_data["det_info"][single_det_index]
+
+    click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+    click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+    click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+    click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+    click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+    click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+
+    pk_snr = [max(abs(np.array(bm_j['signal'])) / np.array(bm_j['resid'])) for bm_j in det['beam']]
+    click.echo("pk snr = " + str(pk_snr))
+
+    click.echo('\n' + "Plotting detection...")
+    det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=show_figure)
+
+
+@click.command('spec_detect', short_help="Visualize detection(s) from spectral analysis")
+@click.option("--det-file", help="Detection GZIP file", default=None)
+@click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
+@click.option("--log-scale-freq", help="Visualize frequency in log scaling", default=False)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Print figure to screen", default=True)
+def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_figure):
+    '''
+    Visualize spectral detection (sd) results
+
+    \b
+    Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
+    \tinfrapy plot sd_json --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz'
+    \tinfrapy plot sd_json --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz' --single-det-index 3
+
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##     Spectral Detection (sd)     ##")
+    click.echo("##          Visualization          ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")    
+
+    if os.path.splitext(det_file)[-1] == ".gz":
+        det_data = json.load(gzip.open(det_file, 'rt'))
+    else:
+        det_data = json.load(open(det_file))
+
+    click.echo('\n' + "waveform summary:")
+    for wvfrm in det_data['wvfrm_info']:
+        print('\t' + wvfrm['trace id'], end="")
+        print('\t' + wvfrm['starttime'] + ' - ' + wvfrm['endtime'])
+
+    click.echo('\n' + "sd (spectral detector) parameters:")
+    for key in det_data['sd_params'].keys():
+        click.echo("  " + key + ": " + str(det_data['sd_params'][key]))
+
+    if single_det_index is not None:
+        if single_det_index > len(det_data["det_info"]):
+            click.echo('\n' + "detection index (" + str(single_det_index) + ") doesn't correspond to a detection in this file.")
+
+            click.echo('\n' + "detection summary:")
+            for nd, det in enumerate(det_data['det_info']):
+                print("   index: " + str(nd), end='\t')
+                print("   time: " + det['peak f-stat time'], end='\t')
+                print("   f-stat: " + str(np.round(det['f-stat'], 1)), end='\t')
+                print("   back azimuth: " + str(np.round(det['back az'], 1)), end='\t')
+                print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')
+                print("   duration: " + str(det['time vals'][-1] - det['time vals'][0]))
+            print("")
+        else:
+
+            det = det_data['det_info'][single_det_index]
+
+            spec_pnts = np.array(det['spec pnts'])
+            t1, t2 = min(spec_pnts[:, 0]), max(spec_pnts[:, 0])
+            f1, f2 = min(spec_pnts[:, 1]), max(spec_pnts[:, 1])
+
+            print('\n' + "detection summary (index = " + str(single_det_index) + "):")
+            print("   time: " + det['peak f-stat time'])
+            print("   duration [s]: " + str(np.round(t2 - t1, 2)))
+            print("   frequency range [Hz]: " + str(f1) + " - " + str(f2))
+        
+            click.echo('\n' + "Plotting detection index " + str(single_det_index))
+            det_vis.plot_sd_single_json(det_data, single_det_index, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
+
+    else:
+        click.echo('\n' + "detection summary:")
+        for nd, det in enumerate(det_data['det_info']):
+            spec_pnts = np.array(det['spec pnts'])
+            t1, t2 = min(spec_pnts[:, 0]), max(spec_pnts[:, 0])
+            f1, f2 = min(spec_pnts[:, 1]), max(spec_pnts[:, 1])
+
+            print("   index: " + str(nd), end='\t')
+            print("   time: " + det['peak f-stat time'], end='\t')
+            print("   duration [s]: " + str(np.round(t2 - t1, 2)), end='\t')
+            print("   frequency range [Hz]: " + str(f1) + ", " + str(f2))
+
+        click.echo('\n' + "Plotting spectrogram detection results...")
+        det_vis.plot_sd_json(det_data, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################
+## THE REST OF THESE ARE DEPRECATED AND ## 
+##  WILL BE REMOVED IN A FUTURE UPDATE  ##
+##########################################
+
+
+
 
 
 @click.command('fk', short_help="Visualize beamforming (fk) results")

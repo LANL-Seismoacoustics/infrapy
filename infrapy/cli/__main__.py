@@ -50,12 +50,27 @@ main.add_command(plot)
 main.add_command(utils)
 
 # main functions (run analysis)
+main.add_command(cli_detection.run_beam_detect)
+main.add_command(cli_detection.run_spec_detect)
+
+
+plot.add_command(cli_visualization.beam_detect)
+plot.add_command(cli_visualization.spec_detect)
+
+
+
+
+
+####################
+## DEPRECATED CLI ##
+####################
 main.add_command(cli_detection.run_fk)
 main.add_command(cli_detection.run_fd)
 main.add_command(cli_detection.run_fkd)
 main.add_command(cli_detection.run_sd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
+
 
 # SpYE
 run_spye.add_command(cli_loc.regional)

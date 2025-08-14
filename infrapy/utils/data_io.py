@@ -22,10 +22,23 @@ blank_sac_dict = {'delta': None, 'npts': None, 'depmin': None, 'depmax': None, '
 def stream_label(st):
     label = os.path.commonprefix([tr.stats.network for tr in st])
     label = label + "." + os.path.commonprefix([tr.stats.station for tr in st])
-    label = label + '_' + st[0].stats.starttime.strftime('%Y.%m.%d_%H.%M.%S')
-    label = label + '-' + st[0].stats.endtime.strftime('%H.%M.%S')
+    label = label + '_' + st[0].stats.starttime.strftime('%Y.%m.%dT%H.%M.%S')
 
     return label
+
+
+def wvfrm_info(st, latlon):
+    info = []
+    for n, tr in enumerate(st):
+        info = info + [{}]
+        info[-1]['trace id'] = tr.id
+        info[-1]['starttime'] = str(tr.stats.starttime)
+        info[-1]['endtime'] = str(tr.stats.endtime)
+        info[-1]['latitude'] = float(latlon[n][0])
+        info[-1]['longitude'] = float(latlon[n][1])
+
+    return info
+
 
 ############################
 ##     Data Ingestion     ##
