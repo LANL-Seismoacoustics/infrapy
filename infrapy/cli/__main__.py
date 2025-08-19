@@ -67,6 +67,7 @@ detect.add_command(cli_detection.run_beam_detect)
 detect.add_command(cli_detection.run_spec_detect)
 
 event.add_command(cli_event.build)
+event.add_command(cli_event.localize)
 
 
 
@@ -74,7 +75,7 @@ event.add_command(cli_event.build)
 plot.add_command(cli_visualization.beam_detect)
 plot.add_command(cli_visualization.spec_detect)
 plot.add_command(cli_visualization.wvfrms)
-
+plot.add_command(cli_visualization.map_dets)
 
 
 # Utilities

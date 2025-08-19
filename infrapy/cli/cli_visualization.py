@@ -300,18 +300,20 @@ def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_fig
 
 @click.command('map_dets', short_help="Plot detections on a map")
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--detect-label", help="Detection path and pattern", default=None)
+@click.option("--detect-files", help="Detection path and pattern (option 1)", default=None)
+@click.option("--event-file", help="EVent file (option 2)", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
-def map_dets(config_file, range_max, detect_label, figure_out, offline_maps_dir):
+@click.option("--show-figure", help="Print figure to screen", default=True)
+def map_dets(config_file, detect_files, event_file, range_max, figure_out, offline_maps_dir, show_figure):
     '''
     Visualize detections on a map
 
     \b
     Example usage (run from infrapy/examples directory after running run_assoc example):
-    \tinfrapy plot map_dets --detect-label 'data/Blom_etal2020_GJI/*'
-    \tinfrapy plot map_dets --detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
+    \tinfrapy plot map_dets --detect-files 'data/Blom_etal2020_GJI/*'
+    \tinfrapy plot map_dets --detect-files 'GJI_example-ev0.dets.json'  --range-max 1000
 
     '''
 
@@ -333,10 +335,12 @@ def map_dets(config_file, range_max, detect_label, figure_out, offline_maps_dir)
     else:
         user_config = None
 
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+    detect_files = config.set_param(user_config, 'DETECTION IO', 'detect_files', detect_files, 'string')
+    event_file = config.set_param(user_config, 'EVENT IO', 'event_file', event_file, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  detect_files: " + str(detect_files))
+    click.echo("  event_file: " + str(event_file))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
     offline_maps_dir = config.set_param(user_config, 'VISUALIZATION', 'offline_maps_dir', offline_maps_dir, 'string')
@@ -347,21 +351,33 @@ def map_dets(config_file, range_max, detect_label, figure_out, offline_maps_dir)
         click.echo("  offline maps directory: {}".format(offline_maps_dir))
         loc_vis.use_offline_maps(offline_maps_dir)
 
-    det_data = data_io._load_dets_json(detect_label)
+    if detect_files is not None:
+        det_data = data_io._load_dets_json(detect_files)
+        det_dicts = []
+        for entry in det_data:
+            for det in entry["det_info"]:
+                det_dicts = det_dicts + [det]
+                if 'fk_params' in entry.keys():
+                    det_dicts[-1]["wvfrm_info"] = entry["wvfrm_info"]
+                    det_dicts[-1]["fk_params"] = entry["fk_params"]
+                    det_dicts[-1]["det_params"] = entry["det_params"]
 
-    det_dicts = []
-    for entry in det_data:
-        for det in entry["det_info"]:
-            det_dicts = det_dicts + [det]
-            if 'fk_params' in entry.keys():
-                det_dicts[-1]["wvfrm_info"] = entry["wvfrm_info"]
-                det_dicts[-1]["fk_params"] = entry["fk_params"]
-                det_dicts[-1]["det_params"] = entry["det_params"]
+    elif event_file is not None:
+        ev_info = data_io._load_dets_json(event_file)[0]
+        det_dicts = ev_info["det_info"]
+        range_max = ev_info["assoc_params"]["range_max"]
+        click.echo("Updating range max from event building parameters: " + str(range_max) + " km")
+        
+    else:
+        click.echo("Requires either detection file(s) or event file to plot detection projections)")
+        return 
 
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
     click.echo('\n' + "Drawing map with detection back azimuth projections...")
-    loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
+    loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out, show_fig=show_figure)
+
+
 
 
 

@@ -38,6 +38,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #      General (Canonical)     #
 #      Propagation Models      #
 # ############################ #
+
 canon_rcel_wts = np.array([0.0539, 0.0899, 0.8562])
 canon_rcel_mns = np.array([1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26])
 canon_rcel_vrs = np.array([0.066, 0.08, 0.33])
@@ -50,6 +51,7 @@ def canonical_rcel(rcel):
         vals = np.asarray([canon_rcel_wts] * len(rcel)) / np.asarray([canon_rcel_vrs] * len(rcel)) * norm.pdf((np.asarray([rcel] * 3).T - np.asarray([canon_rcel_mns] * len(rcel))) / np.asarray([canon_rcel_vrs] * len(rcel)))
         return np.sum(vals, axis=1)
 
+
 # ########################### #
 #     Accessible Celerity     #
 #      Statistics Models      #
@@ -61,20 +63,20 @@ def set_celerity_model(option, rcel_wts=None, rcel_mns=None, rcel_sds=None):
     global canon_rcel_vrs
     
     if option == "user":
-        globalcanon_rcel_wts = np.array([float(val) for val in rcel_wts.replace(" ","").split(",")])
+        canon_rcel_wts = np.array([float(val) for val in rcel_wts.replace(" ","").split(",")])
         canon_rcel_mns = np.array([float(val) for val in rcel_mns.replace(" ","").split(",")])
         canon_rcel_vrs = np.array([float(val) for val in rcel_sds.replace(" ","").split(",")])
 
         print("  Using user specified celerity model:")
-        print("    Reciprocal celerity weights: " + str(infrasound.canon_rcel_wts))
-        print("    Reciprocal celerity means: " + str(infrasound.canon_rcel_mns))
-        print("    Reciprocal celerity stdev: " + str(infrasound.canon_rcel_vrs))
+        print("    Reciprocal celerity weights: " + str(rcel_wts))
+        print("    Reciprocal celerity means: " + str(rcel_mns))
+        print("    Reciprocal celerity stdev: " + str(rcel_sds))
     
     elif option == "regional_hf":
         print("  Using built-in regional_hf celerity model")
         canon_rcel_wts = np.array([0.072, 0.421, 0.513])
         canon_rcel_mns = np.array([1.0/0.339, 1.0/0.293, 1.0/0.259])
-        canon_rcel_sds = np.array([0.053, 0.064, 0.274])
+        canon_rcel_vrs = np.array([0.053, 0.064, 0.274])
     else:
         print("  Using built-in regional_lf celerity model")
         canon_rcel_wts = np.array([0.0539, 0.0899, 0.8562])
