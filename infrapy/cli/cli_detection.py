@@ -22,7 +22,7 @@ from ..detection import beamforming_new as fkd
 from ..detection import spectral
 
 
-@click.command('beam_detect', short_help="Run beamforming and detection methods in sequence")
+@click.command('beam', short_help="Run beamforming-based detection on an array")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
@@ -72,9 +72,9 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy beam_detect --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
-    \tinfrapy beam_detect --config-file config/detection_local.config --cpu-cnt 4
-    \tinfrapy beam_detect --config-file config/detection_fdsn.config --cpu-cnt 4
+    \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
+    \tinfrapy detect beam --config-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy detect beam --config-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
     
@@ -197,22 +197,6 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 
     # Read in data
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
-    wvfrm_info = data_io.wvfrm_info(stream, latlon)
-
-    click.echo('\n' + "Data summary:")
-    for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
-
-    if latlon is not None:
-        array_loc = latlon[0]
-    else:
-        array_loc = [stream[0].stats.sac['stla'], stream[0].stats.sac['stlo']]
-
-    if local_wvfrms is not None and "/" in local_wvfrms:
-        output_id = os.path.dirname(local_wvfrms) + "/"
-    else:
-        output_id = ""
-    output_id = output_id + data_io.stream_label(stream)
 
     # Check if using a noise window for analysis (only used for GLS analysis)
     ns_covar_inv = None
@@ -234,31 +218,53 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
             ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
 
     # Check if using a signal window
-    if fk_params['signal_start'] is not None:
-        t1 = UTCDateTime(fk_params['signal_start'])
-        t2 = UTCDateTime(fk_params['signal_end'])
+    if fk_params["signal_start"] is not None or fk_params["signal_end"] is not None:
+        if fk_params["signal_start"] is not None:
+            t1 = UTCDateTime(fk_params["signal_start"])
+        else:
+            t1 = stream[0].stats.starttime
+    
+        if fk_params["signal_end"] is not None:
+            t2 = UTCDateTime(fk_params["signal_end"])
+        else:
+            t2 = stream[0].stats.endtime
 
-        click.echo('\n' + "Trimming data to signal analysis window...")
-        click.echo('\t' + "start time: " + str(t1))
-        click.echo('\t' + "end time: " + str(t2))
-
-        warning_message = "signal_start and signal_end values poorly defined."
         if t1 > t2:
-            warning_message = warning_message + "  signal_start after signal_end."
-            warning_message = warning_message + "  Stream won't be trimmed."
-            warnings.warn((warning_message))
-        elif t1 < stream[0].stats.starttime:
-            warning_message = warning_message + "  signal_start before data start time."
-            warning_message = warning_message + "  Stream won't be trimmed."
-            warnings.warn((warning_message))
-        elif t2 > stream[0].stats.endtime:
-            warning_message = warning_message + "  signal_end after data end time."
-            warning_message = warning_message + "  Stream won't be trimmed."
+            warning_message = "Specified signal_start after signal_end. Stream won't be trimmed."
             warnings.warn((warning_message))
         else:
+            if t1 < stream[0].stats.starttime:
+                warning_message = "Specified signal_start before data start time."
+                warnings.warn((warning_message))
+                t1 = stream[0].stats.starttime 
+        
+            if t2 > stream[0].stats.endtime:
+                warning_message = "Specified signal_end after data end time."
+                warnings.warn((warning_message))
+                t2 = stream[0].stats.endtime 
+        
+            click.echo('\n' + "Trimming data to signal analysis window...")
+            click.echo('\t' + "start time: " + str(t1))
+            click.echo('\t' + "end time: " + str(t2))
             stream.trim(t1, t2)
 
+    wvfrm_info = data_io.wvfrm_info(stream, latlon)
 
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    if latlon is not None:
+        array_loc = latlon[0]
+    else:
+        array_loc = [stream[0].stats.sac['stla'], stream[0].stats.sac['stlo']]
+
+    if local_wvfrms is not None and "/" in local_wvfrms:
+        output_id = os.path.dirname(local_wvfrms) + "/"
+    else:
+        output_id = ""
+    output_id = output_id + data_io.stream_label(stream)
+    
     # Define DOA values
     back_az_vals = np.arange(fk_params['back_az_min'], fk_params['back_az_max'], fk_params['back_az_step'])
     trc_vel_vals = np.arange(fk_params['trace_vel_min'], fk_params['trace_vel_max'], fk_params['trace_vel_step'])
@@ -324,10 +330,11 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 
         st_bm.detrend().filter('bandpass', freqmin=fk_params['freq_min'], freqmax=fk_params['freq_max'])
         st_bm.trim(t1, t2)
+
         x_bm, t_bm, _, geom_bm = fkd.stream_to_array_data(st_bm, latlon=latlon)
         X_bm, _, f_bm = fkd.fft_array_data(x_bm, t_bm, fft_window="boxcar")
 
-        sig_est, residual = fkd.extract_signal(X_bm, f_bm, [det_info[3], det_info[4]], geom_bm)
+        sig_est, residual = fkd.extract_signal(X_bm, f_bm, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm)
 
         sig_wvfrm = np.fft.irfft(sig_est)[:len(t_bm)] / (t_bm[1] - t_bm[0])
         resid_wvfrms = np.fft.irfft(residual, axis=1)[:, :len(t_bm)]  / (t_bm[1] - t_bm[0])
@@ -338,14 +345,16 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         dets_out[-1]['beam'][0]['signal'] = sig_wvfrm
         dets_out[-1]['beam'][0]['resid'] = resid_env
 
-        # repeat without the bandpass filter for the spectra
+        # repeat without the bandpass filter or buffer for the spectra
+        t1 = t_ref + det_info[1]
+        t2 = t_ref + det_info[2]
+
         st_bm2 = stream.copy()
         st_bm2.trim(t1, t2)
-        st_bm2.detrend()
 
         x_bm2, t_bm2, _, geom_bm2 = fkd.stream_to_array_data(st_bm2, latlon=latlon)
         X_bm2, _, f_bm2 = fkd.fft_array_data(x_bm2, t_bm2, fft_window="boxcar")
-        sig_est2, residual2 = fkd.extract_signal(X_bm2, f_bm2, [det_info[3], det_info[4]], geom_bm2)
+        sig_est2, residual2 = fkd.extract_signal(X_bm2, f_bm2, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm2)
 
         dets_out[-1]['spec'] = [{}]
         dets_out[-1]['spec'][0]['freq'] = f_bm2
@@ -365,7 +374,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         pl.close()
         
 
-@click.command('spec_detect', short_help="Run spectral detection on a single channel")
+@click.command('spectral', short_help="Run spectral detection on a single channel")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
@@ -406,8 +415,8 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy spec_detect --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
-    \tinfrapy spec_detect --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 5
+    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
+    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 5
     
     
     '''
@@ -518,11 +527,43 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         click.echo("  " + key + ": " + str(sd_params[key]))
 
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
-    wvfrm_info = data_io.wvfrm_info(stream, latlon)
+
+    # Check if using a signal window
+    if sd_params["signal_start"] is not None or sd_params["signal_end"] is not None:
+        if sd_params["signal_start"] is not None:
+            t1 = UTCDateTime(sd_params["signal_start"])
+        else:
+            t1 = stream[0].stats.starttime
+    
+        if sd_params["signal_end"] is not None:
+            t2 = UTCDateTime(sd_params["signal_end"])
+        else:
+            t2 = stream[0].stats.endtime
+
+        if t1 > t2:
+            warning_message = "Specified signal_start after signal_end. Stream won't be trimmed."
+            warnings.warn((warning_message))
+        else:
+            if t1 < stream[0].stats.starttime:
+                warning_message = "Specified signal_start before data start time."
+                warnings.warn((warning_message))
+                t1 = stream[0].stats.starttime 
+        
+            if t2 > stream[0].stats.endtime:
+                warning_message = "Specified signal_end after data end time."
+                warnings.warn((warning_message))
+                t2 = stream[0].stats.endtime 
+        
+            click.echo('\n' + "Trimming data to signal analysis window...")
+            click.echo('\t' + "start time: " + str(t1))
+            click.echo('\t' + "end time: " + str(t2))
+            stream.trim(t1, t2)
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    wvfrm_info = data_io.wvfrm_info(stream, latlon)
 
     if local_wvfrms is not None and "/" in local_wvfrms:
         output_id = os.path.dirname(local_wvfrms) + "/"
@@ -530,30 +571,6 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
 
-    # Check if using a signal window
-    if sd_params["signal_start"] is not None:
-        t1 = UTCDateTime(sd_params["signal_start"])
-        t2 = UTCDateTime(sd_params["signal_end"])
-
-        click.echo('\n' + "Trimming data to signal analysis window...")
-        click.echo('\t' + "start time: " + str(t1))
-        click.echo('\t' + "end time: " + str(t2))
-
-        warning_message = "signal_start and signal_end values poorly defined."
-        if t1 > t2:
-            warning_message = warning_message + "  signal_start after signal_end."
-            warning_message = warning_message + "  Stream won't be trimmed."
-            warnings.warn((warning_message))
-        elif t1 < stream[0].stats.starttime:
-            warning_message = warning_message + "  signal_start before data start time."
-            warning_message = warning_message + "  Stream won't be trimmed."
-            warnings.warn((warning_message))
-        elif t2 > stream[0].stats.endtime:
-            warning_message = warning_message + "  signal_end after data end time."
-            warning_message = warning_message + "  Stream won't be trimmed."
-            warnings.warn((warning_message))
-        else:
-            stream.trim(t1, t2)
 
     det_list, spectrogram, history = spectral.cli_sd(stream[0], sd_params["spectral_option"], sd_params["morlet_omega0"], [sd_params["freq_min"], sd_params["freq_max"]], 0.8, sd_params["p_value"], 
                                             sd_params["window_len"], sd_params["window_step"], sd_params["freq_tm_factor"], sd_params["cluster_eps"], sd_params["cluster_min_samples"], sd_params["cluster_window_len"], pl)
@@ -830,7 +847,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo('')
 
 
-@click.command('run_fd', short_help="Identify detections from beamforming results")
+@click.command('run_fd', short_help="Identify detections from beamforming results", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-fk-label", help="Local beamforming (fk) results label", default=None)
 @click.option("--local-detect-label", help="Label for local detection (fd) results", default=None)
@@ -984,7 +1001,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
         np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
 
-@click.command('run_fkd', short_help="Run beamforming and detection methods in sequence")
+@click.command('run_fkd', short_help="Run beamforming and detection methods in sequence", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
@@ -1299,7 +1316,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 
 
 
-@click.command('run_sd', short_help="Run spectral detection on a single channel")
+@click.command('run_sd', short_help="Run spectral detection on a single channel", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)

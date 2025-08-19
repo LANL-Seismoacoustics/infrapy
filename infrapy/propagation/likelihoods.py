@@ -552,8 +552,41 @@ class InfrasoundDetection(object):
         # some of the variables...
         self.calc_kappa_etc()
 
+    # the new version
+    def fillFromDict2(self, dict):
+        # set required parameters
+        if dict['peak f-stat time'] is not None:
+            self.set_peakF_UTCtime(UTCDateTime(dict['peak f-stat time']))
+        else:
+            self.set_peakF_UTCtime(UTCDateTime("9999-01-02T00:00:00"))
+
+        self.set_start(min(start_end[0] for start_end in dict['start/end']))
+        self.set_end(max(start_end[1] for start_end in dict['start/end']))
+
+        self.set_peakF_value(dict['f-stat'])
+        self.set_back_azimuth(dict['back az'])
+        self.set_trace_velocity(dict['tr vel'])
+
+        self.set_lat(dict['wvfrm_info'][0][0]['latitude'])
+        self.set_lon(dict['wvfrm_info'][0][0]['longitude'])
+        self.set_array_dim(len(dict['wvfrm_info'][0]))
+
+        self.set_network(dict['wvfrm_info'][0][0]['trace id'].split('.')[0])
+        self.set_station(dict['wvfrm_info'][0][0]['trace id'].split('.')[1])
+
+        f_min = min(fk_params['freq_min'] for fk_params in dict['fk_params'])
+        f_max = min(fk_params['freq_max'] for fk_params in dict['fk_params'])
+        self.set_freq_range([f_min, f_max])
+
+        # At this point, the array_dim, and peakF_value have probably changed, so we need to recalculate
+        # some of the variables...
+        self.calc_kappa_etc()
+        
+
     def __str__(self):
         return '{}'.format(self.generateDict())
+
+
 
 
 # ############################# #

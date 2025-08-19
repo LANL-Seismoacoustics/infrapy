@@ -9,6 +9,8 @@ import numpy as np
 
 from obspy import UTCDateTime
 
+from scipy.interpolate import interp1d
+
 from scipy.signal import spectrogram, stft, cwt, morlet2
 
 import matplotlib.pyplot as plt 
@@ -131,8 +133,24 @@ def plot_det_json(det_dict, single_det_index, param_set_index=None, output_path=
     ax5.yaxis.set_label_position("right")
     ax5.yaxis.set_ticks_position("right")
 
-    ax5.loglog(det_info["spec"][param_set_index]["freq"], det_info["spec"][param_set_index]["resid"], '-r', linewidth=0.5, label="Residual")
-    ax5.loglog(det_info["spec"][param_set_index]["freq"], det_info["spec"][param_set_index]["signal"], '-k', linewidth=0.5, label="Signal Estimate")
+    # combine spectral and residual curves across detection parameter sets
+    if len(det_info["spec"]) > 1:
+        f_lim = np.min([det_spec["freq"][-1] for det_spec in det_info["spec"]])       
+        df = np.min([det_spec["freq"][1] for det_spec in det_info["spec"]])
+
+        signal_interps = [interp1d(det_spec["freq"], det_spec["signal"]) for det_spec in det_info["spec"]]
+        resid_interps = [interp1d(det_spec["freq"], det_spec["resid"]) for det_spec in det_info["spec"]]
+
+        spec_freq = np.arange(0.0, f_lim, df)
+        spec_sig = np.mean(np.array([spec_fit(spec_freq) for spec_fit in signal_interps]), axis=0)
+        spec_resid = np.mean(np.array([resid_fit(spec_freq) for resid_fit in resid_interps]), axis=0)
+    else:
+        spec_freq = det_info["spec"][param_set_index]["freq"]
+        spec_sig = det_info["spec"][param_set_index]["signal"]
+        spec_resid = det_info["spec"][param_set_index]["resid"]
+
+    ax5.loglog(spec_freq, spec_resid, '-r', linewidth=0.5, label="Residual")
+    ax5.loglog(spec_freq, spec_sig, '-k', linewidth=0.5, label="Signal Estimate")
     ax5.axvspan(f_min, f_max, color='lightsteelblue', alpha=0.5, edgecolor=None, zorder=1)
     ax5.legend(fontsize=9)
 
@@ -157,6 +175,72 @@ def plot_det_json(det_dict, single_det_index, param_set_index=None, output_path=
         ax.axvspan(t1, t2, color="lightsteelblue", alpha=0.75)
 
     plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=250) 
+
+    if show_fig:
+        plt.show()
+
+
+def plot_wvfrms(det_dict, annotate_option="frequency", output_path=None, show_fig=True):
+
+    param_set_cnt = len(det_dict["fk"])
+        
+    t0 = np.datetime64(det_dict["peak f-stat time"])
+
+    dt_min = min([(beam_j["time"][0]) for beam_j in det_dict["beam"]])
+    dt_max = max([(beam_j["time"][-1]) for beam_j in det_dict["beam"]])
+
+    t_min = t0 + np.timedelta64(int(dt_min * 1000.0), 'ms')
+    t_max = t0 + np.timedelta64(int(dt_max * 1000.0), 'ms')
+
+    fig = plt.figure(figsize=(8, 1 + 1.5 * param_set_cnt), layout="constrained")
+    spec = fig.add_gridspec(param_set_cnt, 1)
+
+    ax0 = fig.add_subplot(spec[param_set_cnt - 1])
+
+    ax0.set_xlabel("")
+    ax0.tick_params(axis='x', labelrotation=30)
+    ax0.set_ylabel("Pressure [Pa]")
+
+    ax0.set_xlim((t_min, t_max))
+
+    beam_0 = det_dict["beam"][0]
+    t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in beam_0["time"]]
+
+    ax0.fill_between(t_vals, -np.array(beam_0['resid']), beam_0['resid'], color='r', alpha=0.5)
+    ax0.plot(t_vals, beam_0['signal'], 'k', linewidth=0.5)
+
+    t1 = t0 + np.timedelta64(int(det_dict["start/end"][0][0] * 1000.0), 'ms')
+    t2 = t0 + np.timedelta64(int(det_dict["start/end"][0][1] * 1000.0), 'ms')
+    ax0.axvspan(t1, t2, color="lightsteelblue", alpha=0.75)
+
+    if annotate_option == "frequency":
+        ann_text = str(det_dict["fk_params"][0]["freq_min"]) + " - " + str(det_dict["fk_params"][0]["freq_max"]) + " Hz"
+    else:
+        ann_text = "Parameter Index: 0"
+
+    ax0.annotate(ann_text, (0.975, 0.95), xycoords='axes fraction', horizontalalignment = "right", verticalalignment="top")
+
+    for k, beam_k in enumerate(det_dict["beam"][1:]):
+        ax_k = fig.add_subplot(spec[param_set_cnt - (k + 2)], sharex=ax0)
+        plt.setp(ax_k.get_xticklabels(), visible=False)
+
+        t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in beam_k["time"]]
+        ax_k.fill_between(t_vals, -np.array(beam_k['resid']), beam_k['resid'], color='r', alpha=0.5)
+        ax_k.plot(t_vals, beam_k['signal'], 'k', linewidth=0.5)
+
+        t1 = t0 + np.timedelta64(int(det_dict["start/end"][k + 1][0] * 1000.0), 'ms')
+        t2 = t0 + np.timedelta64(int(det_dict["start/end"][k + 1][1] * 1000.0), 'ms')
+        ax_k.axvspan(t1, t2, color="lightsteelblue", alpha=0.75)
+
+        if annotate_option == "frequency":
+            ann_text = str(det_dict["fk_params"][k + 1]["freq_min"]) + " - " + str(det_dict["fk_params"][k + 1]["freq_max"]) + " Hz"
+        else:
+            ann_text = "Parameter Index: " + str(k + 1)
+
+        ax_k.annotate(ann_text, (0.975, 0.95), xycoords='axes fraction', horizontalalignment = "right", verticalalignment="top")
 
     if output_path:
         plt.savefig(output_path, dpi=250) 

@@ -24,7 +24,7 @@ from ..characterization import spye
 from ..utils import config
 from ..utils import data_io
 
-@click.command('run_loc', short_help="Estimate source locations and times for events")
+@click.command('run_loc', short_help="Estimate source locations and times for events", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)

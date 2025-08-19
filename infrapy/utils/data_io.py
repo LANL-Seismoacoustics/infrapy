@@ -5,6 +5,7 @@ from threading import local
 import warnings 
 import fnmatch
 import json
+import gzip 
 import csv
 
 import numpy as np
@@ -76,14 +77,20 @@ def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, e
     """
 
     client = Client(fdsn_opt)
-    stream = client.get_waveforms(network, station, location, channel, UTCDateTime(starttime), UTCDateTime(endtime), attach_response = True)
-    stream.remove_response()
 
-    inventory = client.get_stations(network=network, station=station, starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
+    t1 = UTCDateTime(starttime)
+    t2 = UTCDateTime(endtime)
+
+    stream = client.get_waveforms(network, station, location, channel, t1, t2, attach_response = True)
+    stream.remove_response()
+    stream.merge(fill_value=0)
+
+    inventory = client.get_stations(network=network, station=station, location=location, channel=channel, starttime=t1, endtime=t2, level="channel")
+
     latlon = []
-    for network in inventory:
-        for station in network:
-            latlon = latlon + [[station.latitude, station.longitude]]
+    for tr in stream:
+        coords = inventory.get_coordinates(tr.get_id(), UTCDateTime(tr.stats.starttime))
+        latlon = latlon + [[coords['latitude'], coords['longitude']]]
 
     return stream, latlon
 
@@ -236,6 +243,50 @@ def set_det_list(local_detect_label, merge=True):
     return det_list
 
 
+def _load_dets_json(det_files):
+    """
+    Read in multiple [...].dets.json files specified by either a comma
+    separated list or a wild card glob
+    
+    """
+
+    def temp_open_json(det_file):
+        if os.path.splitext(det_file)[-1] == ".gz":
+            return json.load(gzip.open(det_file, 'rt'))
+        else:
+            return json.load(open(det_file))
+
+    det_list = []
+    if "*" not in det_files:
+        # define file list from comma or space separated list
+        for file in det_files.replace(" ","").split(","):
+            det_list = det_list + [temp_open_json(file)]
+    else:
+        # define file list from wild card glob
+        if "/" in det_files:
+            file_path = os.path.dirname(det_files) + "/" 
+            dir_files = os.listdir(os.path.dirname(det_files))
+        else:
+            file_path = ""
+            dir_files = os.listdir(".")
+        dir_files = np.sort(dir_files)
+
+        file_list = []
+        for file in dir_files:
+            if fnmatch.fnmatch(file, os.path.basename(det_files)):
+                file_list += [file]
+
+        if len(file_list) == 0:
+            msg = '\n' + "Detection file(s) specified not found"
+            warnings.warn(msg)
+            det_list = None 
+        else:
+            for file in file_list:
+                det_list = det_list + [temp_open_json(file_path + file)]
+
+    return det_list 
+
+
 ##########################
 ##     Data Writing     ##
 ##        Methods       ##
@@ -252,7 +303,7 @@ def write_stream_to_sac(stream, latlon):
         Iterable containing latitude and longitude info for each trace of the stream
     """
 
-    labels = [tr.stats.network + "." + tr.stats.station for tr in stream]
+    labels = [tr.id for tr in stream]
     if len(np.unique(labels)) < len(stream):
         print("Warning!  Non-unique labels.  Adding indexing...")
         labels = [label + "-" + str(n) for n, label in enumerate(labels)]
@@ -336,7 +387,7 @@ def fk_header(stream, latlon, freq_min, freq_max, back_az_min, back_az_max, back
     header = "InfraPy Beamforming (fk) Results" + '\n'
     header = header + '\n' + "Data summary:" + '\n'
     for tr in stream:
-        header = header + "    " + tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
+        header = header + "    " + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
 
     header = header + '\n' + "  channel_cnt: " + str(len(stream)) + '\n'
 
@@ -604,6 +655,14 @@ def json_to_detection_list(filename):
             detection.fillFromDict(entry)
             detection_list.append(detection)
     return detection_list
+
+
+def _det_dict_to_likelihood(det_dict):
+
+    detection = lklhds.InfrasoundDetection()
+    detection.fillFromDict2(det_dict)
+
+    return detection
 
 
 # ############################# #

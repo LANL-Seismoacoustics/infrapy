@@ -10,6 +10,8 @@ Author: pblom@lanl.gov
 import os
 import pickle
 import click
+import json
+import gzip
 
 import warnings
 
@@ -20,6 +22,8 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import gaussian_kde, norm
 from scipy.optimize import curve_fit
+from scipy.signal import hilbert 
+
 from pathlib import Path
 
 import numpy as np
@@ -281,7 +285,7 @@ def check_db_wvfrm(config_file, db_config, network, station, location, channel, 
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
     click.echo('\nLocation info:')    
     for line in latlon:
@@ -372,7 +376,7 @@ def write_wvfrms(config_file, db_config, fdsn, network, station, location, chann
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
     click.echo('\n' + "Writing waveform data to local SAC files...")
     data_io.write_stream_to_sac(stream, latlon)
@@ -509,7 +513,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
     if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = ""
@@ -617,7 +621,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     header = "InfraPy Best Beam Results" + '\n'
     header = header + '\n' + "Data summary:" + '\n'
     for tr in stream:
-        header = header + "    " + tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
+        header = header + "    " + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
 
     header = header + "  t0: " + str(stream[0].stats.starttime) + '\n\n'
 
@@ -719,3 +723,319 @@ def fit_celerity(data_file, cel_index, atten_index, atten_lim):
     plt.ylabel("Probability")
     plt.legend()
     plt.show()
+
+
+
+
+@click.command('merge-dets', short_help="Check waveform pull from database")
+@click.option("--det-files", help="Detection GZIP files", default=None)
+@click.option("--merged-label", help="Output detection file label", default=None)
+def merge_dets(det_files, merged_label):
+
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         merge_dets          ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    dets_data = data_io._load_dets_json(det_files)
+
+    click.echo('\n' + "Unique fk (beam) parameters:")
+    for key in dets_data[0]['fk_params'][0].keys():
+        vals = [det['fk_params'][0][key] for det in dets_data]
+        if None not in vals:
+            vals = np.unique(vals)
+            if len(vals) == 1:
+                vals = vals[0]
+        else:
+            if all(val is None for val in vals):
+                vals = None 
+
+        click.echo("  " + key + ": " + str(vals))
+
+    click.echo('\n' + "Unique detection parameters:")
+    for key in dets_data[0]['det_params'][0].keys():
+        vals = [det['det_params'][0][key] for det in dets_data]
+        if None not in vals:
+            vals = np.unique(vals)
+            if len(vals) == 1:
+                vals = vals[0]
+        else:
+            if all(val is None for val in vals):
+                vals = None 
+        click.echo("  " + key + ": " + str(vals))
+
+    click.echo('\n' + "Merging detections...")
+    det_list = []
+    for entry in dets_data:
+        for det in entry["det_info"]:
+            det_list = det_list + [det]
+            det_list[-1]["wvfrm_info"] = entry["wvfrm_info"]
+            det_list[-1]["fk_params"] = entry["fk_params"]
+            det_list[-1]["det_params"] = entry["det_params"]
+
+    dets_out = []
+    while len(det_list) > 0:
+        merge_indices = [0]
+        for k, det_k in enumerate(det_list[1:]):
+            # check at least one station ID matches
+            ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
+            ids_k = [ch['trace id'] for ch in det_k['wvfrm_info'][0]]
+
+            if any(id in ids_0 for id in ids_k):
+                # compute detection time overlap
+                dt = abs(UTCDateTime(det_list[0]["peak f-stat time"]) - UTCDateTime(det_k["peak f-stat time"]))
+
+                dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
+                dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
+                dt = dt / (dur1 + dur2)
+
+                # check back azimuths are within tolerance 
+                daz = abs(det_list[0]["back az"] - det_k["back az"])
+                if daz > 360.0:
+                    daz = daz - 360.0
+                daz = daz / 20.0
+
+                if np.sqrt(dt**2 + daz**2) < 0.5:
+                    merge_indices = merge_indices + [k + 1]
+
+        dets_to_merge = [det_list[j] for j in merge_indices]
+        click.echo('\n' + "Detections to merge:")
+        for det in dets_to_merge:
+            click.echo("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
+
+        f_stat_vals = [det["f-stat"] for det in dets_to_merge]
+        tm_vals = [det["peak f-stat time"] for det in dets_to_merge]
+        t0 = tm_vals[np.argmax(f_stat_vals)]
+
+        dets_out = dets_out + [det_list[0]]
+        dets_out[-1]["f-stat"] = np.max(f_stat_vals)
+        dets_out[-1]["peak f-stat time"] = t0
+
+        dt = UTCDateTime(dets_to_merge[0]["peak f-stat time"]) - UTCDateTime(t0)
+        dets_out[-1]["fk"][0]["time"] = np.array(dets_out[-1]["fk"][0]["time"]) + dt
+        dets_out[-1]["beam"][0]["time"] = np.array(dets_out[-1]["beam"][0]["time"]) + dt
+        dets_out[-1]["start/end"][0] = np.array(dets_out[-1]["start/end"][0]) + dt
+
+        for det in dets_to_merge[1:]:
+            for key in ["wvfrm_info", "fk_params", "det_params", "start/end", "fk", "beam", "spec"]:
+                dets_out[-1][key] = dets_out[-1][key] + det[key]
+                
+            dt = UTCDateTime(det["peak f-stat time"]) - UTCDateTime(t0)
+            dets_out[-1]["start/end"][-1] = np.array(det["start/end"][-1]) + dt
+            dets_out[-1]["fk"][-1]["time"] = np.array(det["fk"][-1]["time"]) + dt
+            dets_out[-1]["beam"][-1]["time"] = np.array(det["beam"][-1]["time"]) + dt
+
+        # update back azimuth and trace velocity using weighted mean...        
+        az_all, tr_all, fs_all = [np.array([])] * 3
+        for det in dets_to_merge:
+            tm_mask = np.logical_and(det["start/end"][0][0] <= det["fk"][-1]["time"], det["fk"][-1]["time"] <= det["start/end"][0][1])
+            az_all = np.append(az_all, np.array(det["fk"][-1]["back az"])[tm_mask])
+            tr_all = np.append(tr_all, np.array(det["fk"][-1]["tr vel"])[tm_mask])
+            fs_all = np.append(fs_all, np.array(det["fk"][-1]["f-stat"])[tm_mask])
+
+        dets_out[-1]["back az"] = np.average(az_all, weights=fs_all)
+        dets_out[-1]["tr vel"] = np.average(tr_all, weights=fs_all)
+
+        # remove merged detections from the original list and continue
+        det_list = [det_list[j] for j in range(len(det_list)) if j not in merge_indices]
+
+    det_output = {'det_info' : dets_out}
+    with gzip.open(merged_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+@click.command('convert-dets', short_help="Convert legacy detection output to new JSON")
+@click.option("--det-file", help="Detection GZIP files", default=None)
+@click.option("--fk-file", help="Detection GZIP files", default=None)
+
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--local-wvfrms", help="Local waveform data files", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+
+@click.option("--local-latlon", help="Location information for local waveforms", default=None)
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+
+@click.option("--output-label", help="Output detection file label", default=None)
+
+def convert_dets(det_file, fk_file, config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
+
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         convert_dets        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    if config_file:
+        if os.path.isfile(config_file):
+            click.echo('\n' + "Loading configuration info from: " + config_file)
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo('\n' + "Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None
+
+    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_info = None
+
+    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+
+    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+
+    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
+    wvfrm_info = data_io.wvfrm_info(stream, latlon)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    # Load fk parameters from the config file if one is provided (otherwise use defaults)
+    fk_params = {}
+    fk_params['freq_min'] = config.set_param(user_config, 'FK', 'freq_min', None, 'float')
+    fk_params['freq_max'] = config.set_param(user_config, 'FK', 'freq_max', None, 'float')
+    fk_params['back_az_min'] = config.set_param(user_config, 'FK', 'back_az_min', None, 'float')
+    fk_params['back_az_max'] = config.set_param(user_config, 'FK', 'back_az_max', None, 'float')
+    fk_params['back_az_step'] = config.set_param(user_config, 'FK', 'back_az_step', None, 'float')
+    fk_params['trace_vel_min'] = config.set_param(user_config, 'FK', 'trace_vel_min', None, 'float')
+    fk_params['trace_vel_max'] = config.set_param(user_config, 'FK', 'trace_vel_max', None, 'float')
+    fk_params['trace_vel_step'] = config.set_param(user_config, 'FK', 'trace_vel_step', None, 'float')
+    fk_params['method'] = config.set_param(user_config, 'FK', 'method', None, 'string')
+    fk_params['signal_start'] = config.set_param(user_config, 'FK', 'signal_start', None, 'string')
+    fk_params['signal_end'] = config.set_param(user_config, 'FK', 'signal_end', None, 'string')
+    fk_params['noise_start'] = config.set_param(user_config, 'FK', 'noise_start', None, 'string')
+    fk_params['noise_end'] = config.set_param(user_config, 'FK', 'noise_end', None, 'string')
+    fk_params['window_len'] = config.set_param(user_config, 'FK', 'window_len', None, 'float')
+    fk_params['sub_window_len'] = config.set_param(user_config, 'FK', 'sub_window_len', None, 'float')
+    fk_params['window_step'] = config.set_param(user_config, 'FK', 'window_step', None, 'float')
+    fk_params['cpu_cnt'] = config.set_param(user_config, 'FK', 'cpu_cnt', None, 'int')
+
+    # Update fk values from fk_results file
+
+
+
+    click.echo('\n' + "fk (beam) parameters:")
+    for key in fk_params.keys():
+        click.echo("  " + key + ": " + str(fk_params[key]))
+
+    # Set detection parameters from config file if one is provided (otherwise use defaults)
+    det_params = {}
+    det_params['window_len'] = config.set_param(user_config, 'FD', 'window_len', None, 'float')
+    det_params['p_value'] = config.set_param(user_config, 'FD', 'p_value', None, 'float')
+    det_params['min_duration'] = config.set_param(user_config, 'FD', 'min_duration', None, 'float')
+    det_params['back_az_width'] = config.set_param(user_config, 'FD', 'back_az_width', None, 'float')
+    det_params['fixed_thresh'] = config.set_param(user_config, 'FD', 'fixed_thresh', None, 'float')
+    det_params['thresh_ceil'] = config.set_param(user_config, 'FD', 'thresh_ceil', None, 'float')
+    det_params['return_thresh'] = config.set_param(user_config, 'FD', 'return_thresh', None, 'bool')
+    det_params['merge_dets'] = config.set_param(user_config, 'FD', 'merge_dets', None, 'bool')
+
+    click.echo('\n' + "detection parameters:")
+    for key in det_params.keys():
+        click.echo("  " + key + ": " + str(det_params[key]))
+
+    # Extract fk results
+    fk_vals = np.loadtxt(fk_file)
+
+    fk_out = {}
+    fk_out['time'] = fk_vals[:, 0]
+    fk_out['back az'] = fk_vals[:, 1]
+    fk_out['tr vel'] = fk_vals[:, 2]
+    fk_out['f-stat'] = fk_vals[:, 3]
+    fk_out['thresh'] = np.zeros_like(fk_vals[:, 0])
+    
+    dets_orig = data_io._load_dets_json(det_file)
+
+    dets_out = []
+    for det in dets_orig[0]:
+        click.echo('')
+        click.echo(det)
+
+        dets_out = dets_out + [{}]
+        dets_out[-1]['peak f-stat time'] = det['Time (UTC)']
+        dets_out[-1]['start/end'] = [[det['Start'], det['End']]]
+        dets_out[-1]['f-stat'] = det['F Stat.']
+
+        dt_ref = UTCDateTime(str(dets_out[-1]['peak f-stat time'])) - UTCDateTime(stream[0].stats.starttime)
+        det_mask = np.logical_and(det['Start'] <= fk_out['time'] - dt_ref, fk_out['time'] - dt_ref <= det['End'])
+        dets_out[-1]['back az'] = np.average(fk_out['back az'][det_mask], weights=fk_out['f-stat'][det_mask])
+        dets_out[-1]['tr vel'] = np.average(fk_out['tr vel'][det_mask], weights=fk_out['f-stat'][det_mask])
+
+        # Extract the fk results
+        det_buffer = (det['Start'] - det['End']) * 0.15
+        det_buffer = max(min(det_buffer, 60.0), 15.0)
+        det_buffer = fk_params['window_step'] * np.round(det_buffer/fk_params['window_step'])
+        
+        det_mask = np.logical_and(det['Start'] - det_buffer <= fk_out['time'] - dt_ref,
+                                    fk_out['time'] - dt_ref <= det['End'] + det_buffer)
+
+        dets_out[-1]['fk'] = [{}]
+        dets_out[-1]['fk'][0]['time'] = fk_out['time'][det_mask] - dt_ref
+        dets_out[-1]['fk'][0]['back az'] = fk_out['back az'][det_mask]
+        dets_out[-1]['fk'][0]['tr vel'] = fk_out['tr vel'][det_mask]
+        dets_out[-1]['fk'][0]['f-stat'] = fk_out['f-stat'][det_mask]
+
+        # Extract the beam and spectral information
+        st_bm = stream.copy()
+
+        t_ref = UTCDateTime(str(dets_out[-1]['peak f-stat time']))
+        t1 = t_ref + det['Start'] - det_buffer
+        t2 = t_ref + det['End'] + det_buffer
+
+        st_bm.detrend().filter('bandpass', freqmin=fk_params['freq_min'], freqmax=fk_params['freq_max'])
+        st_bm.trim(t1, t2)
+        x_bm, t_bm, _, geom_bm = beamforming_new.stream_to_array_data(st_bm, latlon=latlon)
+        X_bm, _, f_bm = beamforming_new.fft_array_data(x_bm, t_bm, fft_window="boxcar")
+
+        sig_est, residual = beamforming_new.extract_signal(X_bm, f_bm, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm)
+
+        sig_wvfrm = np.fft.irfft(sig_est)[:len(t_bm)] / (t_bm[1] - t_bm[0])
+        resid_wvfrms = np.fft.irfft(residual, axis=1)[:, :len(t_bm)]  / (t_bm[1] - t_bm[0])
+        resid_env = np.mean([np.abs(hilbert(resid_wvfrms[nM])) for nM in range(len(resid_wvfrms))], axis=0)
+ 
+        dets_out[-1]['beam'] = [{}]
+        dets_out[-1]['beam'][0]['time'] = t_bm + det['Start'] - det_buffer
+        dets_out[-1]['beam'][0]['signal'] = sig_wvfrm
+        dets_out[-1]['beam'][0]['resid'] = resid_env
+
+        # repeat without the bandpass filter for the spectra
+        st_bm2 = stream.copy()
+        st_bm2.trim(t1, t2)
+        st_bm2.detrend()
+
+        x_bm2, t_bm2, _, geom_bm2 = beamforming_new.stream_to_array_data(st_bm2, latlon=latlon)
+        X_bm2, _, f_bm2 = beamforming_new.fft_array_data(x_bm2, t_bm2, fft_window="boxcar")
+        sig_est2, residual2 = beamforming_new.extract_signal(X_bm2, f_bm2, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm2)
+
+        dets_out[-1]['spec'] = [{}]
+        dets_out[-1]['spec'][0]['freq'] = f_bm2
+        dets_out[-1]['spec'][0]['signal'] = np.abs(sig_est2)
+        dets_out[-1]['spec'][0]['resid'] = np.mean(np.abs(residual2), axis=0)
+
+    det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
+    with gzip.open(output_label + "-update.dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+

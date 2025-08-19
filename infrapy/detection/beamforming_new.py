@@ -871,10 +871,22 @@ def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=
 #         For CLI        #
 # ###################### #
 def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_n):
-    X, S, f = fft_array_data(x, t, window, sub_window_len=sub_window_length)
-    beam_power = run(X, S, f, geom, delays, freq_band, method=method, ns_covar_inv=ns_covar_inv, signal_cnt=signal_cnt, normalize_beam=True)
+    if method == "time_domain":
+        tm_mask = np.logical_and(window[0] <= t, t <= window[1])
+        t_win = t[tm_mask]
+
+        norm_env = np.mean(np.array([np.abs(signal.hilbert(x_k[tm_mask])) for x_k in x]), axis=0)
+        x_interp = [interp1d(t_win, x_k[tm_mask], bounds_error=False, fill_value=0.0) for x_k in x]
+        beams = np.mean(np.array([[x_k(t_win - delays_j[k]) for k, x_k in enumerate(x_interp)] for delays_j in delays]), axis=1)
+        beam_power = np.atleast_2d([np.mean(np.abs(signal.hilbert(beam_k))**2 / norm_env**2) for beam_k in beams])
+        
+    else:
+        X, S, f = fft_array_data(x, t, window, sub_window_len=sub_window_length)
+        beam_power = run(X, S, f, geom, delays, freq_band, method=method, ns_covar_inv=ns_covar_inv, signal_cnt=signal_cnt, normalize_beam=True)
+
     prog_bar.increment(prog_n)
     return find_peaks(beam_power, back_az_vals, trc_vel_vals)
+
 
 
 def beam_window_wrapper(args):
@@ -927,8 +939,12 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
         """
 
     print('\n' + "Running fk analysis..." + '\n\t' + "Progress: ", end = '')
-
-    x, t, t0, geom = stream_to_array_data(stream, latlon=latlon)
+    if method == "time_domain":
+        st_copy = stream.copy()
+        st_copy.detrend().filter("bandpass", freqmin=freq_band[0], freqmax=freq_band[1])
+        x, t, t0, geom = stream_to_array_data(st_copy, latlon=latlon)
+    else:
+        x, t, t0, geom = stream_to_array_data(stream, latlon=latlon)
     M, N = x.shape
 
     # define slownes and delays from array geomry
@@ -961,6 +977,8 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
 
     prog_bar.close()
     beam_times = np.array(beam_times)[:, 0]
+
+    beam_peaks[:, 2][beam_peaks[:, 2] > 0.999] = 0.999
     beam_peaks[:, 2] = beam_peaks[:, 2] / (1.0 - beam_peaks[:, 2]) * (M - 1)
 
     return beam_times, beam_peaks
@@ -1059,16 +1077,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             while np.all(det_mask[n:n + (det_len + 1)]) and n + (det_len + 1) < len(det_mask):
                 det_len += 1
 
-            # # back_az_min = np.min(back_az_vals[n:n + det_len])
-            # # back_az_max = np.max(back_az_vals[n:n + det_len])
-
-            # # back_az_diff = abs(back_az_max - back_az_min)
-            # # if back_az_diff > 180.0:
-            # #     back_az_diff = abs(back_az_diff - 360.0)
-
-            # if back_az_diff < back_az_lim:
-            
-            back_az_95conf = stats.circstd(back_az_vals[n:n+det_len], high=360.0) * 2.0
+            back_az_95conf = stats.circstd(back_az_vals[n:n + det_len], high=360.0) * 2.0
             
             if back_az_95conf < back_az_lim:
                 pk_index = np.argmax(fstat_vals[n:n + det_len]) 
@@ -1106,7 +1115,10 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                     t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
                     dt = (t2 - t1).astype('m8[s]').astype(float)
 
-                    if dt < max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1]):
+                    dt_thresh = max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1])
+                    dt_thresh = max(60.0, dt_thresh)
+
+                    if dt < dt_thresh:
                         if dets[j][5] >= dets[j + 1][5]:
                             dets[j][2] = dets[j][2] + (dt + (dets[j + 1][2] - dets[j + 1][1]))
                             dets[j + 1] = dets[j]
@@ -1114,6 +1126,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                         else:
                             dets[j + 1][1] = dets[j + 1][1] - (dt + (dets[j][2] - dets[j][1]))
                             dets[j] = None
+
 
             if dets.count(None) == 0:
                 break

@@ -18,7 +18,7 @@ from ..utils import data_io
 from ..association import hjl
 
 
-@click.command('run_assoc', short_help="Associate detections into events")
+@click.command('run_assoc', short_help="Associate detections into events", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--local-event-label", help="Path for event info output", default=None)

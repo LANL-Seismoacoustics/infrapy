@@ -11,9 +11,12 @@ import gzip
 import configparser as cnfg
 import numpy as np
 
+import matplotlib.pyplot as plt 
+
 from obspy import UTCDateTime
 
 from multiprocessing import Pool
+
 
 from ..utils import config
 from ..utils import data_io
@@ -22,7 +25,7 @@ from ..location import visualization as loc_vis
 from ..location import bisl
 
 
-@click.command('beam_detect', short_help="Plot detections from updated JSON format output")
+@click.command('beam', short_help="Plot detections from updated JSON format output")
 @click.option("--det-file", help="Detection GZIP file", default=None)
 @click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
 @click.option("--plot-all-dets", help="Plot all detections", default=False)
@@ -31,11 +34,11 @@ from ..location import bisl
 @click.option("--show-figure", help="Print figure to screen", default=True)
 def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figure_out, show_figure):
     '''
-    Summarize the contents of a JSON detections file
+    Visualize beam detection results
 
-    Example usage (requires 'infrapy beam_detect --config-file config/detection_local.config' run first):
-    \tinfrapy plot beam_detect --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz
-    \tinfrapy plot beam_detect --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 3
+    Example usage:
+    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz
+    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 3
     '''
 
     click.echo("")
@@ -157,15 +160,15 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
 @click.command('wvfrms', short_help="Plot detections from updated JSON format output")
 @click.option("--det-file", help="Detection GZIP file", default=None)
 @click.option("--single-det-index", help="Index of a single detection", default=0)
+@click.option("--plot-all-dets", help="Plot waveforms for all detections", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def wvfrms(det_file, single_det_index, figure_out, show_figure):
+def wvfrms(det_file, single_det_index, plot_all_dets, figure_out, show_figure):
     '''
     Summarize the contents of a JSON detections file
 
     Example usage (requires 'infrapy run_fkd --config-file config/detection_local.config' run first):
-    \tinfrapy plot fd_json --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59-update.dets.json.gz
-    \tinfrapy plot fd_json --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59-update.dets.json.gz --single-det-index 3
+    \tinfrapy plot wvfrms --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 0
     '''
 
     if os.path.splitext(det_file)[-1] == ".gz":
@@ -173,23 +176,42 @@ def wvfrms(det_file, single_det_index, figure_out, show_figure):
     else:
         det_data = json.load(open(det_file))
 
-    det = det_data["det_info"][single_det_index]
+    if plot_all_dets:
+        click.echo('\n' + "Plotting all detections...")
+        for k in range(len(det_data['det_info'])):
+            det = det_data["det_info"][k]
 
-    click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
-    click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
-    click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
-    click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
-    click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
-    click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+            click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+            click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+            click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+            click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+            click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+            click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
 
-    pk_snr = [max(abs(np.array(bm_j['signal'])) / np.array(bm_j['resid'])) for bm_j in det['beam']]
-    click.echo("pk snr = " + str(pk_snr))
+            if figure_out is not None:
+                figure_out = figure_out + "_det" + str(k)
 
-    click.echo('\n' + "Plotting detection...")
-    det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=show_figure)
+            det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=False)
+
+        if show_figure:
+            plt.show()
+    else:
+        det = det_data["det_info"][single_det_index]
+
+        click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+        click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+        click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+        click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+        click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+        click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+
+        det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=show_figure)
 
 
-@click.command('spec_detect', short_help="Visualize detection(s) from spectral analysis")
+
+            
+
+@click.command('spectral', short_help="Visualize detection(s) from spectral analysis")
 @click.option("--det-file", help="Detection GZIP file", default=None)
 @click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
 @click.option("--log-scale-freq", help="Visualize frequency in log scaling", default=False)
@@ -201,8 +223,8 @@ def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_fig
 
     \b
     Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
-    \tinfrapy plot sd_json --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz'
-    \tinfrapy plot sd_json --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz' --single-det-index 3
+    \tinfrapy plot spectral --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz'
+    \tinfrapy plot spectral --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz' --single-det-index 3
 
     '''
 
@@ -273,6 +295,76 @@ def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_fig
 
         click.echo('\n' + "Plotting spectrogram detection results...")
         det_vis.plot_sd_json(det_data, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
+
+
+
+@click.command('map_dets', short_help="Plot detections on a map")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--detect-label", help="Detection path and pattern", default=None)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
+def map_dets(config_file, range_max, detect_label, figure_out, offline_maps_dir):
+    '''
+    Visualize detections on a map
+
+    \b
+    Example usage (run from infrapy/examples directory after running run_assoc example):
+    \tinfrapy plot map_dets --detect-label 'data/Blom_etal2020_GJI/*'
+    \tinfrapy plot map_dets --detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
+
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##          Detection List         ##")
+    click.echo("##             Mapping             ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")    
+
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  detect_label: " + str(detect_label))
+
+    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+    offline_maps_dir = config.set_param(user_config, 'VISUALIZATION', 'offline_maps_dir', offline_maps_dir, 'string')
+
+    click.echo('\n' + "Visualization parameters:")
+    click.echo("  range_max: " + str(range_max) + '\n')
+    if offline_maps_dir:
+        click.echo("  offline maps directory: {}".format(offline_maps_dir))
+        loc_vis.use_offline_maps(offline_maps_dir)
+
+    det_data = data_io._load_dets_json(detect_label)
+
+    det_dicts = []
+    for entry in det_data:
+        for det in entry["det_info"]:
+            det_dicts = det_dicts + [det]
+            if 'fk_params' in entry.keys():
+                det_dicts[-1]["wvfrm_info"] = entry["wvfrm_info"]
+                det_dicts[-1]["fk_params"] = entry["fk_params"]
+                det_dicts[-1]["det_params"] = entry["det_params"]
+
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
+
+    click.echo('\n' + "Drawing map with detection back azimuth projections...")
+    loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
+
+
+
 
 
 

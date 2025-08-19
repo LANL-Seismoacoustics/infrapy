@@ -3,10 +3,13 @@
 import click
 
 from . import cli_detection
-from . import cli_assoc
-from . import cli_loc
+from . import cli_event
 from . import cli_visualization
 from . import cli_utils
+
+from . import cli_assoc
+from . import cli_loc
+
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
 def main():
@@ -18,10 +21,19 @@ def main():
     pass
 
 
-@click.group('run_spye', short_help="Estimate explosive yield from a surface explosion", context_settings={'help_option_names': ['-h', '--help']})
-def run_spye():
+@click.group('detect', short_help="Detect signatures in infrasound data", context_settings={'help_option_names': ['-h', '--help']})
+def detect():
     '''
-    infrapy run_spye - explosive yield estimation methods
+    infrapy detect - run detection analysis
+    
+    '''
+    pass 
+
+
+@click.group('event', short_help="Build and analyse events", context_settings={'help_option_names': ['-h', '--help']})
+def event():
+    '''
+    infrapy detect - run detection analysis
     
     '''
     pass 
@@ -45,17 +57,38 @@ def utils():
     pass 
 
 
-main.add_command(run_spye)
+main.add_command(detect)
+main.add_command(event)
 main.add_command(plot)
 main.add_command(utils)
 
-# main functions (run analysis)
-main.add_command(cli_detection.run_beam_detect)
-main.add_command(cli_detection.run_spec_detect)
+# Analysis methods
+detect.add_command(cli_detection.run_beam_detect)
+detect.add_command(cli_detection.run_spec_detect)
+
+event.add_command(cli_event.build)
 
 
+
+# Visualizations
 plot.add_command(cli_visualization.beam_detect)
 plot.add_command(cli_visualization.spec_detect)
+plot.add_command(cli_visualization.wvfrms)
+
+
+
+# Utilities
+utils.add_command(cli_utils.arrivals2json)
+utils.add_command(cli_utils.arrival_time)
+utils.add_command(cli_utils.calc_celerity)
+utils.add_command(cli_utils.check_db_wvfrm)
+utils.add_command(cli_utils.write_wvfrms)
+utils.add_command(cli_utils.best_beam)
+utils.add_command(cli_utils.fit_celerity)
+utils.add_command(cli_utils.merge_dets)
+utils.add_command(cli_utils.convert_dets)
+
+
 
 
 
@@ -71,8 +104,14 @@ main.add_command(cli_detection.run_sd)
 main.add_command(cli_assoc.run_assoc)
 main.add_command(cli_loc.run_loc)
 
-
 # SpYE
+@click.group('run_spye', short_help="Spectral yield methods", context_settings={'help_option_names': ['-h', '--help']}, hidden=True)
+def run_spye():
+    '''
+    infrapy run_spye - run spectral yield methods
+    '''
+    pass 
+
 run_spye.add_command(cli_loc.regional)
 run_spye.add_command(cli_loc.single_station)
 run_spye.add_command(cli_loc.combine)
@@ -87,14 +126,6 @@ plot.add_command(cli_visualization.loc)
 plot.add_command(cli_visualization.origin_time)
 plot.add_command(cli_visualization.yield_plot)
 
-# Utilities
-utils.add_command(cli_utils.arrivals2json)
-utils.add_command(cli_utils.arrival_time)
-utils.add_command(cli_utils.calc_celerity)
-utils.add_command(cli_utils.check_db_wvfrm)
-utils.add_command(cli_utils.write_wvfrms)
-utils.add_command(cli_utils.best_beam)
-utils.add_command(cli_utils.fit_celerity)
 
 
 if __name__ == '__main__':
