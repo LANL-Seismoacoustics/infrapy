@@ -217,6 +217,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     
     if alt_lims is None:
         alt_lims = [0.0, 0.0]
+        alt_resol = 1.0
 
     lat_grid, lon_grid, alt_grid, tm_grid = bisl.build_grid(det_list, bm_width=bm_width, rng_max=rng_max, grid_resol=grid_resol, ll_corner=ll_corner, ur_corner=ur_corner,
                                                     latlon_resol=latlon_resol, include_tms=True, tm_lims=tm_lims, tm_resol=tm_resol, alt_lims=alt_lims, alt_resol=alt_resol)

@@ -381,6 +381,93 @@ def map_dets(config_file, detect_files, event_file, range_max, figure_out, offli
 
 
 
+@click.command('localize', short_help="Plot localization result on a map")
+@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--event-file", help="Detection path and pattern", default=None)
+@click.option("--event-loc-index", help="Index of location results", default=None, type=int)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
+@click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-fig", help="Generate figure on screeen", default=True)
+@click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
+def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level, figure_out, show_fig, offline_maps_dir):
+    '''
+    Visualize BISL results in with wide or zoomed format
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+    \tinfrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+
+    '''
+
+    click.echo("")
+    click.echo("####################################")
+    click.echo("##                                ##")
+    click.echo("##             InfraPy            ##")
+    click.echo("##   Localization visualization   ##")
+    click.echo("##                                ##")
+    click.echo("####################################")
+    click.echo("")  
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        user_config = cnfg.ConfigParser()
+        user_config.read(config_file)
+    else:
+        user_config = None
+
+    if offline_maps_dir is not None:
+        loc_vis.use_offline_maps(offline_maps_dir)
+
+    event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
+    click.echo("Loading event information from event_file: " + str(event_file))
+    ev_data = data_io._load_dets_json(event_file)[0]
+    loc_info = ev_data['location']
+
+    if event_loc_index is not None:
+        loc = ev_data['location'][event_loc_index]
+        click.echo("Visualizing with event_loc_index: " + str(event_loc_index) + '\n')
+        click.echo("localization parameters:")
+        for key in loc['params'].keys():
+            # click.echo("  " + key + ": " + str(loc_params[key]))
+            if loc['params'][key] is not None:
+                click.echo("  " + key + ": " + str(loc['params'][key]))
+        click.echo("")
+
+    else:
+        click.echo("  " + str(len(loc_info)) + " localization results in file")
+        for loc_k, loc in enumerate(ev_data['location']):
+            click.echo('\n' + "localization parameters (index: " + str(loc_k) + "):")
+            for key in loc['params'].keys():
+                # click.echo("  " + key + ": " + str(loc_params[key]))
+                if loc['params'][key] is not None:
+                    click.echo("  " + key + ": " + str(loc['params'][key]))
+
+            lat = str(np.round(loc['result']['lat_mean'], 3))
+            lon = str(np.round(loc['result']['lon_mean'], 3))
+            NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+            EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+            tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+            click.echo('\n' + "localization result (index: " + str(loc_k) + "):")
+            click.echo("  Latitude: " + lat + " deg +/- " + NS_std + " km.")
+            click.echo("  Longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("  Origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+        click.echo('\n' + "Visualizing index 0 result")
+        loc = ev_data['location'][0]
+
+    click.echo("Localization Result Summary")
+    click.echo("-" * 27)
+    click.echo(bisl.summarize(loc['result'], confidence_level=float(confidence_level)))
+
+    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data["det_info"]]
+    loc_vis.plot_localization(det_list, loc, ev_data["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_fig)
+
+
 
 
 

@@ -540,15 +540,14 @@ def summarize(result, confidence_level=90):
 
     if 't_MaP' in result:
         if confidence_level != 90:
-            dt_vals = np.array([(tm_val - result['temporal_pdf'][0][0]).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in result['temporal_pdf'][0]])
-
-            dt_mean = (result['t_mean'] - result['temporal_pdf'][0][0]).astype('m8[ms]').astype(float) / 1.0e3
+            dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in result['temporal_pdf'][0]])
+            dt_mean = (np.datetime64(result['t_mean']) - np.datetime64(result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
             tm_mask = np.logical_and(dt_mean - 4.0 * result['t_stdev'] < dt_vals, dt_vals < dt_mean + 4.0 * result['t_stdev'])
 
             tm_conf = find_confidence(interp1d(dt_vals[tm_mask], np.array(result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
 
-            tm_min_val = result['temporal_pdf'][0][0] + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms')
-            tm_max_val = result['temporal_pdf'][0][0] + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms') 
+            tm_min_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms')
+            tm_max_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms') 
         else:
             tm_min_val = result['t_min']
             tm_max_val = result['t_max']

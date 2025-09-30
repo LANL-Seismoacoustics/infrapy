@@ -106,8 +106,8 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
     for key in assoc_params.keys():
         click.echo("  " + key + ": " + str(assoc_params[key]))
 
-    if cpu_cnt is not None:
-        pl = Pool(cpu_cnt)
+    if assoc_params['cpu_cnt'] is not None:
+        pl = Pool(assoc_params['cpu_cnt'])
     else:
         pl = None
 
@@ -241,39 +241,50 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     loc_params['c0_stdev'] = config.set_param(user_config, 'LOC', 'c0_stdev', c0_stdev, 'float')
     loc_params['det_tm_stdev'] = config.set_param(user_config, 'LOC', 'det_tm_stdev', det_tm_stdev, 'float')
     loc_params['local_temp_dir'] = config.set_param(user_config, 'LOC', 'local_temp_dir', local_temp_dir, 'str')
-    loc_params['cpu_cnt'] = config.set_param(user_config, 'ASSOC', 'cpu_cnt', cpu_cnt, 'int')
+    loc_params['cpu_cnt'] = config.set_param(user_config, 'LOC', 'cpu_cnt', cpu_cnt, 'int')
 
+    if loc_params['cpu_cnt'] is not None:
+        pl = Pool(loc_params['cpu_cnt'])
+    else:
+        pl = None
 
     if loc_params['ll_corner'] is not None:
         # set grid from corners
-        loc_params['ll_corner'] = np.array([float(val) for val in ll_corner.replace(" ","").split(",")])
-        loc_params['ur_corner'] = np.array([float(val) for val in ur_corner.replace(" ","").split(",")])
+
+        loc_params['ll_corner'] = np.array([float(val) for val in loc_params['ll_corner'].replace(" ","").split(",")])
+        loc_params['ur_corner'] = np.array([float(val) for val in loc_params['ur_corner'].replace(" ","").split(",")])
         tm_lims = (np.datetime64(loc_params['tm_min']), np.datetime64(loc_params['tm_max']))
+
+        if loc_params['alt_lims'] is not None:
+            loc_params['alt_lims'] = np.array([float(val) for val in loc_params['alt_lims'].replace(" ","").split(",")])
 
         loc_params['back_az_width'] = None
         loc_params['range_max'] = None
+        loc_params['grid_resol'] = None 
     else:
         # set automatically
         loc_params['alt_resol'] = None
         loc_params['c0_stdev'] = None
         tm_lims = None
 
+    if loc_params['atmo_data'] is None:           
+        infrasound.set_celerity_model(loc_params["celerity_model"], rcel_wts=loc_params['rcel_wts'], rcel_mns=loc_params['rcel_mns'], rcel_sds=loc_params['rcel_sds'])
+
+        if loc_params['pgm_file'] is not None:
+            click.echo("  pgm_file: " + str(loc_params['pgm_file']))
+            pgm = infrasound.PathGeometryModel()
+            pgm.load(loc_params['pgm_file'])
+        else:
+            pgm = None
+    else:
+        loc_params["celerity_model"] = None
 
     click.echo('\n' + "localization parameters:")
     for key in loc_params.keys():
-        click.echo("  " + key + ": " + str(loc_params[key]))
-        #if loc_params[key] is not None:
-        #    click.echo("  " + key + ": " + str(loc_params[key]))
+        # click.echo("  " + key + ": " + str(loc_params[key]))
+        if loc_params[key] is not None:
+            click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
-
-    infrasound.set_celerity_model(loc_params["celerity_model"], rcel_wts=loc_params['rcel_wts'], rcel_mns=loc_params['rcel_mns'], rcel_sds=loc_params['rcel_sds'])
-
-    if loc_params['pgm_file'] is not None:
-        click.echo("  pgm_file: " + str(loc_params['pgm_file']))
-        pgm = infrasound.PathGeometryModel()
-        pgm.load(loc_params['pgm_file'])
-    else:
-        pgm = None
 
     ev_data = data_io._load_dets_json(event_file)[0]
 
@@ -289,7 +300,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
 
         click.echo("")
-        if atmo_data is None:           
+        if loc_params['atmo_data'] is None:           
             result = bisl.run(det_list, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
                               ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'],
                               tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], path_geo_model=pgm)
@@ -306,14 +317,14 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 
                         temp_path = tmpdirname + "/temp"
 
-                        if "*" in atmo_data:
-                            if len(os.path.dirname(atmo_data)) > 0:
-                                file_path = os.path.dirname(atmo_data) + "/"
+                        if "*" in loc_params['atmo_data']:
+                            if len(os.path.dirname(loc_params['atmo_data'])) > 0:
+                                file_path = os.path.dirname(loc_params['atmo_data']) + "/"
                             else:
                                 file_path = ""
 
-                            if "/" in atmo_data:
-                                dir_files = os.listdir(os.path.dirname(atmo_data))
+                            if "/" in loc_params['atmo_data']:
+                                dir_files = os.listdir(os.path.dirname(loc_params['atmo_data']))
                             else:
                                 dir_files = os.listdir(".")
 
@@ -323,8 +334,10 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                             norms = []
                             for k, file_name in enumerate(file_list):                            
                                 print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
-                                temp = tribl.run(det_list, file_path + file_name, temp_path + "-" + str(k), bm_width=back_az_width, rng_max=range_max, grid_resol=grid_resol, ll_corner=ll_corner, ur_corner=ur_corner,
-                                                latlon_resol=latlon_resol, tm_lims=tm_lims, tm_resol=tm_resol, alt_lims=alt_lims, alt_resol=alt_resol, grnd_snd_spd=grnd_snd_spd, c0_stdev=c0_stdev, det_time_stdev=det_tm_stdev, verbose=False, show_prog=True, pool=pl) 
+                                temp = tribl.run(det_list, file_path + file_name, temp_path + "-" + str(k), bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
+                                                ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'],
+                                                alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
+                                                det_time_stdev=loc_params['det_tm_stdev'], verbose=False, show_prog=True, pool=pl) 
                                 norms = norms + [temp['norm']]
 
                             norms = norms / np.sum(norms)
@@ -350,9 +363,11 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                             click.echo('\n' + "Analyzing combined localization PDF...")
                             result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
 
-                        else:              
-                            result = tribl.run(det_list, atmo_data, temp_path, bm_width=back_az_width, rng_max=range_max, grid_resol=grid_resol, ll_corner=ll_corner, ur_corner=ur_corner,
-                                                latlon_resol=latlon_resol, tm_lims=tm_lims, tm_resol=tm_resol, alt_lims=alt_lims, alt_resol=alt_resol, grnd_snd_spd=grnd_snd_spd, c0_stdev=c0_stdev, det_time_stdev=det_tm_stdev, verbose=True, pool=pl)
+                        else:
+                            result = tribl.run(det_list, loc_params['atmo_data'], temp_path, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'], 
+                                                ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], 
+                                                alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
+                                                det_time_stdev=loc_params['det_tm_stdev'], verbose=True, pool=pl)
             else:
                 click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
                 return

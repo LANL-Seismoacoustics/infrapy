@@ -76,6 +76,7 @@ plot.add_command(cli_visualization.beam_detect)
 plot.add_command(cli_visualization.spec_detect)
 plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
+plot.add_command(cli_visualization.ev_loc)
 
 
 # Utilities
