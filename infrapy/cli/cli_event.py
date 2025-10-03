@@ -163,7 +163,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
 @click.option("--tm-max", help="Maximum origin time", default=None)
 @click.option("--tm-resol", help="Resolution of origin time grid (seconds)", default=None, type=float)
 
-@click.option("--celerity-model", help="Use included celerity model (default: '" + config.defaults['LOC']['celerity_model'], default=None, hidden=True)
+@click.option("--celerity-model", help="Use included celerity model (default: '" + config.defaults['LOC']['celerity_model'], default=None)
 @click.option("--rcel-wts", help="Custom reciprocal celerity model weights", default=None, hidden=True)
 @click.option("--rcel-mns", help="Custom reciprocal celerity model means", default=None, hidden=True)
 @click.option("--rcel-sds", help="Custom reciprocal celerity model standard deviations", default=None, hidden=True)
@@ -291,10 +291,14 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     # Check if results already exist for this parameter set
     new_param_set = True
     param_index = 0
-    for k, result_set in enumerate(ev_data['location']):
-        if loc_params == result_set['params']:
-            new_param_set = False
+    for k, result_set in enumerate(ev_data['location']):        
+        try:
+            new_param_set = False 
             param_index = k
+            np.testing.assert_equal(loc_params, result_set['params'])
+        except:
+            new_param_set = True
+            pass
 
     if new_param_set:
         det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
@@ -328,7 +332,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                             else:
                                 dir_files = os.listdir(".")
 
-                            file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(atmo_data))])
+                            file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
 
                             click.echo('\n' + "Computing localization using atmosphere ensemble:")
                             norms = []
@@ -377,11 +381,10 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         click.echo(bisl.summarize(result))
 
         ev_data['location'] = ev_data['location'] + [{'params' : loc_params, 'result' : result}]
-
-        with gzip.open("test.ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
             json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
         click.echo("Localization result already exists in this event file for this parameter set.")
-        click.echo('\n' + "BISL Summary:")
+        click.echo('\n' + "Localization Summary:")
         click.echo(bisl.summarize(ev_data['location'][param_index]['result']))
 

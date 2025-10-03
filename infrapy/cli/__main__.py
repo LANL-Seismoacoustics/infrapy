@@ -69,8 +69,6 @@ detect.add_command(cli_detection.run_spec_detect)
 event.add_command(cli_event.build)
 event.add_command(cli_event.localize)
 
-
-
 # Visualizations
 plot.add_command(cli_visualization.beam_detect)
 plot.add_command(cli_visualization.spec_detect)
@@ -78,18 +76,16 @@ plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
 plot.add_command(cli_visualization.ev_loc)
 
-
 # Utilities
-utils.add_command(cli_utils.arrivals2json)
-utils.add_command(cli_utils.arrival_time)
-utils.add_command(cli_utils.calc_celerity)
 utils.add_command(cli_utils.check_db_wvfrm)
 utils.add_command(cli_utils.write_wvfrms)
-utils.add_command(cli_utils.best_beam)
-utils.add_command(cli_utils.fit_celerity)
 utils.add_command(cli_utils.merge_dets)
 utils.add_command(cli_utils.convert_dets)
+utils.add_command(cli_utils.event_gt)
+utils.add_command(cli_utils.event_summary)
 
+# moving to stochprop
+utils.add_command(cli_utils.fit_celerity)
 
 
 
@@ -127,6 +123,14 @@ plot.add_command(cli_visualization.dets)
 plot.add_command(cli_visualization.loc)
 plot.add_command(cli_visualization.origin_time)
 plot.add_command(cli_visualization.yield_plot)
+
+# Utilities
+utils.add_command(cli_utils.arrivals2json)
+utils.add_command(cli_utils.arrival_time)
+utils.add_command(cli_utils.calc_celerity)
+utils.add_command(cli_utils.best_beam)
+
+
 
 
 

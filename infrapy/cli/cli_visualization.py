@@ -157,13 +157,14 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
 
 
 
-@click.command('wvfrms', short_help="Plot detections from updated JSON format output")
+@click.command('wvfrms', short_help="Plot waveform from detection or event")
 @click.option("--det-file", help="Detection GZIP file", default=None)
+@click.option("--event-file", help="Event GZIP JSON file", default=None)
 @click.option("--single-det-index", help="Index of a single detection", default=0)
 @click.option("--plot-all-dets", help="Plot waveforms for all detections", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def wvfrms(det_file, single_det_index, plot_all_dets, figure_out, show_figure):
+def wvfrms(det_file, event_file, single_det_index, plot_all_dets, figure_out, show_figure):
     '''
     Summarize the contents of a JSON detections file
 
@@ -171,15 +172,42 @@ def wvfrms(det_file, single_det_index, plot_all_dets, figure_out, show_figure):
     \tinfrapy plot wvfrms --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 0
     '''
 
-    if os.path.splitext(det_file)[-1] == ".gz":
-        det_data = json.load(gzip.open(det_file, 'rt'))
-    else:
-        det_data = json.load(open(det_file))
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##     Waveform Visualization      ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")  
 
-    if plot_all_dets:
-        click.echo('\n' + "Plotting all detections...")
-        for k in range(len(det_data['det_info'])):
-            det = det_data["det_info"][k]
+    if det_file is not None:
+        if os.path.splitext(det_file)[-1] == ".gz":
+            det_data = json.load(gzip.open(det_file, 'rt'))
+        else:
+            det_data = json.load(open(det_file))
+
+        if plot_all_dets:
+            click.echo('\n' + "Plotting all detections...")
+            for k in range(len(det_data['det_info'])):
+                det = det_data["det_info"][k]
+
+                click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
+                click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
+                click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
+                click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
+                click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
+                click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
+
+                if figure_out is not None:
+                    figure_out = figure_out + "_det" + str(k)
+
+                det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=False)
+
+            if show_figure:
+                plt.show()
+        else:
+            det = det_data["det_info"][single_det_index]
 
             click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
             click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
@@ -188,25 +216,13 @@ def wvfrms(det_file, single_det_index, plot_all_dets, figure_out, show_figure):
             click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
             click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
 
-            if figure_out is not None:
-                figure_out = figure_out + "_det" + str(k)
+            det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=show_figure)
 
-            det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=False)
+    elif event_file is not None:
 
-        if show_figure:
-            plt.show()
-    else:
-        det = det_data["det_info"][single_det_index]
+        click.echo("Hello")
 
-        click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
-        click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
-        click.echo('Frequency band [Hz]:' + ''.join(['\t\t' + str(fk_j["freq_min"]) + " - " + str(fk_j["freq_max"]) for fk_j in det['fk_params']]))
-        click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
-        click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
-        click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
-
-        det_vis.plot_wvfrms(det, output_path=figure_out, show_fig=show_figure)
-
+        event_data = json.load(gzip.open(event_file, 'rt'))
 
 
             
@@ -490,7 +506,7 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
 
 
 
-@click.command('fk', short_help="Visualize beamforming (fk) results")
+@click.command('fk', short_help="Visualize beamforming (fk) results", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
@@ -645,7 +661,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
             warnings.warn(msg)
 
 
-@click.command('fd', short_help="Visualize detections from beamforming results")
+@click.command('fd', short_help="Visualize detections from beamforming results", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
@@ -814,7 +830,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
             warnings.warn(msg)
 
 
-@click.command('sd', short_help="Visualize detection(s) from spectral analysis")
+@click.command('sd', short_help="Visualize detection(s) from spectral analysis", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--local-latlon", help="Array location information for local waveforms", default=None)
@@ -980,7 +996,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         det_vis.plot_sd(stream[0], det_list, [freq_min, freq_max], spec_option=spectral_option, morlet_omega0=morlet_omega0, output_path=figure_out, show_fig=show_figure)
 
 
-@click.command('dets', short_help="Plot detections on a map")
+@click.command('dets', short_help="Plot detections on a map", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
@@ -1035,7 +1051,7 @@ def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_di
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
 
 
-@click.command('loc', short_help="Plot localization result on a map")
+@click.command('loc', short_help="Plot localization result on a map", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-detect-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
@@ -1107,7 +1123,7 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
     
 
 
-@click.command('origin-time', short_help="Plot origin time distribution")
+@click.command('origin-time', short_help="Plot origin time distribution", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-loc-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
@@ -1151,7 +1167,7 @@ def origin_time(config_file, local_loc_label, figure_out, grnd_truth):
     loc_vis.plot_origin_time(bisl_result, output_path=figure_out, grnd_truth=grnd_truth)
     
 
-@click.command('yield', short_help="Plot yield estimate distribution")
+@click.command('yield', short_help="Plot yield estimate distribution", hidden=True)
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-yld-label", help="Yield estimate result", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
