@@ -572,7 +572,7 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     output_id = output_id + data_io.stream_label(stream)
 
 
-    det_list, spectrogram, history = spectral.cli_sd(stream[0], sd_params["spectral_option"], sd_params["morlet_omega0"], [sd_params["freq_min"], sd_params["freq_max"]], 0.8, sd_params["p_value"], 
+    det_list, spectrogram, history = spectral.cli_sd(stream[0], sd_params["spectral_option"], sd_params["morlet_omega0"], [sd_params["freq_min"], sd_params["freq_max"]], 0.9, sd_params["p_value"], 
                                             sd_params["window_len"], sd_params["window_step"], sd_params["freq_tm_factor"], sd_params["cluster_eps"], sd_params["cluster_min_samples"], sd_params["cluster_window_len"], pl)
 
     if detect_label is None or detect_label == "auto":

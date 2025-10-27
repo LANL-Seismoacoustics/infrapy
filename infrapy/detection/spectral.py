@@ -74,6 +74,10 @@ def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, time
 
         dt_start = min(det_pnts[:, 0])
         dt_end = max(det_pnts[:, 0])
+        
+        if dt_end == dt_start:
+            dt_start = dt_start - 1
+            dt_end = dt_end + 1
 
         det_buffer = (dt_end - dt_start) * 0.15
         det_buffer = min(det_buffer, 60.0)
@@ -103,11 +107,10 @@ def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, time
 
         # spectral curves
         SXX_det_mask = np.logical_and(dt_start < t, t < dt_end)
-
         spec_mean = np.mean(Sxx_log[:, SXX_det_mask], axis=1)
         spec_max = np.max(Sxx_log[:, SXX_det_mask], axis=1)
-        det_info['spec'] = [f, spec_mean, spec_max]
 
+        det_info['spec'] = [f, spec_mean, spec_max]
         tm_index = np.argmin([abs(tn - dt_det) for tn in times_history])
 
         bg_freqs = f[peaks_history[tm_index] != 0]
@@ -266,6 +269,10 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     else:
         print("Error: unrecognized spectrogram option: " + spec_option + ".")
         return []
+    
+    if (t[1] - t[0]) > clustering_eps:
+        print("** Specified clustering linkage (" + str(clustering_eps) + " s) is less than spectrogram window step (" + str(t[1] - t[0]) + " s).  Adjusting to allow clusters to form.")
+        clustering_eps = (t[1] - t[0]) * 1.1
    
     _, cluster_results, history = run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, cluster_window_len, pl, t_skip, verbose=True)
  

@@ -175,10 +175,11 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
 @click.option("--grnd-snd-spd", help="Sound speed at the ground", default=None)
 @click.option("--c0-stdev", help="Sound speed uncertainty if using TRIBL", default=None)
 @click.option("--det-tm-stdev", help="Detection time uncertainty", default=None)
+@click.option("--az-limit", help="Azimuth resolution limit", default=None)
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 
-def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, local_temp_dir, cpu_cnt):
+def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -213,6 +214,10 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     click.echo('\n' + "Data summary:")
     click.echo("  event_file: " + str(event_file))
 
+    ev_data = data_io._load_dets_json(event_file)[0]
+    if range_max is None:
+        range_max = ev_data['assoc_params']['range_max']
+
     # Algorithm parameters
     loc_params = {}
     loc_params['back_az_width'] = config.set_param(user_config, 'LOC', 'back_az_width', back_az_width, 'float')
@@ -240,6 +245,9 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     loc_params['grnd_snd_spd'] = config.set_param(user_config, 'LOC', 'grnd_snd_spd', grnd_snd_spd, 'float')
     loc_params['c0_stdev'] = config.set_param(user_config, 'LOC', 'c0_stdev', c0_stdev, 'float')
     loc_params['det_tm_stdev'] = config.set_param(user_config, 'LOC', 'det_tm_stdev', det_tm_stdev, 'float')
+
+    loc_params['az_limit'] = config.set_param(user_config, 'LOC', 'az_limit', az_limit, 'float')
+
     loc_params['local_temp_dir'] = config.set_param(user_config, 'LOC', 'local_temp_dir', local_temp_dir, 'str')
     loc_params['cpu_cnt'] = config.set_param(user_config, 'LOC', 'cpu_cnt', cpu_cnt, 'int')
 
@@ -265,9 +273,11 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         # set automatically
         loc_params['alt_resol'] = None
         loc_params['c0_stdev'] = None
+        loc_params['az_limit'] = None
+        
         tm_lims = None
 
-    if loc_params['atmo_data'] is None:           
+    if loc_params['atmo_data'] is None:               
         infrasound.set_celerity_model(loc_params["celerity_model"], rcel_wts=loc_params['rcel_wts'], rcel_mns=loc_params['rcel_mns'], rcel_sds=loc_params['rcel_sds'])
 
         if loc_params['pgm_file'] is not None:
@@ -286,7 +296,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
 
-    ev_data = data_io._load_dets_json(event_file)[0]
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -296,6 +305,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
             new_param_set = False 
             param_index = k
             np.testing.assert_equal(loc_params, result_set['params'])
+            break
         except:
             new_param_set = True
             pass
@@ -314,10 +324,10 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                     click.echo("InfraGA methods not compiled.  Run 'infraga compile' and try again.")
                 else:                               
                     with tempfile.TemporaryDirectory(prefix='infraga_') as tmpdirname:
-                        if local_temp_dir is not None:
-                            if not os.path.isdir(local_temp_dir):
-                                os.mkdir(local_temp_dir)
-                            tmpdirname = local_temp_dir
+                        if loc_params['local_temp_dir'] is not None:
+                            if not os.path.isdir(loc_params['local_temp_dir']):
+                                os.mkdir(loc_params['local_temp_dir'])
+                            tmpdirname = loc_params['local_temp_dir']
 
                         temp_path = tmpdirname + "/temp"
 
@@ -341,7 +351,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                                 temp = tribl.run(det_list, file_path + file_name, temp_path + "-" + str(k), bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
                                                 ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'],
                                                 alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
-                                                det_time_stdev=loc_params['det_tm_stdev'], verbose=False, show_prog=True, pool=pl) 
+                                                det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=False, show_prog=True, pool=pl) 
                                 norms = norms + [temp['norm']]
 
                             norms = norms / np.sum(norms)
@@ -367,24 +377,28 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
                             click.echo('\n' + "Analyzing combined localization PDF...")
                             result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
 
+                            # Add ensemble information tp location dictionary
+                            result['atmo ensemble'] = file_list
+                            result['atmo norms'] = norms 
+
                         else:
                             result = tribl.run(det_list, loc_params['atmo_data'], temp_path, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'], 
                                                 ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], 
                                                 alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
-                                                det_time_stdev=loc_params['det_tm_stdev'], verbose=True, pool=pl)
+                                                det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=True, pool=pl)
             else:
                 click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
                 return
 
         # Determine output format for BISL results
-        click.echo('\n' + "Localization Summary:")
-        click.echo(bisl.summarize(result))
+        if result['norm'] > 0.0:
+            click.echo('\n' + "Localization Summary:")
+            click.echo(bisl.summarize(result))
 
-        ev_data['location'] = ev_data['location'] + [{'params' : loc_params, 'result' : result}]
-        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
-            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+            ev_data['location'] = ev_data['location'] + [{'params' : loc_params, 'result' : result}]
+            with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
         click.echo("Localization result already exists in this event file for this parameter set.")
         click.echo('\n' + "Localization Summary:")
         click.echo(bisl.summarize(ev_data['location'][param_index]['result']))
-

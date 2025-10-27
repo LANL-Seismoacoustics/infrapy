@@ -204,22 +204,31 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
             ax.plot(list(gc_path.lons), list(gc_path.lats), '.', color=back_az_color, markersize=1.5, transform=map_proj)
     ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
 
+    if 'latitude' in grnd_truth_dict.keys():
+        ax.plot([float(grnd_truth_dict['longitude'])], [float(grnd_truth_dict['latitude'])], '*r', markersize=5.0, transform=map_proj)
+
     # Zoomed in map
     lat_min, lat_max = np.floor(min(conf_latlon[1])), np.ceil(max(conf_latlon[1]))
     lon_min, lon_max = np.floor(min(conf_latlon[0])), np.ceil(max(conf_latlon[0]))
+
+    if 'latitude' in grnd_truth_dict.keys():
+        lat_min, lat_max = min(lat_min, float(grnd_truth_dict['latitude'])), max(lat_max, float(grnd_truth_dict['latitude']))
+        lon_min, lon_max = min(lon_min, float(grnd_truth_dict['longitude'])), max(lon_max, float(grnd_truth_dict['longitude']))
+
     _setup_map_ax(ax_zm, [[lat_min, lat_max], [lon_min, lon_max]])
 
     ax_zm.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=5.0, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
     ax_zm.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
+    if 'latitude' in grnd_truth_dict.keys():
+        ax_zm.plot([float(grnd_truth_dict['longitude'])], [float(grnd_truth_dict['latitude'])], '*r', markersize=10.0, transform=map_proj)
+
     # Origin time
+    dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in loc_result['temporal_pdf'][0]])
+    dt_mean = (np.datetime64(loc_result['t_mean']) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
+    tm_mask = np.logical_and(dt_mean - 5.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 5.0 * loc_result['t_stdev'])
     if confidence_level != 90.0:
-            dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in loc_result['temporal_pdf'][0]])
-            dt_mean = (np.datetime64(loc_result['t_mean']) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
-            tm_mask = np.logical_and(dt_mean - 4.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 4.0 * loc_result['t_stdev'])
-
             tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
-
             tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
             tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
     else:
@@ -229,18 +238,19 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     origin_times = np.array([np.datetime64(tn) for tn in loc_result['temporal_pdf'][0]])
     origin_time_pdf = np.array(loc_result['temporal_pdf'][1])
 
-    mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
-
-    ax_tm.plot(origin_times, origin_time_pdf, '-k', linewidth=2.5)
-    ax_tm.fill_between(origin_times[mask], 0.0, origin_time_pdf[mask], color=conf_color, alpha=0.5)
+    conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
+    
+    ax_tm.plot(origin_times[tm_mask], origin_time_pdf[tm_mask], '-k', linewidth=2.5)
+    ax_tm.fill_between(origin_times[conf_mask], 0.0, origin_time_pdf[conf_mask], color=conf_color, alpha=0.5)
+    if 'orig_tm' in grnd_truth_dict.keys():
+        ax_tm.axvline(x = np.datetime64(grnd_truth_dict['orig_tm']), color='red')
 
     ax_tm.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
     ax_tm.set_ylim(0)
     ax_tm.yaxis.set_ticklabels([])
 
     # annotation
-    ax_an.axis('off')
-    
+    ax_an.axis('off')   
     conf_area = np.round(np.pi * loc_result['NS_stdev'] * loc_result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 2)
 
     def round_str(val):

@@ -270,18 +270,18 @@ def plot_sd_json(det_dict, log_scale_freq=False, output_path=None, show_fig=True
     _, a = plt.subplots(3, sharex=True, figsize=(8, 8))
 
     try:
-        Sxx_mean = np.mean(Sxx_log)
-        Sxx_std = np.std(Sxx_log)
-        Sxx_min = np.min(Sxx_log)
-        Sxx_max = np.max(Sxx_log)
+        Sxx_mean = np.nanmeanmean(Sxx_log)
+        Sxx_std = np.nanstd(Sxx_log)
+        Sxx_min = np.nanmin(Sxx_log)
+        Sxx_max = np.nanmax(Sxx_log)
     except:
-        Sxx_mean = np.mean(Sxx_log[Sxx_log != -np.inf])
-        Sxx_std = np.std(Sxx_log[Sxx_log != -np.inf])
-        Sxx_min = np.min(Sxx_log[Sxx_log != -np.inf])
-        Sxx_max = np.max(Sxx_log[Sxx_log != -np.inf])
+        Sxx_mean = np.nanmean(Sxx_log[Sxx_log != -np.inf])
+        Sxx_std = np.nanstd(Sxx_log[Sxx_log != -np.inf])
+        Sxx_min = np.nanmin(Sxx_log[Sxx_log != -np.inf])
+        Sxx_max = np.nanmax(Sxx_log[Sxx_log != -np.inf])
 
-    cmap_max = min(Sxx_mean + 2.0 * Sxx_std, Sxx_max)
-    cmap_min = max(Sxx_mean - 2.0 * Sxx_std, Sxx_min)
+    cmap_max = min(Sxx_mean + 3.0 * Sxx_std, Sxx_max)
+    cmap_min = max(Sxx_mean - 3.0 * Sxx_std, Sxx_min)
 
     a[2].set_xlabel("Time (rel. " + det_dict["wvfrm_info"][0]["starttime"] + " [s]")
 
@@ -296,8 +296,6 @@ def plot_sd_json(det_dict, log_scale_freq=False, output_path=None, show_fig=True
 
     a[0].imshow(np.flipud(Sxx_log), extent=[t[0], t[-1], f[1], f[-1]], cmap=cm.jet, aspect='auto', vmin=cmap_min, vmax=cmap_max)
     a[1].imshow(np.flipud(Sxx_norm), extent=[t[0], t[-1], f[0], f[-1]], cmap=cm.gnuplot2, aspect='auto', vmin=0.0, vmax= min(np.nanmax(Sxx_norm), 2.0 * np.nanstd(Sxx_norm)))
-
-
 
     for k, det in enumerate(det_dict['det_info']):
         spec_pnts = np.array(det['spec pnts'])

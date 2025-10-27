@@ -25,20 +25,13 @@ from datetime import datetime
 from pyproj import Geod
 
 from scipy.integrate import simps
-from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
-from scipy.stats import norm, gaussian_kde
-from scipy.signal import savgol_filter
-from scipy.special import gamma
-
+from scipy.interpolate import interp1d, interp2d
 
 from . import bisl
 from ..utils import prog_bar
 
-
 sph_proj = Geod(ellps='sphere')
-
 resol = '100m'  # use data at this scale (not working at the moment)
-
 
 # ############################ #
 #       Back Projection        #
@@ -138,7 +131,7 @@ class BackProjection(object):
 
     r_earth = 6370.0
 
-    def __init__(self, detection, projection_file, det_time_std_dev=5.0, c0=340.0, c0_stdev=2.0, dt=1.0):
+    def __init__(self, detection, projection_file, det_time_std_dev=5.0, c0=340.0, c0_stdev=2.0, dt=1.0, az_limit=2.0):
 
         self.c0 = c0
         self.c0_stdev = c0_stdev
@@ -147,6 +140,9 @@ class BackProjection(object):
         v0 = detection.trace_velocity
 
         self.az_std_dev = np.degrees(1.0 / np.sqrt(2.0 * (detection.array_dim - 1.0) * detection.peakF_value))
+        self.az_std_dev = max(self.az_std_dev, az_limit)
+
+
         self.tr_vel_std_dev = v0 * np.radians(self.az_std_dev)
 
         v0_up = v0 + v0 * np.radians(self.az_std_dev)
@@ -192,11 +188,11 @@ class BackProjection(object):
         return np.sum(result, axis=0)
     
 
-def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0):
+def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0, az_limit=2.0):
 
     c0 = _compute_projections(dets_list, atmo_file, temp_dest=projection_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=latlon_bnds, cpu_cnt=cpu_cnt)
     if c0 is not None:
-        return [BackProjection(det, projection_path + ".det-" + str(n) + ".projection.dat", det_time_std_dev=det_time_std_dev, c0=c0[n], c0_stdev=c0_stdev) for n, det in enumerate(dets_list)]
+        return [BackProjection(det, projection_path + ".det-" + str(n) + ".projection.dat", det_time_std_dev=det_time_std_dev, c0=c0[n], c0_stdev=c0_stdev, az_limit=az_limit) for n, det in enumerate(dets_list)]
     else:
         return None
 
@@ -209,7 +205,7 @@ def eval_on_grid_wrapper(args):
 
 
 def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0,
-            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, verbose=True, show_prog=True, pool=None):
+            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, az_limit=2.0, verbose=True, show_prog=True, pool=None):
 
     if verbose:
         print("Running Time-Reversed Infrasonic Bayesian Localization (TRIBL) Analysis...")
@@ -235,7 +231,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     else:
         cpu_cnt = None
 
-    projs = build_projections(det_list, atmo_file, temp_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=[[lat_vals[0], lat_vals[-1]], [lon_vals[0], lon_vals[-1]]], cpu_cnt=cpu_cnt, c0_stdev=c0_stdev, det_time_std_dev=det_time_stdev)
+    projs = build_projections(det_list, atmo_file, temp_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=[[lat_vals[0], lat_vals[-1]], [lon_vals[0], lon_vals[-1]]], cpu_cnt=cpu_cnt, c0_stdev=c0_stdev, det_time_std_dev=det_time_stdev, az_limit=az_limit)
 
     if verbose:
         print('\t' + "Evaluating localization probability on grid...")
@@ -258,7 +254,18 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     pdf = pdf.reshape(lat_grid.shape)
 
     np.savez_compressed(temp_path + ".pdf", lat_vals=lat_vals, lon_vals=lon_vals, alt_vals=alt_vals, tm_vals=tm_vals, pdf=pdf)
-    result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=verbose)
+
+    if np.max(pdf) > 0.0:
+        result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=verbose)
+    else:
+        result = {'norm' : 0.0}
+
+        print('\nOne of the detections is driving the PDF to zero...')
+        print('\tIndex\tmax(PDF)')
+        for j, det in enumerate(det_pdfs):
+            print('\t' + str(j) + '\t' + str(np.max(det)))
+
+        print("Once it's working, try --det-mask ", np.where(np.max(det) > 0.0))
 
     return result
 

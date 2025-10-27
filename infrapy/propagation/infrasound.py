@@ -72,7 +72,7 @@ def set_celerity_model(option, rcel_wts=None, rcel_mns=None, rcel_sds=None):
         print("    Reciprocal celerity means: " + str(rcel_mns))
         print("    Reciprocal celerity stdev: " + str(rcel_sds))
     
-    elif option == "regional_hf":
+    elif "regional_hf" in option:
         print("  Using built-in regional_hf celerity model")
         canon_rcel_wts = np.array([0.072, 0.421, 0.513])
         canon_rcel_mns = np.array([1.0/0.339, 1.0/0.293, 1.0/0.259])

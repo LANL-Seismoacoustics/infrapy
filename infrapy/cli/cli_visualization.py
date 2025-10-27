@@ -13,6 +13,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt 
 
+
+from scipy.stats import chi2
 from obspy import UTCDateTime
 
 from multiprocessing import Pool
@@ -441,12 +443,15 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
     ev_data = data_io._load_dets_json(event_file)[0]
     loc_info = ev_data['location']
 
+    if range_max is None:
+        range_max = ev_data['assoc_params']['range_max']
+    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
+
     if event_loc_index is not None:
         loc = ev_data['location'][event_loc_index]
         click.echo("Visualizing with event_loc_index: " + str(event_loc_index) + '\n')
         click.echo("localization parameters:")
         for key in loc['params'].keys():
-            # click.echo("  " + key + ": " + str(loc_params[key]))
             if loc['params'][key] is not None:
                 click.echo("  " + key + ": " + str(loc['params'][key]))
         click.echo("")
@@ -454,9 +459,12 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
     else:
         click.echo("  " + str(len(loc_info)) + " localization results in file")
         for loc_k, loc in enumerate(ev_data['location']):
-            click.echo('\n' + "localization parameters (index: " + str(loc_k) + "):")
+            click.echo('\n' + "#" * 29)
+            click.echo("##  " + "localization index: " + str(loc_k) + "  ##")
+            click.echo("#" * 29)
+
+            click.echo("parameters" + '\n' + "-" * 10)
             for key in loc['params'].keys():
-                # click.echo("  " + key + ": " + str(loc_params[key]))
                 if loc['params'][key] is not None:
                     click.echo("  " + key + ": " + str(loc['params'][key]))
 
@@ -466,19 +474,19 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
             EW_std = str(np.round(loc['result']['EW_stdev'], 2))
             tm_std = str(np.round(loc['result']['t_stdev'], 1))
 
-            click.echo('\n' + "localization result (index: " + str(loc_k) + "):")
+            click.echo('\n' + "result" + '\n' + "-" * 6)
             click.echo("  Latitude: " + lat + " deg +/- " + NS_std + " km.")
             click.echo("  Longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("  90% confidence area: " + str(np.round(np.pi * loc['result']['NS_stdev'] * loc['result']['EW_stdev'] * chi2(2).ppf(0.9), 1)) + " sqr km" )
+
             click.echo("  Origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
 
-        click.echo('\n' + "Visualizing index 0 result")
+        click.echo('\n' + "Visualizing index 0 result" + '\n')
         loc = ev_data['location'][0]
 
     click.echo("Localization Result Summary")
     click.echo("-" * 27)
     click.echo(bisl.summarize(loc['result'], confidence_level=float(confidence_level)))
-
-    range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
 
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data["det_info"]]
     loc_vis.plot_localization(det_list, loc, ev_data["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_fig)

@@ -642,7 +642,10 @@ def event_gt(event_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry
     base_vals = [latitude, longitude, orig_tm, eq_tnt]
     for k in range(4):
         entry_check(base_keys[k], base_vals[k])
-        
+
+    if gt_dict['orig_tm'] is not None:
+        gt_dict['orig_tm'] = UTCDateTime(gt_dict['orig_tm'])
+
     for e in user_entry:
         key, val = e.split(":")
         entry_check(key, val)
@@ -673,7 +676,7 @@ def event_summary(event_file):
     click.echo("Loading information from event_file: " + str(event_file))
     ev_data = data_io._load_dets_json(event_file)[0]
 
-    click.echo('\n' + "Detection Summary" + '\n' + "-" * 17)
+    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
     for det in ev_data['det_info']:
         click.echo(det['wvfrm_info'][0][0]['trace id'])
         click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
@@ -684,9 +687,13 @@ def event_summary(event_file):
         click.echo("")
 
     if len(ev_data['location']) > 0:
-        click.echo('\n' + "Localization Summary" + '\n' + "-" * 20)
+        click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
         for loc_k, loc in enumerate(ev_data['location']):
-            click.echo("  parameters (index: " + str(loc_k) + "):")
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(loc_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
             for key in loc['params'].keys():
                 if loc['params'][key] is not None:
                     click.echo("    " + key + ": " + str(loc['params'][key]))
@@ -697,14 +704,13 @@ def event_summary(event_file):
             EW_std = str(np.round(loc['result']['EW_stdev'], 2))
             tm_std = str(np.round(loc['result']['t_stdev'], 1))
 
-            click.echo('\n' + "  result (index: " + str(loc_k) + "):")
+            click.echo('\n' + "result" + '\n' + "-" * 6)
             click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
             click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
             click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
-            click.echo("")
 
     if len(ev_data['ground truth'].keys()) > 0:
-        click.echo('\n' + "Ground Truth Summary"  + '\n' + "-" * 20)
+        click.echo('\n' + "=" * 20 + '\n' + "Ground Truth Summary"  + '\n' + "=" * 20)
         for key in ev_data['ground truth']:
             click.echo("  " + key + ': ' + str(ev_data['ground truth'][key]))
         click.echo("")
