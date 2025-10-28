@@ -288,10 +288,6 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     fk_out['thresh'] = thresh_vals 
 
     # save detection results
-    det_list = []
-    for det_info in dets:
-        det_list = det_list + [data_io.define_detection(det_info, array_loc, len(stream), [fk_params['freq_min'], fk_params['freq_max']], note="InfraPy CLI detection")]
-
     dets_out = []
     for det_info in dets:
         dets_out = dets_out + [{}]
@@ -316,7 +312,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         det_mask = np.logical_and(det_info[1] - det_buffer <= dt - dt_ref, dt - dt_ref <= det_info[2] + det_buffer)
 
         dets_out[-1]['fk'] = [{}]
-        dets_out[-1]['fk'][0]['time'] = np.arange(det_info[1] - det_buffer, det_info[2] + det_buffer + fk_params['window_step'], fk_params['window_step'])
+        dets_out[-1]['fk'][0]['time'] = np.arange(det_info[1] - det_buffer, det_info[2] + det_buffer + fk_params['window_step'], fk_params['window_step'])[-np.sum(det_mask):]
         dets_out[-1]['fk'][0]['back az'] = beam_peaks[:, 0][det_mask]
         dets_out[-1]['fk'][0]['tr vel'] = beam_peaks[:, 1][det_mask]
         dets_out[-1]['fk'][0]['f-stat'] = beam_peaks[:, 2][det_mask]
