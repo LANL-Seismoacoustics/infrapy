@@ -339,6 +339,8 @@ def merge_dets(det_files, merged_label):
     dets_out = []
     while len(det_list) > 0:
         merge_indices = [0]
+        print("")
+
         for k, det_k in enumerate(det_list[1:]):
             # check at least one station ID matches
             ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
@@ -350,15 +352,17 @@ def merge_dets(det_files, merged_label):
 
                 dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
                 dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
-                dt = dt / (dur1 + dur2)
+                dt = dt / (2.0 * max(dur1, dur2))
 
                 # check back azimuths are within tolerance 
                 daz = abs(det_list[0]["back az"] - det_k["back az"])
                 if daz > 360.0:
                     daz = daz - 360.0
-                daz = daz / 20.0
+                daz = daz / 30.0
 
-                if np.sqrt(dt**2 + daz**2) < 0.5:
+                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
+
+                if np.sqrt(dt**2 + daz**2) < 0.75:
                     merge_indices = merge_indices + [k + 1]
 
         dets_to_merge = [det_list[j] for j in merge_indices]

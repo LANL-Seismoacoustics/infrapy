@@ -402,3 +402,81 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         click.echo("Localization result already exists in this event file for this parameter set.")
         click.echo('\n' + "Localization Summary:")
         click.echo(bisl.summarize(ev_data['location'][param_index]['result']))
+
+
+
+@click.command('characterize', short_help="Characterize the source spectra for an event")
+@click.option("--event-file", help="Event JSON file to be analyzed", default=None)
+@click.option("--config-file", help="Configuration file", default=None)
+
+@click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
+
+
+@click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['YIELD']['freq_min'] + " [Hz])", default=None, type=float)
+@click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['YIELD']['freq_max'] + " [Hz])", default=None, type=float)
+@click.option("--yld-min", help="Minimum yield (default: " + config.defaults['YIELD']['yld_min'] + " [tons eq. TNT])", default=1.0, type=float)
+@click.option("--yld-max", help="Maximum yield (default: " + config.defaults['YIELD']['yld_max'] + " [tons eq. TNT])", default=1000.0, type=float)
+@click.option("--ref-rng", help="Reference range for blastwave model (default " + config.defaults['YIELD']['ref_rng'] + " km)", default=1.0, type=float)
+@click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['YIELD']['resolution'] + ")", default=None, type=int)
+@click.option("--amb-press", help="Ambient pressure (default: " + config.defaults['YIELD']['amb_press'] + " [Pa])", default=None, type=float)
+@click.option("--amb-temp", help="Ambient temperature (default: " + config.defaults['YIELD']['amb_temp'] + " [K])", default=None, type=float)
+@click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
+@click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
+def characterize(event_file, config_file, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
+    '''
+    Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy localize --event-file GJI_example-ev0
+    '''
+
+    click.echo("")
+    click.echo("#####################################")
+    click.echo("##                                 ##")
+    click.echo("##             InfraPy             ##")
+    click.echo("##    Characterization Analysis    ##")
+    click.echo("##                                 ##")
+    click.echo("#####################################")
+    click.echo("")    
+
+    if config_file:
+        click.echo('\n' + "Loading configuration info from: " + config_file)
+        if os.path.isfile(config_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(config_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None    
+
+    event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
+            
+    click.echo('\n' + "Data summary:")
+    click.echo("  event_file: " + str(event_file))
+
+    ev_data = data_io._load_dets_json(event_file)[0]
+
+    # Set analysis parameter dictionary
+    char_params = {}
+    char_params['tlm_label'] = config.set_param(user_config, 'YIELD', 'tlm_label', tlm_label, 'str')
+    char_params['freq_min'] = config.set_param(user_config, 'YIELD', 'freq_min', freq_min, 'float')
+    char_params['freq_max'] = config.set_param(user_config, 'YIELD', 'freq_max', freq_max, 'float')
+    char_params['yld_min'] = config.set_param(user_config, 'YIELD', 'yld_min', yld_min, 'float')
+    char_params['yld_max'] = config.set_param(user_config, 'YIELD', 'yld_max', yld_max, 'float')
+    char_params['ref_rng'] = config.set_param(user_config, 'YIELD', 'ref_rng', ref_rng, 'float')
+
+
+    char_params['resolution'] = config.set_param(user_config, 'YIELD', 'resolution', resolution, 'int')
+    char_params['amb_press'] = config.set_param(user_config, 'YIELD', 'amb_press', amb_press, 'float')
+    char_params['amb_temp'] = config.set_param(user_config, 'YIELD', 'amb_temp', amb_temp, 'float')
+    char_params['grnd_burst'] = config.set_param(user_config, 'YIELD', 'grnd_burst', grnd_burst, 'bool')
+    char_params['exp_type'] = config.set_param(user_config, 'YIELD', 'exp_type', exp_type, 'str')
+
+    click.echo('\n' + "characterization parameters:")
+    for key in char_params.keys():
+        if char_params[key] is not None:
+            click.echo("  " + key + ": " + str(char_params[key]))
+    click.echo("")
+

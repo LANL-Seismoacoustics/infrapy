@@ -117,7 +117,6 @@ def _setup_map_ax(ax, latlon_bnds):
     return ax
 
 
-
 def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, show_fig=True):
     '''
     Visualize detections on a Cartopy map
@@ -156,6 +155,83 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
 
     if show_fig:
         plt.show()
+
+
+def plot_ev_wvfrms(ev_data, use_loc=False, loc_index=0, use_gt=False):
+
+    sta_list, sta_indices = np.unique([det['wvfrm_info'][0][0]['trace id'] for det in ev_data['det_info']], return_index=True)
+    sta_cnt = len(sta_list)
+
+    if use_loc:
+        print("Plotting using localization result for ranges...")
+
+        sta_locs = np.array([[ev_data['det_info'][k]['wvfrm_info'][0][0]['latitude'],  ev_data['det_info'][k]['wvfrm_info'][0][0]['longitude']] for k in sta_indices])
+        src_loc = [ev_data['location'][loc_index]['result']['lat_mean'],ev_data['location'][loc_index]['result']['lon_mean']]
+        sta_rngs = sph_proj.inv([src_loc[1]] * sta_cnt, [src_loc[0]] * sta_cnt, sta_locs[:, 1], sta_locs[:, 0], return_back_azimuth=True, radians=False)[2] / 1000.0
+
+        fig = plt.figure(figsize=(8, 12))
+
+        scaling = 25.0
+
+        for j, sta in enumerate(sta_list):
+            for det_k in ev_data['det_info']:
+                if det_k['wvfrm_info'][0][0]['trace id'] == sta:
+                    t0 = np.datetime64(det_k["peak f-stat time"])
+                    l = np.argmax([max(fk_l['f-stat']) for fk_l in det_k['fk']])
+
+                    t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
+                    plt.plot(t_vals, sta_rngs[j] + np.array(det_k["beam"][l]['signal']) * scaling, 'k', linewidth=0.5)
+
+    elif use_gt:
+        print("Plotting using ground truth location for ranges...")
+    
+
+
+    else:
+        print("Plotting event waveforms station-by-station...")
+
+        fig = plt.figure(figsize=(8, 1 + 1.5 * sta_cnt), layout="constrained")
+        spec = fig.add_gridspec(sta_cnt, 1)
+
+        ax0 = fig.add_subplot(spec[sta_cnt - 1])
+
+        ax0.set_xlabel("")
+        ax0.tick_params(axis='x', labelrotation=30)
+        ax0.set_ylabel("Pressure [Pa]")
+
+        t_min = min([np.datetime64(det_k["peak f-stat time"]) + np.timedelta64(int(det_k["beam"][0]["time"][0] * 1000.0), 'ms') for det_k in ev_data['det_info']])
+        t_max = max([np.datetime64(det_k["peak f-stat time"]) + np.timedelta64(int(det_k["beam"][0]["time"][-1] * 1000.0), 'ms') for det_k in ev_data['det_info']])
+        ax0.set_xlim((t_min, t_max))
+
+        for det_k in ev_data['det_info']:
+            if det_k['wvfrm_info'][0][0]['trace id'] == sta_list[0]:
+                t0 = np.datetime64(det_k["peak f-stat time"])
+                l = np.argmax([max(fk_l['f-stat']) for fk_l in det_k['fk']])
+
+                t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
+                ax0.plot(t_vals, det_k["beam"][l]['signal'], 'k', linewidth=0.5)
+
+        ax0.annotate(sta_list[0], (0.975, 0.95), xycoords='axes fraction', horizontalalignment = "right", verticalalignment="top")
+
+        for k in range(1, sta_cnt):
+            ax_k = fig.add_subplot(spec[sta_cnt - (k + 1)], sharex=ax0)
+            ax_k.set_ylabel("Pressure [Pa]")
+            plt.setp(ax_k.get_xticklabels(), visible=False)
+
+            for det_k in ev_data['det_info']:
+                if det_k['wvfrm_info'][0][0]['trace id'] == sta_list[k]:
+                    t0 = np.datetime64(det_k["peak f-stat time"])
+                    l = np.argmax([max(fk_l['f-stat']) for fk_l in det_k['fk']])
+
+                    t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
+                    ax_k.plot(t_vals, det_k["beam"][l]['signal'], 'k', linewidth=0.5)
+
+            ax_k.annotate(sta_list[k], (0.975, 0.95), xycoords='axes fraction', horizontalalignment = "right", verticalalignment="top")
+
+    plt.show()
+
+
+
 
 
 def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0, range_max=None, output_path=None, show_fig=True):

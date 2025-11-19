@@ -164,9 +164,12 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
 @click.option("--event-file", help="Event GZIP JSON file", default=None)
 @click.option("--single-det-index", help="Index of a single detection", default=0)
 @click.option("--plot-all-dets", help="Plot waveforms for all detections", default=False)
+@click.option("--use-loc", help="Use location solution to defined ranges", default=False)
+@click.option("--use-gt", help="Use ground truth to defined ranges", default=False)
+@click.option("--event-loc-index", help="Index of location for event result", default=0)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def wvfrms(det_file, event_file, single_det_index, plot_all_dets, figure_out, show_figure):
+def wvfrms(det_file, event_file, single_det_index, plot_all_dets, use_loc, use_gt, event_loc_index, figure_out, show_figure):
     '''
     Summarize the contents of a JSON detections file
 
@@ -222,12 +225,49 @@ def wvfrms(det_file, event_file, single_det_index, plot_all_dets, figure_out, sh
 
     elif event_file is not None:
 
-        click.echo("Hello")
+        ev_data = json.load(gzip.open(event_file, 'rt'))
 
-        event_data = json.load(gzip.open(event_file, 'rt'))
+        click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+        for det in ev_data['det_info']:
+            click.echo(det['wvfrm_info'][0][0]['trace id'])
+            click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
+            click.echo("  detection time: " + det['peak f-stat time'])
+            click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
+            click.echo("  tface velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
+            click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
+            click.echo("")
 
+        if len(ev_data['location']) > 0:
+            click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+            for loc_k, loc in enumerate(ev_data['location']):
+                click.echo('\n' + "#" * 14)
+                click.echo("## " + "index: " + str(loc_k) + " ##")
+                click.echo("#" * 14)
 
-            
+                click.echo("parameters" + '\n' + "-" * 10)
+                for key in loc['params'].keys():
+                    if loc['params'][key] is not None:
+                        click.echo("    " + key + ": " + str(loc['params'][key]))
+
+                lat = str(np.round(loc['result']['lat_mean'], 3))
+                lon = str(np.round(loc['result']['lon_mean'], 3))
+                NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+                EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+                tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+                click.echo('\n' + "result" + '\n' + "-" * 6)
+                click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+                click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+                click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+        if len(ev_data['ground truth'].keys()) > 0:
+            click.echo('\n' + "=" * 20 + '\n' + "Ground Truth Summary"  + '\n' + "=" * 20)
+            for key in ev_data['ground truth']:
+                click.echo("  " + key + ': ' + str(ev_data['ground truth'][key]))
+            click.echo("")
+        
+        loc_vis.plot_ev_wvfrms(ev_data, use_loc=use_loc, loc_index=event_loc_index, use_gt=use_gt)
+           
 
 @click.command('spectral', short_help="Visualize detection(s) from spectral analysis")
 @click.option("--det-file", help="Detection GZIP file", default=None)
