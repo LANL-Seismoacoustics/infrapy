@@ -131,7 +131,7 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
 
     for det in det_list:
         if det.back_azimuth is not None:
-            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2))
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2), return_back_azimuth=False)
             lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
             lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
 
@@ -143,7 +143,7 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
 
     for det in det_list:
         if det.back_azimuth is not None:
-            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=500, del_s=(range_max * 1.0e3 / 500))
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=500, del_s=(range_max * 1.0e3 / 500), return_back_azimuth=False)
             ax.plot(list(gc_path.lons), list(gc_path.lats), '.', color=back_az_color, markersize=1.5, transform=map_proj)
     ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
 
@@ -271,7 +271,7 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     # Zoomed out map
     _setup_map_ax(ax, [[lat_min, lat_max], [lon_min, lon_max]])
     spatial_pdf = np.array(loc_result['spatial_pdf'])
-    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=5.0, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=7.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
     ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
     for det in det_list:
@@ -293,7 +293,7 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
 
     _setup_map_ax(ax_zm, [[lat_min, lat_max], [lon_min, lon_max]])
 
-    ax_zm.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=5.0, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax_zm.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=7.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
     ax_zm.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
 
     if 'latitude' in grnd_truth_dict.keys():
@@ -359,6 +359,145 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     if show_fig:
         plt.show()
         
+
+
+
+
+def plot_localization(ev_dict, loc_index=None, char_index=None, confidence_level=90.0, range_max=None, output_path=None, show_fig=True):
+
+    det_list = ev_dict['det_info']
+    loc_dict = ev_dict['location'][loc_index]
+
+    loc_params = loc_dict['params']
+    loc_result = loc_dict['result']
+
+    array_lats = np.array([det.latitude for det in det_list])
+    array_lons = np.array([det.longitude for det in det_list])
+
+    conf_x, conf_y = bisl.calc_conf_ellipse([0.0, 0.0],[loc_result['EW_stdev'], loc_result['NS_stdev'], loc_result['covar']], confidence_level)
+    conf_latlon = sph_proj.fwd(np.array([loc_result['lon_mean']] * len(conf_x)), np.array([loc_result['lat_mean']] * len(conf_x)), np.degrees(np.arctan2(conf_x, conf_y)), np.sqrt(conf_x**2 + conf_y**2) * 1e3)
+
+    lat_min, lat_max = min(array_lats), max(array_lats)
+    lon_min, lon_max = min(array_lons), max(array_lons)
+
+    for det in det_list:
+        if det.back_azimuth is not None:
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=2, del_s=(range_max * 1.0e3 / 2), return_back_azimuth=False)
+            lat_min, lat_max = min(min(gc_path.lats), lat_min), max(max(gc_path.lats), lat_max)
+            lon_min, lon_max = min(min(gc_path.lons), lon_min), max(max(gc_path.lons), lon_max)
+
+    lat_min, lat_max = np.floor(lat_min), np.ceil(lat_max)
+    lon_min, lon_max = np.floor(lon_min), np.ceil(lon_max)
+
+    lat_mean = (lat_max + lat_min) / 2.0
+    ratio = (lat_max - lat_min) / (lon_max - lon_min) * np.cos(np.radians(lat_mean))
+
+    fig = plt.figure(figsize=(10, 10 * ratio), layout="constrained")
+    spec = fig.add_gridspec(4, 5)
+
+    ax = fig.add_subplot(spec[:3, :3], projection=map_proj)
+    ax_tm = fig.add_subplot(spec[3:, :3])
+    ax_an = fig.add_subplot(spec[:2, 3:])
+    ax_zm = fig.add_subplot(spec[2:, 3:], projection=map_proj)
+
+    # Zoomed out map
+    _setup_map_ax(ax, [[lat_min, lat_max], [lon_min, lon_max]])
+    spatial_pdf = np.array(loc_result['spatial_pdf'])
+    ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=7.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
+
+    for det in det_list:
+        if det.back_azimuth is not None:
+            gc_path = sph_proj.fwd_intermediate(det.longitude, det.latitude, det.back_azimuth, npts=500, del_s=(range_max * 1.0e3 / 500), return_back_azimuth=False)
+            ax.plot(list(gc_path.lons), list(gc_path.lats), '.', color=back_az_color, markersize=1.5, transform=map_proj)
+    ax.plot(array_lons, array_lats, 'k^', markersize=7.5, transform=map_proj)
+
+    if 'latitude' in grnd_truth_dict.keys():
+        ax.plot([float(grnd_truth_dict['longitude'])], [float(grnd_truth_dict['latitude'])], '*r', markersize=5.0, transform=map_proj)
+
+    # Zoomed in map
+    lat_min, lat_max = np.floor(min(conf_latlon[1])), np.ceil(max(conf_latlon[1]))
+    lon_min, lon_max = np.floor(min(conf_latlon[0])), np.ceil(max(conf_latlon[0]))
+
+    if 'latitude' in grnd_truth_dict.keys():
+        lat_min, lat_max = min(lat_min, float(grnd_truth_dict['latitude'])), max(lat_max, float(grnd_truth_dict['latitude']))
+        lon_min, lon_max = min(lon_min, float(grnd_truth_dict['longitude'])), max(lon_max, float(grnd_truth_dict['longitude']))
+
+    _setup_map_ax(ax_zm, [[lat_min, lat_max], [lon_min, lon_max]])
+
+    ax_zm.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=7.5, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
+    ax_zm.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
+
+    if 'latitude' in grnd_truth_dict.keys():
+        ax_zm.plot([float(grnd_truth_dict['longitude'])], [float(grnd_truth_dict['latitude'])], '*r', markersize=10.0, transform=map_proj)
+
+    # Origin time
+    dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in loc_result['temporal_pdf'][0]])
+    dt_mean = (np.datetime64(loc_result['t_mean']) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
+    tm_mask = np.logical_and(dt_mean - 5.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 5.0 * loc_result['t_stdev'])
+    if confidence_level != 90.0:
+            tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+            tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
+            tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
+    else:
+        tm_min_val = loc_result['t_min']
+        tm_max_val = loc_result['t_max']
+
+    origin_times = np.array([np.datetime64(tn) for tn in loc_result['temporal_pdf'][0]])
+    origin_time_pdf = np.array(loc_result['temporal_pdf'][1])
+
+    conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
+    
+    ax_tm.plot(origin_times[tm_mask], origin_time_pdf[tm_mask], '-k', linewidth=2.5)
+    ax_tm.fill_between(origin_times[conf_mask], 0.0, origin_time_pdf[conf_mask], color=conf_color, alpha=0.5)
+    if 'orig_tm' in grnd_truth_dict.keys():
+        ax_tm.axvline(x = np.datetime64(grnd_truth_dict['orig_tm']), color='red')
+
+    ax_tm.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+    ax_tm.set_ylim(0)
+    ax_tm.yaxis.set_ticklabels([])
+
+    # annotation
+    ax_an.axis('off')   
+    conf_area = np.round(np.pi * loc_result['NS_stdev'] * loc_result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 2)
+
+    def round_str(val):
+        return str(np.round(val, 2))
+
+    if loc_params['atmo_data'] is None: 
+        loc_summary = 'BISL Summary\n' + '-' * 20 + '\n'
+    else:
+        loc_summary = 'TRIBL Summary\n' + '-' * 26 + '\n'
+
+    loc_summary = loc_summary + str(np.round(loc_result['lat_mean'], 4)) + " deg N +/- " + round_str(loc_result["NS_stdev"]) + " km," + '\n'
+    loc_summary = loc_summary + str(np.round(loc_result['lon_mean'], 4)) + " deg E +/- " + round_str(loc_result["EW_stdev"]) + " km," + '\n'
+    loc_summary = loc_summary + loc_result['t_mean'] + " +/- " + round_str(loc_result['t_stdev']) + " s" + '\n\n'
+    loc_summary = loc_summary + str(confidence_level) + "% confidence area: " + str(conf_area) + " sq km" + '\n'
+    loc_summary = loc_summary + str(confidence_level) + "% confidence origin time:" + '\n  ' + tm_min_val + '\n  ' + tm_max_val + '\n'
+
+    if loc_params['atmo_data'] is None: 
+        if loc_params['pgm_file'] is None:
+            loc_summary = loc_summary + '\n' + "Celerity model: " + loc_params['celerity_model']
+        else:
+            loc_summary = loc_summary + '\n' + "PGM file: " + loc_params['pgm_file']
+    else:
+        loc_summary = loc_summary + '\n' "atmo_data: " + loc_params['atmo_data']
+
+    ax_an.text(0.0, 1.0, loc_summary, va="top", fontsize=10, bbox=dict(boxstyle="round, pad=0.2", fc="lightsteelblue", ec="black", lw=1))
+
+    if output_path:
+        plt.savefig(output_path, dpi=300) 
+
+    if show_fig:
+        plt.show()
+        
+
+
+
+
+
+
+
 
 def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, output_path=None, grnd_truth=None, show_fig=True):
     '''
@@ -482,4 +621,5 @@ def plot_spye(spye_result, title=None, output_path=None, show_fig=True):
     
     if show_fig:
         plt.show()
+
 

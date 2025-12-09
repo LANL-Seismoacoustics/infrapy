@@ -13,6 +13,8 @@ import numpy as np
 from multiprocessing import Pool
 from importlib.util import find_spec
 
+import matplotlib.pyplot as plt 
+
 from ..utils import config
 from ..utils import data_io
 
@@ -20,6 +22,8 @@ from ..association import hjl
 
 from ..location import bisl, tribl
 from ..propagation import infrasound
+
+from ..characterization import spye
 
 
 @click.command('build', short_help="Associate detections into events")
@@ -124,21 +128,48 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
                 det_dicts[-1]["fk_params"] = entry["fk_params"]
                 det_dicts[-1]["det_params"] = entry["det_params"]
 
-    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
+    # Check if an event file exists with matching parameter configuration and detections from this list
+    result_check = False
+    if os.path.isfile(event_label + "-0.ev.json.gz"):
+        ev0_data = data_io._load_dets_json(event_label + "-0.ev.json.gz")[0]
 
-    events, event_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
-                                    bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'], rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), 
-                                    resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 
-                                    cluster_det_population=assoc_params['event_population_min'], cluster_array_population=assoc_params['event_station_min'], pool=pl)
+        param_check = False
+        try:
+            np.testing.assert_equal(assoc_params, ev0_data['assoc_params'])
+            param_check = True 
+        except:
+            pass
 
-    click.echo("Identified " + str(len(events)) + " events." + '\n')
-    for j, ev in enumerate(events):
-        dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
-                                             rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
+        dets_check = True
+        for ev_det in ev0_data['det_info']:
+            check = np.any([np.all([ev_det[key] == list_det[key] for key in ['peak f-stat time', 'f-stat', 'back az', 'tr vel']]) for list_det in det_dicts])
+            dets_check = dets_check and check 
 
-        ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
-        with gzip.open(event_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
-            json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+        result_check = param_check and dets_check
+
+        if not result_check:
+            warning_message = "Event result exists, but parameters or detections don't match.  I hope you're meaning to overwrite existing results from another event building run!"
+            warnings.warn((warning_message))
+        
+    if result_check:
+        click.echo("Event results found matching this parameter configuration and detection set.  Skipping event building to avoid overwriting existing results.")
+    else:
+        det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
+
+        events, event_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
+                                        bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'], rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), 
+                                        resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 
+                                        cluster_det_population=assoc_params['event_population_min'], cluster_array_population=assoc_params['event_station_min'], pool=pl)
+
+        click.echo("Identified " + str(len(events)) + " events." + '\n')
+        for j, ev in enumerate(events):
+            dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
+                                                rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
+
+            ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
+            with gzip.open(event_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
 
     if pl is not None:
         pl.terminate()
@@ -409,8 +440,8 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 @click.option("--event-file", help="Event JSON file to be analyzed", default=None)
 @click.option("--config-file", help="Configuration file", default=None)
 
+@click.option("--det-mask", help="Mask to select detections for analysis", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
-
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['YIELD']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['YIELD']['freq_max'] + " [Hz])", default=None, type=float)
@@ -422,13 +453,13 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 @click.option("--amb-temp", help="Ambient temperature (default: " + config.defaults['YIELD']['amb_temp'] + " [K])", default=None, type=float)
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
-def characterize(event_file, config_file, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
+def characterize(event_file, config_file, det_mask, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy localize --event-file GJI_example-ev0
+    \tinfrapy characterize --event-file GJI_example-ev0
     '''
 
     click.echo("")
@@ -452,11 +483,17 @@ def characterize(event_file, config_file, tlm_label, freq_min, freq_max, yld_min
         user_config = None    
 
     event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
+    det_mask = config.set_param(user_config, 'DATA IO', 'det_mask', det_mask, 'string')
+
+    ev_data = data_io._load_dets_json(event_file)[0]
+    if det_mask is None:
+        det_mask = np.ones(len(ev_data['det_info']))
+    else:
+        det_mask = [int(val) for val in det_mask.strip(' ()[]').split(',')]
             
     click.echo('\n' + "Data summary:")
     click.echo("  event_file: " + str(event_file))
-
-    ev_data = data_io._load_dets_json(event_file)[0]
+    click.echo("  det_mask: " + str(det_mask))
 
     # Set analysis parameter dictionary
     char_params = {}
@@ -467,16 +504,87 @@ def characterize(event_file, config_file, tlm_label, freq_min, freq_max, yld_min
     char_params['yld_max'] = config.set_param(user_config, 'YIELD', 'yld_max', yld_max, 'float')
     char_params['ref_rng'] = config.set_param(user_config, 'YIELD', 'ref_rng', ref_rng, 'float')
 
-
     char_params['resolution'] = config.set_param(user_config, 'YIELD', 'resolution', resolution, 'int')
     char_params['amb_press'] = config.set_param(user_config, 'YIELD', 'amb_press', amb_press, 'float')
     char_params['amb_temp'] = config.set_param(user_config, 'YIELD', 'amb_temp', amb_temp, 'float')
     char_params['grnd_burst'] = config.set_param(user_config, 'YIELD', 'grnd_burst', grnd_burst, 'bool')
     char_params['exp_type'] = config.set_param(user_config, 'YIELD', 'exp_type', exp_type, 'str')
 
+    char_params['det_mask'] = str(det_mask)
+
     click.echo('\n' + "characterization parameters:")
     for key in char_params.keys():
         if char_params[key] is not None:
             click.echo("  " + key + ": " + str(char_params[key]))
     click.echo("")
+
+    # ######################### #
+    #      Load Detections      #
+    # ######################### #
+    det_info = [dict for k, dict in enumerate(ev_data['det_info']) if bool(det_mask[k])]
+
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_info]
+    det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info]
+
+    click.echo("=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+    for k, det in enumerate(det_info):
+        freq = det_specs[k][0]
+        mask = (det_specs[k][1] / det_specs[k][2]) > 2.0
+
+        click.echo(det['wvfrm_info'][0][0]['trace id'])
+        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
+        click.echo("  detection time: " + det['peak f-stat time'])
+        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
+        click.echo("  tface velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
+        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
+        click.echo("  high snr band: " + str(np.round(freq[mask][0], 2)) + " - " + str(np.round(freq[mask][-1], 2)) + ' Hz\n')
+
+    # drop residual spectra and scale to dB
+    det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
+
+    # ######################### #
+    #     Load TLoss Models     #
+    # ######################### #
+    click.echo("Loading transmission loss statistics...")
+    tlm_dir = os.path.dirname(tlm_label)
+    tlm_pattern = tlm_pattern = tlm_label.split("/")[-1]
+    tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
+
+    models = [0] * 2
+    models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
+    models[1] = [0] * len(tlm_files)
+    for n in range(len(tlm_files)):
+        models[1][n] = infrasound.TLossModel()
+        models[1][n].load(tlm_dir + "/" + tlm_files[n])
+    
+
+    # ######################## #
+    #         Run Yield        #
+    #    Estimation Methods    #
+    # ######################## #
+
+    # read location results and find lowest uncertainty
+
+    loc_std = [loc['result']['NS_stdev'] * loc['result']['NS_stdev'] for loc in ev_data['location']]
+    loc_lats = [loc['result']['lat_mean'] for loc in ev_data['location']]
+    loc_lons = [loc['result']['lon_mean'] for loc in ev_data['location']]
+
+    loc_index = np.argmin(loc_std)
+    src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
+
+    spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models, 
+                            yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
+                            ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
+                            p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
+
+
+    ev_data['characterization'] = ev_data['characterization'] + [{'params' : char_params, 'result' : spye_result}]
+    with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+        json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+    click.echo('\n' + 'Results Summary (tons eq. TNT):')
+    click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+    click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+    click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+    click.echo('')
 

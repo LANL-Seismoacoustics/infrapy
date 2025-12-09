@@ -68,6 +68,7 @@ detect.add_command(cli_detection.run_spec_detect)
 
 event.add_command(cli_event.build)
 event.add_command(cli_event.localize)
+event.add_command(cli_event.characterize)
 
 # Visualizations
 plot.add_command(cli_visualization.beam_detect)
@@ -75,6 +76,7 @@ plot.add_command(cli_visualization.spec_detect)
 plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
 plot.add_command(cli_visualization.ev_loc)
+plot.add_command(cli_visualization.ev_char)
 
 # Utilities
 utils.add_command(cli_utils.check_db_wvfrm)
@@ -110,6 +112,7 @@ def run_spye():
     '''
     pass 
 
+main.add_command(run_spye)
 run_spye.add_command(cli_loc.regional)
 run_spye.add_command(cli_loc.single_station)
 run_spye.add_command(cli_loc.combine)
