@@ -441,7 +441,9 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 @click.option("--config-file", help="Configuration file", default=None)
 
 @click.option("--det-mask", help="Mask to select detections for analysis", default=None)
+@click.option("--loc-index", help="Localization index to use in analysis", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
+
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['YIELD']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['YIELD']['freq_max'] + " [Hz])", default=None, type=float)
@@ -453,7 +455,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 @click.option("--amb-temp", help="Ambient temperature (default: " + config.defaults['YIELD']['amb_temp'] + " [K])", default=None, type=float)
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
-def characterize(event_file, config_file, det_mask, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
+def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -483,28 +485,43 @@ def characterize(event_file, config_file, det_mask, tlm_label, freq_min, freq_ma
         user_config = None    
 
     event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
-    det_mask = config.set_param(user_config, 'DATA IO', 'det_mask', det_mask, 'string')
+    det_mask = config.set_param(user_config, 'YIELD', 'det_mask', det_mask, 'string')
+    loc_index = config.set_param(user_config, 'YIELD', 'loc_index', loc_index, 'str')
 
     ev_data = data_io._load_dets_json(event_file)[0]
+
     if det_mask is None:
         det_mask = np.ones(len(ev_data['det_info']))
     else:
         det_mask = [int(val) for val in det_mask.strip(' ()[]').split(',')]
             
+    if loc_index is not None:
+        src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
+    else:
+        loc_std = [loc['result']['NS_stdev'] * loc['result']['NS_stdev'] for loc in ev_data['location']]
+        loc_lats = [loc['result']['lat_mean'] for loc in ev_data['location']]
+        loc_lons = [loc['result']['lon_mean'] for loc in ev_data['location']]
+
+        loc_index = np.argmin(loc_std)
+        src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
+
     click.echo('\n' + "Data summary:")
     click.echo("  event_file: " + str(event_file))
-    click.echo("  det_mask: " + str(det_mask))
 
     # Set analysis parameter dictionary
     char_params = {}
+    char_params['det_mask'] = det_mask
+    char_params['loc_index'] = loc_index
+
     char_params['tlm_label'] = config.set_param(user_config, 'YIELD', 'tlm_label', tlm_label, 'str')
+
     char_params['freq_min'] = config.set_param(user_config, 'YIELD', 'freq_min', freq_min, 'float')
     char_params['freq_max'] = config.set_param(user_config, 'YIELD', 'freq_max', freq_max, 'float')
     char_params['yld_min'] = config.set_param(user_config, 'YIELD', 'yld_min', yld_min, 'float')
     char_params['yld_max'] = config.set_param(user_config, 'YIELD', 'yld_max', yld_max, 'float')
-    char_params['ref_rng'] = config.set_param(user_config, 'YIELD', 'ref_rng', ref_rng, 'float')
-
     char_params['resolution'] = config.set_param(user_config, 'YIELD', 'resolution', resolution, 'int')
+
+    char_params['ref_rng'] = config.set_param(user_config, 'YIELD', 'ref_rng', ref_rng, 'float')
     char_params['amb_press'] = config.set_param(user_config, 'YIELD', 'amb_press', amb_press, 'float')
     char_params['amb_temp'] = config.set_param(user_config, 'YIELD', 'amb_temp', amb_temp, 'float')
     char_params['grnd_burst'] = config.set_param(user_config, 'YIELD', 'grnd_burst', grnd_burst, 'bool')
@@ -542,49 +559,61 @@ def characterize(event_file, config_file, det_mask, tlm_label, freq_min, freq_ma
     # drop residual spectra and scale to dB
     det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
 
-    # ######################### #
-    #     Load TLoss Models     #
-    # ######################### #
-    click.echo("Loading transmission loss statistics...")
-    tlm_dir = os.path.dirname(tlm_label)
-    tlm_pattern = tlm_pattern = tlm_label.split("/")[-1]
-    tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
+    # Check if a result for this parameter set already exists.
+    new_param_set = True
+    param_index = 0
+    for k, result_set in enumerate(ev_data['characterization']):        
+        try:
+            new_param_set = False 
+            param_index = k
+            np.testing.assert_equal(char_params, result_set['params'])
+            break
+        except:
+            new_param_set = True
+            pass
 
-    models = [0] * 2
-    models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
-    models[1] = [0] * len(tlm_files)
-    for n in range(len(tlm_files)):
-        models[1][n] = infrasound.TLossModel()
-        models[1][n].load(tlm_dir + "/" + tlm_files[n])
-    
+    if new_param_set:
+        # ######################### #
+        #     Load TLoss Models     #
+        # ######################### #
+        click.echo("Loading transmission loss statistics...")
+        tlm_dir = os.path.dirname(char_params['tlm_label'])
+        tlm_pattern = char_params['tlm_label'].split("/")[-1]
+        tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
 
-    # ######################## #
-    #         Run Yield        #
-    #    Estimation Methods    #
-    # ######################## #
+        models = [0] * 2
+        models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
+        models[1] = [0] * len(tlm_files)
+        for n in range(len(tlm_files)):
+            models[1][n] = infrasound.TLossModel()
+            models[1][n].load(tlm_dir + "/" + tlm_files[n])
+        
 
-    # read location results and find lowest uncertainty
-
-    loc_std = [loc['result']['NS_stdev'] * loc['result']['NS_stdev'] for loc in ev_data['location']]
-    loc_lats = [loc['result']['lat_mean'] for loc in ev_data['location']]
-    loc_lons = [loc['result']['lon_mean'] for loc in ev_data['location']]
-
-    loc_index = np.argmin(loc_std)
-    src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
-
-    spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models, 
+        # ######################## #
+        #         Run Yield        #
+        #    Estimation Methods    #
+        # ######################## #
+        spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models, 
                             yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                             ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
                             p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
 
 
-    ev_data['characterization'] = ev_data['characterization'] + [{'params' : char_params, 'result' : spye_result}]
-    with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
-        json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+        ev_data['characterization'] = ev_data['characterization'] + [{'params' : char_params, 'result' : spye_result}]
+        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
-    click.echo('\n' + 'Results Summary (tons eq. TNT):')
-    click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
-    click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
-    click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
-    click.echo('')
+        click.echo('\n' + 'Results Summary (tons eq. TNT):')
+        click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+        click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+        click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+        click.echo('')
 
+    else:
+        spye_result = ev_data['characterization'][param_index]['result']
+
+        click.echo("Characterization result already exists in this event file for this parameter set:")
+        click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
+        click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
+        click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))
+        click.echo('')

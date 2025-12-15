@@ -534,11 +534,12 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
 @click.option("--event-file", help="Detection path and pattern", default=None)
 @click.option("--loc-index", help="Index of location results", default=None, type=int)
 @click.option("--char-index", help="Index of characterization results", default=None, type=int)
+@click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Generate figure on screeen", default=True)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
-def ev_char(config_file, event_file, loc_index, char_index, confidence_level, figure_out, show_figure, offline_maps_dir):
+def ev_char(config_file, event_file, loc_index, char_index, range_max, confidence_level, figure_out, show_figure, offline_maps_dir):
     '''
     Visualize characterization results for an event
 
@@ -570,7 +571,6 @@ def ev_char(config_file, event_file, loc_index, char_index, confidence_level, fi
 
     event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
     click.echo("Loading event information from event_file: " + str(event_file))
-
     ev_data = data_io._load_dets_json(event_file)[0]
     loc_info = ev_data['location']
 
@@ -619,9 +619,9 @@ def ev_char(config_file, event_file, loc_index, char_index, confidence_level, fi
     click.echo("-" * 27)
     click.echo(bisl.summarize(loc['result'], confidence_level=float(confidence_level)))
 
-    # det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data["det_info"]]
-    # loc_vis.plot_localization(det_list, loc, ev_data["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_figure)
-
+    char = ev_data['characterization'][0]
+    
+    loc_vis.plot_characterization(ev_data["det_info"], loc, char, ev_data["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_figure)
 
 
 

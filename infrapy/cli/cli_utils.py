@@ -713,6 +713,23 @@ def event_summary(event_file):
             click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
             click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
 
+    if len(ev_data['characterization']) > 0:
+        click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+        for char_k, char in enumerate(ev_data['characterization']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(char_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in char['params'].keys():
+                if char['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(char['params'][key]))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+            click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+            click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]))
+
     if len(ev_data['ground truth'].keys()) > 0:
         click.echo('\n' + "=" * 20 + '\n' + "Ground Truth Summary"  + '\n' + "=" * 20)
         for key in ev_data['ground truth']:
