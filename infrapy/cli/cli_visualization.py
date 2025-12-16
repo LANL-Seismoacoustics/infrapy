@@ -535,7 +535,7 @@ def ev_loc(config_file, event_file, event_loc_index, range_max, confidence_level
 @click.option("--loc-index", help="Index of location results", default=None, type=int)
 @click.option("--char-index", help="Index of characterization results", default=None, type=int)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
-@click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)
+@click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Generate figure on screeen", default=True)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
@@ -621,7 +621,7 @@ def ev_char(config_file, event_file, loc_index, char_index, range_max, confidenc
 
     char = ev_data['characterization'][0]
     
-    loc_vis.plot_characterization(ev_data["det_info"], loc, char, ev_data["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_figure)
+    loc_vis.plot_characterization(ev_data["det_info"], loc, char, ev_data["ground truth"], range_max=range_max, confidence_level=float(confidence_level), output_path=figure_out, show_fig=show_figure)
 
 
 

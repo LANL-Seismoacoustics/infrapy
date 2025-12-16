@@ -413,7 +413,9 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     src_loc = [loc_result['lat_mean'], loc_result['lon_mean']]
     sta_rngs = sph_proj.inv([src_loc[1]] * sta_cnt, [src_loc[0]] * sta_cnt, sta_locs[:, 1], sta_locs[:, 0], return_back_azimuth=True, radians=False)[2] / 1000.0
 
-    scaling = 25.0
+    scaling = 15.0
+    use_reduced_time = True 
+    ax_wvfm.set_ylabel("Range [km]")
 
     for j, sta in enumerate(sta_list):
         for det_k in det_info:
@@ -421,10 +423,20 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
                 t0 = np.datetime64(det_k["peak f-stat time"])
                 l = np.argmax([max(fk_l['f-stat']) for fk_l in det_k['fk']])
 
-                t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
+                if use_reduced_time:
+                    t_src = np.datetime64(loc_result['t_mean'])
+                    det_dt = (t0 - t_src).astype('m8[ms]').astype(float) / 1.0e3
+                    t_vals = [det_dt + dt - sta_rngs[j] / 0.34 for dt in det_k["beam"][l]["time"]]
+                    ax_wvfm.set_xlabel("Reduced Time (rel. 340 m/s) [s]")
+
+                else:
+                    t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
+
+                    ax_wvfm.set_xlabel(t0.astype('datetime64[D]'))                    
+                    formatter = mdates.DateFormatter('%H:%M:%S')
+                    ax_wvfm.xaxis.set_major_formatter(formatter)
+
                 ax_wvfm.plot(t_vals, sta_rngs[j] + np.array(det_k["beam"][l]['signal']) * scaling, linewidth=0.5)
-
-
 
     # Zoomed out map
     _setup_map_ax(ax_map1, [[lat_min, lat_max], [lon_min, lon_max]])
@@ -461,18 +473,23 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in loc_result['temporal_pdf'][0]])
     dt_mean = (np.datetime64(loc_result['t_mean']) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
     tm_mask = np.logical_and(dt_mean - 5.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 5.0 * loc_result['t_stdev'])
+
     if confidence_level != 90.0:
-            tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
-            tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
-            tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
+        tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+        tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
+        tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
     else:
         tm_min_val = loc_result['t_min']
         tm_max_val = loc_result['t_max']
 
+    print(tm_min_val)
+    print(tm_max_val)
+    
     origin_times = np.array([np.datetime64(tn) for tn in loc_result['temporal_pdf'][0]])
     origin_time_pdf = np.array(loc_result['temporal_pdf'][1])
 
     conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
+    print(conf_mask)
     
     ax_orig.plot(origin_times[tm_mask], origin_time_pdf[tm_mask], '-k', linewidth=2.5)
     ax_orig.fill_between(origin_times[conf_mask], 0.0, origin_time_pdf[conf_mask], color=conf_color, alpha=0.5)
@@ -514,9 +531,18 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
 
     ax_yield.set_xscale('log')
     ax_yield.plot(np.array(char_result['yld_vals']), char_result['yld_pdf'], '-k')
-    ax_yield.fill_between(np.array(char_result['yld_vals']), char_result['yld_pdf'], where=np.logical_and(char_result['conf_bnds'][0][0] <= np.array(char_result['yld_vals']), np.array(char_result['yld_vals']) <= char_result['conf_bnds'][0][1]), color=back_az_color, alpha=0.25)
-    ax_yield.fill_between(np.array(char_result['yld_vals']), char_result['yld_pdf'], where=np.logical_and(char_result['conf_bnds'][1][0] <= np.array(char_result['yld_vals']), np.array(char_result['yld_vals']) <= char_result['conf_bnds'][1][1]), color=conf_color, alpha=0.25)
 
+    if confidence_level != 90.0:
+        yld_conf = bisl.find_confidence(interp1d(char_result['yld_vals'],  char_result['yld_pdf']), [char_result['yld_vals'][0], char_result['yld_vals'][-1]], confidence_level / 100.0)                  
+        yld_min_val = yld_conf[0][0]
+        yld_max_val = yld_conf[0][1]
+    else:
+        yld_min_val = char_result['conf_bnds'][1][0]
+        yld_max_val = char_result['conf_bnds'][1][1]
+
+    print(yld_min_val, yld_max_val)
+    
+    ax_yield.fill_between(np.array(char_result['yld_vals']), char_result['yld_pdf'], where=np.logical_and(yld_min_val <= np.array(char_result['yld_vals']), np.array(char_result['yld_vals']) <= yld_max_val), color=conf_color, alpha=0.5)
     ax_yield.set_xlabel("Yield (eq. TNT) [tons]")
 
     ax_yield.set_ylabel("Probability")
@@ -525,12 +551,11 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     ax_yield.set_ylim(0)
     ax_yield.yaxis.set_ticklabels([])
 
-
-
     # annotation
     ax_info.axis('off')   
     conf_area = np.round(np.pi * loc_result['NS_stdev'] * loc_result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 2)
-
+    print(conf_area)
+    
     def round_str(val):
         return str(np.round(val, 2))
 
@@ -548,6 +573,8 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
             ev_summary = ev_summary + '\n' + "PGM file: " + loc_params['pgm_file']
     else:
         ev_summary = ev_summary + '\n' "atmo_data: " + loc_params['atmo_data']
+
+    print(ev_summary)
 
     ax_info.text(0.0, 1.0, ev_summary, va="top", fontsize=10, bbox=dict(boxstyle="round, pad=0.2", fc="lightsteelblue", ec="black", lw=1))
 
