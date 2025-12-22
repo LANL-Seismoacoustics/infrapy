@@ -330,7 +330,7 @@ def find_confidence(func, lims, conf_lvl):
         
 
         if conf < conf_lvl:
-            plt.show()
+            # plt.show()
             break
             
     return bnds, conf, thresh

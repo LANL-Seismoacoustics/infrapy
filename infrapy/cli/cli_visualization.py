@@ -615,11 +615,48 @@ def ev_char(config_file, event_file, loc_index, char_index, range_max, confidenc
         click.echo('\n' + "Visualizing index 0 result" + '\n')
         loc = ev_data['location'][0]
 
+
+
+    if char_index is not None:
+        char = ev_data['characterization'][char_index]
+        click.echo("Visualizing with event_loc_index: " + str(loc_index) + '\n')
+        click.echo("characterization parameters:")
+        for key in char['params'].keys():
+            if char['params'][key] is not None:
+                click.echo("  " + key + ": " + str(char['params'][key]))
+        click.echo("")
+
+    else:
+        click.echo("  " + str(len(loc_info)) + " characterization results in file")
+        for char_k, char in enumerate(ev_data['characterization']):
+            click.echo('\n' + "#" * 34)
+            click.echo("##  " + "characterization index: " + str(char_k) + "  ##")
+            click.echo("#" * 34)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in char['params'].keys():
+                if char['params'][key] is not None:
+                    click.echo("  " + key + ": " + str(char['params'][key]))
+
+            lat = str(np.round(loc['result']['lat_mean'], 3))
+            lon = str(np.round(loc['result']['lon_mean'], 3))
+            NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+            EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+            tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("  Latitude: " + lat + " deg +/- " + NS_std + " km.")
+            click.echo("  Longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("  90% confidence area: " + str(np.round(np.pi * loc['result']['NS_stdev'] * loc['result']['EW_stdev'] * chi2(2).ppf(0.9), 1)) + " sqr km" )
+
+            click.echo("  Origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+        click.echo('\n' + "Visualizing index 0 result" + '\n')
+        char = ev_data['characterization'][0]
+
     click.echo("Localization Result Summary")
     click.echo("-" * 27)
     click.echo(bisl.summarize(loc['result'], confidence_level=float(confidence_level)))
-
-    char = ev_data['characterization'][0]
     
     loc_vis.plot_characterization(ev_data["det_info"], loc, char, ev_data["ground truth"], range_max=range_max, confidence_level=float(confidence_level), output_path=figure_out, show_fig=show_figure)
 

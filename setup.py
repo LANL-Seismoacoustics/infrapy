@@ -22,6 +22,7 @@ setup(name = "infrapy",
                   'infrapy.detection',
                   'infrapy.location',
                   'infrapy.performance',
+                  'infrapy.pipeline',
                   'infrapy.propagation',
                   'infrapy.resources',
                   'infrapy.resources.travelTimeTables',
@@ -33,7 +34,8 @@ setup(name = "infrapy",
                   'InfraView.resources.graphics',
                   'InfraView.resources.styles'],
 
-      entry_points = {'console_scripts':['infrapy=infrapy.cli.__main__:main'],
+      entry_points = {'console_scripts':['infrapy=infrapy.cli.__main__:main',
+                                         'infrapype=infrapy.pipeline.__main__:pipeline'],
                       'gui_scripts':['infraview = InfraView.__main__:main']},
 
       
