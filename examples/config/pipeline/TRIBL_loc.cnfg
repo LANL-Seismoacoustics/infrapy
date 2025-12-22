@@ -1,0 +1,27 @@
+# Sample infrapy config file for updated CLI and DB interface
+#
+# From Dannemann et al. ()
+# GT: 7/23/12 @ 11:45 (17:42:01 UTC)
+# NOQ location is 40.65, -112.11 (use that for reference location in InfraView when selecting stations)
+
+
+[LOC]
+atmo_data = g2s//Users/pblom/Research/Coding/Python/infrapy_testing/json_event/g2s/US_RM.summer-00.met
+
+ll_corner = 40.5, -114.0
+ur_corner = 42.0, -112.0
+alt_bnds = 0, 0
+
+latlon_resol = 0.04
+alt_resol = 1.0
+
+tm_min = 2012-07-23T17:38:00
+tm_max = 2012-07-23T17:42:00
+tm_resol = 10.0
+
+rng_snd_spd_stdev = 5.0
+det_tm_stdev = 4.0
+
+local_temp_dir = temp/TRIBL
+
+

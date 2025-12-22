@@ -1,0 +1,20 @@
+# Sample infrapy config file for updated CLI and DB interface
+#
+# From Danneman et al. ()
+# GT: 7/23/12 @ 11:45 (17:42:01 UTC)
+# NOQ location is 40.65, -112.11 (use that for reference location in InfraView when selecting stations)
+
+
+[FK]
+freq_min = 1.0
+freq_max = 4.0
+window_len = 8
+window_step = 2
+
+[FD]
+window_len = 3600
+p_value = 0.01
+min_duration = 20.0
+back_az_width = 10.0
+merge_dets = True
+

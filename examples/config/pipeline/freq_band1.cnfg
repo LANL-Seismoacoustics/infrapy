@@ -1,0 +1,25 @@
+# Sample infrapy config file for updated CLI and DB interface
+#
+# From Dannemann et al. ()
+# GT: 7/23/12 @ 11:45 (17:42:01 UTC)
+# NOQ location is 40.65, -112.11 (use that for reference location in InfraView when selecting stations)
+
+# 
+# Example uses:
+# infrapy detect beam --fdsn iris --network YJ --station 'BRP*' --location '*' --channel 'EDF' --config-file ev_test.cnfg --cpu-cnt 8
+# infrapy detect beam --fdsn iris --network UU --station 'NOQ*' --location '*' --channel 'EDF' --config-file ev_test.cnfg --cpu-cnt 8
+
+[FK]
+freq_min = 0.1
+freq_max = 0.4
+window_len = 80
+window_step = 20
+
+[FD]
+window_len = 3600
+p_value = 0.01
+min_duration = 20.0
+back_az_width = 20.0
+merge_dets = True
+
+

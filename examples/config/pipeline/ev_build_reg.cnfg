@@ -1,0 +1,8 @@
+# InfraPy event building parameter set for near-regional scale event
+
+[ASSOC]
+range_max = 1000.0
+cpu_cnt = 12
+
+
+
