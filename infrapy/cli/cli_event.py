@@ -161,7 +161,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
                                         resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 
                                         cluster_det_population=assoc_params['event_population_min'], cluster_array_population=assoc_params['event_station_min'], pool=pl)
 
-        click.echo("Identified " + str(len(events)) + " events." + '\n')
+        click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
         for j, ev in enumerate(events):
             dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
                                                 rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)

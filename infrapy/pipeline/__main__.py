@@ -11,6 +11,26 @@ import configparser as cnfg
 from obspy import UTCDateTime
 
 
+# Function to find common sub-string in a list of strings
+def comm_str(str_list):
+    if len(str_list) > 1:                    
+        str0 = str_list[0]
+        result = "" 
+
+        for i in range(len(str0)):
+            for j in range(i + 1, len(str0) + 1):
+                k = 1
+                for k in range(1, len(str_list)):
+                    if str0[i:j] not in str_list[k]:
+                        break
+                if (k + 1 == len(str_list) and len(result) < (j - i)):
+                    result = str0[i:j]
+    else:
+        result = str_list[0]
+
+    return result
+
+
 @click.command('infrapype', short_help="Automated infrapy analysis pipeline (prototype)",context_settings={'help_option_names': ['-h', '--help']})
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--out-label", help="Specify a file output prefix (default YR-JDAY)", default=None)
@@ -33,6 +53,8 @@ def pipeline(config_file, out_label, cpu_cnt):
     click.echo("#####################################")
     click.echo("")    
 
+    test_commands = False
+
     if config_file:
         click.echo('\n' + "Loading configuration info from: " + config_file)
         if os.path.isfile(config_file):
@@ -50,16 +72,18 @@ def pipeline(config_file, out_label, cpu_cnt):
     # summarize pipeline parameters
     click.echo('\n' + "pipeline parameters:")
     for key in pipe_params.keys():       
-        if 'cnfgs' in key and not isinstance(pipe_params[key], list):
-            pipe_params[key] = [pipe_params[key]]
-        elif 'trace_ids' in key:
+        if 'trace_ids' in key:
             if '|' in pipe_params[key]:
                 pipe_params[key] = pipe_params[key].replace('\n','').split('|')
             else:
                 pipe_params[key] = pipe_params[key].replace('\n','').split(',')
-        elif "," in pipe_params[key]:
+
+        if "," in pipe_params[key]:
             pipe_params[key] = pipe_params[key].replace('\n','').split(',')
 
+        if 'cnfgs' in key and not isinstance(pipe_params[key], list):
+            pipe_params[key] = [pipe_params[key]]
+        
         if type(pipe_params[key]) is list:
             if len(pipe_params[key]) > 1:
                 click.echo("  " + key + ":")
@@ -77,14 +101,14 @@ def pipeline(config_file, out_label, cpu_cnt):
 
         if not os.path.isdir(dir):
             click.echo("Creating directory: " + dir)
-            os.mkdir(dir)
+            os.makedirs(dir)
 
     # Define temporary directory (if needed)
     with tempfile.TemporaryDirectory(prefix='infraga_') as temp_path:
 
         if 'temp_dir' in pipe_params.keys():
             if not os.path.isdir(pipe_params['temp_dir']):
-                os.mkdir(pipe_params['temp_dir'])               
+                os.makedirs(pipe_params['temp_dir'])               
             temp_path = pipe_params['temp_dir']
 
         if temp_path[-1] != "/":
@@ -94,30 +118,29 @@ def pipeline(config_file, out_label, cpu_cnt):
 
         if 'out_label' not in pipe_params.keys():
             t0 = UTCDateTime(pipe_params['starttime'])
-            click.echo(t0)
-            click.echo(t0.year)
-            click.echo(t0.julday)
+            pipe_params['out_label'] = str(t0.date)
 
-            pipe_params['out_label'] = "test2"
-
-        click.echo("out_label: " + pipe_params['out_label'])
-
-        test_commands = True
-
-        '''
         
         # Run detection, merge, and plot
         for id in pipe_params['trace_ids']:
-            net, sta, loc, cha = id.split(".")               
-            det_label = id.replace("*","")
-            fig_label = det_label.replace(".","_")              
+            if '*' in id:
+                net, sta, loc, cha = id.split(".")               
+                det_label = id.replace("*","")
+            else:
+                net = np.unique([item.split(".")[0] for item in id.replace(" ","").split(",")])
+                sta = np.unique([item.split(".")[1] for item in id.replace(" ","").split(",")])
+                loc = np.unique([item.split(".")[2] for item in id.replace(" ","").split(",")])
+                cha = np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")])
+
+                det_label = comm_str(net) + "." + comm_str(sta) + "." + comm_str(loc) + "." + comm_str(cha)
+
+                net = ",".join(net)
+                sta = ",".join(sta)
+                loc = ",".join(loc)
+                cha = ",".join(cha)
 
             if not os.path.isfile(pipe_params["det_dir"] + det_label + ".dets.json.gz"):
-                for bm_j, bm_config in enumerate(pipe_params["beam_cnfgs"][:1]):
-
-                    # Need to add some parsing logic here for lists or wildcards
-                    net, sta, loc, cha = id.split(".")
-                    output_label = id.replace("*","")
+                for bm_j, bm_config in enumerate(pipe_params["beam_cnfgs"]):
 
                     command = "infrapy detect beam"
                     command = command + " --fdsn " + pipe_params["fdsn"]
@@ -127,17 +150,17 @@ def pipeline(config_file, out_label, cpu_cnt):
                     command = command + " --endtime " + pipe_params["endtime"]
 
                     command = command + " --config-file " + pipe_params["config_dir"] + bm_config
-                    command = command + " --detect-label " + temp_path + output_label + "-" + str(bm_j)
+                    command = command + " --detect-label " + temp_path + det_label + "-" + str(bm_j)
                     click.echo(command)
                     if not test_commands:
                         os.system(command)
-            
 
                 command = "infrapy utils merge-dets --det-files '" + temp_path + det_label + "-*' --merged-label " + pipe_params["det_dir"] + det_label
                 click.echo(command)
                 if not test_commands:
                     os.system(command)
 
+            fig_label = det_label.replace(".","_")              
             if not os.path.isfile(pipe_params["figs_dir"] + fig_label + "_det0.png"):
                 command = "infrapy plot beam --det-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
                 command = command + " --figure-out " + pipe_params["figs_dir"] + fig_label
@@ -147,17 +170,18 @@ def pipeline(config_file, out_label, cpu_cnt):
                     os.system(command)
                 click.echo("")
 
+
         # Build events
         for ev_j, ev_config in enumerate(pipe_params["ev_build_cnfgs"]):
-            if not os.path.isfile(pipe_params["ev_dir"] + out_label + "-" + str(ev_j) + ".ev.json.gz"):
-                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + out_label + "_" + str(ev_j)
+            if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + "_ev-cnfg_" + str(ev_j) + ".ev.json.gz"):
+                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + "_" + str(ev_j)
                 command = command + " --config-file " + pipe_params["config_dir"] + ev_config
 
                 print(command) 
                 if not test_commands:
                     os.system(command)
 
-
+        
         # Cycle through events, plot the projections and compute localizations
         ev_files = [file for file in np.sort(os.listdir(pipe_params["ev_dir"])) if fnmatch.fnmatch(file,"*.ev.json.gz")]
 
@@ -185,7 +209,6 @@ def pipeline(config_file, out_label, cpu_cnt):
                 print(command)
                 if not test_commands:
                     os.system(command)
-        '''
 
 
 if __name__ == '__main__':
