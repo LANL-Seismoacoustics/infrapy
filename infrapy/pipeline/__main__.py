@@ -10,6 +10,7 @@ import configparser as cnfg
 
 from obspy import UTCDateTime
 
+from ..utils import config
 
 # Function to find common sub-string in a list of strings
 def comm_str(str_list):
@@ -33,15 +34,19 @@ def comm_str(str_list):
 
 @click.command('infrapype', short_help="Automated infrapy analysis pipeline (prototype)",context_settings={'help_option_names': ['-h', '--help']})
 @click.option("--config-file", help="Configuration file", default=None)
-@click.option("--out-label", help="Specify a file output prefix (default YR-JDAY)", default=None)
+@click.option("--out-label", help="Specify a file output prefix (default 'YYYY-MM-DD')", default=None)
+@click.option("--starttime", help="Start time of automated analysis", default=None)
+@click.option("--endtime", help="End time of automated analysis", default=None)
+
+
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def pipeline(config_file, out_label, cpu_cnt):
+def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
     '''
     Run infrapy pipeline (infrapype) analysis 
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapype --config-file config/infrapype_HRR5.cnfg
+    \tinfrapype --config-file config/pipeline-HRR5.cnfg
     '''
 
     click.echo("")
@@ -68,6 +73,15 @@ def pipeline(config_file, out_label, cpu_cnt):
         return 0
     
     pipe_params = dict(user_config["PIPELINE"])
+
+    # Read in any command line options
+    pipe_params['out_label'] = config.set_param(user_config, 'PIPELINE', 'out_label', out_label, 'string')
+    pipe_params['starttime'] = config.set_param(user_config, 'PIPELINE', 'starttime', starttime, 'string')
+    pipe_params['endtime'] = config.set_param(user_config, 'PIPELINE', 'endtime', endtime, 'string')
+
+    if pipe_params['out_label'] is None:
+        t0 = UTCDateTime(pipe_params['starttime'])
+        pipe_params['out_label'] = str(t0.datetime).replace(" ","T").replace(":",".")
 
     # summarize pipeline parameters
     click.echo('\n' + "pipeline parameters:")
@@ -113,26 +127,19 @@ def pipeline(config_file, out_label, cpu_cnt):
 
         if temp_path[-1] != "/":
             temp_path = temp_path + "/"
-
-        click.echo("temp_path: " + temp_path)
-
-        if 'out_label' not in pipe_params.keys():
-            t0 = UTCDateTime(pipe_params['starttime'])
-            pipe_params['out_label'] = str(t0.date)
-
         
         # Run detection, merge, and plot
         for id in pipe_params['trace_ids']:
             if '*' in id:
                 net, sta, loc, cha = id.split(".")               
-                det_label = id.replace("*","")
+                det_label = pipe_params['out_label'] + "_" + id.replace("*","")
             else:
                 net = np.unique([item.split(".")[0] for item in id.replace(" ","").split(",")])
                 sta = np.unique([item.split(".")[1] for item in id.replace(" ","").split(",")])
                 loc = np.unique([item.split(".")[2] for item in id.replace(" ","").split(",")])
                 cha = np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")])
 
-                det_label = comm_str(net) + "." + comm_str(sta) + "." + comm_str(loc) + "." + comm_str(cha)
+                det_label = pipe_params['out_label'] + "_" + comm_str(net) + "." + comm_str(sta) + "." + comm_str(loc) + "." + comm_str(cha)
 
                 net = ",".join(net)
                 sta = ",".join(sta)
@@ -171,10 +178,14 @@ def pipeline(config_file, out_label, cpu_cnt):
                 click.echo("")
 
 
-        # Build events
+        # Build and analyze events if config file(s) are specified 
+        if "ev_build_cnfgs" not in pipe_params.keys(): return 
+
         for ev_j, ev_config in enumerate(pipe_params["ev_build_cnfgs"]):
-            if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + "_ev-cnfg_" + str(ev_j) + ".ev.json.gz"):
-                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + "_" + str(ev_j)
+            ev_j_id = "_ev-bld-cnfg-" + str(ev_j) if len(pipe_params['ev_build_cnfgs']) > 1 else "" 
+
+            if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + ".ev.json.gz"):
+                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
                 command = command + " --config-file " + pipe_params["config_dir"] + ev_config
 
                 print(command) 
