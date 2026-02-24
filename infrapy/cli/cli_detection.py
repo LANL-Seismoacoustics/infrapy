@@ -278,7 +278,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, det_params['window_len'], TB_prod, len(stream), det_params['p_value'], min_seq, det_params['back_az_width'], det_params['fixed_thresh'], det_params['thresh_ceil'], True, det_params['merge_dets'])
 
     # save fk results
-    dt = np.array([(tn - np.datetime64(tr.stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+    dt = np.array([(tn - np.datetime64(stream[0].stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
 
     fk_out = {}
     fk_out['time'] = dt
@@ -297,9 +297,9 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         dets_out[-1]['f-stat'] = det_info[5]
 
         # update to use weighted mean of values across detection
-        dt_ref = UTCDateTime(str(det_info[0])) - UTCDateTime(stream[0].stats.starttime)
-
+        dt_ref = UTCDateTime(str(det_info[0])) - min([UTCDateTime(tr.stats.starttime) for tr in stream])
         det_mask = np.logical_and(det_info[1] <= dt - dt_ref, dt - dt_ref <= det_info[2])
+
         dets_out[-1]['back az'] = np.average(beam_peaks[:, 0][det_mask], weights=beam_peaks[:, 2][det_mask])
         dets_out[-1]['tr vel'] = np.average(beam_peaks[:, 1][det_mask], weights=beam_peaks[:, 2][det_mask])
         

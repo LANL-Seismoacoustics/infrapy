@@ -1067,13 +1067,13 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                 thresh_vals[n] = thresh
                 det_mask[n] = fstat_vals[n] >= thresh
 
-
     # Check for detections shorter than the minimum sequence 
     #   length and with too large of back azimuth deviations
     n, dets = 0, []
     while n < (len(det_mask) - min_seq):
         if np.all(det_mask[n:n + min_seq]):
             det_len = min_seq
+
             while np.all(det_mask[n:n + (det_len + 1)]) and n + (det_len + 1) < len(det_mask):
                 det_len += 1
 
@@ -1086,7 +1086,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                     det_time = times[n + pk_index]
                     det_start = (times[n] - times[n + pk_index]).astype('m8[s]').astype(float)
                     det_end = (times[n + det_len - 1] - times[n + pk_index]).astype('m8[s]').astype(float)
-
+                    
                     back_az = back_az_vals[n + pk_index]
                     trc_vel = trc_vel_vals[n + pk_index]
                     fstat = fstat_vals[n + pk_index]

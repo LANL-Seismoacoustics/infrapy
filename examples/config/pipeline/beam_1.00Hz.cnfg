@@ -12,6 +12,6 @@ cpu_cnt = 12
 window_len = 3600
 p_value = 0.01
 min_duration = 20.0
-back_az_width = 10.0
+back_az_width = 20.0
 merge_dets = True
 

@@ -170,12 +170,9 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
             with gzip.open(event_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
-
     if pl is not None:
         pl.terminate()
         pl.close()
-
-
 
 
 @click.command('localize', short_help="Estimate source location and origin time")
@@ -326,7 +323,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         if loc_params[key] is not None:
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
-
 
     # Check if results already exist for this parameter set
     new_param_set = True

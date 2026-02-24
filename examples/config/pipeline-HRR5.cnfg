@@ -11,6 +11,7 @@ config_dir = config/pipeline/
 det_dir = HRR/dets/
 ev_dir = HRR/events/
 figs_dir = HRR/figs/
+temp_Dir = HRR/temp/
 
 # CONFIG FILE INFO
 beam_cnfgs = beam_0.10Hz.cnfg,
@@ -23,8 +24,7 @@ ev_build_cnfgs = ev_build_reg.cnfg
 ev_loc_cnfgs = loc_BISL_reg-hf.cnfg,
                loc_BISL_reg-lf.cnfg
 
-ev_char_cnfgs = ''
-# char_SpYE.cnfg
+# ev_char_cnfgs = char_SpYE.cnfg
 
 # DATA INFO
 fdsn = IRIS

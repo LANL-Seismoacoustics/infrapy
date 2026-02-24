@@ -172,7 +172,7 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
                 command = "infrapy plot beam --det-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
                 command = command + " --figure-out " + pipe_params["figs_dir"] + fig_label
                 command = command + " --plot-all-dets true  --show-figure False"
-                click.echo(command) 
+                click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
                 click.echo("")
@@ -185,39 +185,41 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
             ev_j_id = "_ev-bld-cnfg-" + str(ev_j) if len(pipe_params['ev_build_cnfgs']) > 1 else "" 
 
             if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + ".ev.json.gz"):
-                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
+                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
                 command = command + " --config-file " + pipe_params["config_dir"] + ev_config
 
-                print(command) 
+                click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
-
-        
+       
         # Cycle through events, plot the projections and compute localizations
+        if "ev_loc_cnfgs" not in pipe_params.keys(): return 
         ev_files = [file for file in np.sort(os.listdir(pipe_params["ev_dir"])) if fnmatch.fnmatch(file,"*.ev.json.gz")]
-
         for ev_file in ev_files:
-            command = "infrapy plot map_dets --event-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + pipe_params["figs_dir"] + ev_file.split(".")[0] + ".back-proj.png --show-figure False"
-            print('\n' + command) 
+            fig_path = pipe_params["figs_dir"] + ev_file.split(".ev")[0]
+
+            command = "infrapy plot map_dets --event-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
+            click.echo('\n' + command) 
             if not test_commands:
                 os.system(command)
 
             for k, loc_config in enumerate(pipe_params["ev_loc_cnfgs"]):
                 command = "infrapy event localize --event-file " + pipe_params["ev_dir"] + ev_file + " --config-file " + pipe_params["config_dir"] + loc_config
-                print('\n' + command) 
+                click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
 
                 command = "infrapy plot localize --event-file " + pipe_params["ev_dir"] + ev_file + "  --event-loc-index " + str(k) 
-                command = command + " --figure-out " + pipe_params["figs_dir"] + ev_file.split(".")[0] + ".loc-" + str(k) + ".png --show-figure False"
-                print(command) 
+                command = command + " --figure-out " + fig_path + ".loc-" + str(k) + ".png --show-figure False"
+                click.echo(command) 
                 if not test_commands:
                     os.system(command)
 
+            if "ev_char_cnfgs" not in pipe_params.keys(): return 
             for l, char_config in enumerate(pipe_params["ev_char_cnfgs"]):
                 # run yield estimation
                 command = "infrapy event characterize --event-file HRR/events/HRR5_0-0.ev.json.gz --config-file " + pipe_params["config_dir"] + char_config
-                print(command)
+                click.echo(command)
                 if not test_commands:
                     os.system(command)
 
