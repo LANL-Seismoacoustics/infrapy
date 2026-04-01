@@ -49,7 +49,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event build --detect-files 'data/Blom_etal2020_GJI/*' --event-label GJI_example --cpu-cnt 4
+    \tinfrapy event build --detect-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --event-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
     '''
 
     click.echo("")
@@ -213,7 +213,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy localize --event-file GJI_example-ev0
+    \tinfrapy event localize --event-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
     '''
 
     click.echo("")

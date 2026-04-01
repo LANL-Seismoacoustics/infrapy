@@ -370,8 +370,8 @@ def map_dets(config_file, detect_files, event_file, range_max, figure_out, offli
 
     \b
     Example usage (run from infrapy/examples directory after running run_assoc example):
-    \tinfrapy plot map_dets --detect-files 'data/Blom_etal2020_GJI/*'
-    \tinfrapy plot map_dets --detect-files 'GJI_example-ev0.dets.json'  --range-max 1000
+    \tinfrapy plot map_dets --detect-files 'data/Blom_etal2020_GJI/SY*' --range-max 1500
+    \tinfrapy plot map_dets --event-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz 
 
     '''
 
