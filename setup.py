@@ -42,7 +42,10 @@ setup(name = "infrapy",
       package_dir={'infrapy.propagation' : 'infrapy/propagation'},
       package_data={'infrapy.propagation' : ['compass.png'],
                     'infrapy.resources' : ['default.config'],
-                    'infrapy.resources.travelTimeTables' : ['ak135_1st_arrivals.dat']},
+                    'infrapy.resources.travelTimeTables' : ['ak135_1st_arrivals.dat', 
+                                                            'regional_hf.rcg.json',
+                                                            'regional_lf.rcg.json',
+                                                            'infGEM.rcg.json']},
                     
 
       install_requires = ['numpy',

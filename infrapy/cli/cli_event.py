@@ -191,10 +191,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
 @click.option("--tm-max", help="Maximum origin time", default=None)
 @click.option("--tm-resol", help="Resolution of origin time grid (seconds)", default=None, type=float)
 
-@click.option("--celerity-model", help="Use included celerity model (default: '" + config.defaults['LOC']['celerity_model'], default=None)
-@click.option("--rcel-wts", help="Custom reciprocal celerity model weights", default=None, hidden=True)
-@click.option("--rcel-mns", help="Custom reciprocal celerity model means", default=None, hidden=True)
-@click.option("--rcel-sds", help="Custom reciprocal celerity model standard deviations", default=None, hidden=True)
+@click.option("--celerity-model", help="Celerity model option or file (default: '" + config.defaults['LOC']['celerity_model'], default=None)
 @click.option("--pgm-file", help="Path geometry model (PGM) file (optional)", default=None)
 
 @click.option("--atmo-data", help="Atmosphere data if using TRIBL", default=None)
@@ -207,7 +204,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 
-def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
+def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -261,10 +258,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     loc_params['tm_resol'] = config.set_param(user_config, 'LOC', 'tm_resol', tm_resol, 'float')
 
     loc_params['celerity_model'] = config.set_param(user_config, 'LOC', 'celerity_model', celerity_model, 'str')
-    loc_params['rcel_wts'] = config.set_param(user_config, 'LOC', 'rcel_wts', rcel_wts, 'str')
-    loc_params['rcel_mns'] = config.set_param(user_config, 'LOC', 'rcel_mns', rcel_mns, 'str')
-    loc_params['rcel_sds'] = config.set_param(user_config, 'LOC', 'rcel_sds', rcel_sds, 'str')
-
     loc_params['pgm_file'] = config.set_param(user_config, 'LOC', 'pgm_file', pgm_file, 'str')
 
     loc_params['atmo_data'] = config.set_param(user_config, 'LOC', 'atmo_data', atmo_data, 'str')
@@ -286,7 +279,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 
     if loc_params['ll_corner'] is not None:
         # set grid from corners
-
         loc_params['ll_corner'] = np.array([float(val) for val in loc_params['ll_corner'].replace(" ","").split(",")])
         loc_params['ur_corner'] = np.array([float(val) for val in loc_params['ur_corner'].replace(" ","").split(",")])
         tm_lims = (np.datetime64(loc_params['tm_min']), np.datetime64(loc_params['tm_max']))
@@ -306,13 +298,12 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         tm_lims = None
 
     if loc_params['atmo_data'] is None:               
-        infrasound.set_celerity_model(loc_params["celerity_model"], rcel_wts=loc_params['rcel_wts'], rcel_mns=loc_params['rcel_mns'], rcel_sds=loc_params['rcel_sds'])
-
         if loc_params['pgm_file'] is not None:
             click.echo("  pgm_file: " + str(loc_params['pgm_file']))
             pgm = infrasound.PathGeometryModel()
             pgm.load(loc_params['pgm_file'])
         else:
+            infrasound._load_celerity_model(loc_params["celerity_model"])
             pgm = None
     else:
         loc_params["celerity_model"] = None
@@ -323,6 +314,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         if loc_params[key] is not None:
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
+
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -429,7 +421,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         click.echo("Localization result already exists in this event file for this parameter set.")
         click.echo('\n' + "Localization Summary:")
         click.echo(bisl.summarize(ev_data['location'][param_index]['result']))
-
 
 
 @click.command('characterize', short_help="Characterize the source spectra for an event")
