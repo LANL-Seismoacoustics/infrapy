@@ -21,7 +21,6 @@ from ..utils import config, data_io
 from ..detection import beamforming_new as fkd
 from ..detection import spectral
 
-
 @click.command('beam', short_help="Run beamforming-based detection on an array")
 @click.option("--config-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
@@ -35,7 +34,6 @@ from ..detection import spectral
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-
 @click.option("--detect-label", help="Label for detection results", default=None)
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
@@ -72,8 +70,8 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
-    \tinfrapy detect beam --config-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4 \n
+    \tinfrapy detect beam --config-file config/detection_local.config --cpu-cnt 4 \n
     \tinfrapy detect beam --config-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
@@ -254,30 +252,19 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     for tr in stream:
         click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
-    if latlon is not None:
-        array_loc = latlon[0]
-    else:
-        array_loc = [stream[0].stats.sac['stla'], stream[0].stats.sac['stlo']]
-
     if local_wvfrms is not None and "/" in local_wvfrms:
         output_id = os.path.dirname(local_wvfrms) + "/"
     else:
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
     
-    # Define DOA values
-    back_az_vals = np.arange(fk_params['back_az_min'], fk_params['back_az_max'], fk_params['back_az_step'])
-    trc_vel_vals = np.arange(fk_params['trace_vel_min'], fk_params['trace_vel_max'], fk_params['trace_vel_step'])
-
-    # run fk analysis
-    beam_times, beam_peaks = fkd.run_fk(stream, latlon, [fk_params['freq_min'], fk_params['freq_max']], fk_params['window_len'], fk_params['sub_window_len'], fk_params['window_step'], fk_params['method'], back_az_vals, trc_vel_vals, ns_covar_inv, 1, pl)
+    # Run beamforming (fk)
+    beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl)
 
     print("Running adaptive f-detector..." + '\n')
-    TB_prod = (fk_params['freq_max'] - fk_params['freq_min']) * fk_params['window_len']
-    min_seq = max(3, int(det_params['min_duration'] / fk_params['window_len']))
-    dets, thresh_vals = fkd.run_fd(beam_times, beam_peaks, det_params['window_len'], TB_prod, len(stream), det_params['p_value'], min_seq, det_params['back_az_width'], det_params['fixed_thresh'], det_params['thresh_ceil'], True, det_params['merge_dets'])
+    dets, thresh_vals = fkd.run_afd_dict(beam_times, beam_peaks, fk_params, det_params, len(stream))
 
-    # save fk results
+    # save fk results for the full duration
     dt = np.array([(tn - np.datetime64(stream[0].stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
 
     fk_out = {}
@@ -287,7 +274,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     fk_out['f-stat'] = beam_peaks[:, 2]
     fk_out['thresh'] = thresh_vals 
 
-    # save detection results
+    # save individual detection results
     dets_out = []
     for det_info in dets:
         dets_out = dets_out + [{}]
@@ -567,9 +554,7 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
 
-
-    det_list, spectrogram, history = spectral.cli_sd(stream[0], sd_params["spectral_option"], sd_params["morlet_omega0"], [sd_params["freq_min"], sd_params["freq_max"]], 0.9, sd_params["p_value"], 
-                                            sd_params["window_len"], sd_params["window_step"], sd_params["freq_tm_factor"], sd_params["cluster_eps"], sd_params["cluster_min_samples"], sd_params["cluster_window_len"], pl)
+    det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, pl)
 
     if detect_label is None or detect_label == "auto":
         detect_label = output_id
@@ -855,7 +840,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
+def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
     Run fd analysis to identify detections in beamforming results
 
@@ -888,7 +873,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     # Data IO parameters
     # use local ingestion for initial testing
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
     if local_fk_label == 'auto':
         # try loading waveform data and see if fk_label can be built
@@ -922,12 +907,12 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     if ".fk_results.dat" in local_fk_label:
         local_fk_label = local_fk_label[:-15]
 
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = local_fk_label
+    if detect_label is None or detect_label == "auto":
+        detect_label = local_fk_label
 
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
-    click.echo("  local_detect_label: " + local_detect_label)
+    click.echo("  detect_label: " + detect_label)
 
     # Algorithm parameters
     window_len = config.set_param(user_config, 'FD', 'window_len', window_len, 'float')
@@ -990,11 +975,11 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
     det_list = []
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection", method=method)]
-    print("Writing detections to " + local_detect_label + ".dets.json")
-    data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
+    print("Writing detections to " + detect_label + ".dets.json")
+    data_io.detection_list_to_json(detect_label + ".dets.json", det_list, stream_info)
 
     if return_thresh:
-        np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
+        np.savetxt(detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
 
 @click.command('run_fkd', short_help="Run beamforming and detection methods in sequence", hidden=True)
@@ -1041,7 +1026,7 @@ def run_fd(config_file, local_fk_label, local_detect_label, window_len, p_value,
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
 def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, 
-    local_detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
+    detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration, 
     back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
@@ -1098,7 +1083,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 
     # Result IO
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -1129,7 +1114,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         click.echo("  db_url (and other database info)")
         
     click.echo("  local_fk_label: " + str(local_fk_label))
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
 
     # Algorithm parameters
     freq_min = config.set_param(user_config, 'FK', 'freq_min', freq_min, 'float')
@@ -1291,20 +1276,20 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
 
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = output_id
+    if detect_label is None or detect_label == "auto":
+        detect_label = output_id
 
     if len(det_list) > 0:
-        click.echo("Writing detection results using label: " + local_detect_label)
+        click.echo("Writing detection results using label: " + detect_label)
         stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
                    os.path.commonprefix([tr.stats.station for tr in stream]),
                    os.path.commonprefix([tr.stats.channel for tr in stream])]
-        data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list, stream_info)
+        data_io.detection_list_to_json(detect_label + ".dets.json", det_list, stream_info)
     else:
         click.echo("No detection identified in analysis.")
     
     if return_thresh:
-        np.savetxt(local_detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
+        np.savetxt(detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
     if pl is not None:
         pl.terminate()
@@ -1345,7 +1330,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--cluster-window-len", help="Window length for clustering (default: " + config.defaults['SD']['cluster_window_len'], default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    local_detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
+    detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
     p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, cpu_cnt):
     '''
     Run spectral detection methods on a single channel to identify signals of interest.
@@ -1399,7 +1384,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
     # Result IO
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
 
     click.echo('\n' + "Data parameters:")
@@ -1430,7 +1415,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
         
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
     if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
@@ -1517,12 +1502,12 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
 
     det_list = spectral.cli_sd(stream[0], spectral_option, morlet_omega0, [freq_min, freq_max], 0.8, p_value, window_len, window_step, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, pl)
 
-    if local_detect_label is None or local_detect_label == "auto":
-        local_detect_label = output_id
+    if detect_label is None or detect_label == "auto":
+        detect_label = output_id
 
     if len(det_list) > 0:
-        click.echo("Writing detection results using label: " + local_detect_label)
-        data_io.detection_list_to_json(local_detect_label + ".dets.json", det_list)
+        click.echo("Writing detection results using label: " + detect_label)
+        data_io.detection_list_to_json(detect_label + ".dets.json", det_list)
     else:
         click.echo("No detection identified in analysis.")
 

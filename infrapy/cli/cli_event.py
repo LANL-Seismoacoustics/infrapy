@@ -32,6 +32,7 @@ from ..characterization import spye
 @click.option("--event-label", help="Path for event info output", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
+@click.option("--celerity-model", help="Celerity model option or file (default: '" + config.defaults['ASSOC']['celerity_model'], default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['ASSOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Maximum source-receiver range (default: " + config.defaults['ASSOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['ASSOC']['resolution'] + ")", default=None, type=int)
@@ -42,8 +43,8 @@ from ..characterization import spye
 @click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
 @click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def build(config_file, detect_files, event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
-                cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
+def build(config_file, detect_files, event_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
+                cluster_linkage, cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
@@ -92,10 +93,11 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
     assoc_params['starttime'] = config.set_param(user_config, 'ASSOC', 'starttime', starttime, 'string')
     assoc_params['endtime'] = config.set_param(user_config, 'ASSOC', 'endtime', endtime, 'string')
 
+    assoc_params['celerity_model'] = config.set_param(user_config, 'ASSOC', 'celerity_model', celerity_model, 'string')
+
     assoc_params['back_az_width'] = config.set_param(user_config, 'ASSOC', 'back_az_width', back_az_width, 'float')
     assoc_params['range_max'] = config.set_param(user_config, 'ASSOC', 'range_max', range_max, 'float')
     assoc_params['resolution'] = config.set_param(user_config, 'ASSOC', 'resolution', resolution, 'int')
-
 
     assoc_params['distance_matrix_max'] = config.set_param(user_config, 'ASSOC', 'distance_matrix_max', distance_matrix_max, 'float')
     assoc_params['cluster_linkage'] = config.set_param(user_config, 'ASSOC', 'cluster_linkage', cluster_linkage, 'string')
@@ -118,7 +120,6 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
     click.echo("")
 
     det_data = data_io._load_dets_json(detect_files)
-
     det_dicts = []
     for entry in det_data:
         for det in entry["det_info"]:
@@ -156,6 +157,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, back_az_wi
     else:
         det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
+        infrasound._load_celerity_model(assoc_params['celerity_model'])
         events, event_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
                                         bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'], rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), 
                                         resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 

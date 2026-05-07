@@ -280,3 +280,22 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     det_list = [det2dict(f, t, Sxx_log, cluster_results[k], trace, history[0], history[1], times_history) for k in range(len(cluster_results))]
  
     return det_list, [f[::2], t[::2], Sxx_log[::2,::2]], history
+
+
+##########################
+## Dictionary Extaction ##
+##########################
+def spec_det_dict(trace, sd_params, pl):
+        return cli_sd(trace,
+                      sd_params["spectral_option"],
+                      sd_params["morlet_omega0"],
+                      [sd_params["freq_min"], sd_params["freq_max"]],
+                      0.9,  # hard coded 90% overlap of spectrogram
+                      sd_params["p_value"],
+                      sd_params["window_len"],
+                      sd_params["window_step"],
+                      sd_params["freq_tm_factor"],
+                      sd_params["cluster_eps"],
+                      sd_params["cluster_min_samples"],
+                      sd_params["cluster_window_len"], pl)
+        

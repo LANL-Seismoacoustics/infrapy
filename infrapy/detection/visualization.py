@@ -53,9 +53,9 @@ def plot_fk_json(det_dict, output_path=None, show_fig=True):
         plt.show()
 
 
-def plot_det_json(det_dict, single_det_index, param_set_index=None, output_path=None, show_fig=True):
+def plot_det_json(det_dict, det_index, param_set_index=None, output_path=None, show_fig=True):
 
-    det_info = det_dict["det_info"][single_det_index]
+    det_info = det_dict["det_info"][det_index]
         
     if param_set_index is None:
         param_set_index = np.argmax(np.array([np.max(fk_j["f-stat"]) for fk_j in det_info["fk"]]))
@@ -316,13 +316,13 @@ def plot_sd_json(det_dict, log_scale_freq=False, output_path=None, show_fig=True
         plt.show()
 
 
-def plot_sd_single_json(det_dict, single_det_index, log_scale_freq=False, output_path=None, show_fig=True):
+def plot_sd_single_json(det_dict, det_index, log_scale_freq=False, output_path=None, show_fig=True):
     '''
     Visualize a single spectral detection (sd) result
 
     '''  
 
-    det_info = det_dict["det_info"][single_det_index]
+    det_info = det_dict["det_info"][det_index]
 
     f, t, Sxx_log = det_info['spectrogram']
     try:
@@ -372,9 +372,9 @@ def plot_sd_single_json(det_dict, single_det_index, log_scale_freq=False, output
 
     ax3 = fig.add_subplot(spec[1:, 4:])
     ax3.semilogx(det_info['bg spec'][0], det_info['bg spec'][1], '-k', linewidth=1.0, label="Background")
-    ax3.semilogx(det_info['bg spec'][0], det_info['bg spec'][2], '--k', linewidth=1.0, label="Threshold")
-    ax3.semilogx(det_info['spec'][0], det_info['spec'][1], '-r', linewidth=1.5, label="Detection (mean)")
-    ax3.semilogx(det_info['spec'][0], det_info['spec'][2], '--r', linewidth=1.0, label="Detection (peak)")
+    ax3.semilogx(det_info['spec'][0], det_info['spec'][1], '-r', linewidth=1.5, label="Detection")
+    # ax3.semilogx(det_info['bg spec'][0], det_info['bg spec'][2], '--k', linewidth=1.0, label="Threshold")
+    # ax3.semilogx(det_info['spec'][0], det_info['spec'][2], '--r', linewidth=1.0, label="Detection (peak)")
     ax3.axvspan(f1, f2, color='lightsteelblue', alpha=0.5, edgecolor=None)
     ax3.grid()
     ax3.set_ylim(-90.0)

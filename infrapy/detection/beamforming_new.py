@@ -938,7 +938,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
             Residual across the array once beamed signal is extracted
         """
 
-    print('\n' + "Running fk analysis..." + '\n\t' + "Progress: ", end = '')
+    print('\n' + "Running beamforming analysis..." + '\n\t' + "Progress: ", end = '')
     if method == "time_domain":
         st_copy = stream.copy()
         st_copy.detrend().filter("bandpass", freqmin=freq_band[0], freqmax=freq_band[1])
@@ -1141,4 +1141,50 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
 def detect_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
     return run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq, back_az_lim, fixed_thresh, return_thresh)
+
+
+##########################
+## Dictionary Extaction ##
+##########################
+
+def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
+
+    back_az_vals = np.arange(fk_params['back_az_min'],
+                             fk_params['back_az_max'],
+                             fk_params['back_az_step'])
+
+    trc_vel_vals = np.arange(fk_params['trace_vel_min'],
+                             fk_params['trace_vel_max'],
+                             fk_params['trace_vel_step'])
+
+    return run_fk(stream, latlon,
+                  [fk_params['freq_min'], fk_params['freq_max']],
+                  fk_params['window_len'],
+                  fk_params['sub_window_len'],
+                  fk_params['window_step'],
+                  fk_params['method'],
+                  back_az_vals,
+                  trc_vel_vals,
+                  ns_covar_inv,
+                  1, # hard code picking only 1 peak
+                  pl)
+
+
+def run_afd_dict(beam_times, beam_peaks, fk_params, det_params, chan_cnt):
+
+    TB_prod = (fk_params['freq_max'] - fk_params['freq_min']) * fk_params['window_len']
+    min_seq = max(3, int(det_params['min_duration'] / fk_params['window_len']))
+
+    return run_fd(beam_times, beam_peaks,
+                  det_params['window_len'],
+                  TB_prod,
+                  chan_cnt,
+                  det_params['p_value'],
+                  min_seq,
+                  det_params['back_az_width'],
+                  det_params['fixed_thresh'],
+                  det_params['thresh_ceil'],
+                  True, # hard code returning the detection threshold
+                  det_params['merge_dets'])
+
 

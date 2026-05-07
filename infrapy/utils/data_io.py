@@ -167,13 +167,13 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
     return stream, latlon
 
 
-def set_det_list(local_detect_label, merge=True):
+def set_det_list(detect_label, merge=True):
     """
     Read detections from a file (or files) using the [...].dets.json format used to output detections
 
     Parameters
     ----------
-    local_detect_label: str
+    detect_label: str
         String denoting detection file(s) to be loaded for analysis
     merge: bool
         Control for merging files into a single list (for event ID) or creating nested lists (for multiple localization analyses)
@@ -186,14 +186,14 @@ def set_det_list(local_detect_label, merge=True):
     """
 
 
-    if "*" not in local_detect_label:
-        if "," not in local_detect_label:
-            print("Loading detections from file: " + local_detect_label)
-            if ".dets.json" not in local_detect_label:
-                local_detect_label = local_detect_label + ".dets.json"
-            det_list = json_to_detection_list(local_detect_label)
+    if "*" not in detect_label:
+        if "," not in detect_label:
+            print("Loading detections from file: " + detect_label)
+            if ".dets.json" not in detect_label:
+                detect_label = detect_label + ".dets.json"
+            det_list = json_to_detection_list(detect_label)
         else:
-            for file in local_detect_label.replace(" ","").split(","):
+            for file in detect_label.replace(" ","").split(","):
                 if ".dets.json" not in file:
                     file = file + ".dets.json"
 
@@ -204,19 +204,19 @@ def set_det_list(local_detect_label, merge=True):
                     det_list = det_list + [json_to_detection_list(file)]
 
     else:
-        if len(os.path.dirname(local_detect_label)) > 0:
-            file_path = os.path.dirname(local_detect_label) + "/"
+        if len(os.path.dirname(detect_label)) > 0:
+            file_path = os.path.dirname(detect_label) + "/"
         else:
             file_path = ""
 
         file_list = []
-        if "/" in local_detect_label:
-            dir_files = os.listdir(os.path.dirname(local_detect_label))
+        if "/" in detect_label:
+            dir_files = os.listdir(os.path.dirname(detect_label))
         else:
             dir_files = os.listdir(".")
             
         for file in dir_files:
-            if fnmatch.fnmatch(file, os.path.basename(local_detect_label)):
+            if fnmatch.fnmatch(file, os.path.basename(detect_label)):
                 file_list += [file]
 
         if len(file_list) == 0:
@@ -224,8 +224,8 @@ def set_det_list(local_detect_label, merge=True):
             warnings.warn(msg)
             det_list = None 
         elif len(file_list) == 1:
-            print("Loading detections from file: " + file_path + local_detect_label)
-            det_list = [json_to_detection_list(file_path + local_detect_label)]
+            print("Loading detections from file: " + file_path + detect_label)
+            det_list = [json_to_detection_list(file_path + detect_label)]
         else:
             print("Loading detections from files:")
             det_list = []

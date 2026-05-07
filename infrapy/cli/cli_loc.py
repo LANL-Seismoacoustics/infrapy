@@ -56,7 +56,7 @@ from ..utils import data_io
 @click.option("--det-tm-stdev", help="Detection time uncertainty", default=None)
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, local_temp_dir, cpu_cnt):
+def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, local_temp_dir, cpu_cnt):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
@@ -89,14 +89,14 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
         user_config = None
 
     # Data IO parameters
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
 
     if ".loc.json" in local_loc_label:
        local_loc_label = local_loc_label[:-9] 
             
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
 
     # Algorithm parameters
@@ -188,7 +188,7 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
 
 
     click.echo("")
-    events = data_io.set_det_list(local_detect_label, merge=False)
+    events = data_io.set_det_list(detect_label, merge=False)
 
     if type(events[0]) is list:
         # run localization analysis for multiple detection sets
@@ -316,7 +316,7 @@ def run_loc(config_file, local_detect_label, local_loc_label, back_az_width, ran
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
 
-def regional(config_file, local_wvfrms, fdsn, db_config, local_detect_label, local_loc_label, local_yld_label, tlm_label, 
+def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc_label, local_yld_label, tlm_label, 
                 src_lat, src_lon, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, noise_option, window_buffer,
                 amb_press, amb_temp, grnd_burst, exp_type):
     '''
@@ -355,14 +355,14 @@ def regional(config_file, local_wvfrms, fdsn, db_config, local_detect_label, loc
     db_info = None
     
     # Data IO parameters
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
     src_lat = config.set_param(user_config, 'YIELD', 'src_lat', src_lat, 'float')
     src_lon = config.set_param(user_config, 'YIELD', 'src_lon', src_lon, 'float')
 
     click.echo('\n' + "Data parameters:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
     click.echo("  tlm_label: " + str(tlm_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
     if local_loc_label is not None:
@@ -420,7 +420,7 @@ def regional(config_file, local_wvfrms, fdsn, db_config, local_detect_label, loc
     click.echo("  exp_type: " + str(exp_type))
 
 
-    det_list = data_io.json_to_detection_list(local_detect_label)
+    det_list = data_io.json_to_detection_list(detect_label)
     if local_wvfrms is not None:
         stream, _ = data_io.set_stream(local_wvfrms, None, None)
     else:
@@ -489,7 +489,7 @@ def regional(config_file, local_wvfrms, fdsn, db_config, local_detect_label, loc
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['YIELD']['resolution'] + ")", default=None, type=int)
 @click.option("--noise-option", help="Noise option ('pre', 'post', or 'beam')", default=None)
 @click.option("--window-buffer", help="Window buffer scaling (default: " + config.defaults['YIELD']['window_buffer'] + ")", default=None, type=float)
-def single_station(config_file, local_wvfrms, fdsn, db_config, local_detect_label, local_loc_label, local_pdf_label, tlm_label, 
+def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc_label, local_pdf_label, tlm_label, 
                     det_index, src_lat, src_lon, freq_min, freq_max, ref_rng, resolution, noise_option, window_buffer):
     '''
     Run Spectral Yield Estimation (SpYE) methods to estimate the near-source acoustic spectral amplitude for a single detecting station
@@ -531,14 +531,14 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, local_detect_labe
     db_info = None
     
     # Data IO parameters
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
     src_lat = config.set_param(user_config, 'YIELD', 'src_lat', src_lat, 'float')
     src_lon = config.set_param(user_config, 'YIELD', 'src_lon', src_lon, 'float')
 
     click.echo('\n' + "Data parameters:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
     click.echo("  det_index: " + str(det_index))
     click.echo("  tlm_label: " + str(tlm_label))
     click.echo("  local_pdf_label: " + str(local_pdf_label))
@@ -585,7 +585,7 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, local_detect_labe
     click.echo("  window_buffer: " + str(window_buffer))
 
     # Load detection and stream info
-    det_list = data_io.json_to_detection_list(local_detect_label)
+    det_list = data_io.json_to_detection_list(detect_label)
     if local_wvfrms is not None:
         stream, _ = data_io.set_stream(local_wvfrms, None, None)
     else:

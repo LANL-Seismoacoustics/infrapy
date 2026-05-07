@@ -27,20 +27,20 @@ from ..location import visualization as loc_vis
 from ..location import bisl
 
 
-@click.command('beam', short_help="Plot detections from updated JSON format output")
+@click.command('beam', short_help="Plot detections from beamforming")
 @click.option("--det-file", help="Detection GZIP file", default=None)
-@click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
+@click.option("--det-index", help="Index of a single detection", default=None, type=int)
 @click.option("--plot-all-dets", help="Plot all detections", default=False)
-@click.option("--param-set-index", help="Index of a parameter set (merged dets)", default=None, type=int)
+@click.option("--param-index", help="Index of a parameter set (merged dets)", default=None, type=int)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figure_out, show_figure):
+def beam_detect(det_file, det_index, plot_all_dets, param_index, figure_out, show_figure):
     '''
     Visualize beam detection results
 
     Example usage:
-    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz
-    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 3
+    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
+    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz  --det-index 2
     '''
 
     click.echo("")
@@ -72,9 +72,9 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
         for key in det_data['det_params'][0].keys():
             click.echo("  " + key + ": " + str(det_data['det_params'][0][key]))
 
-        if single_det_index is not None:
-            if single_det_index > len(det_data["det_info"]):
-                click.echo('\n' + "detection index (" + str(single_det_index) + ") doesn't correspond to a detection in this file.")
+        if det_index is not None:
+            if det_index > len(det_data["det_info"]):
+                click.echo('\n' + "detection index (" + str(det_index) + ") doesn't correspond to a detection in this file.")
 
                 click.echo('\n' + "detection summary:")
                 for nd, det in enumerate(det_data['det_info']):
@@ -87,17 +87,17 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
                 print("")
 
             else:
-                det = det_data['det_info'][single_det_index]
+                det = det_data['det_info'][det_index]
 
-                click.echo('\n' + "detection summary (index = " + str(single_det_index) + "):")
+                click.echo('\n' + "detection summary (index = " + str(det_index) + "):")
                 print("   time: " + det['peak f-stat time'])
                 print("   f-stat: " + str(np.round(det['f-stat'], 1)))
                 print("   back azimuth: " + str(np.round(det['back az'], 1)) + " deg (rel. N)")
                 print("   trace velocity: " + str(np.round(det['tr vel'], 1)) + "m/s")
                 print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]) + " sec")
 
-                click.echo('\n' + "Plotting detection index " + str(single_det_index))
-                det_vis.plot_det_json(det_data, single_det_index, output_path=figure_out, show_fig=show_figure)
+                click.echo('\n' + "Plotting detection index " + str(det_index))
+                det_vis.plot_det_json(det_data, det_index, output_path=figure_out, show_fig=show_figure)
 
         else:
             click.echo('\n' + "detection summary:")
@@ -120,8 +120,8 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
                 det_vis.plot_fk_json(det_data, output_path=figure_out, show_fig=show_figure)
 
     else: 
-        if single_det_index is None:
-            single_det_index = 0
+        if det_index is None:
+            det_index = 0
 
         if plot_all_dets:
             click.echo('\n' + "Plotting all detections...")
@@ -143,9 +143,9 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
                 plt.show()
 
         else:
-            click.echo('\n' + "detection summary (index = " + str(single_det_index) + "):")
+            click.echo('\n' + "detection summary (index = " + str(det_index) + "):")
 
-            det = det_data["det_info"][single_det_index]
+            det = det_data["det_info"][det_index]
 
             click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
             click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
@@ -155,26 +155,26 @@ def beam_detect(det_file, single_det_index, plot_all_dets, param_set_index, figu
             click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
             
             click.echo('\n' + "Plotting detection...")
-            det_vis.plot_det_json(det_data, single_det_index, param_set_index, output_path=figure_out, show_fig=show_figure)
+            det_vis.plot_det_json(det_data, det_index, param_index, output_path=figure_out, show_fig=show_figure)
 
 
 
 @click.command('wvfrms', short_help="Plot waveform from detection or event")
 @click.option("--det-file", help="Detection GZIP file", default=None)
 @click.option("--event-file", help="Event GZIP JSON file", default=None)
-@click.option("--single-det-index", help="Index of a single detection", default=0)
+@click.option("--det-index", help="Index of a single detection", default=0)
 @click.option("--plot-all-dets", help="Plot waveforms for all detections", default=False)
 @click.option("--use-loc", help="Use location solution to defined ranges", default=False)
 @click.option("--use-gt", help="Use ground truth to defined ranges", default=False)
 @click.option("--event-loc-index", help="Index of location for event result", default=0)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def wvfrms(det_file, event_file, single_det_index, plot_all_dets, use_loc, use_gt, event_loc_index, figure_out, show_figure):
+def wvfrms(det_file, event_file, det_index, plot_all_dets, use_loc, use_gt, event_loc_index, figure_out, show_figure):
     '''
     Summarize the contents of a JSON detections file
 
     Example usage (requires 'infrapy run_fkd --config-file config/detection_local.config' run first):
-    \tinfrapy plot wvfrms --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --single-det-index 0
+    \tinfrapy plot wvfrms --det-file data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json.gz --det-index 0
     '''
 
     click.echo("")
@@ -212,7 +212,7 @@ def wvfrms(det_file, event_file, single_det_index, plot_all_dets, use_loc, use_g
             if show_figure:
                 plt.show()
         else:
-            det = det_data["det_info"][single_det_index]
+            det = det_data["det_info"][det_index]
 
             click.echo('\nRun index:' + ''.join(['\t\t\t' + str(j) for j in np.arange(len(det["fk_params"]))]))
             click.echo('-' * 32 + '-' * 24 * len(det["fk_params"]) )
@@ -271,18 +271,18 @@ def wvfrms(det_file, event_file, single_det_index, plot_all_dets, use_loc, use_g
 
 @click.command('spectral', short_help="Visualize detection(s) from spectral analysis")
 @click.option("--det-file", help="Detection GZIP file", default=None)
-@click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
+@click.option("--det-index", help="Index of a single detection", default=None, type=int)
 @click.option("--log-scale-freq", help="Visualize frequency in log scaling", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_figure):
+def spec_detect(det_file, log_scale_freq, det_index, figure_out, show_figure):
     '''
     Visualize spectral detection (sd) results
 
     \b
     Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
     \tinfrapy plot spectral --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz'
-    \tinfrapy plot spectral --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz' --single-det-index 3
+    \tinfrapy plot spectral --det-file 'data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz' --det-index 3
 
     '''
 
@@ -310,9 +310,9 @@ def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_fig
     for key in det_data['sd_params'].keys():
         click.echo("  " + key + ": " + str(det_data['sd_params'][key]))
 
-    if single_det_index is not None:
-        if single_det_index > len(det_data["det_info"]):
-            click.echo('\n' + "detection index (" + str(single_det_index) + ") doesn't correspond to a detection in this file.")
+    if det_index is not None:
+        if det_index > len(det_data["det_info"]):
+            click.echo('\n' + "detection index (" + str(det_index) + ") doesn't correspond to a detection in this file.")
 
             click.echo('\n' + "detection summary:")
             for nd, det in enumerate(det_data['det_info']):
@@ -325,19 +325,19 @@ def spec_detect(det_file, log_scale_freq, single_det_index, figure_out, show_fig
             print("")
         else:
 
-            det = det_data['det_info'][single_det_index]
+            det = det_data['det_info'][det_index]
 
             spec_pnts = np.array(det['spec pnts'])
             t1, t2 = min(spec_pnts[:, 0]), max(spec_pnts[:, 0])
             f1, f2 = min(spec_pnts[:, 1]), max(spec_pnts[:, 1])
 
-            print('\n' + "detection summary (index = " + str(single_det_index) + "):")
+            print('\n' + "detection summary (index = " + str(det_index) + "):")
             print("   time: " + det['peak f-stat time'])
             print("   duration [s]: " + str(np.round(t2 - t1, 2)))
             print("   frequency range [Hz]: " + str(f1) + " - " + str(f2))
         
-            click.echo('\n' + "Plotting detection index " + str(single_det_index))
-            det_vis.plot_sd_single_json(det_data, single_det_index, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
+            click.echo('\n' + "Plotting detection index " + str(det_index))
+            det_vis.plot_sd_single_json(det_data, det_index, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
 
     else:
         click.echo('\n' + "detection summary:")
@@ -855,7 +855,7 @@ def fk(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
 def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, station, location, channel, starttime, endtime,
-    local_fk_label, local_detect_label, figure_out, show_figure):
+    local_fk_label, detect_label, figure_out, show_figure):
     '''
     Visualize detection (fd) results
 
@@ -905,7 +905,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 
     # Result IO
     local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -931,7 +931,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         click.echo("  endtime: " + str(endtime))
         
     click.echo("  local_fk_label: " + str(local_fk_label))
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
 
     if figure_out:
         click.echo("  figure_out: " + figure_out)
@@ -963,15 +963,15 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
         
         # Read in detection list
-        if local_detect_label is None or local_detect_label == 'auto':
-            local_detect_label = local_fk_label
+        if detect_label is None or detect_label == 'auto':
+            detect_label = local_fk_label
 
-        det_list = data_io.set_det_list(local_detect_label + ".dets.json", merge=True)
+        det_list = data_io.set_det_list(detect_label + ".dets.json", merge=True)
         if len(det_list) == 0:
             click.echo("Note: no detections found in analysis.")
 
-        if os.path.isfile(local_detect_label + ".fd_thresholds.dat"):
-            temp = np.loadtxt(local_detect_label + ".fd_thresholds.dat")
+        if os.path.isfile(detect_label + ".fd_thresholds.dat"):
+            temp = np.loadtxt(detect_label + ".fd_thresholds.dat")
             thresh_times = np.array([t0 + np.timedelta64(int(dt_n * 1e3), 'ms') for dt_n in dt])
             det_thresh = [thresh_times, temp[:, 1]]
 
@@ -997,7 +997,7 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
             stream.filter("bandpass", freqmin=freq_min, freqmax=freq_max)
 
             # Read in detection list
-            det_list = data_io.set_det_list(local_detect_label, merge=True)
+            det_list = data_io.set_det_list(detect_label, merge=True)
             if len(det_list) == 0:
                 click.echo("Note: no detections found in analysis.")
 
@@ -1026,11 +1026,11 @@ def fd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['SD']['freq_max'] + " [Hz])", default=None, type=float)
 @click.option("--signal-start", help="Start of analysis window", default=None)
 @click.option("--signal-end", help="End of analysis window", default=None)
-@click.option("--single-det-index", help="Index of a single detection", default=None, type=int)
+@click.option("--det-index", help="Index of a single detection", default=None, type=int)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
 def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, station, location, channel, starttime, endtime,
-    local_detect_label, spectral_option, morlet_omega0, freq_min, freq_max, signal_start, signal_end, single_det_index, figure_out, show_figure):
+    detect_label, spectral_option, morlet_omega0, freq_min, freq_max, signal_start, signal_end, det_index, figure_out, show_figure):
     '''
     Visualize spectral detection (sd) results
 
@@ -1038,7 +1038,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     Example usage (run from infrapy/examples directory after running fd examples or fkd examples):
     \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC'
     \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --spectral-option cwt --morlet-omega0 12.0
-    \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --single-det-index 2
+    \tinfrapy plot sd --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --det-index 2
 
     '''
 
@@ -1079,7 +1079,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
 
     # Result IO
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -1104,7 +1104,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         click.echo("  starttime: " + str(starttime))
         click.echo("  endtime: " + str(endtime))
         
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
 
     if figure_out:
         click.echo("  figure_out: " + figure_out)
@@ -1144,10 +1144,10 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
         else:
             stream.trim(t1, t2)
 
-    if local_detect_label is not None:
-        if ".dets.json" not in local_detect_label:
-            local_detect_label = local_detect_label + ".dets.json"
-        det_list = json.load(open(local_detect_label))
+    if detect_label is not None:
+        if ".dets.json" not in detect_label:
+            detect_label = detect_label + ".dets.json"
+        det_list = json.load(open(detect_label))
     else:
         if local_wvfrms is not None and "/" in local_wvfrms:
             output_id = os.path.dirname(local_wvfrms) + "/"
@@ -1162,12 +1162,12 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
     if len(det_list) == 0:
         click.echo("Note: no detections found in analysis.")
 
-    if single_det_index is not None:
-        if single_det_index <= len(det_list) - 1:
-            click.echo("Plotting detection info for detection index (" + str(single_det_index) + ")..." + '\n')
-            det_vis.plot_sd_single(stream[0], det_list[single_det_index], [freq_min, freq_max], output_path=figure_out, show_fig=show_figure)       
+    if det_index is not None:
+        if det_index <= len(det_list) - 1:
+            click.echo("Plotting detection info for detection index (" + str(det_index) + ")..." + '\n')
+            det_vis.plot_sd_single(stream[0], det_list[det_index], [freq_min, freq_max], output_path=figure_out, show_fig=show_figure)       
         else:
-            click.echo("Invalid detection index (" + str(single_det_index) + "), only " + str(len(det_list)) + " detections in file.")
+            click.echo("Invalid detection index (" + str(det_index) + "), only " + str(len(det_list)) + " detections in file.")
     else:
         click.echo("Plotting spectrogram with detection info..." + '\n')
         det_vis.plot_sd(stream[0], det_list, [freq_min, freq_max], spec_option=spectral_option, morlet_omega0=morlet_omega0, output_path=figure_out, show_fig=show_figure)
@@ -1179,7 +1179,7 @@ def sd(config_file, local_wvfrms, local_latlon, fdsn, db_config, network, statio
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
-def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_dir):
+def dets(config_file, range_max, detect_label, figure_out, offline_maps_dir):
     '''
     Visualize detections on a map
 
@@ -1208,10 +1208,10 @@ def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_di
     else:
         user_config = None
 
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
     offline_maps_dir = config.set_param(user_config, 'VISUALIZATION', 'offline_maps_dir', offline_maps_dir, 'string')
@@ -1222,7 +1222,7 @@ def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_di
         click.echo("  offline maps directory: {}".format(offline_maps_dir))
         loc_vis.use_offline_maps(offline_maps_dir)
 
-    det_list = data_io.set_det_list(local_detect_label, merge=True)
+    det_list = data_io.set_det_list(detect_label, merge=True)
 
     click.echo('\n' + "Drawing map with detection back azimuth projections...")
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out)
@@ -1237,7 +1237,7 @@ def dets(config_file, range_max, local_detect_label, figure_out, offline_maps_di
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--grnd-truth", help="Ground truth location", default=None)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
-def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figure_out, grnd_truth, offline_maps_dir):
+def loc(config_file, detect_label, local_loc_label, range_max, zoom, figure_out, grnd_truth, offline_maps_dir):
     '''
     Visualize BISL results in with wide or zoomed format
 
@@ -1264,11 +1264,11 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
     else:
         user_config = None
 
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_event_label: " + str(local_detect_label))
+    click.echo("  local_event_label: " + str(detect_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
 
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
@@ -1286,7 +1286,7 @@ def loc(config_file, local_detect_label, local_loc_label, range_max, zoom, figur
         loc_vis.use_offline_maps(offline_maps_dir)
 
     click.echo('\n' + "Reading in detection list...")
-    det_list = data_io.set_det_list(local_detect_label, merge=False)
+    det_list = data_io.set_det_list(detect_label, merge=False)
     if ".loc.json" in local_loc_label:
         bisl_result = json.load(open(local_loc_label))
     else:
@@ -1332,7 +1332,7 @@ def origin_time(config_file, local_loc_label, figure_out, grnd_truth):
     local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_loc_label, 'string')
 
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_loc_label))
+    click.echo("  detect_label: " + str(local_loc_label))
 
     click.echo('\n' + "Reading in BISL results...")
     if ".loc.json" in local_loc_label:

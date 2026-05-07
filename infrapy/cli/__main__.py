@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
+import os 
 import click
+import webbrowser
+import subprocess
+import shlex
+
+from importlib.util import find_spec 
 
 from . import cli_detection
 from . import cli_event
@@ -57,6 +63,23 @@ def utils():
     pass 
 
 
+#######################
+##    Open Manual    ##
+#######################
+@click.command('doc', short_help="Open infrapy manual")
+def open_doc():
+
+    pkg_loc = find_spec('infrapy').submodule_search_locations[0]
+    filename = pkg_loc + '/docs/build/html/index.html'
+
+    if not os.path.isfile(filename):      
+        print("Compiling manual...")
+        subprocess.run(shlex.split("make html -C " + pkg_loc + "/docs/"), shell=False)
+
+    webbrowser.open('file://' + os.path.realpath(filename), new=2)
+
+
+main.add_command(open_doc)
 main.add_command(detect)
 main.add_command(event)
 main.add_command(plot)
@@ -111,6 +134,7 @@ def run_spye():
     infrapy run_spye - run spectral yield methods
     '''
     pass 
+
 
 main.add_command(run_spye)
 run_spye.add_command(cli_loc.regional)

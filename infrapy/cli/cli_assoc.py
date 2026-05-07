@@ -34,7 +34,7 @@ from ..association import hjl
 @click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
 @click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_assoc(config_file, local_detect_label, local_event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
+def run_assoc(config_file, detect_label, local_event_label, starttime, endtime, back_az_width, range_max, resolution, distance_matrix_max, cluster_linkage, 
                 cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
@@ -66,19 +66,19 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
 
 
     # Data IO parameters
-    local_detect_label = config.set_param(user_config, 'DETECTION IO', 'local_detect_label', local_detect_label, 'string')
+    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
     local_event_label = config.set_param(user_config, 'DETECTION IO', 'local_event_label', local_event_label, 'string')
     starttime = config.set_param(user_config, 'DETECTION IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'DETECTION IO', 'endtime', endtime, 'string')
 
     # Data IO parameters
     click.echo('\n' + "Data summary:")
-    click.echo("  local_detect_label: " + str(local_detect_label))
+    click.echo("  detect_label: " + str(detect_label))
     click.echo("  local_event_label: " + str(local_event_label))
     click.echo("  starttime: " + str(starttime))
     click.echo("  endtime: " + str(endtime))
 
-    if local_detect_label is None or local_event_label is None:
+    if detect_label is None or local_event_label is None:
         msg = "Association analysis requires detection input (--local-detect-label) and output path (--local-event-label)"
         warnings.warn(msg)
         return 0
@@ -110,7 +110,7 @@ def run_assoc(config_file, local_detect_label, local_event_label, starttime, end
         pl = None
     click.echo("")
 
-    det_list = data_io.set_det_list(local_detect_label, merge=True)
+    det_list = data_io.set_det_list(detect_label, merge=True)
     events, event_qls = hjl.id_events(det_list, cluster_threshold, starttime=starttime, endtime=endtime, dist_max=distance_matrix_max, 
                                     bm_width=back_az_width, rng_max=range_max, rad_min=100.0, rad_max=(range_max / 4.0), 
                                     resol=resolution, linkage_method=cluster_linkage, trimming_thresh=trimming_threshold, 
