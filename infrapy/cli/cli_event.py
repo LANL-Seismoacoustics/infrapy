@@ -15,6 +15,9 @@ from importlib.util import find_spec
 
 import matplotlib.pyplot as plt 
 
+if find_spec('stochprop'):
+    import stochprop.propagation as sp_prop
+
 from ..utils import config
 from ..utils import data_io
 
@@ -72,7 +75,6 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
             return 0
     else:
         user_config = None
-
 
     # Data IO parameters
     detect_files = config.set_param(user_config, 'DETECTION IO', 'detect_files', detect_files, 'string')
@@ -301,9 +303,13 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 
     if loc_params['atmo_data'] is None:               
         if loc_params['pgm_file'] is not None:
-            click.echo("  pgm_file: " + str(loc_params['pgm_file']))
-            pgm = infrasound.PathGeometryModel()
-            pgm.load(loc_params['pgm_file'])
+            if find_spec('stochprop'):
+                click.echo("  pgm_file: " + str(loc_params['pgm_file']))
+                pgm = sp_prop.PathGeometryModel()
+                pgm.load(loc_params['pgm_file'])
+            else:
+                click.echo('\n' + "Can't use a PGM without stochprop installed." + '\n' + "Built-in celerity model options are: 'regional_hf', 'regional_lf', and 'infGEM'" + '\n')
+                return 
         else:
             infrasound._load_celerity_model(loc_params["celerity_model"])
             pgm = None
@@ -316,7 +322,6 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         if loc_params[key] is not None:
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
-
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -494,6 +499,10 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
         loc_index = np.argmin(loc_std)
         src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
 
+    if not find_spec('stochprop'):
+        click.echo('\n' + "Can't load transmission loss model (TLM) file without stochprop installed." + '\n')
+        return 
+
     click.echo('\n' + "Data summary:")
     click.echo("  event_file: " + str(event_file))
 
@@ -574,10 +583,9 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
         models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
         models[1] = [0] * len(tlm_files)
         for n in range(len(tlm_files)):
-            models[1][n] = infrasound.TLossModel()
+            models[1][n] = sp_prop.TLossModel()
             models[1][n].load(tlm_dir + "/" + tlm_files[n])
         
-
         # ######################## #
         #         Run Yield        #
         #    Estimation Methods    #
@@ -586,7 +594,6 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
                             yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                             ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
                             p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
-
 
         ev_data['characterization'] = ev_data['characterization'] + [{'params' : char_params, 'result' : spye_result}]
         with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:

@@ -91,9 +91,12 @@ def canonical_tloss(rng, tloss):
     return np.sum(vals)
 
 
+'''
 # ############################ #
 #          Stochastic          #
 #      Propagation Models      #
+#      THIS HAS ALL BEING      #
+#      MOVED TO STOCHPROP      #
 # ############################ #
 def find_azimuth_bin(az, bin_cnt=8):
     reduced = np.degrees(np.arctan2(np.sin(np.radians(az)), np.cos(np.radians(az))))
@@ -843,3 +846,5 @@ class TLossModel(object):
         else:
             plt.pause(5)
             plt.close('all')
+'''
+

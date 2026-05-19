@@ -737,6 +737,64 @@ def event_summary(event_file):
         click.echo("")
 
 
+@click.command('event-loc-reset', short_help="Reset localization in an event file")
+@click.option("--event-file", help="Event GZIP JSON files", default=None)
+def event_loc_reset(event_file):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       Reset Event File      ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    click.echo("Loading information from event_file: " + str(event_file))
+    ev_data = data_io._load_dets_json(event_file)[0]
+
+    if len(ev_data['location']) > 0:
+        click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+        for loc_k, loc in enumerate(ev_data['location']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(loc_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in loc['params'].keys():
+                if loc['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(loc['params'][key]))
+
+            lat = str(np.round(loc['result']['lat_mean'], 3))
+            lon = str(np.round(loc['result']['lon_mean'], 3))
+            NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+            EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+            tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+            click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
+
+    user_opt = input('WARNING!!! This action will remove existing localization result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+    if user_opt in ['y', 'yes']:
+        confirm = True
+    else:
+        confirm = False
+
+    if confirm:
+        click.echo('\nRemoving localization results from event file...')
+        ev_data['location'] = []
+        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+
+
+
 
 ##########################################
 ## THE REST OF THESE ARE DEPRECATED AND ## 
