@@ -106,9 +106,9 @@ utils.add_command(cli_utils.check_db_wvfrm)
 utils.add_command(cli_utils.write_wvfrms)
 utils.add_command(cli_utils.merge_dets)
 utils.add_command(cli_utils.convert_dets)
-utils.add_command(cli_utils.event_gt)
-utils.add_command(cli_utils.event_summary)
-utils.add_command(cli_utils.event_loc_reset)
+utils.add_command(cli_utils.ev_gt)
+utils.add_command(cli_utils.ev_summary)
+utils.add_command(cli_utils.ev_loc_reset)
 
 # moving to stochprop
 utils.add_command(cli_utils.fit_celerity)

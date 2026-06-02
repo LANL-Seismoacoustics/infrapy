@@ -43,7 +43,7 @@ class IPDatabaseConnectWidget(IPBaseWidgets.IPSettingsGroupBox):
         super().__init__(parent=parent, title=title)
 
         self.session = None
-        self.config_filename = ""
+        self.cnfgname = ""
 
         self.buildUI()
         
@@ -105,9 +105,9 @@ class IPDatabaseConnectWidget(IPBaseWidgets.IPSettingsGroupBox):
         self.setLayout(main_layout)
 
         # create dialogs here
-        self.config_file_dialog = QFileDialog()
-        self.config_file_dialog.setFileMode(QFileDialog.ExistingFile)
-        self.config_file_dialog.setNameFilter("(*.ini)")
+        self.cnfg_dialog = QFileDialog()
+        self.cnfg_dialog.setFileMode(QFileDialog.ExistingFile)
+        self.cnfg_dialog.setNameFilter("(*.ini)")
 
         self.table_dialog = IPTableDialog(self)
 
@@ -136,7 +136,7 @@ class IPDatabaseConnectWidget(IPBaseWidgets.IPSettingsGroupBox):
         self.url_edit.setText(s_dict['url'])
 
     def connect_signals_and_slots(self):
-        self.load_config_button.clicked.connect(self.load_config_file)
+        self.load_config_button.clicked.connect(self.load_cnfg)
         # self.save_current_button.clicked.connect(self.save_current_config)
         self.save_default_button.clicked.connect(self.save_default_net_config)
         self.show_tables_button.clicked.connect(self.show_tables_dialog)
@@ -221,13 +221,13 @@ class IPDatabaseConnectWidget(IPBaseWidgets.IPSettingsGroupBox):
 
 
     @pyqtSlot()
-    def load_config_file(self):
+    def load_cnfg(self):
         # This loads configuration settings from the standard infrapy ini files.
-        if self.config_file_dialog.exec_():
-            self.config_filename = self.config_file_dialog.selectedFiles()[0]
+        if self.cnfg_dialog.exec_():
+            self.cnfgname = self.cnfg_dialog.selectedFiles()[0]
             try:
                 config = configparser.ConfigParser()
-                config.read(self.config_filename)
+                config.read(self.cnfgname)
                 self.schema_type_combo.setCurrentText(config['DATABASE']['schema'])
                 self.url_edit.setText(config['DATABASE']['url'])
 

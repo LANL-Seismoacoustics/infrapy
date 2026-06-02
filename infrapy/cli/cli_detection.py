@@ -22,7 +22,7 @@ from ..detection import beamforming_new as fkd
 from ..detection import spectral
 
 @click.command('beam', short_help="Run beamforming-based detection on an array")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -34,7 +34,7 @@ from ..detection import spectral
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-@click.option("--detect-label", help="Label for detection results", default=None)
+@click.option("--det-label", help="Label for detection results", default=None)
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
@@ -61,22 +61,22 @@ from ..detection import spectral
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
+@click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
+def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
+    det_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration, 
-    back_az_width, fixed_thresh, thresh_ceil, merge_dets):
+    back_az_width, fixed_thresh, thresh_ceil, merge_dets, auto_overwrite):
     '''
     Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
     
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4 \n
-    \tinfrapy detect beam --config-file config/detection_local.config --cpu-cnt 4 \n
-    \tinfrapy detect beam --config-file config/detection_fdsn.config --cpu-cnt 4
+    \tinfrapy detect beam --cnfg-file config/detection_local.config --cpu-cnt 4 \n
+    \tinfrapy detect beam --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
     
-
     click.echo("")
     click.echo("######################################")
     click.echo("##                                  ##")
@@ -86,11 +86,11 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     click.echo("######################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -98,26 +98,26 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         user_config = None
 
     # Database configuration and info   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Result IO
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -147,7 +147,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
         
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
 
     # Algorithm parameters
     fk_params = {}
@@ -257,7 +257,17 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     else:
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
-    
+
+    if det_label is None or det_label == "auto":
+        det_label = output_id
+
+    # check if results already exist
+    if not auto_overwrite and os.path.isfile(det_label + ".dets.json.gz"):
+        user_opt = input('\nWARNING!!! Detection results file (' + det_label + '.dets.json.gz) already exists and will be overwritten. \nDo you want to proceed? (y/n): ').lower().strip()
+        if user_opt in ['n', 'no']:
+            click.echo("")
+            return 
+
     # Run beamforming (fk)
     beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl)
 
@@ -344,12 +354,12 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         dets_out[-1]['spec'][0]['signal'] = np.abs(sig_est2)
         dets_out[-1]['spec'][0]['resid'] = np.mean(np.abs(residual2), axis=0)
 
-    if detect_label is None or detect_label == "auto":
-        detect_label = output_id
+    if det_label is None or det_label == "auto":
+        det_label = output_id
 
-    click.echo("Writing beamforming and detection results into " + detect_label + ".dets.json.gz" + '\n')
+    click.echo("Writing beamforming and detection results into " + det_label + ".dets.json.gz" + '\n')
     det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
-    with gzip.open(detect_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+    with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
     if pl is not None:
@@ -358,7 +368,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         
 
 @click.command('spectral', short_help="Run spectral detection on a single channel")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -371,7 +381,7 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 
-@click.option("--detect-label", help="Label for detection results", default=None)
+@click.option("--det-label", help="Label for detection results", default=None)
 
 @click.option("--signal-start", help="Start of analysis window", default=None)
 @click.option("--signal-end", help="End of analysis window", default=None)
@@ -390,19 +400,19 @@ def run_beam_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 @click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'] + ")", default=None, type=int)
 @click.option("--cluster-window-len", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_window_len'] + ")", default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
-    p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, cpu_cnt):
+@click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
+def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
+    det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
+    p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, cpu_cnt, auto_overwrite):
     '''
     Run spectral detection methods on a single channel to identify signals of interest.
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
-    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 5
-    
+    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4   
     
     '''
+    # \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 5
     
 
     click.echo("")
@@ -414,11 +424,11 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
     click.echo("#####################################")
     click.echo("") 
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -426,27 +436,26 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         user_config = None
 
     # Database configuration and info   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Result IO
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
-
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -476,7 +485,7 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
         
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
     if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
@@ -554,20 +563,24 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
         output_id = ""
     output_id = output_id + data_io.stream_label(stream)
 
+    if det_label is None or det_label == "auto":
+        det_label = output_id
+
+    # check if results already exist
+    if not auto_overwrite and os.path.isfile(det_label + ".dets.json.gz"):
+        user_opt = input('\nWARNING!!! Detection results file (' + det_label + '.dets.json.gz) already exists and will be overwritten. \nDo you want to proceed? (y/n): ').lower().strip()
+        if user_opt in ['n', 'no']:
+            click.echo("")
+            return 
+
     det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, pl)
-
-    if detect_label is None or detect_label == "auto":
-        detect_label = output_id
-
     det_output = {'wvfrm_info' : wvfrm_info, 'sd_params' : sd_params, 'spectrogram': spectrogram, 'history': history, 'det_info' : det_list}
-    with gzip.open(detect_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+    with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
     if pl is not None:
         pl.terminate()
         pl.close()
-
-
 
 
 ##########################################
@@ -577,7 +590,7 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 
 
 @click.command('run_fk', short_help="Run beamforming methods on waveform data", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -608,7 +621,7 @@ def run_spec_detect(config_file, local_wvfrms, fdsn, db_config, local_latlon, ne
 @click.option("--sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
+def run_fk(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     local_fk_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, 
     signal_start, signal_end, noise_start, noise_end, window_len, sub_window_len, window_step, cpu_cnt):
     '''
@@ -617,8 +630,8 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy run_fk --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
-    \tinfrapy run_fk --config-file config/detection_local.config --cpu-cnt 4
-    \tinfrapy run_fk --config-file config/detection_fdsn.config --cpu-cnt 4
+    \tinfrapy run_fk --cnfg-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy run_fk --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
 
@@ -634,11 +647,11 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo('\n' + "DEPRACATION WARNING:  THE FK BEAMFORMING METHOD HAD BEEN REPLACED WITH 'infrapy beam_detect'.  IT WILL BE REMOVED IN A FUTURE UPDATE." + '\n')
 
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -646,26 +659,26 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         user_config = None
 
     # Database configuration and info   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Result IO
-    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
+    local_fk_label = config.set_param(user_config, 'DATA IO', 'local_fk_label', local_fk_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -829,9 +842,9 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
 
 
 @click.command('run_fd', short_help="Identify detections from beamforming results", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-fk-label", help="Local beamforming (fk) results label", default=None)
-@click.option("--local-detect-label", help="Label for local detection (fd) results", default=None)
+@click.option("--local-det-label", help="Label for local detection (fd) results", default=None)
 @click.option("--window-len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['FD']['p_value'] + ")", default=None, type=float)
 @click.option("--min-duration", help="Minimum detection duration (default: " + config.defaults['FD']['min_duration'] + " [s])", default=None, type=float)
@@ -840,7 +853,7 @@ def run_fk(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
+def run_fd(cnfg_file, local_fk_label, det_label, window_len, p_value, min_duration, back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
     Run fd analysis to identify detections in beamforming results
 
@@ -859,11 +872,11 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -872,14 +885,14 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
 
     # Data IO parameters
     # use local ingestion for initial testing
-    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+    local_fk_label = config.set_param(user_config, 'DATA IO', 'local_fk_label', local_fk_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
 
     if local_fk_label == 'auto':
         # try loading waveform data and see if fk_label can be built
-        local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', None, 'string')
-        fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', None, 'string')   
-        db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', None, 'string')
+        local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', None, 'string')
+        fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', None, 'string')   
+        db_config = config.set_param(user_config, 'DATA IO', 'db_config', None, 'string')
         if db_config is not None:
             db_info = cnfg.ConfigParser()
             db_info.read(db_config)
@@ -887,13 +900,13 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
             db_info = None 
 
 
-        network = config.set_param(user_config, 'WAVEFORM IO', 'network', None, 'string')
-        station = config.set_param(user_config, 'WAVEFORM IO', 'station', None, 'string')
-        location = config.set_param(user_config, 'WAVEFORM IO', 'location', None, 'string')
-        channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', None, 'string')       
+        network = config.set_param(user_config, 'DATA IO', 'network', None, 'string')
+        station = config.set_param(user_config, 'DATA IO', 'station', None, 'string')
+        location = config.set_param(user_config, 'DATA IO', 'location', None, 'string')
+        channel = config.set_param(user_config, 'DATA IO', 'channel', None, 'string')       
 
-        starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', None, 'string')
-        endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', None, 'string')
+        starttime = config.set_param(user_config, 'DATA IO', 'starttime', None, 'string')
+        endtime = config.set_param(user_config, 'DATA IO', 'endtime', None, 'string')
 
         stream, _ = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
 
@@ -907,12 +920,12 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
     if ".fk_results.dat" in local_fk_label:
         local_fk_label = local_fk_label[:-15]
 
-    if detect_label is None or detect_label == "auto":
-        detect_label = local_fk_label
+    if det_label is None or det_label == "auto":
+        det_label = local_fk_label
 
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk_label: " + local_fk_label)
-    click.echo("  detect_label: " + detect_label)
+    click.echo("  det_label: " + det_label)
 
     # Algorithm parameters
     window_len = config.set_param(user_config, 'FD', 'window_len', window_len, 'float')
@@ -975,15 +988,15 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
     det_list = []
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, [array_lat, array_lon], channel_cnt, [freq_min,freq_max], note="InfraPy CLI detection", method=method)]
-    print("Writing detections to " + detect_label + ".dets.json")
-    data_io.detection_list_to_json(detect_label + ".dets.json", det_list, stream_info)
+    print("Writing detections to " + det_label + ".dets.json")
+    data_io.detection_list_to_json(det_label + ".dets.json", det_list, stream_info)
 
     if return_thresh:
-        np.savetxt(detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
+        np.savetxt(det_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
 
 @click.command('run_fkd', short_help="Run beamforming and detection methods in sequence", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -997,7 +1010,7 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
 @click.option("--endtime", help="End time of analysis window", default=None)
 
 @click.option("--local-fk-label", help="Label for local output of fk results", default=None)
-@click.option("--local-detect-label", help="Label for local detection (fd) results", default=None)
+@click.option("--local-det-label", help="Label for local detection (fd) results", default=None)
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['FK']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['FK']['freq_max'] + " [Hz])", default=None, type=float)
@@ -1025,8 +1038,8 @@ def run_fd(config_file, local_fk_label, detect_label, window_len, p_value, min_d
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
-def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, 
-    detect_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
+def run_fkd(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, 
+    det_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
     signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration, 
     back_az_width, fixed_thresh, thresh_ceil, return_thresh, merge_dets):
     '''
@@ -1035,8 +1048,8 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy run_fkd --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
-    \tinfrapy run_fkd --config-file config/detection_local.config --cpu-cnt 4
-    \tinfrapy run_fkd --config-file config/detection_fdsn.config --cpu-cnt 4
+    \tinfrapy run_fkd --cnfg-file config/detection_local.config --cpu-cnt 4
+    \tinfrapy run_fkd --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
     
@@ -1051,11 +1064,11 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -1063,27 +1076,27 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         user_config = None
 
     # Database configuration and info   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Result IO
-    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+    local_fk_label = config.set_param(user_config, 'DATA IO', 'local_fk_label', local_fk_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -1114,7 +1127,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
         click.echo("  db_url (and other database info)")
         
     click.echo("  local_fk_label: " + str(local_fk_label))
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
 
     # Algorithm parameters
     freq_min = config.set_param(user_config, 'FK', 'freq_min', freq_min, 'float')
@@ -1276,20 +1289,20 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
     for det_info in dets:
         det_list = det_list + [data_io.define_detection(det_info, array_loc, len(stream), [freq_min, freq_max], note="InfraPy CLI detection")]
 
-    if detect_label is None or detect_label == "auto":
-        detect_label = output_id
+    if det_label is None or det_label == "auto":
+        det_label = output_id
 
     if len(det_list) > 0:
-        click.echo("Writing detection results using label: " + detect_label)
+        click.echo("Writing detection results using label: " + det_label)
         stream_info = [os.path.commonprefix([tr.stats.network for tr in stream]),
                    os.path.commonprefix([tr.stats.station for tr in stream]),
                    os.path.commonprefix([tr.stats.channel for tr in stream])]
-        data_io.detection_list_to_json(detect_label + ".dets.json", det_list, stream_info)
+        data_io.detection_list_to_json(det_label + ".dets.json", det_list, stream_info)
     else:
         click.echo("No detection identified in analysis.")
     
     if return_thresh:
-        np.savetxt(detect_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
+        np.savetxt(det_label + ".fd_thresholds.dat", np.vstack((dt, thresh_vals)).T)
 
     if pl is not None:
         pl.terminate()
@@ -1298,7 +1311,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 
 
 @click.command('run_sd', short_help="Run spectral detection on a single channel", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -1311,7 +1324,7 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 
-@click.option("--local-detect-label", help="Label for local detection (sd) results", default=None)
+@click.option("--local-det-label", help="Label for local detection (sd) results", default=None)
 
 @click.option("--signal-start", help="Start of analysis window", default=None)
 @click.option("--signal-end", help="End of analysis window", default=None)
@@ -1329,8 +1342,8 @@ def run_fkd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, s
 @click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'] + ")", default=None, type=int)
 @click.option("--cluster-window-len", help="Window length for clustering (default: " + config.defaults['SD']['cluster_window_len'], default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    detect_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
+def run_sd(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
+    det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
     p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, cpu_cnt):
     '''
     Run spectral detection methods on a single channel to identify signals of interest.
@@ -1353,11 +1366,11 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
     click.echo("#####################################")
     click.echo("") 
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -1365,26 +1378,26 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         user_config = None
 
     # Database configuration and info   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Result IO
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
 
 
     click.echo('\n' + "Data parameters:")
@@ -1415,7 +1428,7 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
         
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
     if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
         pl = Pool(cpu_cnt)
@@ -1502,12 +1515,12 @@ def run_sd(config_file, local_wvfrms, fdsn, db_config, local_latlon, network, st
 
     det_list = spectral.cli_sd(stream[0], spectral_option, morlet_omega0, [freq_min, freq_max], 0.8, p_value, window_len, window_step, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, pl)
 
-    if detect_label is None or detect_label == "auto":
-        detect_label = output_id
+    if det_label is None or det_label == "auto":
+        det_label = output_id
 
     if len(det_list) > 0:
-        click.echo("Writing detection results using label: " + detect_label)
-        data_io.detection_list_to_json(detect_label + ".dets.json", det_list)
+        click.echo("Writing detection results using label: " + det_label)
+        data_io.detection_list_to_json(det_label + ".dets.json", det_list)
     else:
         click.echo("No detection identified in analysis.")
 

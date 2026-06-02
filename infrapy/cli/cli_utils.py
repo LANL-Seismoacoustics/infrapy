@@ -41,7 +41,7 @@ from infrapy.utils import config, data_io
 
 
 @click.command('check-db-wvfrms', short_help="Check waveform pull from database")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 
 @click.option("--network", help="Network code for FDSN and database", default=None)
@@ -51,13 +51,13 @@ from infrapy.utils import config, data_io
 
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-def check_db_wvfrm(config_file, db_config, network, station, location, channel, starttime, endtime):
+def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, starttime, endtime):
     '''
     Test database pull of waveform data for beamforming (fk or fdk) analysis
 
     \b
     Example usage (detection_db.config will be unique to your database pull):
-    \tinfrapy run_fk --config-file config/detection_db.config
+    \tinfrapy run_fk --cnfg-file config/detection_db.config
 
     '''
 
@@ -70,11 +70,11 @@ def check_db_wvfrm(config_file, db_config, network, station, location, channel, 
     click.echo("#################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -82,16 +82,16 @@ def check_db_wvfrm(config_file, db_config, network, station, location, channel, 
         user_config = None
 
     # Database and data IO parameters   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     click.echo('\n' + "Data parameters:")
     click.echo("  db_config: " + str(db_config))
@@ -118,7 +118,7 @@ def check_db_wvfrm(config_file, db_config, network, station, location, channel, 
 
 
 @click.command('write-wvfrms', short_help="Save waveforms from FDSN or database")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 
@@ -129,13 +129,13 @@ def check_db_wvfrm(config_file, db_config, network, station, location, channel, 
 
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-def write_wvfrms(config_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
+def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
     '''
     Write waveform data from an FDSN or database pull into local SAC files
 
     \b
     Example usage (detection_db.config will be unique to your database pull):
-    \tinfrapy utils write-wvfrms --config-file config/detection_fdsn.config
+    \tinfrapy utils write-wvfrms --cnfg-file config/detection_fdsn.config
 
     '''
 
@@ -148,11 +148,11 @@ def write_wvfrms(config_file, db_config, fdsn, network, station, location, chann
     click.echo("#################################")
     click.echo("")   
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -160,19 +160,19 @@ def write_wvfrms(config_file, db_config, fdsn, network, station, location, chann
         user_config = None
 
     # Database and data IO parameters   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     click.echo('\n' + "Data parameters:")
     if fdsn is not None:
@@ -415,7 +415,7 @@ def merge_dets(det_files, merged_label):
 @click.option("--det-file", help="Detection GZIP files", default=None)
 @click.option("--fk-file", help="Detection GZIP files", default=None)
 
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -430,7 +430,7 @@ def merge_dets(det_files, merged_label):
 
 @click.option("--output-label", help="Output detection file label", default=None)
 
-def convert_dets(det_file, fk_file, config_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
+def convert_dets(det_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
 
 
     click.echo("")
@@ -442,31 +442,31 @@ def convert_dets(det_file, fk_file, config_file, local_wvfrms, fdsn, db_config, 
     click.echo("#################################")
     click.echo("")  
 
-    if config_file:
-        if os.path.isfile(config_file):
-            click.echo('\n' + "Loading configuration info from: " + config_file)
+    if cnfg_file:
+        if os.path.isfile(cnfg_file):
+            click.echo('\n' + "Loading configuration info from: " + cnfg_file)
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
     else:
         user_config = None
 
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
     wvfrm_info = data_io.wvfrm_info(stream, latlon)
@@ -602,8 +602,8 @@ def convert_dets(det_file, fk_file, config_file, local_wvfrms, fdsn, db_config, 
 
 
 
-@click.command('event-gt', short_help="Populate event ground truth information")
-@click.option("--event-file", help="Event GZIP JSON files", default=None)
+@click.command('ev-gt', short_help="Populate event ground truth information")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
 
 @click.option("--latitude", help="event latitude (deg)", default=None)
 @click.option("--longitude", help="Event longitude (deg)", default=None)
@@ -613,7 +613,7 @@ def convert_dets(det_file, fk_file, config_file, local_wvfrms, fdsn, db_config, 
 @click.option("--user-entry", help="User specified info (comma sep. key/val)", default=None, multiple=True)
 @click.option("--entry-mode", help="Add values or overwite ('append' or 'replace')", default='append')
 
-def event_gt(event_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode):
+def ev_gt(ev_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode):
 
 
     click.echo("")
@@ -625,8 +625,8 @@ def event_gt(event_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry
     click.echo("#################################")
     click.echo("")  
     
-    click.echo("Loading event information from event_file: " + str(event_file))
-    ev_data = data_io._load_dets_json(event_file)[0]
+    click.echo("Loading event information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
     gt_dict = ev_data['ground truth']
 
     def entry_check(key, val):
@@ -660,13 +660,13 @@ def event_gt(event_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry
     click.echo("")
 
     ev_data['Event GT Summary'] = gt_dict
-    with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+    with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
         json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 
-@click.command('event-summary', short_help="Summarize information in an event file")
-@click.option("--event-file", help="Event GZIP JSON files", default=None)
-def event_summary(event_file):
+@click.command('ev-summary', short_help="Summarize information in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_summary(ev_file):
 
     click.echo("")
     click.echo("#################################")
@@ -677,8 +677,8 @@ def event_summary(event_file):
     click.echo("#################################")
     click.echo("")  
 
-    click.echo("Loading information from event_file: " + str(event_file))
-    ev_data = data_io._load_dets_json(event_file)[0]
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
 
     click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
     for det in ev_data['det_info']:
@@ -737,9 +737,9 @@ def event_summary(event_file):
         click.echo("")
 
 
-@click.command('event-loc-reset', short_help="Reset localization in an event file")
-@click.option("--event-file", help="Event GZIP JSON files", default=None)
-def event_loc_reset(event_file):
+@click.command('ev-loc-reset', short_help="Reset localization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_loc_reset(ev_file):
 
     click.echo("")
     click.echo("#################################")
@@ -750,8 +750,8 @@ def event_loc_reset(event_file):
     click.echo("#################################")
     click.echo("")  
 
-    click.echo("Loading information from event_file: " + str(event_file))
-    ev_data = data_io._load_dets_json(event_file)[0]
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
 
     if len(ev_data['location']) > 0:
         click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
@@ -787,12 +787,8 @@ def event_loc_reset(event_file):
     if confirm:
         click.echo('\nRemoving localization results from event file...')
         ev_data['location'] = []
-        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+        with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
             json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
-
-
-
 
 
 
@@ -980,7 +976,7 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
 
 
 @click.command('best-beam', short_help="Compute the best beam via shift/stack", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-url", help="Database URL for waveform data files", default=None)
@@ -1001,16 +997,16 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
 @click.option("--signal-start", help="Start of signal window", default=None)
 @click.option("--signal-end", help="End of signal window", default=None)
 @click.option("--hold-figure", help="Hold figure open", default=True)
-def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
+def best_beam(cnfg_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
     back_az, trace_vel, signal_start, signal_end, hold_figure):
     '''
     Shift and stack the array data to compute the best beam.  Can be run adaptively using the fk_results.dat file or along a specific beam.
 
     \b
-    Example usage (requires 'infrapy run_fk --config-file config/detection_local.config' run first):
-    \tinfrapy utils best-beam --config-file config/detection_local.config
-    \tinfrapy utils best-beam --config-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
-    \tinfrapy utils best-beam --config-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
+    Example usage (requires 'infrapy run_fk --cnfg-file config/detection_local.config' run first):
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
 
     '''
 
@@ -1023,11 +1019,11 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     click.echo("#################################")
     click.echo("")   
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -1035,27 +1031,27 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    db_url = config.set_param(user_config, 'DATA IO', 'db_url', db_url, 'string')
+    db_site = config.set_param(user_config, 'DATA IO', 'db_site', db_site, 'string')
+    db_wfdisc = config.set_param(user_config, 'DATA IO', 'db_wfdisc', db_wfdisc, 'string')
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Local fk file
-    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
+    local_fk_label = config.set_param(user_config, 'DATA IO', 'local_fk_label', local_fk_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:

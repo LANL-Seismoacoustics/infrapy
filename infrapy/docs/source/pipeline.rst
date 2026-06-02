@@ -16,19 +16,19 @@ Once installed, the steps to run pipeline processing in Infrapy are:
 
 .. code-block:: python
 
-    >> infrapy run_fk --config_file BRPConfig.txt
+    >> infrapy run_fk --cnfg-file BRPConfig.txt
 
 4. Run the FD analysis for a specific array that has already FK results, remember to locate the parameter id from your FK analysis (you can use the script read_pfk.py to find the correct id).
 
 .. code-block:: python
 
-    >> infrapy run_fd --config_file BRPConfig.txt
+    >> infrapy run_fd --cnfg-file BRPConfig.txt
 
   4. Once you have run detection on 2+ array, run association processing:
 
   .. code-block:: python
 
-      >> infrapy run_assoc --config_file BRPConfig.txt
+      >> infrapy run_assoc --cnfg-file BRPConfig.txt
 
 
 

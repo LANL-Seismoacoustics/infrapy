@@ -109,7 +109,7 @@ class IPMapWidget(QWidget):
         #self.fig.canvas.mpl_connect('button_press_event', self.button_press_callback)
         #self.fig.canvas.mpl_connect('button_release_event', self.button_release_callback)
         self.fig.canvas.mpl_connect('motion_notify_event', self.motion_notify_callback)
-        # self.fig.canvas.mpl_connect('scroll_event', self.scroll_event_callback)
+        # self.fig.canvas.mpl_connect('scroll_event', self.scroll_ev_callback)
 
     def compute_figure(self):
 
@@ -385,8 +385,8 @@ class IPMapWidget(QWidget):
         if self.gt_marker is not None: # clear old one, and make new one
             self.gt_marker.remove()
 
-        lat = self.parent.showgroundtruth.event_widget.getLat()
-        lon = self.parent.showgroundtruth.event_widget.getLon()
+        lat = self.parent.showgroundtruth.ev_widget.getLat()
+        lon = self.parent.showgroundtruth.ev_widget.getLon()
         
         current_extent = self.axes.get_extent() # plotting the event should not change the extent
         self.gt_marker, = self.axes.plot(lon, lat, 'X', color='red', transform=self.transform, markersize=16, gid='ground_truth_marker')
@@ -394,7 +394,7 @@ class IPMapWidget(QWidget):
         self.set_map_extent(current_extent)
         self.extentWidget.set_extent_spin_values(current_extent)     # update extentWidget
 
-        self.show_hide_ground_truth(self.parent.showgroundtruth.event_widget.showGT_cb.checkState())
+        self.show_hide_ground_truth(self.parent.showgroundtruth.ev_widget.showGT_cb.checkState())
 
     @pyqtSlot(int)
     def show_hide_ground_truth(self, show):
@@ -515,9 +515,9 @@ class IPMapWidget(QWidget):
             lats.append(detection.latitude)
 
 
-        if self.parent.showgroundtruth.event_widget.showGT_cb.isChecked():
-            lons.append(self.parent.showgroundtruth.event_widget.event_lon_edit.value())
-            lats.append(self.parent.showgroundtruth.event_widget.event_lat_edit.value())
+        if self.parent.showgroundtruth.ev_widget.showGT_cb.isChecked():
+            lons.append(self.parent.showgroundtruth.ev_widget.ev_lon_edit.value())
+            lats.append(self.parent.showgroundtruth.ev_widget.ev_lat_edit.value())
 
         maxLat = max(lats + self.end_lats)
         minLat = min(lats + self.end_lats)
@@ -601,7 +601,7 @@ class IPMapWidget(QWidget):
 '''
     # Matplotlib callbacks go here_____________________
 
-    def scroll_event_callback(self, event):
+    def scroll_ev_callback(self, event):
         # ZOOOOOOOOM
         extent = self.axes.get_extent()
 

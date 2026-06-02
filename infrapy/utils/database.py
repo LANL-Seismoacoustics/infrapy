@@ -266,7 +266,7 @@ def eventID_query(session, eventID, db_tables, asquery):
         return None
     
 
-def event_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
+def ev_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
 
     if 'Origin' not in db_tables or 'Event' not in db_tables:
         raise KeyError

@@ -68,13 +68,13 @@ class IPNewDetectionsDialog(QDialog):
         self.lineEdit_note = QLineEdit()
         self.lineEdit_note.textChanged.connect(self.update_notes)
 
-        detection_event_label = QLabel("Event: (optional)")
+        detection_ev_label = QLabel("Event: (optional)")
         self.lineEdit_event = QLineEdit()
         self.lineEdit_event.textChanged.connect(self.update_events)
 
         formBox = QFormLayout()
         formBox.addRow(detection_name_label, self.lineEdit_detection_name)
-        formBox.addRow(detection_event_label, self.lineEdit_event)
+        formBox.addRow(detection_ev_label, self.lineEdit_event)
         formBox.addRow(detection_note_label, self.lineEdit_note)
 
         self.keep_checkbox = QCheckBox('Keep')
@@ -253,12 +253,12 @@ class IPNewDetectionDialog(QDialog):
         pick_note_label = QLabel("Note (optional): ")
         self.lineEdit_note = QLineEdit()
 
-        pick_event_label = QLabel("Event: (optional)")
+        pick_ev_label = QLabel("Event: (optional)")
         self.lineEdit_event = QLineEdit()
 
         formBox = QFormLayout()
         formBox.addRow(pick_name_label, self.lineEdit_pick_name)
-        formBox.addRow(pick_event_label, self.lineEdit_event)
+        formBox.addRow(pick_ev_label, self.lineEdit_event)
         formBox.addRow(pick_note_label, self.lineEdit_note)
 
         # OK and Cancel buttons

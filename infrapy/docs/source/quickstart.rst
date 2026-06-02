@@ -13,7 +13,7 @@ Most of InfraPy's analysis methods are accessible through a command line interfa
 ------------------
 Detection Analyses
 ------------------
-- Infrasonic signatures can be detected using the InfraPy algorithm on single channels or using coherence analysis across a spatially distributed set of sensors.  Detection methods are access usedin :code:`infrapy detect` and output into detection JSON files (e.g., 'ANALYSIS_ID.det.json.gz').
+- Infrasonic signatures can be detected using the InfraPy algorithm on single channels or using coherence analysis across a spatially distributed set of sensors.  Detection methods are access usedin :code:`infrapy detect` and output into detection JSON files (e.g., '[ANALYSIS_ID].det.json.gz').
 
 - Beamforming methods in InfraPy can be run via the :code:`infrapy detect beam` CLI option.  For a local data source such as the included SAC files in the data directory, this is simply,
 
@@ -36,7 +36,7 @@ Detection Analyses
         Data parameters:
           local_wvfrms: data/YJ.BRP*.SAC
           local_latlon: None
-          detect_label: None
+          det_label: None
 
         fk (beam) parameters:
           freq_min: 0.5
@@ -74,7 +74,7 @@ Detection Analyses
         Writing beamforming and detection results into data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
 
 
-- Once completed, this analysis produces an output file containing a summary of the analysis and any identified detection, :code:`data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz`. The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--detect-label` parameter.  Uncompressing and interrogating this file, one can find the waveform info and parameter information, computed fk (i.e., direction-of-arrival and Fisher statistic values) for the entire analysis duration, as well as information for individual detections.
+- Once completed, this analysis produces an output file containing a summary of the analysis and any identified detection, :code:`data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz`. The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--det-label` parameter.  Uncompressing and interrogating this file, one can find the waveform info and parameter information, computed fk (i.e., direction-of-arrival and Fisher statistic values) for the entire analysis duration, as well as information for individual detections.
 
     .. code-block:: none 
 
@@ -166,41 +166,64 @@ Detection Analyses
 
     This plot summarizes the waveform data used as well as the detection time, f-stat, direction of arrival, duration, and frequency band used in analysis.
 
-- In many cases the frequency band for a signal of interest or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorithm as summarized in the :code:`--help` (:code:`-h`) information.  For example, the analysis of data from BRP can be completed using a modified frequency band via:
+- In many cases the frequency band for a signal of interest or the window length appropriate for a given frequency band needs to be modified.  From the command line, this can be done by specifying a number of options in the algorithm as summarized in the :code:`--help` (:code:`-h`) information.  For example, the analysis of data from BRP can be completed using a higher frequency band and shortened analysis windows via:
 
     .. code-block:: bash
 
-        infrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4 --freq-min 1.0 --freq-max 8.0
+        infrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --freq-min 1.0 --freq-max 8.0 --fk-window-len 4.0 --fk-window-step 2.0 --cpu-cnt 4
+
+    If you've run the above after already running the previous example, you'll get a response that looks like this:
+
+    .. code-block:: bash
+
+        ######################################
+        ##                                  ##
+        ##              InfraPy             ##
+        ##  Beamforming Detection Analyses  ##
+        ##                                  ##
+        ######################################
+
+
+        Data parameters:
+          local_wvfrms: data/YJ.BRP*.SAC
+          local_latlon: None
+          det_label: None
+
+        ...
+        
+        WARNING!!! Detection results file (data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz) already exists and will be overwritten. 
+        Do you want to proceed? (y/n): 
+
+    The intended output :code:`[...].dets.json.gz`` file for this analysis already exists from a previous run, and so a catch is included to warn and possibly prevent this overwriting.  Though not generally recommended, a CLI flag is available to automatically overwrite any existing results file (:code:`--auto-overwrite True`).
 
 - In the case that multiple analysis parameters are changed from their default values, a configuration file is useful to simplify running analysis and keep a record of what was used for future review of analysis.  Within the :code:`examples/config` directory are several example configuration files.  The :code:`detection_local.config` file has a configuration to run detection (fk and fd) analysis on local waveform data:
 
     .. code-block:: none
 
-        [WAVEFORM IO]
+        [DATA IO]
         local_wvfrms = data/YJ.BRP*.SAC
-
-        [DETECTION IO]
-        det_label = auto
+        det_label = BRP_hf
 
         [FK]
-        freq_min = 1.0
-        freq_max = 5.0
-        window_len = 10.0
-        window_step = 5.0
+        freq_min = 2.0
+        freq_max = 8.0
+        window_len = 4.0
+        window_step = 2.0
 
         [FD]
-        p_value = 0.05
+        p_value = 0.02
         min_duration = 20.0
+        merge_dets = True
 
-    Note that the parameter specifications use underscores in the config file and hyphens in the command line flags (e.g., :code:`--local-fk-label`` vs. :code:`local_fk_label``).  The analysis can now be completed by simply running:
+- Note that the parameter specifications use underscores in the config file and hyphens in the command line flags and also that headers in the config file are used to distinguish beamforming (FK) and f-stat detection (FD) parameters.  For example, the frequency minimum is specified using :code:`--freq-min` on the command line and :code:`freq_min` in a configuration file.  The beamforming window length is set by :code:`--fk-window-len` on the command line and as :code:`window_len` under :code:`[FK]` in the configuration file while the detection window length is set by :code:`--fd-window-len` on the command line and as :code:`window_len` under :code:`[FD]` in the configuration file.  There is a :code:`default.config` file in the InfraPy resources directory with a full set of all tunable parameters and which header they fall under.  Data input or output information is expected to be listed under :code:`[DATA IO]`.
+
+- Using the configuration file, the analysis can be completed by simply running:
 
     .. code-block:: bash
 
-        infrapy run_fk --config-file config/detection_local.config
+        infrapy detect beam --cnfg-file config/detection_local.config
 
-    The analysis steps are the same as the above; however, you'll notice that when the fk results are being written there's a warning message that existing results are present so that a new file name is used.  
-
-    .. code-block:: none
+    .. code-block:: bash
 
         #####################################
         ##                                 ##
@@ -209,139 +232,26 @@ Detection Analyses
         ##                                 ##
         #####################################
 
+        Loading configuration info from: config/detection_local.config
+
         Data parameters:
           local_wvfrms: data/YJ.BRP*.SAC
           local_latlon: None
-          local_fk_label: None
-
+          det_label: BRP_hf
+        
         ...
 
-        Running fk analysis...
+        Running beamforming analysis...
 	        Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
 
-        WARNING!  fk results file(s) already exist.
-        Writing a new version: data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0.fk_results.dat
+        Writing beamforming and detection results into BRP_hf.dets.json.gz
 
-    This is to avoid overwriting existing results from previous runs and to make comparisons of varied frequeny bands, window lengths, and other parameters more efficient.  The visualization methods can be pointed to any fk results file as: 
-    
-    .. code-block:: bash
-        
-        infrapy plot fk --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59-v0
 
-    When using a config file for analysis, any additional parameters set on the command line will overwrite the values from the config file.  For example, to run the analysis with a maximum frequency of 10 Hz instead of 5 Hz, one can simply run:
+- Using FDSN data ingestion...
 
     .. code-block:: bash
 
-        infrapy run_fk --config-file BRP_analysis.config --freq-max 10
-
-    If a parameter is not included in a config file or via the command line, a default value is used and can be found in the output at the time of the analysis or in the output file header.
-
-    Lastly, large analysis runs can be accelerated by specifying a number of CPUs to utilize in analysis via :code:`--cpu-cnt`.  Multi-threading in InfraPy beamforming analysis is done by distributing individual analysis windows among available threads.   On a desktop OS X machine used for testing, a single-CPU analysis of the included BRP data requires approximately 32 seconds.  With 4 CPUs this is reduced to 14 seconds and with 10 CPUs it reduces further to approximately 10 seconds.  The limited gains for higher CPUs is due to a amount of time needed to perform background tasks such as reading and writing data that is not multi-threaded.  It should be noted that the BRP example data set includes only 20 minutes of waveform data and that longer data sets would likely benefit from higher numbers of CPUs before these background task times become notable.
-
-- From the beamforming results, detection analysis can be conducted via the :code:`run_fd` method.  This analysis requires the fk output label and can use a custom detection label or automatically re-use the fk label if none is specified. 
-  
-    .. code-block:: bash
-
-        infrapy run_fd --config-file config/detection_local.config
-
-    Similarly to the :code:`run_fk` methods, parameter summaries are provided; however, because this analysis is relatively quick there is no progress bar:
-
-    .. code-block:: none
-
-        #####################################
-        ##                                 ##
-        ##             InfraPy             ##
-        ##     Detection (fd) Analysis     ##
-        ##                                 ##
-        #####################################
-
-        Data parameters:
-          local_fk_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
-          detect_label: data/YJ.BRP_2012.04.09_18.00.00-18.19.59
-
-        Algorithm parameters:
-          window_len: 3600.0
-          p_value: 0.05
-          min_duration: 20.0
-          back_az_width: 15.0
-          fixed_thresh: None
-          thresh_ceil: None
-          return_thresh: False
-          merge_dets: False
-
-        Running fd...
-        Writing detections to data/YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json
-
-    As noted in the output, a new file named :code:`YJ.BRP_2012.04.09_18.00.00-18.19.59.dets.json` is created containing all of the detections identified in the fk results.  This file contains the information summarizing each detection in a format that can be ingested for further CLI analysis and can also be loaded into the :ref:`infraview` GUI.  The first detection from this analysis of the included BRP data is shown below:
-
-    .. code-block:: none
-
-        [
-            {
-                "Name": "",
-                "Time (UTC)": "2012-04-09T18:07:05.008300",
-                "F Stat.": 31.9058,
-                "Trace Vel. (m/s)": 370.97,
-                "Back Azimuth": -41.84,
-                "Latitude": 39.4727,
-                "Longitude": -110.741,
-                "Elevation (m)": null,
-                "Start": 0.0,
-                "End": 5.0,
-                "Freq Range": [
-                    1.0,
-                    5.0
-                ],
-                "Array Dim.": 4,
-                "Method": "bartlett",
-                "Event": "",
-                "Note": "InfraPy CLI detection",
-                "Network": "YJ",
-                "Station": "BRP",
-                "Channel": "EDF"
-            },...
-        ]
-
-- Once detections are identified in the data record, they can be visualized similarly to the :code:`plot fk` option via :code:`plot fd`.
-
-    .. code-block:: bash
-
-        infrapy plot fd --config-file config/detection_local.config
-
-    This plot has the same format as the above :code:`plot fk` output, but now includes shaded boxes denoting where detections were identified in the analysis.  The frequency values specified here are applied as a bandpass filter on the waveform data in the visualization.
-
-    .. image:: _static/_images/plot_fd.png
-        :width: 1200px
-        :align: center
-
-
-- One useful feature of the detections methods in InfraPy is the ability to merge detections.  By setting :code:`--merge-dets True` on the command line or :code:`merge_dets = True` in the configuration file, any pair of detections that are separated by less than the larger of their durations and have back azimuth differences less than the specified threshold will be combined.  Re-running the detection analysis with this option turn on and comparing the results:
-
-
-    .. code-block:: bash
-        
-        infrapy run_fd --config-file config/detection_local.config --local-fk-label data/YJ.BRP_2012.04.09_18.00.00-18.19.59 --merge-dets True
-
-        infrapy plot fd --config-file config/detection_local.config
-
-    .. image:: _static/_images/plot_fd2.png
-        :width: 1200px
-        :align: center
-
-
-- In some cases, the parameters in the detection analysis are modified without changing the beamforming configuration and the :code:`run_fd` is useful in such scenarios to avoid repeatedly running the fk analysis.  However, most of the time, the beamforming and detection analysis are run together.  This can be accomplished in the InfraPy CLI via the :code:`run_fkd` option.  
-
-    .. code-block:: bash
-    
-        infrapy run_fkd --config-file config/detection_local.config
-
-    This option essentially combines the :code:`run_fk` and :code:`run_fd` options into a single analysis run.
-
-- In addition to analysis of local data, InfraPy's use of :code:`obspy.clients.fdsn` methods enables analysis of data available on IRIS and similar FDSNs.  Instead of specifying local waveform files, this requires defining the FDSN (e.g., IRIS, USGS) as well as the network, station, channel, and location information of the array.  Lastly, the start and end time are also needed to identify the segment of data to download for analysis.  This information can be entered on the command line, but it's easier to simply write up a config file in most cases (recall that individual parameters can be overwritten on the command line, so the station or start/end times can be modified as needed).  An example analysis from the IMS I53US array is included in :code:`examples/config/detection_fdsn.config`:
-
-    .. code-block:: none
-
-        [WAVEFORM IO]
+        [DATA IO]
         fdsn = IRIS
         network = IM
         station = I53*
@@ -350,31 +260,98 @@ Detection Analyses
         starttime = 2018-12-19T01:00:00
         endtime = 2018-12-19T03:00:00
 
-        [DETECTION IO]
-        local_fk_label = auto
-        detect_label = auto
+- Running using this configuration file,
 
-    Running this analysis will pull 2 hours of data from the International Monitoring System (IMS) I53US infrasound station from December 19th, 2018 that includes a signal produced by a bolide.  Visualization can be slightly slower as the data is re-downloaded from IRIS with each use of the command line calls.  This can be avoided using the :code:`write-wvfrms` :ref:`utilities` function.  Due to the emergent nature of the signal, :code:`--merge-dets` needs to be activated to obtain a useful result as seen below.
+    .. code-block:: bash
 
-
-    .. image:: _static/_images/plot_fd-fdsn.png
-        :width: 1200px
-        :align: center
+        infrapy detect beam --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
 
-    Although not currently accessible in the CLI methods, an FDSN station browser is available in the :ref:`infraview` GUI to search for available data given a reference location, radius, and time bounds.
+    .. code-block:: bash
 
-- Analysis of data from a local database is also available through the InfraPy CLI using the Python pisces library, and is covered in a separate tutorial on :ref:`pisces`.
+        ######################################
+        ##                                  ##
+        ##              InfraPy             ##
+        ##  Beamforming Detection Analyses  ##
+        ##                                  ##
+        ######################################
 
-----------------------
-Network-Level Analyses
-----------------------
+        Loading configuration info from: config/detection_fdsn.config
+
+        Data parameters:
+          fdsn: IRIS
+          network: IM
+          station: I53*
+          location: *
+          channel: *DF
+          starttime: 2018-12-19T01:00:00
+          endtime: 2018-12-19T03:00:00
+          det_label: None
+
+        fk (beam) parameters:
+          freq_min: 0.08
+          freq_max: 2.0
+          back_az_min: -180.0
+          back_az_max: 180.0
+          back_az_step: 2.0
+          trace_vel_min: 300.0
+          trace_vel_max: 600.0
+          trace_vel_step: 2.5
+          method: bartlett
+          window_len: 20.0
+          window_step: 10.0
+          cpu_cnt: 4
+
+        detection parameters:
+          window_len: 3600.0
+          p_value: 0.05
+          min_duration: 40.0
+          back_az_width: 15.0
+          merge_dets: True
+
+        Loading data from FDSN (IRIS)...
+
+        Data summary:
+        IM.I53H1..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H2..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H3..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H4..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H5..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H6..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H7..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+        IM.I53H8..BDF	2018-12-19T01:00:00.000000Z - 2018-12-19T03:00:00.000000Z
+
+        Running beamforming analysis...
+            Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+        Running adaptive f-detector...
+
+        Writing beamforming and detection results into IM.I53H_2018.12.19T01.00.00.dets.json.gz
+
+
+
+
+
+- The above beamforming detection analysis requires a spatially distributed set of microbarometers and uses the coherence to identify signals of interest.  When only a single data stream is available, a spectrogram-based detection method can be applied to identify possible signals of interest. The spectrogram-based detection methods can be accessed using the :code:`infrapy detect spectral` CLI option.  For a local data source such as the included SAC files in the data directory, this is simply (note: if multiple files are selected, only the first file will be used given the single-channel nature of this analysis),
+
+    .. code-block:: bash
+        
+        infrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
+
+
+
+
+
+
+
+--------------
+Event Analyses
+--------------
 
 - Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evaluation of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
 
     .. code-block:: bash
     
-        infrapy run_assoc --local-detect-label 'data/Blom_etal2020_GJI/*' --local-event-label GJI_example --cpu-cnt 4
+        infrapy run_assoc --local-det-label 'data/Blom_etal2020_GJI/*' --local-ev-label GJI_example --cpu-cnt 4
 
     Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
@@ -388,8 +365,8 @@ Network-Level Analyses
         #####################################
 
         Data summary:
-          detect_label: data/Blom_etal2020_GJI/*
-          local_event_label: example
+          det_label: data/Blom_etal2020_GJI/*
+          ev_label: example
           starttime: None
           endtime: None
 
@@ -435,13 +412,13 @@ Network-Level Analyses
         Cleaning up and merging clusters...
         identified 3 events.
 
-    The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`local_event_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
+    The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`ev_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
 
 - Detection sets can be visualized on a map using the :code:`plot dets` option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,
 
     .. code-block:: bash
     
-        infrapy plot dets --local-detect-label 'data/Blom_etal2020_GJI/*'
+        infrapy plot dets --local-det-label 'data/Blom_etal2020_GJI/*'
 
     .. image:: _static/_images/plot_dets1.png
         :width: 1200px
@@ -451,7 +428,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot dets --local-detect-label 'GJI_example-ev0.dets.json'  --range-max 1000
+        infrapy plot dets --local-det-label 'GJI_example-ev0.dets.json'  --range-max 1000
 
     .. image:: _static/_images/plot_dets2.png
         :width: 1200px
@@ -462,7 +439,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
+        infrapy run_loc --local-det-label GJI_example-ev0  --local-loc-label GJI_example-ev0
 
     The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
 
@@ -476,7 +453,7 @@ Network-Level Analyses
         #####################################
 
         Data summary:
-          local_event_label: example1-ev0
+          ev_label: example1-ev0
           local_loc_label: example1-ev0
 
         Parameter summary:
@@ -513,7 +490,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+        infrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
@@ -523,7 +500,7 @@ Network-Level Analyses
 
     .. code-block:: bash
 
-        infrapy plot loc --local-detect-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+        infrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
 
     .. image:: _static/_images/plot_loc2.png
         :width: 900px
@@ -545,7 +522,7 @@ Network-Level Analyses
 
     .. code:: bash
 
-        infrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
+        infrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-det-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
 
     As with other analysis methods, parameter information will be summarized and high level results:
 
@@ -560,7 +537,7 @@ Network-Level Analyses
 
 
         Data parameters:
-        detect_label: data/HRR-5.dets.json
+        det_label: data/HRR-5.dets.json
         tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
         local_loc_label: None
           src_lat: 33.5377
@@ -651,9 +628,9 @@ Network-Level Analyses
 
     .. code:: bash
 
-        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
-        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
-        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-det-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-det-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
+        infrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-det-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
         ...
 
     Each of the above calls creates a :code:`[...].spye_pdf.npz` file containing the frequency-spectral PDF (right panel of the above figure) computed for that single detection.  In this case, the TLM label specified is the same, but it can be different for station-specific TLMs.  Once this is completed for the entire set of detections, the final yield PDF can be computed via:
@@ -743,7 +720,7 @@ Scripting and Notebook-Based Analysis
             back_az_lim = 10
 
             TB_prod = (freq_max - freq_min) * fk_window_len
-            dets = beamforming_new.detect_signals(times, beam_results, fd_win_len, TB_prod, M, min_seq=min_seq, back_az_lim=back_az_lim)
+            dets = beamforming_new.det_signals(times, beam_results, fd_win_len, TB_prod, M, min_seq=min_seq, back_az_lim=back_az_lim)
 
             for det in dets:
                 print("Detection time:", det[0], '\t', "Rel. detection onset:", det[1], '\t',"Rel. detection end:", det[2], '\t',end=' ')

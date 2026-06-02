@@ -12,7 +12,7 @@ from ..utils import config
 from ..detection import beamforming_new as fkd
 
 @click.command('run_fd', short_help="Identify detections from beamforming results")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-fk", help="Local beamforming (fk) data files", default=None)
 @click.option("--local-dets", help="Local detection data files", default=None)
 @click.option("--window_len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
@@ -21,7 +21,7 @@ from ..detection import beamforming_new as fkd
 @click.option("--back-az-width", help="Maximum azimuth scatter (default: " + config.defaults['FD']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--fixed-thresh", help="Fixed f-stat threshold (default: None)", default=None, type=float)
 @click.option("--return-thresh", help="Return threshold (default: " + config.defaults['FD']['return_thresh'] + ")", default=None, type=bool)
-def run_fd(config_file, local_fk, local_dets, window_len, p_value, min_duration, back_az_width, fixed_thresh, return_thresh):
+def run_fd(cnfg_file, local_fk, dets, window_len, p_value, min_duration, back_az_width, fixed_thresh, return_thresh):
     '''
     Identify detections
 
@@ -37,21 +37,21 @@ def run_fd(config_file, local_fk, local_dets, window_len, p_value, min_duration,
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
         user_config = cnfg.ConfigParser()
-        user_config.read(config_file)
+        user_config.read(cnfg_file)
     else:
         user_config = None
 
     # Data IO parameters
     # use local ingestion for initial testing
-    local_fk = config.set_param(user_config, 'DETECTION IO', 'local_fk', local_fk, 'string')
-    local_dets = config.set_param(user_config, 'DETECTION IO', 'local_dets', local_dets, 'string')
+    local_fk = config.set_param(user_config, 'DATA IO', 'local_fk', local_fk, 'string')
+    dets = config.set_param(user_config, 'DATA IO', 'dets', dets, 'string')
 
     click.echo('\n' + "Data parameters:")
     click.echo("  local_fk: " + local_fk)
-    click.echo("  local_dets: " + local_dets)
+    click.echo("  dets: " + dets)
 
     # Algorithm parameters
     window_len = config.set_param(user_config, 'FD', 'window_len', window_len, 'float')

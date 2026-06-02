@@ -214,7 +214,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.beamformingWidget.detectionWidget.signal_detections_cleared.connect(self.locationWidget.detections_cleared)
 
         self.databaseWidget.ipdatabase_query_results_table.signal_new_stream_from_db.connect(self.database_add_streams)
-        self.databaseWidget.ipevent_query_results_table.sig_origin_changed.connect(self.locationWidget.showgroundtruth.event_widget.setEvent)
+        self.databaseWidget.ipev_query_results_table.sig_origin_changed.connect(self.locationWidget.showgroundtruth.ev_widget.setEvent)
 
         # connect tabs to the settings manager so it can adjust when tabs are clicked
         self.sig_widget_changed.connect(self.settings_manager.widget_changed)

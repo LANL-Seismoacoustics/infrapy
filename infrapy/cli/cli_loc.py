@@ -25,8 +25,8 @@ from ..utils import config
 from ..utils import data_io
 
 @click.command('run_loc', short_help="Estimate source locations and times for events", hidden=True)
-@click.option("--config-file", help="Configuration file", default=None)
-@click.option("--local-detect-label", help="Detection path and pattern", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--local-det-label", help="Detection path and pattern", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
@@ -56,16 +56,16 @@ from ..utils import data_io
 @click.option("--det-tm-stdev", help="Detection time uncertainty", default=None)
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, local_temp_dir, cpu_cnt):
+def run_loc(cnfg_file, det_label, local_loc_label, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, rcel_wts, rcel_mns, rcel_sds, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, local_temp_dir, cpu_cnt):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_loc --local-detect-label GJI_example-ev0  --local-loc-label GJI_example-ev0
-    \tinfrapy run_loc --local-detect-label data/detection_set2.json --local-loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
-    \tinfrapy run_loc --local-detect-label data/Blom_etal2024_GJI/UTTR  --local-loc-label data/Blom_etal2024_GJI/UTTR-BISL
-    \tinfrapy run_loc --config-file config/tribl_example.config
+    \tinfrapy run_loc --local-det-label GJI_example-ev0  --local-loc-label GJI_example-ev0
+    \tinfrapy run_loc --local-det-label data/detection_set2.json --local-loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
+    \tinfrapy run_loc --local-det-label data/Blom_etal2024_GJI/UTTR  --local-loc-label data/Blom_etal2024_GJI/UTTR-BISL
+    \tinfrapy run_loc --cnfg-file config/tribl_example.config
     '''
 
     click.echo("")
@@ -77,11 +77,11 @@ def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -89,14 +89,14 @@ def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max
         user_config = None
 
     # Data IO parameters
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DATA IO', 'local_loc_label', local_loc_label, 'string')
 
     if ".loc.json" in local_loc_label:
        local_loc_label = local_loc_label[:-9] 
             
     click.echo('\n' + "Data summary:")
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
 
     # Algorithm parameters
@@ -188,7 +188,7 @@ def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max
 
 
     click.echo("")
-    events = data_io.set_det_list(detect_label, merge=False)
+    events = data_io.set_det_list(det_label, merge=False)
 
     if type(events[0]) is list:
         # run localization analysis for multiple detection sets
@@ -293,11 +293,11 @@ def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max
 
 
 @click.command('regional', short_help="Run analysis using a single set of TLMs")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
-@click.option("--local-detect-label", help="Detection results path", default=None)
+@click.option("--local-det-label", help="Detection results path", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--local-yld-label", help="Output file for results", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
@@ -316,7 +316,7 @@ def run_loc(config_file, detect_label, local_loc_label, back_az_width, range_max
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
 
-def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc_label, local_yld_label, tlm_label, 
+def regional(cnfg_file, local_wvfrms, fdsn, db_config, det_label, local_loc_label, local_yld_label, tlm_label, 
                 src_lat, src_lon, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, noise_option, window_buffer,
                 amb_press, amb_temp, grnd_burst, exp_type):
     '''
@@ -324,7 +324,7 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-detect-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
+    \tinfrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-det-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
     '''
 
     click.echo("")
@@ -337,11 +337,11 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
     click.echo("########################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -349,20 +349,20 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
         user_config = None    
 
     # Waveform info
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')  
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')  
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
     
     # Data IO parameters
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DATA IO', 'local_loc_label', local_loc_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DATA IO', 'local_loc_label', local_loc_label, 'string')
     src_lat = config.set_param(user_config, 'YIELD', 'src_lat', src_lat, 'float')
     src_lon = config.set_param(user_config, 'YIELD', 'src_lon', src_lon, 'float')
 
     click.echo('\n' + "Data parameters:")
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
     click.echo("  tlm_label: " + str(tlm_label))
     click.echo("  local_loc_label: " + str(local_loc_label))
     if local_loc_label is not None:
@@ -420,7 +420,7 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
     click.echo("  exp_type: " + str(exp_type))
 
 
-    det_list = data_io.json_to_detection_list(detect_label)
+    det_list = data_io.json_to_detection_list(det_label)
     if local_wvfrms is not None:
         stream, _ = data_io.set_stream(local_wvfrms, None, None)
     else:
@@ -472,11 +472,11 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
 
 
 @click.command('single-station', short_help="Estimate the near-source spectral amplitude from a single station")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
-@click.option("--local-detect-label", help="Detection results path", default=None)
+@click.option("--local-det-label", help="Detection results path", default=None)
 @click.option("--local-loc-label", help="Localization results path", default=None)
 @click.option("--local-pdf-label", help="Output file for results", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
@@ -489,18 +489,18 @@ def regional(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc
 @click.option("--resolution", help="Number of points/dimension for numerical sampling (default: " + config.defaults['YIELD']['resolution'] + ")", default=None, type=int)
 @click.option("--noise-option", help="Noise option ('pre', 'post', or 'beam')", default=None)
 @click.option("--window-buffer", help="Window buffer scaling (default: " + config.defaults['YIELD']['window_buffer'] + ")", default=None, type=float)
-def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, local_loc_label, local_pdf_label, tlm_label, 
+def single_station(cnfg_file, local_wvfrms, fdsn, db_config, det_label, local_loc_label, local_pdf_label, tlm_label, 
                     det_index, src_lat, src_lon, freq_min, freq_max, ref_rng, resolution, noise_option, window_buffer):
     '''
     Run Spectral Yield Estimation (SpYE) methods to estimate the near-source acoustic spectral amplitude for a single detecting station
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
-    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
-    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
-    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W420/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 3 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W420"
-    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W460/*.sac' --local-detect-label data/HRR-5.dets.json --det-index 4 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W460"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W220/*.sac' --local-det-label data/HRR-5.dets.json --det-index 0 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W220"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W240/*.sac' --local-det-label data/HRR-5.dets.json --det-index 1 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W240"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W340/*.sac' --local-det-label data/HRR-5.dets.json --det-index 2 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W340"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W420/*.sac' --local-det-label data/HRR-5.dets.json --det-index 3 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W420"
+    \tinfrapy run_spye single-station --local-wvfrms '../infrapy-data/hrr-5/W460/*.sac' --local-det-label data/HRR-5.dets.json --det-index 4 --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-pdf-label "HRR-5_W460"
     '''
 
     click.echo("")
@@ -513,11 +513,11 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, loc
     click.echo("########################################")
     click.echo("")     
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -525,20 +525,20 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, loc
         user_config = None    
 
     # Waveform info
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')  
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')  
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
     
     # Data IO parameters
-    detect_label = config.set_param(user_config, 'DETECTION IO', 'detect_label', detect_label, 'string')
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
-    local_loc_label = config.set_param(user_config, 'DETECTION IO', 'local_loc_label', local_loc_label, 'string')
+    det_label = config.set_param(user_config, 'DATA IO', 'det_label', det_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DATA IO', 'local_loc_label', local_loc_label, 'string')
+    local_loc_label = config.set_param(user_config, 'DATA IO', 'local_loc_label', local_loc_label, 'string')
     src_lat = config.set_param(user_config, 'YIELD', 'src_lat', src_lat, 'float')
     src_lon = config.set_param(user_config, 'YIELD', 'src_lon', src_lon, 'float')
 
     click.echo('\n' + "Data parameters:")
-    click.echo("  detect_label: " + str(detect_label))
+    click.echo("  det_label: " + str(det_label))
     click.echo("  det_index: " + str(det_index))
     click.echo("  tlm_label: " + str(tlm_label))
     click.echo("  local_pdf_label: " + str(local_pdf_label))
@@ -585,7 +585,7 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, loc
     click.echo("  window_buffer: " + str(window_buffer))
 
     # Load detection and stream info
-    det_list = data_io.json_to_detection_list(detect_label)
+    det_list = data_io.json_to_detection_list(det_label)
     if local_wvfrms is not None:
         stream, _ = data_io.set_stream(local_wvfrms, None, None)
     else:
@@ -620,7 +620,7 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, loc
 
 
 @click.command('combine', short_help="Combine near-source spectral amplitude PDFs from stations")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-pdf-label", help="Output file for results", default=None)
 @click.option("--local-yld-label", help="Output file for results", default=None)
 @click.option("--yld-min", help="Minimum yield (default: " + config.defaults['YIELD']['yld_min'] + " [tons eq. TNT])", default=1.0, type=float)
@@ -632,7 +632,7 @@ def single_station(config_file, local_wvfrms, fdsn, db_config, detect_label, loc
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
 
-def combine(config_file, local_pdf_label, local_yld_label, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
+def combine(cnfg_file, local_pdf_label, local_yld_label, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
     '''
     Run Spectral Yield Estimation (SpYE) methods to combine near-source acoustic spectral amplitude from single station analyses
 
@@ -651,11 +651,11 @@ def combine(config_file, local_pdf_label, local_yld_label, yld_min, yld_max, ref
     click.echo("########################################")
     click.echo("")     
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0

@@ -4,19 +4,19 @@ import sys
 from infrapy.database.taskbase.fdet import FDet
 
 
-def run(config_file, array):
-    pdetect = FDet(config_file, ARRAY_NAME=array)
+def run(cnfg_file, array):
+    pdetect = FDet(cnfg_file, ARRAY_NAME=array)
     pdetect.database_connecting()
     pdetect.data_processing()
 
 if __name__ == '__main__':
 
     try:
-        config_file = sys.argv[1]
+        cnfg_file = sys.argv[1]
     except Exception as ex1:
         print('A configuration file is required to start data processing')
         sys.exit()
-    print('Running fk with configuration file:', config_file)
+    print('Running fk with configuration file:', cnfg_file)
 
     try:
         array = sys.argv[2]
@@ -24,4 +24,4 @@ if __name__ == '__main__':
     except Exception as ex1:
         array = None
 
-    run(config_file, array)
+    run(cnfg_file, array)

@@ -94,7 +94,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     position_labels = []
 
     pick_line_list = []     # list to hold the references to pick lines
-    event_line_list = []    # list to hold the references to event lines
+    ev_line_list = []    # list to hold the references to event lines
     arrival_line_list = []  # list to hold the arrival lines
 
     active_plot = 0
@@ -361,7 +361,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     @pyqtSlot()
     def plotEventLines(self):
 
-        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
+        eventWidget = self.window().locationWidget.showgroundtruth.ev_widget       # reference for convenience
 
         if eventWidget.hasValidEvent():
             self.clearEventLines()
@@ -371,20 +371,20 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
                 position = utcEventTime - UTCDateTime(self.earliest_start_time)
 
-                self.event_line_list.append(IPEventLine.IPEventLine(position, eventID=eventWidget.getID()))
-                plot.addItem(self.event_line_list[idx])
+                self.ev_line_list.append(IPEventLine.IPEventLine(position, eventID=eventWidget.getID()))
+                plot.addItem(self.ev_line_list[idx])
 
                 # set visibility appropriately
-                self.event_line_list[idx].setVisible(eventWidget.displayEvent_cb.isChecked())
+                self.ev_line_list[idx].setVisible(eventWidget.displayev_cb.isChecked())
 
                 # connect line so that if moved, the event widget will update
-                """ self.event_line_list[idx].sigEventLineMoving.connect(self.updateEventWidget) """
+                """ self.ev_line_list[idx].sigEventLineMoving.connect(self.updateEventWidget) """
 
                 # need to connect the moveline events so they all move together
                 """ if idx > 0:
                     for jdx in range(0, idx):
-                        self.event_line_list[jdx].sigEventLineMoving.connect(self.event_line_list[idx].setValue)
-                        self.event_line_list[idx].sigEventLineMoving.connect(self.event_line_list[jdx].setValue) """
+                        self.ev_line_list[jdx].sigEventLineMoving.connect(self.ev_line_list[idx].setValue)
+                        self.ev_line_list[idx].sigEventLineMoving.connect(self.ev_line_list[jdx].setValue) """
 
         self.plotArrivalLines()
 
@@ -392,7 +392,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
         self.clearArrivalLines()
         
         #reference for convenience
-        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
+        eventWidget = self.window().locationWidget.showgroundtruth.ev_widget       # reference for convenience
         if eventWidget.hasValidEvent():     # only continue if there is a valid event with location and time
 
             # now if the user has selected the display arrivals checkbox, proceed
@@ -415,32 +415,32 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 array_lat = array_lat/cnt
                 array_lon = array_lon/cnt
 
-                event_dict = eventWidget.Dict()
-                event_time = UTCDateTime(str(event_dict['UTC Date']) + 'T' + str(event_dict['UTC Time']))
+                ev_dict = eventWidget.Dict()
+                ev_time = UTCDateTime(str(ev_dict['UTC Date']) + 'T' + str(ev_dict['UTC Time']))
 
                 g = pyproj.Geod(ellps='WGS84')
-                _, _, distance = g.inv(event_dict['Longitude'], event_dict['Latitude'], array_lon, array_lat)
+                _, _, distance = g.inv(ev_dict['Longitude'], ev_dict['Latitude'], array_lon, array_lat)
 
                 idx = 0
                 for plot in self.plot_list:
                     # for each plot, generate the three arrival lines
                     # tropospheric  340 m/s
                     travel_time = distance/340.0
-                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    position = ev_time + travel_time - UTCDateTime(self.earliest_start_time)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Tropospheric'))
                     plot.addItem(self.arrival_line_list[idx])
                     self.arrival_line_list[idx].setVisible(eventWidget.displayArrivals_cb.isChecked())
 
                     # thermospheric 250 m/s
                     travel_time = distance/250.0
-                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    position = ev_time + travel_time - UTCDateTime(self.earliest_start_time)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Thermospheric'))
                     plot.addItem(self.arrival_line_list[idx+1])
                     self.arrival_line_list[idx+1].setVisible(eventWidget.displayArrivals_cb.isChecked())
 
                     # stratospheric 290 m/s
                     travel_time = distance/290.0
-                    position = event_time + travel_time - UTCDateTime(self.earliest_start_time)
+                    position = ev_time + travel_time - UTCDateTime(self.earliest_start_time)
                     self.arrival_line_list.append(IPEventLine.IPArrivalLine(position, 'Stratospheric'))
                     plot.addItem(self.arrival_line_list[idx+2])
                     self.arrival_line_list[idx+2].setVisible(eventWidget.displayArrivals_cb.isChecked())
@@ -455,19 +455,19 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
     # saying something has changed
     @pyqtSlot()
     def updateEventLines(self):
-        eventWidget = self.window().locationWidget.showgroundtruth.event_widget       # reference for convenience
+        eventWidget = self.window().locationWidget.showgroundtruth.ev_widget       # reference for convenience
         waveformWidget = self.window().waveformWidget
 
         if eventWidget.hasValidEvent():
-            if not self.event_line_list:
+            if not self.ev_line_list:
                 return
 
-            for idx, eline in enumerate(self.event_line_list):
+            for idx, eline in enumerate(self.ev_line_list):
 
-                eline.setVisible(eventWidget.displayEvent_cb.isChecked())
+                eline.setVisible(eventWidget.displayev_cb.isChecked())
 
-                utc_event_time = UTCDateTime(eventWidget.getUTCDateTimeString())
-                eline.setPos(utc_event_time - UTCDateTime(waveformWidget._sts[idx].stats.starttime))
+                utc_ev_time = UTCDateTime(eventWidget.getUTCDateTimeString())
+                eline.setPos(utc_ev_time - UTCDateTime(waveformWidget._sts[idx].stats.starttime))
                 eline.setID(eventWidget.getID())
 
         self.plotArrivalLines()
@@ -478,8 +478,8 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
 
         sender = self.sender()
         if isinstance(sender, IPEventLine.IPEventLine):
-            new_UTC_event_time = self.sts[0].stats.starttime + self.event_line_list[0].pos().x()
-            eventWidget.setUTCDateTime(new_UTC_event_time)
+            new_UTC_ev_time = self.sts[0].stats.starttime + self.ev_line_list[0].pos().x()
+            eventWidget.setUTCDateTime(new_UTC_ev_time)
 
     @pyqtSlot()
     def clearEventLines(self):
@@ -488,7 +488,7 @@ class IPPlotLayoutWidget(pg.GraphicsLayoutWidget):
                 if isinstance(item, IPEventLine.IPEventLine):
                     plot.removeItem(item)
                     del item
-        self.event_line_list = []
+        self.ev_line_list = []
         self.clearArrivalLines()
 
     def clearArrivalLines(self):

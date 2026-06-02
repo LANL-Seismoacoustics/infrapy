@@ -33,20 +33,20 @@ def comm_str(str_list):
 
 
 @click.command('infrapype', short_help="Automated infrapy analysis pipeline (prototype)",context_settings={'help_option_names': ['-h', '--help']})
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--out-label", help="Specify a file output prefix (default 'YYYY-MM-DD')", default=None)
 @click.option("--starttime", help="Start time of automated analysis", default=None)
 @click.option("--endtime", help="End time of automated analysis", default=None)
 
 
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
+def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     '''
     Run infrapy pipeline (infrapype) analysis 
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapype --config-file config/pipeline-HRR5.cnfg
+    \tinfrapype --cnfg-file config/pipeline-HRR5.cnfg
     '''
 
     click.echo("")
@@ -60,11 +60,11 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
 
     test_commands = False
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0
@@ -156,8 +156,8 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
                     command = command + " --starttime " + pipe_params["starttime"]
                     command = command + " --endtime " + pipe_params["endtime"]
 
-                    command = command + " --config-file " + pipe_params["config_dir"] + bm_config
-                    command = command + " --detect-label " + temp_path + det_label + "-" + str(bm_j)
+                    command = command + " --cnfg-file " + pipe_params["config_dir"] + bm_config
+                    command = command + " --det-label " + temp_path + det_label + "-" + str(bm_j)
                     click.echo(command)
                     if not test_commands:
                         os.system(command)
@@ -185,8 +185,8 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
             ev_j_id = "_ev-bld-cnfg-" + str(ev_j) if len(pipe_params['ev_build_cnfgs']) > 1 else "" 
 
             if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + ".ev.json.gz"):
-                command = "infrapy event build --detect-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --event-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
-                command = command + " --config-file " + pipe_params["config_dir"] + ev_config
+                command = "infrapy event build --det-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --ev-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
+                command = command + " --cnfg-file " + pipe_params["config_dir"] + ev_config
 
                 click.echo('\n' + command) 
                 if not test_commands:
@@ -198,18 +198,18 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
         for ev_file in ev_files:
             fig_path = pipe_params["figs_dir"] + ev_file.split(".ev")[0]
 
-            command = "infrapy plot map_dets --event-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
+            command = "infrapy plot map_dets --ev-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
             click.echo('\n' + command) 
             if not test_commands:
                 os.system(command)
 
             for k, loc_config in enumerate(pipe_params["ev_loc_cnfgs"]):
-                command = "infrapy event localize --event-file " + pipe_params["ev_dir"] + ev_file + " --config-file " + pipe_params["config_dir"] + loc_config
+                command = "infrapy event localize --ev-file " + pipe_params["ev_dir"] + ev_file + " --cnfg-file " + pipe_params["config_dir"] + loc_config
                 click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
 
-                command = "infrapy plot localize --event-file " + pipe_params["ev_dir"] + ev_file + "  --event-loc-index " + str(k) 
+                command = "infrapy plot localize --ev-file " + pipe_params["ev_dir"] + ev_file + "  --ev-loc-index " + str(k) 
                 command = command + " --figure-out " + fig_path + ".loc-" + str(k) + ".png --show-figure False"
                 click.echo(command) 
                 if not test_commands:
@@ -218,7 +218,7 @@ def pipeline(config_file, out_label, starttime, endtime, cpu_cnt):
             if "ev_char_cnfgs" not in pipe_params.keys(): return 
             for l, char_config in enumerate(pipe_params["ev_char_cnfgs"]):
                 # run yield estimation
-                command = "infrapy event characterize --event-file HRR/events/HRR5_0-0.ev.json.gz --config-file " + pipe_params["config_dir"] + char_config
+                command = "infrapy event characterize --ev-file HRR/events/HRR5_0-0.ev.json.gz --cnfg-file " + pipe_params["config_dir"] + char_config
                 click.echo(command)
                 if not test_commands:
                     os.system(command)

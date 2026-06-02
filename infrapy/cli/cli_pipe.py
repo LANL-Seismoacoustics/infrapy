@@ -27,15 +27,15 @@ from ..characterization import spye
 
 
 @click.command('pipeline', short_help="Automated infrapy analysis pipeline (prototype)")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def pipeline(config_file, cpu_cnt):
+def pipeline(cnfg_file, cpu_cnt):
     '''
     Run infrapy pipeline (infrapype) analysis 
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapype --config-file config/infrapype_HRR5.cnfg
+    \tinfrapype --cnfg-file config/infrapype_HRR5.cnfg
     '''
 
     click.echo("")
@@ -47,11 +47,11 @@ def pipeline(config_file, cpu_cnt):
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo('\n' + "Invalid configuration file (file not found)")
             return 0

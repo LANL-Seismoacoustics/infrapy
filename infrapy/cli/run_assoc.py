@@ -4,8 +4,8 @@ import sys
 from infrapy.database.taskbase.assoc import AssocInfraPy_LANL
 
 
-def run(config_file):
-    pdetect = AssocInfraPy_LANL(config_file)
+def run(cnfg_file):
+    pdetect = AssocInfraPy_LANL(cnfg_file)
     pdetect.database_connecting()
     pdetect.data_processing()
 
@@ -13,10 +13,10 @@ def run(config_file):
 if __name__ == '__main__':
 
     try:
-        config_file = sys.argv[1]
+        cnfg_file = sys.argv[1]
     except Exception as ex1:
         print('A configuration file is required to start data processing')
         sys.exit()
 
-    print('run FK, with configuration file:', config_file)
-    run(config_file)
+    print('run FK, with configuration file:', cnfg_file)
+    run(cnfg_file)

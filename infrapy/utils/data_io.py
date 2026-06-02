@@ -167,13 +167,13 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
     return stream, latlon
 
 
-def set_det_list(detect_label, merge=True):
+def set_det_list(det_label, merge=True):
     """
     Read detections from a file (or files) using the [...].dets.json format used to output detections
 
     Parameters
     ----------
-    detect_label: str
+    det_label: str
         String denoting detection file(s) to be loaded for analysis
     merge: bool
         Control for merging files into a single list (for event ID) or creating nested lists (for multiple localization analyses)
@@ -186,14 +186,14 @@ def set_det_list(detect_label, merge=True):
     """
 
 
-    if "*" not in detect_label:
-        if "," not in detect_label:
-            print("Loading detections from file: " + detect_label)
-            if ".dets.json" not in detect_label:
-                detect_label = detect_label + ".dets.json"
-            det_list = json_to_detection_list(detect_label)
+    if "*" not in det_label:
+        if "," not in det_label:
+            print("Loading detections from file: " + det_label)
+            if ".dets.json" not in det_label:
+                det_label = det_label + ".dets.json"
+            det_list = json_to_detection_list(det_label)
         else:
-            for file in detect_label.replace(" ","").split(","):
+            for file in det_label.replace(" ","").split(","):
                 if ".dets.json" not in file:
                     file = file + ".dets.json"
 
@@ -204,19 +204,19 @@ def set_det_list(detect_label, merge=True):
                     det_list = det_list + [json_to_detection_list(file)]
 
     else:
-        if len(os.path.dirname(detect_label)) > 0:
-            file_path = os.path.dirname(detect_label) + "/"
+        if len(os.path.dirname(det_label)) > 0:
+            file_path = os.path.dirname(det_label) + "/"
         else:
             file_path = ""
 
         file_list = []
-        if "/" in detect_label:
-            dir_files = os.listdir(os.path.dirname(detect_label))
+        if "/" in det_label:
+            dir_files = os.listdir(os.path.dirname(det_label))
         else:
             dir_files = os.listdir(".")
             
         for file in dir_files:
-            if fnmatch.fnmatch(file, os.path.basename(detect_label)):
+            if fnmatch.fnmatch(file, os.path.basename(det_label)):
                 file_list += [file]
 
         if len(file_list) == 0:
@@ -224,8 +224,8 @@ def set_det_list(detect_label, merge=True):
             warnings.warn(msg)
             det_list = None 
         elif len(file_list) == 1:
-            print("Loading detections from file: " + file_path + detect_label)
-            det_list = [json_to_detection_list(file_path + detect_label)]
+            print("Loading detections from file: " + file_path + det_label)
+            det_list = [json_to_detection_list(file_path + det_label)]
         else:
             print("Loading detections from files:")
             det_list = []
@@ -467,22 +467,22 @@ def define_detection(det_info, array_loc, channel_cnt, freq_band, note=None, met
                                       )
 
 
-def write_events(events, event_qls, det_list, local_event_label):
+def write_events(events, ev_qls, det_list, ev_label):
     """
     Write detections from event ID analysis into individual output files
 
-    # TODO: event_qls isn't used in this function. Are we saving it for later?
+    # TODO: ev_qls isn't used in this function. Are we saving it for later?
 
 
     Parameters
     ----------
     events: iterable
         List of event labels (detection indices)
-    event_qls: iterable
+    ev_qls: iterable
         Event cluster qualities (not currently used, not sure how to include in output .dets.json files)
     det_list: list
         List of infrapy.propagation.likelihoods.InfrasoundDetection instances for the full analysis
-    local_event_label: str
+    ev_label: str
         Path for output file(s)
 
     """
@@ -490,7 +490,7 @@ def write_events(events, event_qls, det_list, local_event_label):
         temp = []
         for det_id in ev:
             temp = temp + [det_list[det_id]]
-        detection_list_to_json(local_event_label + "-ev" + str(ev_n) + ".dets.json", temp)
+        detection_list_to_json(ev_label + "-ev" + str(ev_n) + ".dets.json", temp)
 
 
 def write_json(results, output_path):

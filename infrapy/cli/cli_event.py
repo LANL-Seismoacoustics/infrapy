@@ -30,9 +30,9 @@ from ..characterization import spye
 
 
 @click.command('build', short_help="Associate detections into events")
-@click.option("--config-file", help="Configuration file", default=None)
-@click.option("--detect-files", help="Detection path and pattern", default=None)
-@click.option("--event-label", help="Path for event info output", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--det-files", help="Detection path and pattern", default=None)
+@click.option("--ev-label", help="Path for event info output", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 @click.option("--celerity-model", help="Celerity model option or file (default: '" + config.defaults['ASSOC']['celerity_model'], default=None)
@@ -43,17 +43,17 @@ from ..characterization import spye
 @click.option("--cluster-linkage", help="Linkage method for clustering (default: " + config.defaults['ASSOC']['cluster_linkage'] + ")", default=None)
 @click.option("--cluster-threshold", help="Cluster linkage threshold (default: " + config.defaults['ASSOC']['cluster_threshold'] + ")", default=None, type=float)
 @click.option("--trimming-threshold", help="Mishapen cluster threshold (default: " + config.defaults['ASSOC']['trimming_threshold'] + ")", default=None, type=float)
-@click.option("--event-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['event_population_min'] + ")", default=None, type=int)
-@click.option("--event-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['event_station_min'] + ")", default=None, type=int)
+@click.option("--ev-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['ev_population_min'] + ")", default=None, type=int)
+@click.option("--ev-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['ev_station_min'] + ")", default=None, type=int)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def build(config_file, detect_files, event_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
-                cluster_linkage, cluster_threshold, trimming_threshold, event_population_min, event_station_min, cpu_cnt):
+def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
+                cluster_linkage, cluster_threshold, trimming_threshold, ev_population_min, ev_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event build --detect-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --event-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
+    \tinfrapy event build --det-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
     '''
 
     click.echo("")
@@ -65,11 +65,11 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
     click.echo("####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -77,16 +77,16 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
         user_config = None
 
     # Data IO parameters
-    detect_files = config.set_param(user_config, 'DETECTION IO', 'detect_files', detect_files, 'string')
-    event_label = config.set_param(user_config, 'DETECTION IO', 'event_label', event_label, 'string')
+    det_files = config.set_param(user_config, 'DATA IO', 'det_files', det_files, 'string')
+    ev_label = config.set_param(user_config, 'DATA IO', 'ev_label', ev_label, 'string')
 
     # Data IO parameters
     click.echo('\n' + "Data summary:")
-    click.echo("  detect_files: " + str(detect_files))
-    click.echo("  event_file: " + str(event_label))
+    click.echo("  det_files: " + str(det_files))
+    click.echo("  ev_file: " + str(ev_label))
 
-    if detect_files is None or event_label is None:
-        msg = "Association analysis requires detection input (--detect-files) and output path (--event-file)"
+    if det_files is None or ev_label is None:
+        msg = "Association analysis requires detection input (--det-files) and output path (--ev-file)"
         warnings.warn(msg)
         return 0
 
@@ -106,8 +106,8 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
     assoc_params['cluster_threshold'] = config.set_param(user_config, 'ASSOC', 'cluster_threshold', cluster_threshold, 'float')
 
     assoc_params['trimming_threshold'] = config.set_param(user_config, 'ASSOC', 'trimming_threshold', trimming_threshold, 'float')
-    assoc_params['event_population_min'] = config.set_param(user_config, 'ASSOC', 'event_population_min', event_population_min, 'int')
-    assoc_params['event_station_min'] = config.set_param(user_config, 'ASSOC', 'event_station_min', event_station_min, 'int')
+    assoc_params['ev_population_min'] = config.set_param(user_config, 'ASSOC', 'ev_population_min', ev_population_min, 'int')
+    assoc_params['ev_station_min'] = config.set_param(user_config, 'ASSOC', 'ev_station_min', ev_station_min, 'int')
     assoc_params['cpu_cnt'] = config.set_param(user_config, 'ASSOC', 'cpu_cnt', cpu_cnt, 'int')
 
     click.echo('\n' + "association parameters:")
@@ -121,7 +121,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
 
     click.echo("")
 
-    det_data = data_io._load_dets_json(detect_files)
+    det_data = data_io._load_dets_json(det_files)
     det_dicts = []
     for entry in det_data:
         for det in entry["det_info"]:
@@ -133,8 +133,8 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
 
     # Check if an event file exists with matching parameter configuration and detections from this list
     result_check = False
-    if os.path.isfile(event_label + "-0.ev.json.gz"):
-        ev0_data = data_io._load_dets_json(event_label + "-0.ev.json.gz")[0]
+    if os.path.isfile(ev_label + "-0.ev.json.gz"):
+        ev0_data = data_io._load_dets_json(ev_label + "-0.ev.json.gz")[0]
 
         param_check = False
         try:
@@ -160,10 +160,10 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
         det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
         infrasound._load_celerity_model(assoc_params['celerity_model'])
-        events, event_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
+        events, ev_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
                                         bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'], rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), 
                                         resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 
-                                        cluster_det_population=assoc_params['event_population_min'], cluster_array_population=assoc_params['event_station_min'], pool=pl)
+                                        cluster_det_population=assoc_params['ev_population_min'], cluster_array_population=assoc_params['ev_station_min'], pool=pl)
 
         click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
         for j, ev in enumerate(events):
@@ -171,7 +171,7 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
                                                 rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
 
             ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
-            with gzip.open(event_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+            with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
     if pl is not None:
@@ -180,8 +180,8 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
 
 
 @click.command('localize', short_help="Estimate source location and origin time")
-@click.option("--event-file", help="Event JSON file to be analyzed", default=None)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--ev-file", help="Event JSON file to be analyzed", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 
@@ -208,13 +208,13 @@ def build(config_file, detect_files, event_label, starttime, endtime, celerity_m
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 
-def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
+def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event localize --event-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
+    \tinfrapy event localize --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
     '''
 
     click.echo("")
@@ -226,11 +226,11 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -238,12 +238,12 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
         user_config = None
 
     # Data IO parameters
-    event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
+    ev_file = config.set_param(user_config, 'DATA IO', 'ev_file', ev_file, 'string')
             
     click.echo('\n' + "Data summary:")
-    click.echo("  event_file: " + str(event_file))
+    click.echo("  ev_file: " + str(ev_file))
 
-    ev_data = data_io._load_dets_json(event_file)[0]
+    ev_data = data_io._load_dets_json(ev_file)[0]
     if range_max is None:
         range_max = ev_data['assoc_params']['range_max']
 
@@ -422,7 +422,7 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
             click.echo(bisl.summarize(result))
 
             ev_data['location'] = ev_data['location'] + [{'params' : loc_params, 'result' : result}]
-            with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+            with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
                 json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
         click.echo("Localization result already exists in this event file for this parameter set.")
@@ -431,8 +431,8 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 
 
 @click.command('characterize', short_help="Characterize the source spectra for an event")
-@click.option("--event-file", help="Event JSON file to be analyzed", default=None)
-@click.option("--config-file", help="Configuration file", default=None)
+@click.option("--ev-file", help="Event JSON file to be analyzed", default=None)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 
 @click.option("--det-mask", help="Mask to select detections for analysis", default=None)
 @click.option("--loc-index", help="Localization index to use in analysis", default=None)
@@ -449,13 +449,13 @@ def localize(event_file, config_file, back_az_width, range_max, grid_resol, ll_c
 @click.option("--amb-temp", help="Ambient temperature (default: " + config.defaults['YIELD']['amb_temp'] + " [K])", default=None, type=float)
 @click.option("--grnd-burst", help="Ground burst assumption (default: " + config.defaults['YIELD']['grnd_burst'] + " [Hz])", default=None, type=bool)
 @click.option("--exp-type", help="Explosion type ('chemical' or 'nuclear')", default=None)
-def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
+def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, freq_max, yld_min, yld_max, ref_rng, resolution, amb_press, amb_temp, grnd_burst, exp_type):
     '''
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy characterize --event-file GJI_example-ev0
+    \tinfrapy characterize --ev-file GJI_example-ev0
     '''
 
     click.echo("")
@@ -467,22 +467,22 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
     click.echo("#####################################")
     click.echo("")    
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
     else:
         user_config = None    
 
-    event_file = config.set_param(user_config, 'DATA IO', 'event_file', event_file, 'string')
+    ev_file = config.set_param(user_config, 'DATA IO', 'ev_file', ev_file, 'string')
     det_mask = config.set_param(user_config, 'YIELD', 'det_mask', det_mask, 'string')
     loc_index = config.set_param(user_config, 'YIELD', 'loc_index', loc_index, 'str')
 
-    ev_data = data_io._load_dets_json(event_file)[0]
+    ev_data = data_io._load_dets_json(ev_file)[0]
 
     if det_mask is None:
         det_mask = np.ones(len(ev_data['det_info']))
@@ -504,7 +504,7 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
         return 
 
     click.echo('\n' + "Data summary:")
-    click.echo("  event_file: " + str(event_file))
+    click.echo("  ev_file: " + str(ev_file))
 
     # Set analysis parameter dictionary
     char_params = {}
@@ -596,7 +596,7 @@ def characterize(event_file, config_file, det_mask, loc_index, tlm_label, freq_m
                             p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
 
         ev_data['characterization'] = ev_data['characterization'] + [{'params' : char_params, 'result' : spye_result}]
-        with gzip.open(event_file, 'wt', encoding='UTF-8') as zipfile:
+        with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
             json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
         click.echo('\n' + 'Results Summary (tons eq. TNT):')

@@ -77,7 +77,7 @@ class InfrasoundDetection(object):
     __array_dim = None      # integer number of elements in the detecting array
     __method = ''           # method used in the beamforming (eg bartlett)
     __name = ''             # string used to identify the detection (maybe only used in the GUI)
-    __event_id = ''         # string containing the event id the detection is associated with
+    __ev_id = ''         # string containing the event id the detection is associated with
     __note = ''             # optional note that can be added for a reminder etc...
     __network = ''          # network code for the detecting array
     __station = ''          # station code for the detecting array
@@ -399,13 +399,13 @@ class InfrasoundDetection(object):
 
     note = property(get_note, set_note, doc="(optional) Note regarding the detection")
 
-    def set_event_id(self, evt):
-        self.__event_id = evt
+    def set_ev_id(self, evt):
+        self.__ev_id = evt
 
-    def get_event_id(self):
-        return self.__event_id
+    def get_ev_id(self):
+        return self.__ev_id
 
-    event_id = property(get_event_id, set_event_id, doc="(optional) ID of the event")
+    ev_id = property(get_ev_id, set_ev_id, doc="(optional) ID of the event")
 
     def set_method(self, method):
         self.__method = method
@@ -490,7 +490,7 @@ class InfrasoundDetection(object):
                          'Freq Range': self.__freq_range,
                          'Array Dim.': self.__array_dim,
                          'Method': self.__method,
-                         'Event': self.__event_id,
+                         'Event': self.__ev_id,
                          'Note': self.__note,
                          'Network': self.__network,
                          'Station': self.__station}
@@ -530,7 +530,7 @@ class InfrasoundDetection(object):
         if 'Note' in dict:
             self.set_note(dict['Note'])
         if 'Event' in dict:
-            self.set_event_id(dict['Event'])
+            self.set_ev_id(dict['Event'])
         if 'Start' in dict:
             self.set_start(dict['Start'])
         if 'End' in dict:

@@ -399,13 +399,13 @@ class IPStationBrowser(QWidget):
         # find out if there is a valid event in the eventwidget, if there is, proceed
         #lol...there's got to be a better way
         mw = self.parentWidget().parentWidget().parentWidget().parentWidget()
-        event_widget = mw.locationWidget.showgroundtruth.event_widget
-        # event_widget = self.parentWidget().parentWidget().parentWidget().parentWidget().eventWidget
-        if event_widget.hasValidEvent():
-            event_dict = event_widget.Dict()
-            date = event_dict['UTC Date']
-            lat = event_dict['Latitude']
-            lon = event_dict['Longitude']
+        ev_widget = mw.locationWidget.showgroundtruth.ev_widget
+        # ev_widget = self.parentWidget().parentWidget().parentWidget().parentWidget().eventWidget
+        if ev_widget.hasValidEvent():
+            ev_dict = ev_widget.Dict()
+            date = ev_dict['UTC Date']
+            lat = ev_dict['Latitude']
+            lon = ev_dict['Longitude']
             # populate the form elements
             self.lat_edit.setValue(lat)
             self.lon_edit.setValue(lon)

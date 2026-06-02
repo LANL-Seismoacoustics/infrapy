@@ -13,21 +13,21 @@ class IPDatabaseWidget(QWidget):
         self.ipdatabase_settings_widget = None
         self.ipdatabase_query_widget = None
         self.ipdatabase_query_results_table = None
-        self.ipevent_query_widget = None
-        self.ipevent_query_results_table = None
+        self.ipev_query_widget = None
+        self.ipev_query_results_table = None
 
         self.buildUI()
 
     def buildUI(self):
         self.ipdatabase_query_widget = IPDatabaseQueryWidget.IPDatabaseQueryWidget(self)
-        self.ipevent_query_widget = IPDatabaseQueryWidget.IPEventQueryWidget(self)
+        self.ipev_query_widget = IPDatabaseQueryWidget.IPEventQueryWidget(self)
 
         self.ipdatabase_query_results_table = IPDatabaseQueryResultsTable.IPDatabaseQueryResultsTable(self)
-        self.ipevent_query_results_table = IPDatabaseQueryResultsTable.IPEventQueryResultsTable(self)
+        self.ipev_query_results_table = IPDatabaseQueryResultsTable.IPEventQueryResultsTable(self)
         
         hlayout = QHBoxLayout()
-        hlayout.addWidget(self.ipevent_query_widget)
-        hlayout.addWidget(self.ipevent_query_results_table)
+        hlayout.addWidget(self.ipev_query_widget)
+        hlayout.addWidget(self.ipev_query_results_table)
         
         #IPSplitter only accepts widgets, so we need to put the hlayout into one
         top_widget = QWidget()
@@ -53,6 +53,6 @@ class IPDatabaseWidget(QWidget):
 
     def connect_signals_and_slots(self):
         self.ipdatabase_settings_widget.connect_widget.sig_session_created.connect(self.ipdatabase_query_widget.set_session)
-        self.ipdatabase_settings_widget.connect_widget.sig_session_created.connect(self.ipevent_query_widget.set_session)
+        self.ipdatabase_settings_widget.connect_widget.sig_session_created.connect(self.ipev_query_widget.set_session)
 
-        self.ipevent_query_results_table.sig_origin_changed.connect(self.ipdatabase_query_widget.update_time)                                                       
+        self.ipev_query_results_table.sig_origin_changed.connect(self.ipdatabase_query_widget.update_time)                                                       
