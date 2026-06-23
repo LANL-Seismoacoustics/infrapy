@@ -514,9 +514,13 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     else:
         pl = None
 
+    if 'cwt' not in sd_params['spectral_option']:
+        sd_params['morlet_omega0'] = None
+
     click.echo('\n' + "sd (spectral detector) parameters:")
     for key in sd_params.keys():
-        click.echo("  " + key + ": " + str(sd_params[key]))
+        if sd_params[key] is not None:
+            click.echo("  " + key + ": " + str(sd_params[key]))
 
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
 

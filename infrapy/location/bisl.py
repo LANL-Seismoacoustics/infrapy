@@ -522,6 +522,17 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
         
     return result 
     
+def run_dict(det_list, loc_params, tm_lims, pgm):
+    return run(det_list,
+               bm_width=loc_params['back_az_width'],
+               rng_max=loc_params['range_max'],
+               grid_resol=loc_params['grid_resol'],
+               ll_corner=loc_params['ll_corner'],
+               ur_corner=loc_params['ur_corner'],
+               latlon_resol=loc_params['latlon_resol'],
+               tm_lims=tm_lims,
+               tm_resol=loc_params['tm_resol'],
+               path_geo_model=pgm)
 
 def summarize(result, confidence_level=90):
     """Outputs results of BISL analysis

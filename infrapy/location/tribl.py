@@ -16,7 +16,7 @@ import json
 from importlib.util import find_spec
 
 if find_spec('infraga'):
-    import wget
+    import requests
     from netCDF4 import Dataset
 
 import numpy as np
@@ -33,16 +33,19 @@ from ..utils import prog_bar
 sph_proj = Geod(ellps='sphere')
 resol = '100m'  # use data at this scale (not working at the moment)
 
+etopo_2022_file = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO_2022_v1_30s_N90W180_surface.nc"
+
+
 # ############################ #
 #       Back Projection        #
 #     Localization Methods     #
 # ############################ #
 def interp_etopo(ll_corner, ur_corner):
-    etopo1 = Dataset(find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd")
+    etopo_2022 = Dataset(etopo_2022_file)
 
-    grid_lons = etopo1.variables['x'][:]
-    grid_lats = etopo1.variables['y'][:]
-    grid_elev = etopo1.variables['z'][:]
+    grid_lats = etopo_2022.variables['lat'][:]
+    grid_lons = etopo_2022.variables['lon'][:]
+    grid_elev = etopo_2022.variables['z'][:]
 
     lat_mask = np.logical_and(ll_corner[0] - 2.0 <= grid_lats, grid_lats <= ur_corner[0] + 2.0).nonzero()[0]
     lon_mask = np.logical_and(ll_corner[1] - 2.0 <= grid_lons, grid_lons <= ur_corner[1] + 2.0).nonzero()[0]
@@ -61,28 +64,31 @@ def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latl
     lat_vals = [det.latitude for det in det_list]
     lon_vals = [det.longitude for det in det_list]
 
-    if os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd"):
+    if os.path.isfile(etopo_2022_file):
         topo = interp_etopo([min(lat_vals), min(lon_vals)], [max(lat_vals), max(lon_vals)])
     else:
-        print("Topography file not found.  Downloading from https://www.ngdc.noaa.gov/mgg/global/")
-        download_url = "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/ice_surface/grid_registered/netcdf/ETOPO1_Ice_g_gmt4.grd.gz"
-        destination = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd.gz"
+        print('\n' + "*" * 25 +'\n' + "ETOPO 2022 file not found" + '\n' + "Downloading from https://www.ngdc.noaa.gov/thredds/fileServer/global/")
+        etopo2022_url = "https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/30s/30s_surface_elev_netcdf/ETOPO_2022_v1_30s_N90W180_surface.nc"
+        destination = etopo_2022_file
+
         try:
             if not os.path.isdir(os.path.split(destination)[0]):
                 os.mkdir(os.path.split(destination)[0])
-            
-            print("Downloading ETOPO1 data...")
-            wget.download(download_url, destination)
-            print("Extracting...")
-            os.system("gzip -d " + destination)
-            print("ETOPO file successfully downloaded.")
 
-            topo = interp_etopo([min(lat_vals), min(lon_vals)], [max(lat_vals), max(lon_vals)])
+            response = requests.get(etopo2022_url)
+            if response.status_code == 200:
+                with open(destination, "wb") as file:
+                    file.write(response.content)
 
+            print("ETOPO file successfully downloaded." + '\n' + "*" * 25 +'\n')
+            return True 
+        
         except:
             print("Download failed.")
-            print("Try manual download: " + download_url)
-            print("Place extracted .grd file in " + find_spec('infraga').submodule_search_locations[0] + "/resources/")
+            print("Try manual download: " + etopo2022_url)
+            print("Place .nc file in " + find_spec('infraga').submodule_search_locations[0] + "/resources/")
+            print("*" * 25 +'\n')
+            return False 
 
     rcvr_elevs = np.array([topo(det.latitude, det.longitude)[0] for det in det_list])
 
@@ -91,13 +97,14 @@ def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latl
         atmo = np.loadtxt(atmo_file)
         snd_spd = interp1d(atmo[:, 0], np.sqrt(0.14 * atmo[:, 5] / atmo[:, 4]))
         grnd_snd_spd = np.array([snd_spd(z_val) for z_val in rcvr_elevs])
-    
-    if len(grnd_snd_spd) == 1:
-        grnd_snd_spd = [grnd_snd_spd[0]] * len(det_list)
-
-    if len(grnd_snd_spd) != len(det_list):
+    elif len(np.atleast_1d(grnd_snd_spd)) == 1:
+        grnd_snd_spd = [grnd_snd_spd] * len(det_list)
+    elif len(np.atleast_1d(grnd_snd_spd)) != len(det_list):
         print('\t' + "Warning! Specificed grnd_snd_spd values don't match length of detections list.")
         return None
+    else:
+        # note sure how things would get here...
+        grnd_snd_spd = 340.0
 
     command_list = []
     for n, det in enumerate(det_list):
@@ -141,7 +148,6 @@ class BackProjection(object):
 
         self.az_std_dev = np.degrees(1.0 / np.sqrt(2.0 * (detection.array_dim - 1.0) * detection.peakF_value))
         self.az_std_dev = max(self.az_std_dev, az_limit)
-
 
         self.tr_vel_std_dev = v0 * np.radians(self.az_std_dev)
 
@@ -268,6 +274,32 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
         print("Once it's working, try --det-mask ", np.where(np.max(det) > 0.0))
 
     return result
+
+
+
+def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, show_prog=True, pool=None):
+
+    return run(det_list,
+               output_id,
+               temp_id,
+               bm_width=loc_params['back_az_width'],
+               rng_max=loc_params['range_max'],
+               grid_resol=loc_params['grid_resol'],
+               ll_corner=loc_params['ll_corner'],
+               ur_corner=loc_params['ur_corner'],
+               latlon_resol=loc_params['latlon_resol'],
+               tm_lims=tm_lims,
+               tm_resol=loc_params['tm_resol'],
+               alt_lims=loc_params['alt_lims'],
+               alt_resol=loc_params['alt_resol'],
+               grnd_snd_spd=loc_params['grnd_snd_spd'],
+               c0_stdev=loc_params['c0_stdev'],
+               det_time_stdev=loc_params['det_tm_stdev'],
+               az_limit=loc_params['az_limit'],
+               verbose=False,
+               show_prog=True,
+               pool=pool) 
+
 
 
 

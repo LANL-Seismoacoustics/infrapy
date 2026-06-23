@@ -209,7 +209,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 if not test_commands:
                     os.system(command)
 
-                command = "infrapy plot localize --ev-file " + pipe_params["ev_dir"] + ev_file + "  --ev-loc-index " + str(k) 
+                command = "infrapy plot localize --ev-file " + pipe_params["ev_dir"] + ev_file + "  --loc-index " + str(k) 
                 command = command + " --figure-out " + fig_path + ".loc-" + str(k) + ".png --show-figure False"
                 click.echo(command) 
                 if not test_commands:

@@ -36,10 +36,6 @@ from infrapy.detection import beamforming_new
 from infrapy.propagation import likelihoods as lklhds
 from infrapy.utils import config, data_io
 
-
-
-
-
 @click.command('check-db-wvfrms', short_help="Check waveform pull from database")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)

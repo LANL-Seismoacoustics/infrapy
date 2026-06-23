@@ -40,7 +40,7 @@ def beam_detect(det_file, det_index, plot_all_dets, param_index, figure_out, sho
 
     Example usage:
     \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
-    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz  --det-index 2
+    \tinfrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz --det-index 1
     '''
 
     click.echo("")
@@ -166,10 +166,10 @@ def beam_detect(det_file, det_index, plot_all_dets, param_index, figure_out, sho
 @click.option("--plot-all-dets", help="Plot waveforms for all detections", default=False)
 @click.option("--use-loc", help="Use location solution to defined ranges", default=False)
 @click.option("--use-gt", help="Use ground truth to defined ranges", default=False)
-@click.option("--ev-loc-index", help="Index of location for event result", default=0)
+@click.option("--loc-index", help="Index of location for event result", default=0)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Print figure to screen", default=True)
-def wvfrms(det_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, ev_loc_index, figure_out, show_figure):
+def wvfrms(det_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, loc_index, figure_out, show_figure):
     '''
     Summarize the contents of a JSON detections file
 
@@ -266,7 +266,7 @@ def wvfrms(det_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, ev_loc_
                 click.echo("  " + key + ': ' + str(ev_data['ground truth'][key]))
             click.echo("")
         
-        loc_vis.plot_ev_wvfrms(ev_data, use_loc=use_loc, loc_index=ev_loc_index, use_gt=use_gt)
+        loc_vis.plot_ev_wvfrms(ev_data, use_loc=use_loc, loc_index=loc_index, use_gt=use_gt)
            
 
 @click.command('spectral', short_help="Visualize detection(s) from spectral analysis")
@@ -439,20 +439,20 @@ def map_dets(cnfg_file, det_files, ev_file, range_max, figure_out, offline_maps_
 @click.command('localize', short_help="Plot localization result on a map")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--ev-file", help="Detection path and pattern", default=None)
-@click.option("--ev-loc-index", help="Index of location results", default=None, type=int)
+@click.option("--loc-index", help="Index of location results", default=None, type=int)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--show-figure", help="Generate figure on screeen", default=True)
 @click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
-def ev_loc(cnfg_file, ev_file, ev_loc_index, range_max, confidence_level, figure_out, show_figure, offline_maps_dir):
+def ev_loc(cnfg_file, ev_file, loc_index, range_max, confidence_level, figure_out, show_figure, offline_maps_dir):
     '''
     Visualize BISL results in with wide or zoomed format
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
-    \tinfrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+    \tinfrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --range-max 1200.0
+    \tinfrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --zoom true
 
     '''
 
@@ -484,9 +484,9 @@ def ev_loc(cnfg_file, ev_file, ev_loc_index, range_max, confidence_level, figure
         range_max = ev_data['assoc_params']['range_max']
     range_max = config.set_param(user_config, 'LOC', 'range_max', range_max, 'float')
 
-    if ev_loc_index is not None:
-        loc = ev_data['location'][ev_loc_index]
-        click.echo("Visualizing with ev_loc_index: " + str(ev_loc_index) + '\n')
+    if loc_index is not None:
+        loc = ev_data['location'][loc_index]
+        click.echo("Visualizing with loc_index: " + str(loc_index) + '\n')
         click.echo("localization parameters:")
         for key in loc['params'].keys():
             if loc['params'][key] is not None:
@@ -580,7 +580,7 @@ def ev_char(cnfg_file, ev_file, loc_index, char_index, range_max, confidence_lev
 
     if loc_index is not None:
         loc = ev_data['location'][loc_index]
-        click.echo("Visualizing with ev_loc_index: " + str(loc_index) + '\n')
+        click.echo("Visualizing with loc_index: " + str(loc_index) + '\n')
         click.echo("localization parameters:")
         for key in loc['params'].keys():
             if loc['params'][key] is not None:
@@ -619,7 +619,7 @@ def ev_char(cnfg_file, ev_file, loc_index, char_index, range_max, confidence_lev
 
     if char_index is not None:
         char = ev_data['characterization'][char_index]
-        click.echo("Visualizing with ev_loc_index: " + str(loc_index) + '\n')
+        click.echo("Visualizing with loc_index: " + str(loc_index) + '\n')
         click.echo("characterization parameters:")
         for key in char['params'].keys():
             if char['params'][key] is not None:
@@ -1231,7 +1231,7 @@ def dets(cnfg_file, range_max, det_label, figure_out, offline_maps_dir):
 @click.command('loc', short_help="Plot localization result on a map", hidden=True)
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-det-label", help="Detection path and pattern", default=None)
-@click.option("--local-loc-label", help="Localization results path", default=None)
+@click.option("--loc-label", help="Localization results path", default=None)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 @click.option("--zoom", help="Option to zoom in on the estimated source region", default=False)
 @click.option("--figure-out", help="Destination for figure", default=None)
@@ -1243,8 +1243,8 @@ def loc(cnfg_file, det_label, local_loc_label, range_max, zoom, figure_out, grnd
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
-    \tinfrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+    \tinfrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --range-max 1200.0
+    \tinfrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --zoom true
 
     '''
 
@@ -1302,7 +1302,7 @@ def loc(cnfg_file, det_label, local_loc_label, range_max, zoom, figure_out, grnd
 
 @click.command('origin-time', short_help="Plot origin time distribution", hidden=True)
 @click.option("--cnfg-file", help="Configuration file", default=None)
-@click.option("--local-loc-label", help="Localization results", default=None)
+@click.option("--loc-label", help="Localization results", default=None)
 @click.option("--figure-out", help="Destination for figure", default=None)
 @click.option("--grnd-truth", help="Ground truth origin time for comparison", default=None)
 def origin_time(cnfg_file, local_loc_label, figure_out, grnd_truth):
@@ -1311,7 +1311,7 @@ def origin_time(cnfg_file, local_loc_label, figure_out, grnd_truth):
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy plot origin-time --local-loc-label GJI_example-ev0
+    \tinfrapy plot origin-time --loc-label GJI_example-ev0
     '''
     click.echo("")
     click.echo("#####################################")

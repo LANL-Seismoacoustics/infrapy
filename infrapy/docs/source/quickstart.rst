@@ -246,8 +246,8 @@ Detection Analyses
 
         Writing beamforming and detection results into BRP_hf.dets.json.gz
 
+- In addition to ingesting local :code:`.SAC` or similar files (anything that can read by ObsPy), the FDSN Client in ObsPy can be called to pull data.  This is best done via a configuration file given the FDSN, network, station, location, channel, and start/end times of the data of interest must all be specified for the data pull.  The :code:`[DATA IO]` block to run a beam using data from the I53 infrasound station is,
 
-- Using FDSN data ingestion...
 
     .. code-block:: bash
 
@@ -260,7 +260,7 @@ Detection Analyses
         starttime = 2018-12-19T01:00:00
         endtime = 2018-12-19T03:00:00
 
-- Running using this configuration file,
+- An example analysis using this time period (during which a bolide signal was recorded on the station) can be completed using the included FDSN configuration file,
 
     .. code-block:: bash
 
@@ -327,90 +327,180 @@ Detection Analyses
 
         Writing beamforming and detection results into IM.I53H_2018.12.19T01.00.00.dets.json.gz
 
-
-
-
-
 - The above beamforming detection analysis requires a spatially distributed set of microbarometers and uses the coherence to identify signals of interest.  When only a single data stream is available, a spectrogram-based detection method can be applied to identify possible signals of interest. The spectrogram-based detection methods can be accessed using the :code:`infrapy detect spectral` CLI option.  For a local data source such as the included SAC files in the data directory, this is simply (note: if multiple files are selected, only the first file will be used given the single-channel nature of this analysis),
 
     .. code-block:: bash
         
         infrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
 
+    .. code-block:: bash
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##   Spectral Detection Analyses   ##
+        ##                                 ##
+        #####################################
 
 
+        Data parameters:
+          local_wvfrms: data/YJ.BRP1..EDF.SAC
+          local_latlon: None
+          det_label: None
+          cpu_cnt: 4
+
+        sd (spectral detector) parameters:
+          spectral_option: spectrogram
+          freq_min: 1.0
+          freq_max: 20.0
+          window_len: 900.0
+          window_step: 450.0
+          p_value: 0.01
+          freq_tm_factor: 35.0
+          cluster_eps: 10.0
+          cluster_min_samples: 40
+          cluster_window_len: 600.0
+          cpu_cnt: 4
+
+        Loading local data from data/YJ.BRP1..EDF.SAC
+
+        Data summary:
+        YJ.BRP1..EDF	2012-04-09T18:00:00.008300Z - 2012-04-09T18:19:59.998300Z
+
+        Running spectral detection (sd) analysis...
+            Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+        Clustering into detections...
+        Identified 5 detections.
+
+- The resulting spectral analysis can be visualized similarly to a beam-based detection result and shows the original spectrogram, the normalized spectrogram with the background removed, and the clustered time-frequency points that were grouped into detections.
+
+    .. code-block:: bash
+    
+            infrapy plot spectral --det-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz 
+
+    .. image:: _static/_images/plot_spec1.png
+        :width: 1200px
+        :align: center
+
+- Once again, the information related to an individual detection can be visualized by specifying a detection index:
+
+    .. code-block:: bash
+    
+            infrapy plot spectral --det-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz --det-index 2
+
+    .. image:: _static/_images/plot_spec2.png
+        :width: 1200px
+        :align: center
 
 
+- Detections obtained from this spectral analysis do not include direction-of-arrival information (e.g., back azimuth and trace velocity), but the detection time, waveform, spectrogram, averaged signal spectra curve, and background spectra curve are all written into the resulting JSON detection file.
 
+    .. code-block:: none 
+
+       {
+       "wvfrm_info": [
+            {
+                "trace id": "YJ.BRP1..EDF",
+                "starttime": "2012-04-09T18:00:00.008300Z",
+                "endtime": "2012-04-09T18:19:59.998300Z",
+                "latitude": 39.47269821166992,
+                "longitude": -110.74089813232422
+            }
+        ],
+        "sd_params": [
+            {"spectral_option": "spectrogram", ...}
+        ],
+        "spectrogram": [...],
+        "history:", [...],
+        "det_info": [    
+            {
+                "peak f-stat time": "2012-04-09T18:10:20.008300",
+                "waveform": [...],
+                "spec pnts": [...],
+                "spectrogram": [...],
+                "spec": [...],
+                "bg spec": [...]
+            }, ...
+        ]
+
+- Depending on the width of the frequency band of the signal, it might be more insightful to visualize the detection results using line or logarithmic scaled frequency.  The default behavior of the visualization uses linear scaling, but logarithic scaling can be applied by including the option :code:`--log-scale-freq True``.
+
+    .. image:: _static/_images/plot_spec3.png
+        :width: 1200px
+        :align: center
+
+    .. image:: _static/_images/plot_spec4.png
+        :width: 1200px
+        :align: center
 
 --------------
 Event Analyses
 --------------
 
-- Once fk and fd analysis are run and detections are identified across a network of infrasound arrays, event identification and localization can be completed.  The detection set used in the Blom et al. (2020) evaluation of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
+- Once detections are identified across a network of infrasound arrays, event identification, localization, and characterization can be completed.  The various event-level analysis methods are accessible through :code:`infrapy event`.  The detection set used in the Blom et al. (2020) evaluation of a pair-based, joint-likelihood association algorithm are included as an example to demonstrate these analysis steps.  Detection files are in the examples/data/Blom_etal_2020/ directory and contain detections on each of 4 regional array in the western US (see the manuscript for a full discussion of the generation of this synthetic data set).  Analysis of these detections and identification of events can be completed by running:
 
     .. code-block:: bash
     
-        infrapy run_assoc --local-det-label 'data/Blom_etal2020_GJI/*' --local-ev-label GJI_example --cpu-cnt 4
+        infrapy event build --det-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
+
+**UPDATES THROUGH HERE**
 
     Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
     .. code-block:: none
 
-        #####################################
-        ##                                 ##
-        ##             InfraPy             ##
-        ##       Association Analysis      ##
-        ##                                 ##
-        #####################################
+        ####################################
+        ##                                ##
+        ##             InfraPy            ##
+        ##         Event Building         ##
+        ##                                ##
+        ####################################
+
 
         Data summary:
-          det_label: data/Blom_etal2020_GJI/*
-          ev_label: example
-          starttime: None
-          endtime: None
+          det_files: data/Blom_etal2020_GJI/SY*dets.json.gz
+          ev_file: Blom_etal2020_GJI
 
-        Parameter summary:
+        association parameters:
+          celerity_model: regional_lf
           back_az_width: 10.0
-          range_max: 2000.0
+          range_max: 1500.0
           resolution: 180
           distance_matrix_max: 8.0
           cluster_linkage: weighted
           cluster_threshold: 5.0
-          trimming_threshold: 3.8
+          trimming_threshold: 3.6
+          ev_population_min: 3
+          ev_station_min: 2
+          cpu_cnt: 4
 
-        Loading detections from files:
-        	data/Blom_etal2020_GJI/NVIAR.dets.json
-        	data/Blom_etal2020_GJI/I57US.dets.json
-        	data/Blom_etal2020_GJI/DLIAR.dets.json
-        	data/Blom_etal2020_GJI/PDIAR.dets.json
 
-        Running event identification for: 2010-01-01T09:35:59.773Z - 2010-01-01T13:23:14.773Z
-        	Computing joint-likelihoods...
-		        Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
-        	Clustering detections into events...
-        	Trimming poor linkages and repeating clustering analysis...
+        Running event identification for: 2010-01-01T10:13:51.773000Z - 2010-01-01T13:04:18.773000Z
+            Computing joint-likelihoods...
+                Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Clustering detections into events...
+            Trimming poor linkages and repeating clustering analysis...
 
-        Running event identification for: 2010-01-01T10:51:44.773Z - 2010-01-01T14:38:59.773Z
-        	Computing joint-likelihoods...
-        		Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
-	        Clustering detections into events...
-        	Trimming poor linkages and repeating clustering analysis...
+        Running event identification for: 2010-01-01T11:10:40.773000Z - 2010-01-01T14:01:07.773000Z
+            Computing joint-likelihoods...
+                Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Clustering detections into events...
+            Trimming poor linkages and repeating clustering analysis...
 
-        Running event identification for: 2010-01-01T12:07:29.773Z - 2010-01-01T15:54:44.773Z
-        	Computing joint-likelihoods...
-        		Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
-        	Clustering detections into events...
-        	Trimming poor linkages and repeating clustering analysis...
+        Running event identification for: 2010-01-01T12:07:29.773000Z - 2010-01-01T14:57:56.773000Z
+            Computing joint-likelihoods...
+                Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Clustering detections into events...
+            Trimming poor linkages and repeating clustering analysis...
 
-        Running event identification for: 2010-01-01T13:23:14.773Z - 2010-01-01T17:10:29.773Z
-        	Computing joint-likelihoods...
-		        Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
-        	Clustering detections into events...
-	        Trimming poor linkages and repeating clustering analysis...
+        Running event identification for: 2010-01-01T13:04:18.773000Z - 2010-01-01T15:54:45.773000Z
+            Computing joint-likelihoods...
+                Progress: 	[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Clustering detections into events...
+            Trimming poor linkages and repeating clustering analysis...
 
         Cleaning up and merging clusters...
-        identified 3 events.
+        Identified 3 event(s).
 
     The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`ev_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
 
@@ -439,7 +529,7 @@ Event Analyses
 
     .. code-block:: bash
 
-        infrapy run_loc --local-det-label GJI_example-ev0  --local-loc-label GJI_example-ev0
+        infrapy run_loc --local-det-label GJI_example-ev0  --loc-label GJI_example-ev0
 
     The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
 
@@ -490,7 +580,7 @@ Event Analyses
 
     .. code-block:: bash
 
-        infrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --range-max 1200.0
+        infrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --range-max 1200.0
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
@@ -500,7 +590,7 @@ Event Analyses
 
     .. code-block:: bash
 
-        infrapy plot loc --local-det-label GJI_example-ev0 --local-loc-label GJI_example-ev0 --zoom true
+        infrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --zoom true
 
     .. image:: _static/_images/plot_loc2.png
         :width: 900px
@@ -510,7 +600,7 @@ Event Analyses
 
     .. code-block:: bash
 
-        infrapy plot origin-time --local-loc-label GJI_example-ev0 
+        infrapy plot origin-time --loc-label GJI_example-ev0 
 
 
     .. image:: _static/_images/plot_origin_time.png

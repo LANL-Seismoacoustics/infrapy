@@ -27,7 +27,7 @@ from ..utils import data_io
 @click.command('run_loc', short_help="Estimate source locations and times for events", hidden=True)
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-det-label", help="Detection path and pattern", default=None)
-@click.option("--local-loc-label", help="Localization results path", default=None)
+@click.option("--loc-label", help="Localization results path", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
 
@@ -62,9 +62,9 @@ def run_loc(cnfg_file, det_label, local_loc_label, back_az_width, range_max, gri
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy run_loc --local-det-label GJI_example-ev0  --local-loc-label GJI_example-ev0
-    \tinfrapy run_loc --local-det-label data/detection_set2.json --local-loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
-    \tinfrapy run_loc --local-det-label data/Blom_etal2024_GJI/UTTR  --local-loc-label data/Blom_etal2024_GJI/UTTR-BISL
+    \tinfrapy run_loc --local-det-label GJI_example-ev0  --loc-label GJI_example-ev0
+    \tinfrapy run_loc --local-det-label data/detection_set2.json --loc-label data/location2 --pgm-file ../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm
+    \tinfrapy run_loc --local-det-label data/Blom_etal2024_GJI/UTTR  --loc-label data/Blom_etal2024_GJI/UTTR-BISL
     \tinfrapy run_loc --cnfg-file config/tribl_example.config
     '''
 
@@ -298,7 +298,7 @@ def run_loc(cnfg_file, det_label, local_loc_label, back_az_width, range_max, gri
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--local-det-label", help="Detection results path", default=None)
-@click.option("--local-loc-label", help="Localization results path", default=None)
+@click.option("--loc-label", help="Localization results path", default=None)
 @click.option("--local-yld-label", help="Output file for results", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
 @click.option("--src-lat", help="Source latitude (if no loc result file)", default=None)
@@ -477,7 +477,7 @@ def regional(cnfg_file, local_wvfrms, fdsn, db_config, det_label, local_loc_labe
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--local-det-label", help="Detection results path", default=None)
-@click.option("--local-loc-label", help="Localization results path", default=None)
+@click.option("--loc-label", help="Localization results path", default=None)
 @click.option("--local-pdf-label", help="Output file for results", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
 @click.option("--det-index", help="Index of detection in file", default=0, type=int)

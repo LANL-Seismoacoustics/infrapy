@@ -725,3 +725,22 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
     ev_qls = [eqi for eqi in ev_qls if eqi > 0]
 
     return events, ev_qls
+
+
+def id_events_dict(det_list, assoc_params, pl):
+    
+    return id_events(det_list,
+                     assoc_params['cluster_threshold'],
+                     starttime=assoc_params['starttime'],
+                     endtime=assoc_params['endtime'],
+                     dist_max=assoc_params['distance_matrix_max'],
+                     bm_width=assoc_params['back_az_width'],
+                     rng_max=assoc_params['range_max'],
+                     rad_min=100.0,
+                     rad_max=(assoc_params['range_max'] / 4.0), 
+                     resol=assoc_params['resolution'],
+                     linkage_method=assoc_params['cluster_linkage'],
+                     trimming_thresh=assoc_params['trimming_threshold'], 
+                     cluster_det_population=assoc_params['ev_population_min'],
+                     cluster_array_population=assoc_params['ev_station_min'],
+                     pool=pl)

@@ -112,7 +112,8 @@ def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, ba
 
     click.echo('\n' + "association parameters:")
     for key in assoc_params.keys():
-        click.echo("  " + key + ": " + str(assoc_params[key]))
+        if assoc_params[key] is not None:
+            click.echo("  " + key + ": " + str(assoc_params[key]))
 
     if assoc_params['cpu_cnt'] is not None:
         pl = Pool(assoc_params['cpu_cnt'])
@@ -160,11 +161,8 @@ def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, ba
         det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
         infrasound._load_celerity_model(assoc_params['celerity_model'])
-        events, ev_qls = hjl.id_events(det_list, assoc_params['cluster_threshold'], starttime=assoc_params['starttime'], endtime=assoc_params['endtime'], dist_max=assoc_params['distance_matrix_max'], 
-                                        bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'], rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), 
-                                        resol=assoc_params['resolution'], linkage_method=assoc_params['cluster_linkage'], trimming_thresh=assoc_params['trimming_threshold'], 
-                                        cluster_det_population=assoc_params['ev_population_min'], cluster_array_population=assoc_params['ev_station_min'], pool=pl)
-
+        events, ev_qls = hjl.id_events_dict(det_list, assoc_params, pl)
+        
         click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
         for j, ev in enumerate(events):
             dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
@@ -214,8 +212,10 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event localize --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
-    '''
+    \tinfrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
+    \tinfrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
+
+        '''
 
     click.echo("")
     click.echo("#####################################")
@@ -341,9 +341,7 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
 
         click.echo("")
         if loc_params['atmo_data'] is None:           
-            result = bisl.run(det_list, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
-                              ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'],
-                              tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], path_geo_model=pgm)
+            result = bisl.run_dict(det_list, loc_params, tm_lims, pgm)         
         else:
             if find_spec('infraga'):
                 if not os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/bin/infraga-sph"):
@@ -374,10 +372,19 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
                             norms = []
                             for k, file_name in enumerate(file_list):                            
                                 print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
+                                temp = tribl.run_dict(det_list,
+                                                      file_path + file_name,
+                                                      loc_params,
+                                                      tm_lims,
+                                                      verbose=False,
+                                                      show_prog=True,
+                                                      pool=pl)
+                                '''
                                 temp = tribl.run(det_list, file_path + file_name, temp_path + "-" + str(k), bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
                                                 ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'],
                                                 alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
                                                 det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=False, show_prog=True, pool=pl) 
+                                '''
                                 norms = norms + [temp['norm']]
 
                             norms = norms / np.sum(norms)
@@ -408,10 +415,20 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
                             result['atmo norms'] = norms 
 
                         else:
+                            result = tribl.run_dict(det_list,
+                                                    loc_params['atmo_data'],
+                                                    temp_path,
+                                                    loc_params,
+                                                    tm_lims,
+                                                    verbose=False,
+                                                    show_prog=True,
+                                                    pool=pl)
+                            '''
                             result = tribl.run(det_list, loc_params['atmo_data'], temp_path, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'], 
                                                 ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], 
                                                 alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
                                                 det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=True, pool=pl)
+                            '''
             else:
                 click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
                 return
