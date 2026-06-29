@@ -34,7 +34,8 @@ from pyproj import Geod
 
 from infrapy.detection import beamforming_new
 from infrapy.propagation import likelihoods as lklhds
-from infrapy.utils import config, data_io
+from infrapy.utils import config, data_io, database
+
 
 @click.command('check-db-wvfrms', short_help="Check waveform pull from database")
 @click.option("--cnfg-file", help="Configuration file", default=None)
@@ -111,6 +112,146 @@ def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, st
     click.echo('\nLocation info:')    
     for line in latlon:
         click.echo(str(line[0]) + '\t' +  str(line[1]))
+
+
+
+@click.command('db2dets_json', short_help="Write from arrivals table to dets.json file")
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--lat-bnds", help="Latitude bounds", default=None, prompt="Latitude bounds (comma separated):")
+@click.option("--lon-bnds", help="Longitude bounds", default=None, prompt="Longitude bounds (comma separated):")
+@click.option("--starttime", help="Start time of analysis window", default=None, prompt="Window start time:")
+@click.option("--endtime", help="End time of analysis window", default=None, prompt="Window end time:")
+@click.option("--phase-list", help="Phases to include in output (default: 'I')", default="I")
+@click.option("--output-label", help="Output label for [...].ev.json.gz file", default=None)
+@click.option("--verbose", help="Print retrieved event info to screen (default: True)", default=True)
+def db2dets_json(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, output_label, verbose):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##        db2dets_json         ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    lat_lims = [float(val) for val in lat_bnds.split(",")]
+    lon_lims = [float(val) for val in lon_bnds.split(",")]
+    starttime = UTCDateTime(starttime)
+    endtime = UTCDateTime(endtime)
+
+    print("Pulling arrivals for criterion:")
+    print("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
+    print("  Time bounds:", starttime, ",", endtime)
+    print("  Phase list:", phase_list)
+
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
+    print("Setting up database configuration...")
+    # set up the session and check connection
+    if 'url' in db_info['DATABASE'].keys():
+        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
+        db_session = database.db_connect_url( db_info['DATABASE']['url'])
+    else:
+        # clean up the above to simplify this or just require a url?
+        db_session = database.db_connect2(db_info)
+
+    # check the session works
+    try:
+        db_session.get_bind().connect()
+    except Exception as e:
+        print("Database connection failed")
+        return 
+
+    det_dicts = database.db2dets_json(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list="I", db_schema="kbcore")
+
+    if len(det_dicts) > 0:
+        if verbose:
+            print('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
+            for det in det_dicts:
+                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
+                print(det['phase id'], end='\t')
+                print(det['peak f-stat time'], end='\t')
+                print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
+                print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
+                print(np.round(np.array(det['f-stat'], dtype=float), 1))
+
+        if output_label is not None:
+            print("Writing " + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
+            with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                json.dump({"det_info" : det_dicts}, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+    else:
+        print('\n' + "No arrivals matched criterion.")
+
+
+@click.command('db2ev_json', short_help="Write from arrivals table to dets.json file")
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--evid", help="Event ID to pull", default=0)
+@click.option("--phase-list", help="Phases to include in output (default: 'I')", default="I")
+@click.option("--output-label", help="Output label for [...].ev.json.gz file", default=None)
+@click.option("--verbose", help="Print retrieved event info to screen (default: True)", default=True)
+def db2ev_json(db_config, evid, phase_list, output_label, verbose):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##          db2ev_json         ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+    
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
+    print("Setting up database configuration...")
+    # set up the session and check connection
+    if 'url' in db_info['DATABASE'].keys():
+        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
+        db_session = database.db_connect_url( db_info['DATABASE']['url'])
+    else:
+        # clean up the above to simplify this or just require a url?
+        db_session = database.db_connect2(db_info)
+
+    # check the session works
+    try:
+        db_session.get_bind().connect()
+    except Exception as e:
+        print("Database connection failed")
+        return 
+
+    ev_output = database.db2ev_json(db_session, db_info['DBTABLES'], evid, db_schema="kbcore")
+
+    if len(ev_output['det_info']) > 0:
+        if verbose:
+            print('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
+            print('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
+            print('  Origin time: ' + str(ev_output['ground truth']['origin time']))
+            print('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
+            
+            for det in ev_output['det_info']:                
+                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
+                print(det['phase id'], end='\t')
+                if "I" in det['phase id']:
+                    print(det['peak f-stat time'], end='\t')
+                    print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
+                    print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
+                    print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                else:
+                    print(det['peak f-stat time'], end='\t')
+                    print(np.round(np.array(det['azimuth'], dtype=float), 1), end='\t')
+                    print(np.round(np.array(det['slow'], dtype=float), 3), end='\t')
+                    print(np.round(np.array(det['snr'], dtype=float), 1))
+
+        if output_label is not None:
+            print("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
+            with gzip.open(output_label + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+
 
 
 @click.command('write-wvfrms', short_help="Save waveforms from FDSN or database")

@@ -104,6 +104,10 @@ plot.add_command(cli_visualization.ev_char)
 # Utilities
 utils.add_command(cli_utils.check_db_wvfrm)
 utils.add_command(cli_utils.write_wvfrms)
+
+utils.add_command(cli_utils.db2dets_json)
+utils.add_command(cli_utils.db2ev_json)
+
 utils.add_command(cli_utils.merge_dets)
 utils.add_command(cli_utils.convert_dets)
 utils.add_command(cli_utils.ev_gt)
