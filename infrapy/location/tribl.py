@@ -33,8 +33,8 @@ from ..utils import prog_bar
 sph_proj = Geod(ellps='sphere')
 resol = '100m'  # use data at this scale (not working at the moment)
 
-etopo_2022_file = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO_2022_v1_30s_N90W180_surface.nc"
 
+etopo_2022_file = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO_2022_v1_30s_N90W180_surface.nc"
 
 # ############################ #
 #       Back Projection        #
@@ -296,8 +296,8 @@ def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, s
                c0_stdev=loc_params['c0_stdev'],
                det_time_stdev=loc_params['det_tm_stdev'],
                az_limit=loc_params['az_limit'],
-               verbose=False,
-               show_prog=True,
+               verbose=verbose,
+               show_prog=show_prog,
                pool=pool) 
 
 

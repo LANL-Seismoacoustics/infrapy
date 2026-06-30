@@ -94,8 +94,10 @@ event.add_command(cli_event.localize)
 event.add_command(cli_event.characterize)
 
 # Visualizations
-plot.add_command(cli_visualization.beam_detect)
-plot.add_command(cli_visualization.spec_detect)
+# plot.add_command(cli_visualization.beam_detect)
+# plot.add_command(cli_visualization.spec_detect)
+plot.add_command(cli_visualization.detect_combined)
+
 plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
 plot.add_command(cli_visualization.ev_loc)

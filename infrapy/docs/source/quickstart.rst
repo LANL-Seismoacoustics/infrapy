@@ -74,7 +74,9 @@ Detection Analyses
         Writing beamforming and detection results into data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
 
 
-- Once completed, this analysis produces an output file containing a summary of the analysis and any identified detection, :code:`data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz`. The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--det-label` parameter.  Uncompressing and interrogating this file, one can find the waveform info and parameter information, computed fk (i.e., direction-of-arrival and Fisher statistic values) for the entire analysis duration, as well as information for individual detections.
+- Once completed, this analysis produces an output file containing a summary of the analysis and any identified detection, :code:`data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz`. The naming convention of the output file uses the network, station, and time associated with the waveform data, but can be overwritten via the :code:`--det-label` parameter.  
+  
+- Uncompressing and interrogating this file, one can find the waveform info and parameter information, computed fk (i.e., direction-of-arrival and Fisher statistic values) for the entire analysis duration, as well as information for individual detections.
 
     .. code-block:: none 
 
@@ -137,11 +139,11 @@ Detection Analyses
         ]
 
 
-- The beamforming results from the :code:`infrapy detect beam` analysis can be visualized using :code:`infrapy plot beam` to show the full beam results or summaries for individual detections.  Providing just the detection visualizes the beam summary:
+- The beamforming results from the :code:`infrapy detect beam` analysis can be visualized using :code:`infrapy plot detect` to show the full beam results or summaries for individual detections.  Providing just the detection visualizes the beam summary:
 
     .. code-block:: bash
 
-        infrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
+        infrapy plot detect --dets-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz
 
 
     .. image:: _static/_images/plot_beam1.png
@@ -152,13 +154,13 @@ Detection Analyses
 
     .. code-block:: bash
 
-        infrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz --figure-out "BRP_beam.png" --show-figure false
+        infrapy plot detect --dets-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz --figure-out "BRP_beam.png" --show-figure false
 
     Summaries of specific detections identified in the analysis can be visualized by specifying a detection index number (the colored segments in the above result),
 
     .. code-block:: bash
 
-        infrapy plot beam --det-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz --det-index 1
+        infrapy plot detect --dets-file data/YJ.BRP_2012.04.09T18.00.00.dets.json.gz --det-index 1
 
     .. image:: _static/_images/plot_beam2.png
         :width: 1200px
@@ -372,11 +374,11 @@ Detection Analyses
         Clustering into detections...
         Identified 5 detections.
 
-- The resulting spectral analysis can be visualized similarly to a beam-based detection result and shows the original spectrogram, the normalized spectrogram with the background removed, and the clustered time-frequency points that were grouped into detections.
+- The resulting spectral analysis can be visualized similarly to a beam-based detection result and shows the original spectrogram, the normalized spectrogram with the background removed, and the clustered time-frequency points that were grouped into detections.  Logic is written into the detection plotting method to identify whether beam- or spectral-based parameters are saved in the file, so it will automatically generate the appropriate visualization.
 
     .. code-block:: bash
     
-            infrapy plot spectral --det-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz 
+            infrapy plot detect --dets-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz 
 
     .. image:: _static/_images/plot_spec1.png
         :width: 1200px
@@ -386,7 +388,7 @@ Detection Analyses
 
     .. code-block:: bash
     
-            infrapy plot spectral --det-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz --det-index 2
+            infrapy plot detect --dets-file data/YJ.BRP1_2012.04.09T18.00.00.dets.json.gz --det-index 2
 
     .. image:: _static/_images/plot_spec2.png
         :width: 1200px
@@ -441,11 +443,11 @@ Event Analyses
 
     .. code-block:: bash
     
-        infrapy event build --det-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
+        infrapy event build --dets-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
 
 **UPDATES THROUGH HERE**
 
-    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to add on a :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
+    Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to use the :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
     .. code-block:: none
 
@@ -458,7 +460,7 @@ Event Analyses
 
 
         Data summary:
-          det_files: data/Blom_etal2020_GJI/SY*dets.json.gz
+          dets_files: data/Blom_etal2020_GJI/SY*dets.json.gz
           ev_file: Blom_etal2020_GJI
 
         association parameters:
@@ -502,36 +504,80 @@ Event Analyses
         Cleaning up and merging clusters...
         Identified 3 event(s).
 
-    The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  For each event identified in the analysis, a new .dets.json file is written that includes the subset of the original detections that have been identified as originating from a common event.  The naming convention of these files is :code:`ev_label_ev-#.dets.json` and the example analysis here should have identified 3 events.
+    The analysis breaks the detection list into segments defined by the maximum propagation distance allows in order to avoid including detections in one analysis that will not be associated with others due to differences in detection times and typical infrasonic propagation velocities.  
+    
+- For each cluster of detections identified in the analysis, an event JSON file output is written that includes the subset of the original detections which have been identified as originating from a common event.  The naming convention of these files is :code:`ev_label_ev-#.ev.json.gz` and the example analysis here should have identified 3 events.  In addition to the detection list for the event, the association analysis parameters and distance matrix of the event (see Blom et al., 2020 for information about the distance matrix) are saved for re-producibility and to document the event cluster quality.  Empty entries for ground truth information, location results, and characterization (yield estimation) results are also defined when the file is created.  Also note that since the source waveform data and detection parameters can be distinct for different stations and signals, those entries are copied into the individual detection entries when writing information into the event file.
 
-- Detection sets can be visualized on a map using the :code:`plot dets` option.  This is useful in determining a useful maximum range for event identification and localization analysis.  For the above analysis of the Blom et al. (2020) synthetic data set, the full data set can be visualized with,
+    .. code-block:: none 
+
+        {
+            "ground truth": {},
+            "det_info": [
+                {
+                    "wvfrm_info": [...],
+                    "fk_params": [...],
+                    "fk_params": [...],
+                    "det_params": [...],
+                    "peak f-stat time": "2010-01-01T12:58:17",
+                    "start/end":[...],
+                    "f-stat": 20.0, 
+                    "back az": -77.1,
+                    "tr vel": 330.0
+                }, ...
+            ],
+            "assoc_params": {
+                "celerity_model": 'regional_lf',
+                "back_az_width": 10.0,
+                ...
+            },
+            "dist_matrix": [
+                [...],
+                [...],
+                ...
+            ],
+            "location": []
+            "characterization": []
+        }
+
+- Detection sets can be visualized on a map using the :code:`plot map_dets` option.  This is insightful in determining a maximum range for event identification and localization analysis.  The synthetic detection set used in the Blom et al. (2020) evaluation of the event building algorithm can be visualized as by defining the :code:`--dets-files`
 
     .. code-block:: bash
     
-        infrapy plot dets --local-det-label 'data/Blom_etal2020_GJI/*'
+        infrapy plot map_dets --dets-files 'data/Blom_etal2020_GJI/SY.DLIAR_2010.01.01T12.00.00-14.00.00.dets.json.gz' --range-max 1500
 
-    .. image:: _static/_images/plot_dets1.png
+    .. image:: _static/_images/map_dets-DLIAR.png
         :width: 1200px
         :align: center
 
-    This result is rather busy, but plotting each individual event's detections shows that the association algorithm correctly identified the events,
+    The full set of detections used in the analysis can be specified using wild cards,
+
+    .. code-block:: bash
+    
+        infrapy plot map_dets --dets-files 'data/Blom_etal2020_GJI/SY.*.dets.json.gz' --range-max 1500
+
+    .. image:: _static/_images/map_dets-all.png
+        :width: 1200px
+        :align: center
+
+    Finally, the resulting event files can be visualized by specifying an :code:`--ev-file` instead of a detections file.  Note that this visualization can be made before any localization analysis has been applied.
 
     .. code-block:: bash
 
-        infrapy plot dets --local-det-label 'GJI_example-ev0.dets.json'  --range-max 1000
+        infrapy plot map_dets --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
 
-    .. image:: _static/_images/plot_dets2.png
+    .. image:: _static/_images/map_dets-ev0.png
+
         :width: 1200px
         :align: center
 
 
-- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015).  This requires specifying the detection list file as well as an output location file label,
+- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015) or using the Time-Reversed Infrasonic Bayesian Localization (TRIBL) algorithm more recently developed in Blom et al. (2025).  Localization analysis can be run using, :code:`infrapy event locate`
 
     .. code-block:: bash
 
-        infrapy run_loc --local-det-label GJI_example-ev0  --loc-label GJI_example-ev0
+        infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-    The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file (the output file for InfraPy's localization is also a .json format file, but it's naming convention uses ".loc.json" to distinguish it from a ".dets.json" detection file)
+    The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file ...
 
     .. code-block:: none
 
@@ -542,70 +588,255 @@ Event Analyses
         ##                                 ##
         #####################################
 
+
         Data summary:
-          ev_label: example1-ev0
-          local_loc_label: example1-ev0
+          ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-        Parameter summary:
+        localization parameters:
           back_az_width: 10.0
-          range_max: 2000.0
-          resolution: 180
-          src_est: None
-          pgm_file: None
+          range_max: 1500.0
+          grid_resol: 180
+          celerity_model: regional_lf
 
-        Loading detections from file: example1-ev0.dets.json
 
         Running Bayesian Infrasonic Source Localization (BISL) Analysis...
-        	Identifying integration region...
-        	Computing marginalized spatial PDF...
-        	Computing confidence ellipse parameters...
-        	Computing marginalized origin time PDF...
+            Identifying integration region...
+            Evaluating localization probability on grid...
+                Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Analyzing localization pdf...
+                Normalizing and marginalizing...
+                Analyzing spatial PDF...
+                Analyzing temporal PDF...
 
-        BISL Summary:
+        Localization Summary:
         Maximum a posteriori analysis: 
-        	Source location: 37.212, -115.283 
-        	Source time: 2010-01-01T12:11:16.645000 
+            Source location: 41.489, -112.015 
+            Source time: 2010-01-01T12:10:11.515500 
         Source location analysis:
-	        Latitude (mean and standard deviation): 37.212 +/- 27.882 km. 
-        	Longitude (mean and standard deviation): -115.283 +/- 34.18 km.
-	        Covariance: -0.41.
-        	Area of 95 confidence ellipse: 17938.387 square kilometers
+            Latitude (mean and standard deviation): 41.341 +/- 25.451 km. 
+            Longitude (mean and standard deviation): -112.119 +/- 25.387 km.
+            Covariance: 0.428.
+            Area of 90% confidence ellipse: 9347.869 square kilometers
         Source time analysis:
-	        Mean and standard deviation: 2010-01-01T12:11:55.838 +/- 100.512 second
-	        Exact 90% confidence bounds: [2010-01-01T12:09:12.885, 2010-01-01T12:14:46.185]
+            Mean and standard deviation: 2010-01-01T12:08:04.896500 +/- 125.167 second
+            Exact 90% confidence bounds: [2010-01-01T12:04:58.593500, 2010-01-01T12:11:27.064500]
 
-        Writing localization result into GJI_example-ev0.loc.json
-
+            
     The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
 
     .. code-block:: bash
 
-        infrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --range-max 1200.0
+        infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
     .. image:: _static/_images/plot_loc1.png
         :width: 1200px
         :align: center
 
-    For visualization of the source region in more detail, the :code:`--zoom` option can be set to true and the map zooms in to show only the estimated source region.
+
+
+- TRIBL usage...
 
     .. code-block:: bash
 
-        infrapy plot loc --local-det-label GJI_example-ev0 --loc-label GJI_example-ev0 --zoom true
+        [LOC]
+        atmo_data = data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
 
-    .. image:: _static/_images/plot_loc2.png
-        :width: 900px
-        :align: center
+        range_max = 1250
+        ll_corner = 40.5, -113.5
+        ur_corner = 41.75, -112.0
+        alt_bounds = 0, 0
 
-    Lastly, the origin time is estimated as part of the BISL analysis and can be visualized as,
+        latlon_resol = 0.04
+        alt_resol = 1.0
+
+        tm_min = 2010-01-01T12:03:00
+        tm_max = 2010-01-01T12:09:00
+        tm_resol = 10.0
+
+        grnd_snd_spd_stdev = 5.0
+        det_tm_stdev = 5.0
+
+        local_temp_dir = data/Blom_etal2024_GJI/temp
+
+
+
+    More discussion
+
 
     .. code-block:: bash
 
-        infrapy plot origin-time --loc-label GJI_example-ev0 
+        infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config
 
+    .. code-block:: bash
 
-    .. image:: _static/_images/plot_origin_time.png
+        infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --loc-index 1
+
+    .. image:: _static/_images/plot_loc1.png
         :width: 1200px
         :align: center
+
+
+- Summarizing event results...
+
+    .. code-block:: bash
+
+        infrapy utils ev_summary --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+    .. code-block:: bash
+
+        #################################
+        ##                             ##
+        ##      InfraPy Utilities      ##
+        ##     Summarize Event File    ##
+        ##                             ##
+        #################################
+
+        Loading information from ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+        =================
+        Detection Summary
+        =================
+
+        SY.PDIAR..BDF
+          location: 42.767, -109.594
+          detection time: 2010-01-01T12:22:23.133690
+          back azimuth [deg]: -122.3
+          trace velocity [m/s]: 341.1
+          f-stat: 25.0
+
+        SY.PDIAR..BDF
+          location: 42.767, -109.594
+          detection time: 2010-01-01T12:25:26.940400
+          back azimuth [deg]: -127.24
+          trace velocity [m/s]: 388.3
+          f-stat: 25.0
+
+        SY.PDIAR..BDF
+          location: 42.767, -109.594
+          detection time: 2010-01-01T12:26:37.228000
+          back azimuth [deg]: -126.32
+          trace velocity [m/s]: 471.5
+          f-stat: 25.0
+
+        SY.DLIAR..BDF
+          location: 35.857, -106.315
+          detection time: 2010-01-01T12:50:00.631600
+          back azimuth [deg]: -37.52
+          trace velocity [m/s]: 363.9
+          f-stat: 25.0
+
+        SY.DLIAR..BDF
+          location: 35.857, -106.315
+          detection time: 2010-01-01T12:55:44.045400
+          back azimuth [deg]: -34.75
+          trace velocity [m/s]: 391.0
+          f-stat: 25.0
+
+        SY.NVIAR..BDF
+          location: 38.43, -118.304
+          detection time: 2010-01-01T12:50:10.199500
+          back azimuth [deg]: 58.03
+          trace velocity [m/s]: 365.5
+          f-stat: 25.0
+
+
+        ====================
+        Localization Summary
+        ====================
+
+        ##############
+        ## index: 0 ##
+        ##############
+        parameters
+        ----------
+            ll_corner: [40.5, -113.5]
+            ur_corner: [41.75, -112.0]
+            latlon_resol: 0.04
+            tm_min: 2010-01-01T12:03:00
+            tm_max: 2010-01-01T12:09:00
+            tm_resol: 10.0
+            atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
+            alt_resol: 1.0
+            c0_stdev: 5.0
+            det_tm_stdev: 5.0
+            az_limit: 2.0
+            local_temp_dir: data/Blom_etal2024_GJI/temp
+
+        result
+        ------
+            latitude: 41.17 deg +/- 9.69 km.
+            longitude: -112.869 deg +/- 8.64 km.
+            origin time: 2010-01-01T12:06:08.776 +/- 29.8 s.
+
+        ##############
+        ## index: 1 ##
+        ##############
+        parameters
+        ----------
+            ll_corner: [40.5, -113.5]
+            ur_corner: [41.75, -112.0]
+            latlon_resol: 0.04
+            tm_min: 2010-01-01T12:03:00
+            tm_max: 2010-01-01T12:09:00
+            tm_resol: 10.0
+            atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
+            alt_resol: 1.0
+            c0_stdev: 5.0
+            det_tm_stdev: 5.0
+            az_limit: 2.0
+            local_temp_dir: data/Blom_etal2024_GJI/temp
+
+        result
+        ------
+            latitude: 41.17 deg +/- 9.69 km.
+            longitude: -112.869 deg +/- 8.64 km.
+            origin time: 2010-01-01T12:06:08.776 +/- 29.8 s.
+
+
+
+- When a location analysis is attempted, but results already exist in the file, the result is simply printed to screen.  For running examples, debugging, or related work, a location reset is avilable as a utilty function.  This will reset the JSON file localization field to an empty list, :code:`[]`.  A warning is given to confirm that this removal of existing analysis is desired,
+
+    .. code-block:: bash
+
+        infrapy utils ev_loc_reset --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
+
+
+    .. code-block:: bash
+
+        #################################
+        ##                             ##
+        ##      InfraPy Utilities      ##
+        ##       Reset Event File      ##
+        ##                             ##
+        #################################
+
+        Loading information from ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+        ====================
+        Localization Summary
+        ====================
+
+        ##############
+        ## index: 0 ##
+        ##############
+        parameters
+        ----------
+            back_az_width: 10.0
+            range_max: 1500.0
+            grid_resol: 180
+            celerity_model: regional_lf
+
+        result
+        ------
+            latitude: 41.341 deg +/- 25.45 km.
+            longitude: -112.119 deg +/- 25.39 km.
+            origin time: 2010-01-01T12:08:04.896500 +/- 125.2 s.
+
+        ########################################
+        ########################################
+
+        WARNING!!! This action will remove existing localization result(s) in this event file. 
+        Do you want to proceed? (y/n): 
 
 
 - Infrasonic signals produced by above-ground explosive sources can be used to estimate the explosive yield via source models such as the Kinney & Graham blastwave scaling laws. InfraPy's Spectral Yield Estimate (SpYE) methods can be applied to relate regional infrasonic signal spectral amplitude to a near-source estimate and then the blastwave model to estimate yield.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository).  In the case of regional propagation for which the same transmission loss statistics are appropriate for all detections, the SpYE methods can be run via:
@@ -868,7 +1099,7 @@ Scripting and Notebook-Based Analysis
             #     Define Parameters     #
             # ######################### #
 
-            det_file = "data/HRR-5.dets.json"
+            dets_file = "data/HRR-5.dets.json"
             wvfrm_path = "../infrapy-data/hrr-5/*/*.sac"
             tloss_path = "../infrapy/propagation/priors/tloss/2007_08-"
 
@@ -895,7 +1126,7 @@ Scripting and Notebook-Based Analysis
             #     Define the detections     #
             #          and spectra          #
             # ############################# #
-            det_list = data_io.json_to_detection_list(det_file)
+            det_list = data_io.json_to_detection_list(dets_file)
             st_list = [Stream([tr for tr in read(wvfrm_path) if det.station in tr.stats.station]) for det in det_list]
             smn_specs = spye.extract_spectra(det_list, st_list, win_buffer=win_buffer, ns_opt=ns_opt)
     

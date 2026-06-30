@@ -31,7 +31,7 @@ from ..characterization import spye
 
 @click.command('build', short_help="Associate detections into events")
 @click.option("--cnfg-file", help="Configuration file", default=None)
-@click.option("--det-files", help="Detection path and pattern", default=None)
+@click.option("--dets-files", help="Detection path and pattern", default=None)
 @click.option("--ev-label", help="Path for event info output", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
@@ -46,14 +46,14 @@ from ..characterization import spye
 @click.option("--ev-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['ev_population_min'] + ")", default=None, type=int)
 @click.option("--ev-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['ev_station_min'] + ")", default=None, type=int)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
+def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
                 cluster_linkage, cluster_threshold, trimming_threshold, ev_population_min, ev_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event build --det-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
+    \tinfrapy event build --dets-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
     '''
 
     click.echo("")
@@ -77,16 +77,16 @@ def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, ba
         user_config = None
 
     # Data IO parameters
-    det_files = config.set_param(user_config, 'DATA IO', 'det_files', det_files, 'string')
+    dets_files = config.set_param(user_config, 'DATA IO', 'dets_files', dets_files, 'string')
     ev_label = config.set_param(user_config, 'DATA IO', 'ev_label', ev_label, 'string')
 
     # Data IO parameters
     click.echo('\n' + "Data summary:")
-    click.echo("  det_files: " + str(det_files))
+    click.echo("  dets_files: " + str(dets_files))
     click.echo("  ev_file: " + str(ev_label))
 
-    if det_files is None or ev_label is None:
-        msg = "Association analysis requires detection input (--det-files) and output path (--ev-file)"
+    if dets_files is None or ev_label is None:
+        msg = "Association analysis requires detection input (--dets-files) and output path (--ev-file)"
         warnings.warn(msg)
         return 0
 
@@ -122,7 +122,7 @@ def build(cnfg_file, det_files, ev_label, starttime, endtime, celerity_model, ba
 
     click.echo("")
 
-    det_data = data_io._load_dets_json(det_files)
+    det_data = data_io._load_dets_json(dets_files)
     det_dicts = []
     for entry in det_data:
         for det in entry["det_info"]:
@@ -212,8 +212,8 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
-    \tinfrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
+    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
+    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
 
         '''
 
@@ -420,7 +420,7 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
                                                     temp_path,
                                                     loc_params,
                                                     tm_lims,
-                                                    verbose=False,
+                                                    verbose=True,
                                                     show_prog=True,
                                                     pool=pl)
                             '''
@@ -454,7 +454,6 @@ def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner
 @click.option("--det-mask", help="Mask to select detections for analysis", default=None)
 @click.option("--loc-index", help="Localization index to use in analysis", default=None)
 @click.option("--tlm-label", help="Transmission loss model (TLM) path", default=None)
-
 
 @click.option("--freq-min", help="Minimum frequency (default: " + config.defaults['YIELD']['freq_min'] + " [Hz])", default=None, type=float)
 @click.option("--freq-max", help="Maximum frequency (default: " + config.defaults['YIELD']['freq_max'] + " [Hz])", default=None, type=float)

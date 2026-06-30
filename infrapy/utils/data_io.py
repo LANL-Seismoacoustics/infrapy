@@ -243,29 +243,29 @@ def set_det_list(det_label, merge=True):
     return det_list
 
 
-def _load_dets_json(det_files):
+def _load_dets_json(dets_files):
     """
     Read in multiple [...].dets.json files specified by either a comma
     separated list or a wild card glob
     
     """
 
-    def temp_open_json(det_file):
-        if os.path.splitext(det_file)[-1] == ".gz":
-            return json.load(gzip.open(det_file, 'rt'))
+    def temp_open_json(dets_file):
+        if os.path.splitext(dets_file)[-1] == ".gz":
+            return json.load(gzip.open(dets_file, 'rt'))
         else:
-            return json.load(open(det_file))
+            return json.load(open(dets_file))
 
     det_list = []
-    if "*" not in det_files:
+    if "*" not in dets_files:
         # define file list from comma or space separated list
-        for file in det_files.replace(" ","").split(","):
+        for file in dets_files.replace(" ","").split(","):
             det_list = det_list + [temp_open_json(file)]
     else:
         # define file list from wild card glob
-        if "/" in det_files:
-            file_path = os.path.dirname(det_files) + "/" 
-            dir_files = os.listdir(os.path.dirname(det_files))
+        if "/" in dets_files:
+            file_path = os.path.dirname(dets_files) + "/" 
+            dir_files = os.listdir(os.path.dirname(dets_files))
         else:
             file_path = ""
             dir_files = os.listdir(".")
@@ -273,7 +273,7 @@ def _load_dets_json(det_files):
 
         file_list = []
         for file in dir_files:
-            if fnmatch.fnmatch(file, os.path.basename(det_files)):
+            if fnmatch.fnmatch(file, os.path.basename(dets_files)):
                 file_list += [file]
 
         if len(file_list) == 0:

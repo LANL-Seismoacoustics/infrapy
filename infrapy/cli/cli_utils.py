@@ -37,7 +37,10 @@ from infrapy.propagation import likelihoods as lklhds
 from infrapy.utils import config, data_io, database
 
 
-@click.command('check-db-wvfrms', short_help="Check waveform pull from database")
+# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+
+
+@click.command('check_db_wvfrms', short_help="Check waveform pull from database")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 
@@ -253,8 +256,9 @@ def db2ev_json(db_config, evid, phase_list, output_label, verbose):
 
 
 
+# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
 
-@click.command('write-wvfrms', short_help="Save waveforms from FDSN or database")
+@click.command('write_wvfrms', short_help="Save waveforms from FDSN or database")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
@@ -347,7 +351,7 @@ def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel
 
 # NOTE: THIS FUNCTION IS MOVING TO STOCHPROP 
 
-@click.command('fit-celerity', short_help="Generate a GMM celerity model")
+@click.command('fit_celerity', short_help="Generate a GMM celerity model")
 @click.option("--data-file", help="File containing celerity information", default=None)
 @click.option("--cel-index", help="Column index of celerity values", default=6)
 @click.option("--atten-index", help="Column index of attenuation values", default=11)
@@ -422,10 +426,10 @@ def fit_celerity(data_file, cel_index, atten_index, atten_lim):
 
 
 
-@click.command('merge-dets', short_help="Check waveform pull from database")
-@click.option("--det-files", help="Detection GZIP files", default=None)
+@click.command('merge_dets', short_help="Check waveform pull from database")
+@click.option("--dets-files", help="Detection GZIP files", default=None)
 @click.option("--merged-label", help="Output detection file label", default=None)
-def merge_dets(det_files, merged_label):
+def merge_dets(dets_files, merged_label):
 
 
     click.echo("")
@@ -437,7 +441,7 @@ def merge_dets(det_files, merged_label):
     click.echo("#################################")
     click.echo("")  
 
-    dets_data = data_io._load_dets_json(det_files)
+    dets_data = data_io._load_dets_json(dets_files)
 
     click.echo('\n' + "Unique fk (beam) parameters:")
     for key in dets_data[0]['fk_params'][0].keys():
@@ -548,8 +552,8 @@ def merge_dets(det_files, merged_label):
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 
-@click.command('convert-dets', short_help="Convert legacy detection output to new JSON")
-@click.option("--det-file", help="Detection GZIP files", default=None)
+@click.command('convert_dets', short_help="Convert legacy detection output to new JSON")
+@click.option("--dets-file", help="Detection GZIP files", default=None)
 @click.option("--fk-file", help="Detection GZIP files", default=None)
 
 @click.option("--cnfg-file", help="Configuration file", default=None)
@@ -567,7 +571,7 @@ def merge_dets(det_files, merged_label):
 
 @click.option("--output-label", help="Output detection file label", default=None)
 
-def convert_dets(det_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
+def convert_dets(dets_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
 
 
     click.echo("")
@@ -665,7 +669,7 @@ def convert_dets(det_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, lo
     fk_out['f-stat'] = fk_vals[:, 3]
     fk_out['thresh'] = np.zeros_like(fk_vals[:, 0])
     
-    dets_orig = data_io._load_dets_json(det_file)
+    dets_orig = data_io._load_dets_json(dets_file)
 
     dets_out = []
     for det in dets_orig[0]:
@@ -739,7 +743,7 @@ def convert_dets(det_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, lo
 
 
 
-@click.command('ev-gt', short_help="Populate event ground truth information")
+@click.command('ev_gt', short_help="Populate event ground truth information")
 @click.option("--ev-file", help="Event GZIP JSON files", default=None)
 
 @click.option("--latitude", help="event latitude (deg)", default=None)
@@ -801,7 +805,7 @@ def ev_gt(ev_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode)
         json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 
-@click.command('ev-summary', short_help="Summarize information in an event file")
+@click.command('ev_summary', short_help="Summarize information in an event file")
 @click.option("--ev-file", help="Event GZIP JSON files", default=None)
 def ev_summary(ev_file):
 
@@ -823,7 +827,7 @@ def ev_summary(ev_file):
         click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
         click.echo("  detection time: " + det['peak f-stat time'])
         click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
-        click.echo("  tface velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
+        click.echo("  trace velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
         click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
         click.echo("")
 
@@ -874,7 +878,7 @@ def ev_summary(ev_file):
         click.echo("")
 
 
-@click.command('ev-loc-reset', short_help="Reset localization in an event file")
+@click.command('ev_loc_reset', short_help="Reset localization in an event file")
 @click.option("--ev-file", help="Event GZIP JSON files", default=None)
 def ev_loc_reset(ev_file):
 

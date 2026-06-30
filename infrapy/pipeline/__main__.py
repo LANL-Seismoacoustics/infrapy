@@ -162,14 +162,14 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     if not test_commands:
                         os.system(command)
 
-                command = "infrapy utils merge-dets --det-files '" + temp_path + det_label + "-*' --merged-label " + pipe_params["det_dir"] + det_label
+                command = "infrapy utils merge-dets --dets-files '" + temp_path + det_label + "-*' --merged-label " + pipe_params["det_dir"] + det_label
                 click.echo(command)
                 if not test_commands:
                     os.system(command)
 
             fig_label = det_label.replace(".","_")              
             if not os.path.isfile(pipe_params["figs_dir"] + fig_label + "_det0.png"):
-                command = "infrapy plot beam --det-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
+                command = "infrapy plot beam --dets-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
                 command = command + " --figure-out " + pipe_params["figs_dir"] + fig_label
                 command = command + " --plot-all-dets true  --show-figure False"
                 click.echo('\n' + command) 
@@ -185,7 +185,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             ev_j_id = "_ev-bld-cnfg-" + str(ev_j) if len(pipe_params['ev_build_cnfgs']) > 1 else "" 
 
             if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + ".ev.json.gz"):
-                command = "infrapy event build --det-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --ev-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
+                command = "infrapy event build --dets-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --ev-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
                 command = command + " --cnfg-file " + pipe_params["config_dir"] + ev_config
 
                 click.echo('\n' + command) 
