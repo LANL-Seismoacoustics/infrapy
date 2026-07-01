@@ -142,7 +142,7 @@ class IPEventQueryWidget(QFrame):
             return database.eventID_query(self.session, self.evid_edit.text(), db_tables, asquery=True)
         else:
             prefor, origins = database.eventID_query(self.session, self.evid_edit.text(), db_tables, asquery=False)
-            self.parent.ipevent_query_results_table.setData(origins, prefor) 
+            self.parent.ipev_query_results_table.setData(origins, prefor) 
 
 
 class IPDatabaseQueryWidget(QFrame):

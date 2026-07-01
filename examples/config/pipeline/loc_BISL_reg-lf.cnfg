@@ -1,0 +1,9 @@
+# Sample infrapy config file for updated CLI and DB interface
+#
+
+
+
+[LOC]
+range_max = 500.0
+celerity_model = 'regional_lf'
+

@@ -179,7 +179,7 @@ class IPDetectionWidget(QWidget):
                 new_detection.set_peakF_value(detection[5])
                 new_detection.set_lat(lat)
                 new_detection.set_lon(lon)
-                new_detection.set_event_id(events[idx])
+                new_detection.set_ev_id(events[idx])
                 new_detection.set_note(notes[idx])
                 new_detection.set_method(method)
                 new_detection.set_freq_range(fr)
@@ -251,7 +251,7 @@ class IPDetectionWidget(QWidget):
             if elev is not None:
                 new_detection.set_ele(elev)
             if event is not None:
-                new_detection.set_event_id(event)
+                new_detection.set_ev_id(event)
             if start_end is not None:
                 new_detection.set_start(start_end[0])
                 new_detection.set_end(start_end[1])

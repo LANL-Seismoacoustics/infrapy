@@ -10,6 +10,8 @@ Author: pblom@lanl.gov
 import os
 import pickle
 import click
+import json
+import gzip
 
 import warnings
 
@@ -20,6 +22,8 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import gaussian_kde, norm
 from scipy.optimize import curve_fit
+from scipy.signal import hilbert 
+
 from pathlib import Path
 
 import numpy as np
@@ -30,9 +34,912 @@ from pyproj import Geod
 
 from infrapy.detection import beamforming_new
 from infrapy.propagation import likelihoods as lklhds
-from infrapy.utils import config, data_io
+from infrapy.utils import config, data_io, database
 
-@click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file")
+
+# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+
+
+@click.command('check_db_wvfrms', short_help="Check waveform pull from database")
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, starttime, endtime):
+    '''
+    Test database pull of waveform data for beamforming (fk or fdk) analysis
+
+    \b
+    Example usage (detection_db.config will be unique to your database pull):
+    \tinfrapy run_fk --cnfg-file config/detection_db.config
+
+    '''
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       check_db_wvfrms       ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")    
+
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(cnfg_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None
+
+    # Database and data IO parameters   
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
+    db_info = None
+
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
+
+    click.echo('\n' + "Data parameters:")
+    click.echo("  db_config: " + str(db_config))
+    click.echo("  network: " + str(network))
+    click.echo("  station: " + str(station))
+    click.echo("  location: " + str(location))
+    click.echo("  channel: " + str(channel))
+    click.echo("  starttime: " + str(starttime))
+    click.echo("  endtime: " + str(endtime))
+
+    # Check data option and populate obspy Stream
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
+    stream, latlon = data_io.set_stream(None, None, db_info, network, station, location, channel, starttime, endtime, None)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    click.echo('\nLocation info:')    
+    for line in latlon:
+        click.echo(str(line[0]) + '\t' +  str(line[1]))
+
+
+
+@click.command('db2dets_json', short_help="Write from arrivals table to dets.json file")
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--lat-bnds", help="Latitude bounds", default=None, prompt="Latitude bounds (comma separated):")
+@click.option("--lon-bnds", help="Longitude bounds", default=None, prompt="Longitude bounds (comma separated):")
+@click.option("--starttime", help="Start time of analysis window", default=None, prompt="Window start time:")
+@click.option("--endtime", help="End time of analysis window", default=None, prompt="Window end time:")
+@click.option("--phase-list", help="Phases to include in output (default: 'I')", default="I")
+@click.option("--output-label", help="Output label for [...].ev.json.gz file", default=None)
+@click.option("--verbose", help="Print retrieved event info to screen (default: True)", default=True)
+def db2dets_json(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, output_label, verbose):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##        db2dets_json         ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    lat_lims = [float(val) for val in lat_bnds.split(",")]
+    lon_lims = [float(val) for val in lon_bnds.split(",")]
+    starttime = UTCDateTime(starttime)
+    endtime = UTCDateTime(endtime)
+
+    print("Pulling arrivals for criterion:")
+    print("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
+    print("  Time bounds:", starttime, ",", endtime)
+    print("  Phase list:", phase_list)
+
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
+    print("Setting up database configuration...")
+    # set up the session and check connection
+    if 'url' in db_info['DATABASE'].keys():
+        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
+        db_session = database.db_connect_url( db_info['DATABASE']['url'])
+    else:
+        # clean up the above to simplify this or just require a url?
+        db_session = database.db_connect2(db_info)
+
+    # check the session works
+    try:
+        db_session.get_bind().connect()
+    except Exception as e:
+        print("Database connection failed")
+        return 
+
+    det_dicts = database.db2dets_json(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list="I", db_schema="kbcore")
+
+    if len(det_dicts) > 0:
+        if verbose:
+            print('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
+            for det in det_dicts:
+                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
+                print(det['phase id'], end='\t')
+                print(det['peak f-stat time'], end='\t')
+                print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
+                print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
+                print(np.round(np.array(det['f-stat'], dtype=float), 1))
+
+        if output_label is not None:
+            print("Writing " + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
+            with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                json.dump({"det_info" : det_dicts}, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+    else:
+        print('\n' + "No arrivals matched criterion.")
+
+
+@click.command('db2ev_json', short_help="Write from arrivals table to dets.json file")
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--evid", help="Event ID to pull", default=0)
+@click.option("--phase-list", help="Phases to include in output (default: 'I')", default="I")
+@click.option("--output-label", help="Output label for [...].ev.json.gz file", default=None)
+@click.option("--verbose", help="Print retrieved event info to screen (default: True)", default=True)
+def db2ev_json(db_config, evid, phase_list, output_label, verbose):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##          db2ev_json         ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+    
+    db_info = cnfg.ConfigParser()
+    db_info.read(db_config)
+
+    print("Setting up database configuration...")
+    # set up the session and check connection
+    if 'url' in db_info['DATABASE'].keys():
+        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
+        db_session = database.db_connect_url( db_info['DATABASE']['url'])
+    else:
+        # clean up the above to simplify this or just require a url?
+        db_session = database.db_connect2(db_info)
+
+    # check the session works
+    try:
+        db_session.get_bind().connect()
+    except Exception as e:
+        print("Database connection failed")
+        return 
+
+    ev_output = database.db2ev_json(db_session, db_info['DBTABLES'], evid, db_schema="kbcore")
+
+    if len(ev_output['det_info']) > 0:
+        if verbose:
+            print('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
+            print('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
+            print('  Origin time: ' + str(ev_output['ground truth']['origin time']))
+            print('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
+            
+            for det in ev_output['det_info']:                
+                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
+                print(det['phase id'], end='\t')
+                if "I" in det['phase id']:
+                    print(det['peak f-stat time'], end='\t')
+                    print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
+                    print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
+                    print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                else:
+                    print(det['peak f-stat time'], end='\t')
+                    print(np.round(np.array(det['azimuth'], dtype=float), 1), end='\t')
+                    print(np.round(np.array(det['slow'], dtype=float), 3), end='\t')
+                    print(np.round(np.array(det['snr'], dtype=float), 1))
+
+        if output_label is not None:
+            print("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
+            with gzip.open(output_label + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+
+
+# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+
+@click.command('write_wvfrms', short_help="Save waveforms from FDSN or database")
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
+    '''
+    Write waveform data from an FDSN or database pull into local SAC files
+
+    \b
+    Example usage (detection_db.config will be unique to your database pull):
+    \tinfrapy utils write-wvfrms --cnfg-file config/detection_fdsn.config
+
+    '''
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         write-wvfrms        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")   
+
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(cnfg_file)
+        else:
+            click.echo("Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None
+
+    # Database and data IO parameters   
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
+    db_info = None
+
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+
+    # Trimming times
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
+
+    click.echo('\n' + "Data parameters:")
+    if fdsn is not None:
+        click.echo("  fdsn: " + str(fdsn))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    elif db_config is not None:
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+
+        click.echo("  db_url: " + str(db_config))
+        click.echo("  network: " + str(network))
+        click.echo("  station: " + str(station))
+        click.echo("  location: " + str(location))
+        click.echo("  channel: " + str(channel))
+        click.echo("  starttime: " + str(starttime))
+        click.echo("  endtime: " + str(endtime))
+    else:
+        click.echo("Invalid data parameters.  Requires fdsn or db info.")
+
+    stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    click.echo('\n' + "Writing waveform data to local SAC files...")
+    data_io.write_stream_to_sac(stream, latlon)
+
+
+
+# NOTE: THIS FUNCTION IS MOVING TO STOCHPROP 
+
+@click.command('fit_celerity', short_help="Generate a GMM celerity model")
+@click.option("--data-file", help="File containing celerity information", default=None)
+@click.option("--cel-index", help="Column index of celerity values", default=6)
+@click.option("--atten-index", help="Column index of attenuation values", default=11)
+@click.option("--atten-lim", help="Attenuation limit", default=None, type=float)
+def fit_celerity(data_file, cel_index, atten_index, atten_lim):
+    '''
+    Compute a KDE of celerity values and generate parameters for a reciprocal celerity model
+
+    \b
+    Example usage (requires a data file with celerities):
+    \tinfrapy utils fit-celerity --data-file ToyAtmo.arrivals.dat
+
+    '''
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         fit-celerity        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")   
+
+
+    click.echo("  Loading data from " + data_file)
+    data = np.loadtxt(data_file)
+    cel_data = data[:, cel_index]
+
+    if atten_lim is not None:
+        click.echo("  Building KDE with limited arrivals (" + str(atten_lim) + " dB Sutherland & Bass attenuation limit)")
+        atten_data = data[:, atten_index]
+        cel_kernel = gaussian_kde(1.0 / cel_data[atten_data > atten_lim])
+    else:
+        click.echo("  Building KDE for all arrival celerities")
+        cel_kernel = gaussian_kde(1.0 / cel_data)
+
+    cel_vals = np.linspace(0.38, 0.18, 200)
+    rcel_pdf = cel_kernel(1.0 / cel_vals)
+
+    click.echo("  Generating fit to KDE...")
+    def rcel_func(rcel, wt1, wt2, wt3, mn1, mn2, mn3, std1, std2, std3):
+        result = (wt1 / std1) * norm.pdf((rcel - mn1) / std1)
+        result = result + (wt2 / std2) * norm.pdf((rcel - mn2) / std2)
+        result = result + (wt3 / std3) * norm.pdf((rcel - mn3) / std3)
+
+        return result
+    
+    popt, _ = curve_fit(rcel_func, 1.0 / cel_vals, rcel_pdf,
+                         p0=[0.0539, 0.0899, 0.8562, 
+                             1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26,
+                             0.066, 0.08, 0.33])
+    popt = np.round(popt, 3)
+
+    click.echo('\n' + "  Reciprocal celerity model parameters (CLI and config file formats):")
+    click.echo("    --rcel-wts '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "' --rcel-mns '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "' --rcel-sds '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
+
+    click.echo("    rcel_wts = '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "'")
+    click.echo("    rcel_mns = '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "'")
+    click.echo("    rcel_sds = '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
+
+    click.echo("    Note: mean reciprocal celerities: 1.0/" + str(np.round(1.0 / popt[3], 3)) + ", 1.0/" + str(np.round(1.0 / popt[4], 3)) + ", 1.0/" + str(np.round(1.0 / popt[5], 3)) + '\n')
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(cel_vals, rcel_pdf, '-k', linewidth=4.0, label="Data KDE")
+    plt.plot(cel_vals, rcel_func(1.0 / cel_vals, popt[0], popt[1], popt[2],popt[3], popt[4], popt[5], 
+                                 popt[6], popt[7], popt[8]), '--r', linewidth=2.0, label="GMM Fit")
+    plt.xlabel("Celerity [km/s]")
+    plt.ylabel("Probability")
+    plt.legend()
+    plt.show()
+
+
+
+
+@click.command('merge_dets', short_help="Check waveform pull from database")
+@click.option("--dets-files", help="Detection GZIP files", default=None)
+@click.option("--merged-label", help="Output detection file label", default=None)
+def merge_dets(dets_files, merged_label):
+
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         merge_dets          ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    dets_data = data_io._load_dets_json(dets_files)
+
+    click.echo('\n' + "Unique fk (beam) parameters:")
+    for key in dets_data[0]['fk_params'][0].keys():
+        vals = [det['fk_params'][0][key] for det in dets_data]
+        if None not in vals:
+            vals = np.unique(vals)
+            if len(vals) == 1:
+                vals = vals[0]
+        else:
+            if all(val is None for val in vals):
+                vals = None 
+
+        click.echo("  " + key + ": " + str(vals))
+
+    click.echo('\n' + "Unique detection parameters:")
+    for key in dets_data[0]['det_params'][0].keys():
+        vals = [det['det_params'][0][key] for det in dets_data]
+        if None not in vals:
+            vals = np.unique(vals)
+            if len(vals) == 1:
+                vals = vals[0]
+        else:
+            if all(val is None for val in vals):
+                vals = None 
+        click.echo("  " + key + ": " + str(vals))
+
+    click.echo('\n' + "Merging detections...")
+    det_list = []
+    for entry in dets_data:
+        for det in entry["det_info"]:
+            det_list = det_list + [det]
+            det_list[-1]["wvfrm_info"] = entry["wvfrm_info"]
+            det_list[-1]["fk_params"] = entry["fk_params"]
+            det_list[-1]["det_params"] = entry["det_params"]
+
+    dets_out = []
+    while len(det_list) > 0:
+        merge_indices = [0]
+        print("")
+
+        for k, det_k in enumerate(det_list[1:]):
+            # check at least one station ID matches
+            ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
+            ids_k = [ch['trace id'] for ch in det_k['wvfrm_info'][0]]
+
+            if any(id in ids_0 for id in ids_k):
+                # compute detection time overlap
+                dt = abs(UTCDateTime(det_list[0]["peak f-stat time"]) - UTCDateTime(det_k["peak f-stat time"]))
+
+                dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
+                dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
+                dt = dt / (2.0 * max(dur1, dur2))
+
+                # check back azimuths are within tolerance 
+                daz = abs(det_list[0]["back az"] - det_k["back az"])
+                if daz > 360.0:
+                    daz = daz - 360.0
+                daz = daz / 30.0
+
+                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
+
+                if np.sqrt(dt**2 + daz**2) < 0.75:
+                    merge_indices = merge_indices + [k + 1]
+
+        dets_to_merge = [det_list[j] for j in merge_indices]
+        click.echo('\n' + "Detections to merge:")
+        for det in dets_to_merge:
+            click.echo("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
+
+        f_stat_vals = [det["f-stat"] for det in dets_to_merge]
+        tm_vals = [det["peak f-stat time"] for det in dets_to_merge]
+        t0 = tm_vals[np.argmax(f_stat_vals)]
+
+        dets_out = dets_out + [det_list[0]]
+        dets_out[-1]["f-stat"] = np.max(f_stat_vals)
+        dets_out[-1]["peak f-stat time"] = t0
+
+        dt = UTCDateTime(dets_to_merge[0]["peak f-stat time"]) - UTCDateTime(t0)
+        dets_out[-1]["fk"][0]["time"] = np.array(dets_out[-1]["fk"][0]["time"]) + dt
+        dets_out[-1]["beam"][0]["time"] = np.array(dets_out[-1]["beam"][0]["time"]) + dt
+        dets_out[-1]["start/end"][0] = np.array(dets_out[-1]["start/end"][0]) + dt
+
+        for det in dets_to_merge[1:]:
+            for key in ["wvfrm_info", "fk_params", "det_params", "start/end", "fk", "beam", "spec"]:
+                dets_out[-1][key] = dets_out[-1][key] + det[key]
+                
+            dt = UTCDateTime(det["peak f-stat time"]) - UTCDateTime(t0)
+            dets_out[-1]["start/end"][-1] = np.array(det["start/end"][-1]) + dt
+            dets_out[-1]["fk"][-1]["time"] = np.array(det["fk"][-1]["time"]) + dt
+            dets_out[-1]["beam"][-1]["time"] = np.array(det["beam"][-1]["time"]) + dt
+
+        # update back azimuth and trace velocity using weighted mean...        
+        az_all, tr_all, fs_all = [np.array([])] * 3
+        for det in dets_to_merge:
+            tm_mask = np.logical_and(det["start/end"][0][0] <= det["fk"][-1]["time"], det["fk"][-1]["time"] <= det["start/end"][0][1])
+            az_all = np.append(az_all, np.array(det["fk"][-1]["back az"])[tm_mask])
+            tr_all = np.append(tr_all, np.array(det["fk"][-1]["tr vel"])[tm_mask])
+            fs_all = np.append(fs_all, np.array(det["fk"][-1]["f-stat"])[tm_mask])
+
+        dets_out[-1]["back az"] = np.average(az_all, weights=fs_all)
+        dets_out[-1]["tr vel"] = np.average(tr_all, weights=fs_all)
+
+        # remove merged detections from the original list and continue
+        det_list = [det_list[j] for j in range(len(det_list)) if j not in merge_indices]
+
+    det_output = {'det_info' : dets_out}
+    with gzip.open(merged_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+@click.command('convert_dets', short_help="Convert legacy detection output to new JSON")
+@click.option("--dets-file", help="Detection GZIP files", default=None)
+@click.option("--fk-file", help="Detection GZIP files", default=None)
+
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--local-wvfrms", help="Local waveform data files", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+
+@click.option("--local-latlon", help="Location information for local waveforms", default=None)
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+
+@click.option("--output-label", help="Output detection file label", default=None)
+
+def convert_dets(dets_file, fk_file, cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, output_label):
+
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##         convert_dets        ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    if cnfg_file:
+        if os.path.isfile(cnfg_file):
+            click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+            user_config = cnfg.ConfigParser()
+            user_config.read(cnfg_file)
+        else:
+            click.echo('\n' + "Invalid configuration file (file not found)")
+            return 0
+    else:
+        user_config = None
+
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
+    db_info = None
+
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
+
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
+
+    stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
+    wvfrm_info = data_io.wvfrm_info(stream, latlon)
+
+    click.echo('\n' + "Data summary:")
+    for tr in stream:
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    # Load fk parameters from the config file if one is provided (otherwise use defaults)
+    fk_params = {}
+    fk_params['freq_min'] = config.set_param(user_config, 'FK', 'freq_min', None, 'float')
+    fk_params['freq_max'] = config.set_param(user_config, 'FK', 'freq_max', None, 'float')
+    fk_params['back_az_min'] = config.set_param(user_config, 'FK', 'back_az_min', None, 'float')
+    fk_params['back_az_max'] = config.set_param(user_config, 'FK', 'back_az_max', None, 'float')
+    fk_params['back_az_step'] = config.set_param(user_config, 'FK', 'back_az_step', None, 'float')
+    fk_params['trace_vel_min'] = config.set_param(user_config, 'FK', 'trace_vel_min', None, 'float')
+    fk_params['trace_vel_max'] = config.set_param(user_config, 'FK', 'trace_vel_max', None, 'float')
+    fk_params['trace_vel_step'] = config.set_param(user_config, 'FK', 'trace_vel_step', None, 'float')
+    fk_params['method'] = config.set_param(user_config, 'FK', 'method', None, 'string')
+    fk_params['signal_start'] = config.set_param(user_config, 'FK', 'signal_start', None, 'string')
+    fk_params['signal_end'] = config.set_param(user_config, 'FK', 'signal_end', None, 'string')
+    fk_params['noise_start'] = config.set_param(user_config, 'FK', 'noise_start', None, 'string')
+    fk_params['noise_end'] = config.set_param(user_config, 'FK', 'noise_end', None, 'string')
+    fk_params['window_len'] = config.set_param(user_config, 'FK', 'window_len', None, 'float')
+    fk_params['sub_window_len'] = config.set_param(user_config, 'FK', 'sub_window_len', None, 'float')
+    fk_params['window_step'] = config.set_param(user_config, 'FK', 'window_step', None, 'float')
+    fk_params['cpu_cnt'] = config.set_param(user_config, 'FK', 'cpu_cnt', None, 'int')
+
+    # Update fk values from fk_results file
+
+
+
+    click.echo('\n' + "fk (beam) parameters:")
+    for key in fk_params.keys():
+        click.echo("  " + key + ": " + str(fk_params[key]))
+
+    # Set detection parameters from config file if one is provided (otherwise use defaults)
+    det_params = {}
+    det_params['window_len'] = config.set_param(user_config, 'FD', 'window_len', None, 'float')
+    det_params['p_value'] = config.set_param(user_config, 'FD', 'p_value', None, 'float')
+    det_params['min_duration'] = config.set_param(user_config, 'FD', 'min_duration', None, 'float')
+    det_params['back_az_width'] = config.set_param(user_config, 'FD', 'back_az_width', None, 'float')
+    det_params['fixed_thresh'] = config.set_param(user_config, 'FD', 'fixed_thresh', None, 'float')
+    det_params['thresh_ceil'] = config.set_param(user_config, 'FD', 'thresh_ceil', None, 'float')
+    det_params['return_thresh'] = config.set_param(user_config, 'FD', 'return_thresh', None, 'bool')
+    det_params['merge_dets'] = config.set_param(user_config, 'FD', 'merge_dets', None, 'bool')
+
+    click.echo('\n' + "detection parameters:")
+    for key in det_params.keys():
+        click.echo("  " + key + ": " + str(det_params[key]))
+
+    # Extract fk results
+    fk_vals = np.loadtxt(fk_file)
+
+    fk_out = {}
+    fk_out['time'] = fk_vals[:, 0]
+    fk_out['back az'] = fk_vals[:, 1]
+    fk_out['tr vel'] = fk_vals[:, 2]
+    fk_out['f-stat'] = fk_vals[:, 3]
+    fk_out['thresh'] = np.zeros_like(fk_vals[:, 0])
+    
+    dets_orig = data_io._load_dets_json(dets_file)
+
+    dets_out = []
+    for det in dets_orig[0]:
+        click.echo('')
+        click.echo(det)
+
+        dets_out = dets_out + [{}]
+        dets_out[-1]['peak f-stat time'] = det['Time (UTC)']
+        dets_out[-1]['start/end'] = [[det['Start'], det['End']]]
+        dets_out[-1]['f-stat'] = det['F Stat.']
+
+        dt_ref = UTCDateTime(str(dets_out[-1]['peak f-stat time'])) - UTCDateTime(stream[0].stats.starttime)
+        det_mask = np.logical_and(det['Start'] <= fk_out['time'] - dt_ref, fk_out['time'] - dt_ref <= det['End'])
+        dets_out[-1]['back az'] = np.average(fk_out['back az'][det_mask], weights=fk_out['f-stat'][det_mask])
+        dets_out[-1]['tr vel'] = np.average(fk_out['tr vel'][det_mask], weights=fk_out['f-stat'][det_mask])
+
+        # Extract the fk results
+        det_buffer = (det['Start'] - det['End']) * 0.15
+        det_buffer = max(min(det_buffer, 60.0), 15.0)
+        det_buffer = fk_params['window_step'] * np.round(det_buffer/fk_params['window_step'])
+        
+        det_mask = np.logical_and(det['Start'] - det_buffer <= fk_out['time'] - dt_ref,
+                                    fk_out['time'] - dt_ref <= det['End'] + det_buffer)
+
+        dets_out[-1]['fk'] = [{}]
+        dets_out[-1]['fk'][0]['time'] = fk_out['time'][det_mask] - dt_ref
+        dets_out[-1]['fk'][0]['back az'] = fk_out['back az'][det_mask]
+        dets_out[-1]['fk'][0]['tr vel'] = fk_out['tr vel'][det_mask]
+        dets_out[-1]['fk'][0]['f-stat'] = fk_out['f-stat'][det_mask]
+
+        # Extract the beam and spectral information
+        st_bm = stream.copy()
+
+        t_ref = UTCDateTime(str(dets_out[-1]['peak f-stat time']))
+        t1 = t_ref + det['Start'] - det_buffer
+        t2 = t_ref + det['End'] + det_buffer
+
+        st_bm.detrend().filter('bandpass', freqmin=fk_params['freq_min'], freqmax=fk_params['freq_max'])
+        st_bm.trim(t1, t2)
+        x_bm, t_bm, _, geom_bm = beamforming_new.stream_to_array_data(st_bm, latlon=latlon)
+        X_bm, _, f_bm = beamforming_new.fft_array_data(x_bm, t_bm, fft_window="boxcar")
+
+        sig_est, residual = beamforming_new.extract_signal(X_bm, f_bm, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm)
+
+        sig_wvfrm = np.fft.irfft(sig_est)[:len(t_bm)] / (t_bm[1] - t_bm[0])
+        resid_wvfrms = np.fft.irfft(residual, axis=1)[:, :len(t_bm)]  / (t_bm[1] - t_bm[0])
+        resid_env = np.mean([np.abs(hilbert(resid_wvfrms[nM])) for nM in range(len(resid_wvfrms))], axis=0)
+ 
+        dets_out[-1]['beam'] = [{}]
+        dets_out[-1]['beam'][0]['time'] = t_bm + det['Start'] - det_buffer
+        dets_out[-1]['beam'][0]['signal'] = sig_wvfrm
+        dets_out[-1]['beam'][0]['resid'] = resid_env
+
+        # repeat without the bandpass filter for the spectra
+        st_bm2 = stream.copy()
+        st_bm2.trim(t1, t2)
+        st_bm2.detrend()
+
+        x_bm2, t_bm2, _, geom_bm2 = beamforming_new.stream_to_array_data(st_bm2, latlon=latlon)
+        X_bm2, _, f_bm2 = beamforming_new.fft_array_data(x_bm2, t_bm2, fft_window="boxcar")
+        sig_est2, residual2 = beamforming_new.extract_signal(X_bm2, f_bm2, [dets_out[-1]['back az'], dets_out[-1]['tr vel']], geom_bm2)
+
+        dets_out[-1]['spec'] = [{}]
+        dets_out[-1]['spec'][0]['freq'] = f_bm2
+        dets_out[-1]['spec'][0]['signal'] = np.abs(sig_est2)
+        dets_out[-1]['spec'][0]['resid'] = np.mean(np.abs(residual2), axis=0)
+
+    det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
+    with gzip.open(output_label + "-update.dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+@click.command('ev_gt', short_help="Populate event ground truth information")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+
+@click.option("--latitude", help="event latitude (deg)", default=None)
+@click.option("--longitude", help="Event longitude (deg)", default=None)
+@click.option("--orig-tm", help="Origin datetime", default=None)
+@click.option("--eq-tnt", help="Explosive yield (eq. TNT) [kg]", default=None)
+
+@click.option("--user-entry", help="User specified info (comma sep. key/val)", default=None, multiple=True)
+@click.option("--entry-mode", help="Add values or overwite ('append' or 'replace')", default='append')
+
+def ev_gt(ev_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode):
+
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##     Write Event GT Info     ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+    
+    click.echo("Loading event information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+    gt_dict = ev_data['ground truth']
+
+    def entry_check(key, val):
+        if key not in gt_dict.keys():
+            gt_dict[key] = val
+        else:
+            if gt_dict[key] is None:
+                gt_dict[key] = val
+            elif entry_mode == 'replace':
+                click.echo("** replacing existing entry for '" + key + "': " + gt_dict[key])            
+                gt_dict[key] = val
+            else:
+                click.echo("Skipping '" + str(key) + "' that already has an entry.")
+
+
+    base_keys = ['latitude', 'longitude', 'orig_tm', 'eq_tnt']
+    base_vals = [latitude, longitude, orig_tm, eq_tnt]
+    for k in range(4):
+        entry_check(base_keys[k], base_vals[k])
+
+    if gt_dict['orig_tm'] is not None:
+        gt_dict['orig_tm'] = UTCDateTime(gt_dict['orig_tm'])
+
+    for e in user_entry:
+        key, val = e.split(":")
+        entry_check(key, val)
+
+    click.echo('\n' + "Ground truth summary:")
+    for key in gt_dict:
+        click.echo("  " + key + ': ' + str(gt_dict[key]))
+    click.echo("")
+
+    ev_data['Event GT Summary'] = gt_dict
+    with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+        json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+@click.command('ev_summary', short_help="Summarize information in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_summary(ev_file):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##     Summarize Event File    ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+
+    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+    for det in ev_data['det_info']:
+        click.echo(det['wvfrm_info'][0][0]['trace id'])
+        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
+        click.echo("  detection time: " + det['peak f-stat time'])
+        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
+        click.echo("  trace velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
+        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
+        click.echo("")
+
+    if len(ev_data['location']) > 0:
+        click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+        for loc_k, loc in enumerate(ev_data['location']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(loc_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in loc['params'].keys():
+                if loc['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(loc['params'][key]))
+
+            lat = str(np.round(loc['result']['lat_mean'], 3))
+            lon = str(np.round(loc['result']['lon_mean'], 3))
+            NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+            EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+            tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+            click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+    if len(ev_data['characterization']) > 0:
+        click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+        for char_k, char in enumerate(ev_data['characterization']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(char_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in char['params'].keys():
+                if char['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(char['params'][key]))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+            click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+            click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]))
+
+    if len(ev_data['ground truth'].keys()) > 0:
+        click.echo('\n' + "=" * 20 + '\n' + "Ground Truth Summary"  + '\n' + "=" * 20)
+        for key in ev_data['ground truth']:
+            click.echo("  " + key + ': ' + str(ev_data['ground truth'][key]))
+        click.echo("")
+
+
+@click.command('ev_loc_reset', short_help="Reset localization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_loc_reset(ev_file):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       Reset Event File      ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+
+    if len(ev_data['location']) > 0:
+        click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+        for loc_k, loc in enumerate(ev_data['location']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(loc_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in loc['params'].keys():
+                if loc['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(loc['params'][key]))
+
+            lat = str(np.round(loc['result']['lat_mean'], 3))
+            lon = str(np.round(loc['result']['lon_mean'], 3))
+            NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+            EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+            tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+            click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+            click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
+
+    user_opt = input('WARNING!!! This action will remove existing localization result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+    if user_opt in ['y', 'yes']:
+        confirm = True
+    else:
+        confirm = False
+
+    if confirm:
+        click.echo('\nRemoving localization results from event file...')
+        ev_data['location'] = []
+        with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+##########################################
+## THE REST OF THESE ARE DEPRECATED AND ## 
+##  WILL BE REMOVED IN A FUTURE UPDATE  ##
+##########################################
+
+
+@click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file", hidden=True)
 @click.option("--arrivals-file", help="InfraGA/GeoAc arrivals file", default=None)
 @click.option("--json-file", help="JSON format detection file", default=None)
 @click.option("--grnd-snd-spd", help="Ground sound speed", default=340.0)
@@ -80,7 +987,7 @@ def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value,
     data_io.detection_list_to_json(json_file, det_list)
 
 
-@click.command('arrival-time', short_help="Estimate the arrival time for a source-receiver pair")
+@click.command('arrival-time', short_help="Estimate the arrival time for a source-receiver pair", hidden=True)
 @click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
 @click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
 @click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
@@ -164,8 +1071,7 @@ def arrival_time(src_lat, src_lon, src_time, rcvr_lat, rcvr_lon, rcvr, celerity_
     click.echo("    " + str(UTCDateTime(src_time) + np.round(rng / celerity_min, 0))[:-8] + '\n')
 
 
-
-@click.command('calc-celerity', short_help="Compute the celerity for an arrival from a known source")
+@click.command('calc-celerity', short_help="Compute the celerity for an arrival from a known source", hidden=True)
 @click.option("--src-lat", help="Source latitude", default=None, prompt="Enter source latitude: ")
 @click.option("--src-lon", help="Source longitude", default=None, prompt="Enter source longitude: ")
 @click.option("--src-time", help="Source time", default=None, prompt="Enter source time: ")
@@ -210,176 +1116,8 @@ def calc_celerity(src_lat, src_lon, src_time, arrival_lat, arrival_lon, arrival_
     click.echo("  Arrival celerity: " + str(np.round(rng / dt, 1)) + " m/s" + '\n')
 
 
-
-@click.command('check-db-wvfrms', short_help="Check waveform pull from database")
-@click.option("--config-file", help="Configuration file", default=None)
-@click.option("--db-config", help="Database configuration file", default=None)
-
-@click.option("--network", help="Network code for FDSN and database", default=None)
-@click.option("--station", help="Station code for FDSN and database", default=None)
-@click.option("--location", help="Location code for FDSN and database", default=None)
-@click.option("--channel", help="Channel code for FDSN and database", default=None)
-
-@click.option("--starttime", help="Start time of analysis window", default=None)
-@click.option("--endtime", help="End time of analysis window", default=None)
-def check_db_wvfrm(config_file, db_config, network, station, location, channel, starttime, endtime):
-    '''
-    Test database pull of waveform data for beamforming (fk or fdk) analysis
-
-    \b
-    Example usage (detection_db.config will be unique to your database pull):
-    \tinfrapy run_fk --config-file config/detection_db.config
-
-    '''
-
-    click.echo("")
-    click.echo("#################################")
-    click.echo("##                             ##")
-    click.echo("##      InfraPy Utilities      ##")
-    click.echo("##       check_db_wvfrms       ##")
-    click.echo("##                             ##")
-    click.echo("#################################")
-    click.echo("")    
-
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
-            user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
-        else:
-            click.echo("Invalid configuration file (file not found)")
-            return 0
-    else:
-        user_config = None
-
-    # Database and data IO parameters   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
-    db_info = None
-
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
-
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
-
-    click.echo('\n' + "Data parameters:")
-    click.echo("  db_config: " + str(db_config))
-    click.echo("  network: " + str(network))
-    click.echo("  station: " + str(station))
-    click.echo("  location: " + str(location))
-    click.echo("  channel: " + str(channel))
-    click.echo("  starttime: " + str(starttime))
-    click.echo("  endtime: " + str(endtime))
-
-    # Check data option and populate obspy Stream
-    db_info = cnfg.ConfigParser()
-    db_info.read(db_config)
-
-    stream, latlon = data_io.set_stream(None, None, db_info, network, station, location, channel, starttime, endtime, None)
-
-    click.echo('\n' + "Data summary:")
-    for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
-
-    click.echo('\nLocation info:')    
-    for line in latlon:
-        click.echo(str(line[0]) + '\t' +  str(line[1]))
-
-
-@click.command('write-wvfrms', short_help="Save waveforms from FDSN or database")
-@click.option("--config-file", help="Configuration file", default=None)
-@click.option("--db-config", help="Database configuration file", default=None)
-@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-
-@click.option("--network", help="Network code for FDSN and database", default=None)
-@click.option("--station", help="Station code for FDSN and database", default=None)
-@click.option("--location", help="Location code for FDSN and database", default=None)
-@click.option("--channel", help="Channel code for FDSN and database", default=None)
-
-@click.option("--starttime", help="Start time of analysis window", default=None)
-@click.option("--endtime", help="End time of analysis window", default=None)
-def write_wvfrms(config_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
-    '''
-    Write waveform data from an FDSN or database pull into local SAC files
-
-    \b
-    Example usage (detection_db.config will be unique to your database pull):
-    \tinfrapy utils write-wvfrms --config-file config/detection_fdsn.config
-
-    '''
-
-    click.echo("")
-    click.echo("#################################")
-    click.echo("##                             ##")
-    click.echo("##      InfraPy Utilities      ##")
-    click.echo("##         write-wvfrms        ##")
-    click.echo("##                             ##")
-    click.echo("#################################")
-    click.echo("")   
-
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
-            user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
-        else:
-            click.echo("Invalid configuration file (file not found)")
-            return 0
-    else:
-        user_config = None
-
-    # Database and data IO parameters   
-    db_config = config.set_param(user_config, 'WAVEFORM IO', 'db_config', db_config, 'string')
-    db_info = None
-
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
-
-    # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
-
-    click.echo('\n' + "Data parameters:")
-    if fdsn is not None:
-        click.echo("  fdsn: " + str(fdsn))
-        click.echo("  network: " + str(network))
-        click.echo("  station: " + str(station))
-        click.echo("  location: " + str(location))
-        click.echo("  channel: " + str(channel))
-        click.echo("  starttime: " + str(starttime))
-        click.echo("  endtime: " + str(endtime))
-    elif db_config is not None:
-        db_info = cnfg.ConfigParser()
-        db_info.read(db_config)
-
-        click.echo("  db_url: " + str(db_config))
-        click.echo("  network: " + str(network))
-        click.echo("  station: " + str(station))
-        click.echo("  location: " + str(location))
-        click.echo("  channel: " + str(channel))
-        click.echo("  starttime: " + str(starttime))
-        click.echo("  endtime: " + str(endtime))
-    else:
-        click.echo("Invalid data parameters.  Requires fdsn or db info.")
-
-    stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
-
-    click.echo('\n' + "Data summary:")
-    for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
-
-    click.echo('\n' + "Writing waveform data to local SAC files...")
-    data_io.write_stream_to_sac(stream, latlon)
-
-
-@click.command('best-beam', short_help="Compute the best beam via shift/stack")
-@click.option("--config-file", help="Configuration file", default=None)
+@click.command('best-beam', short_help="Compute the best beam via shift/stack", hidden=True)
+@click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--local-wvfrms", help="Local waveform data files", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
 @click.option("--db-url", help="Database URL for waveform data files", default=None)
@@ -400,16 +1138,16 @@ def write_wvfrms(config_file, db_config, fdsn, network, station, location, chann
 @click.option("--signal-start", help="Start of signal window", default=None)
 @click.option("--signal-end", help="End of signal window", default=None)
 @click.option("--hold-figure", help="Hold figure open", default=True)
-def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
+def best_beam(cnfg_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local_latlon, network, station, location, channel, starttime, endtime, local_fk_label, freq_min, freq_max,
     back_az, trace_vel, signal_start, signal_end, hold_figure):
     '''
     Shift and stack the array data to compute the best beam.  Can be run adaptively using the fk_results.dat file or along a specific beam.
 
     \b
-    Example usage (requires 'infrapy run_fk --config-file config/detection_local.config' run first):
-    \tinfrapy utils best-beam --config-file config/detection_local.config
-    \tinfrapy utils best-beam --config-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
-    \tinfrapy utils best-beam --config-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
+    Example usage (requires 'infrapy run_fk --cnfg-file config/detection_local.config' run first):
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
+    \tinfrapy utils best-beam --cnfg-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
 
     '''
 
@@ -422,11 +1160,11 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     click.echo("#################################")
     click.echo("")   
 
-    if config_file:
-        click.echo('\n' + "Loading configuration info from: " + config_file)
-        if os.path.isfile(config_file):
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
-            user_config.read(config_file)
+            user_config.read(cnfg_file)
         else:
             click.echo("Invalid configuration file (file not found)")
             return 0
@@ -434,27 +1172,27 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
         user_config = None
 
     # Database and data IO parameters   
-    db_url = config.set_param(user_config, 'WAVEFORM IO', 'db_url', db_url, 'string')
-    db_site = config.set_param(user_config, 'WAVEFORM IO', 'db_site', db_site, 'string')
-    db_wfdisc = config.set_param(user_config, 'WAVEFORM IO', 'db_wfdisc', db_wfdisc, 'string')
+    db_url = config.set_param(user_config, 'DATA IO', 'db_url', db_url, 'string')
+    db_site = config.set_param(user_config, 'DATA IO', 'db_site', db_site, 'string')
+    db_wfdisc = config.set_param(user_config, 'DATA IO', 'db_wfdisc', db_wfdisc, 'string')
 
-    # Local waveform IO parameters
-    local_wvfrms = config.set_param(user_config, 'WAVEFORM IO', 'local_wvfrms', local_wvfrms, 'string')
-    local_latlon = config.set_param(user_config, 'WAVEFORM IO', 'local_latlon', local_latlon, 'string')
+    # Local DATA IO parameters
+    local_wvfrms = config.set_param(user_config, 'DATA IO', 'local_wvfrms', local_wvfrms, 'string')
+    local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
-    # FDSN waveform IO parameters
-    fdsn = config.set_param(user_config, 'WAVEFORM IO', 'fdsn', fdsn, 'string')   
-    network = config.set_param(user_config, 'WAVEFORM IO', 'network', network, 'string')
-    station = config.set_param(user_config, 'WAVEFORM IO', 'station', station, 'string')
-    location = config.set_param(user_config, 'WAVEFORM IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'WAVEFORM IO', 'channel', channel, 'string')       
+    # FDSN DATA IO parameters
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
 
     # Trimming times
-    starttime = config.set_param(user_config, 'WAVEFORM IO', 'starttime', starttime, 'string')
-    endtime = config.set_param(user_config, 'WAVEFORM IO', 'endtime', endtime, 'string')
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
 
     # Local fk file
-    local_fk_label = config.set_param(user_config, 'DETECTION IO', 'local_fk_label', local_fk_label, 'string')
+    local_fk_label = config.set_param(user_config, 'DATA IO', 'local_fk_label', local_fk_label, 'string')
 
     click.echo('\n' + "Data parameters:")
     if local_wvfrms is not None:
@@ -509,7 +1247,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
 
     click.echo('\n' + "Data summary:")
     for tr in stream:
-        click.echo(tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
     if local_fk_label is None or local_fk_label == "auto":
         local_fk_label = ""
@@ -617,7 +1355,7 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
     header = "InfraPy Best Beam Results" + '\n'
     header = header + '\n' + "Data summary:" + '\n'
     for tr in stream:
-        header = header + "    " + tr.stats.network + "." + tr.stats.station + "." + tr.stats.location + "." + tr.stats.channel + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
+        header = header + "    " + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime) + '\n'
 
     header = header + "  t0: " + str(stream[0].stats.starttime) + '\n\n'
 
@@ -645,77 +1383,3 @@ def best_beam(config_file, local_wvfrms, fdsn, db_url, db_site, db_wfdisc, local
         plt.show(block=False)
         plt.pause(5.0)
         plt.close()
-
-
-
-@click.command('fit-celerity', short_help="Generate a GMM celerity model")
-@click.option("--data-file", help="File containing celerity information", default=None)
-@click.option("--cel-index", help="Column index of celerity values", default=6)
-@click.option("--atten-index", help="Column index of attenuation values", default=11)
-@click.option("--atten-lim", help="Attenuation limit", default=None, type=float)
-def fit_celerity(data_file, cel_index, atten_index, atten_lim):
-    '''
-    Compute a KDE of celerity values and generate parameters for a reciprocal celerity model
-
-    \b
-    Example usage (requires a data file with celerities):
-    \tinfrapy utils fit-celerity --data-file ToyAtmo.arrivals.dat
-
-    '''
-
-    click.echo("")
-    click.echo("#################################")
-    click.echo("##                             ##")
-    click.echo("##      InfraPy Utilities      ##")
-    click.echo("##         fit-celerity        ##")
-    click.echo("##                             ##")
-    click.echo("#################################")
-    click.echo("")   
-
-
-    click.echo("  Loading data from " + data_file)
-    data = np.loadtxt(data_file)
-    cel_data = data[:, cel_index]
-
-    if atten_lim is not None:
-        click.echo("  Building KDE with limited arrivals (" + str(atten_lim) + " dB Sutherland & Bass attenuation limit)")
-        atten_data = data[:, atten_index]
-        cel_kernel = gaussian_kde(1.0 / cel_data[atten_data > atten_lim])
-    else:
-        click.echo("  Building KDE for all arrival celerities")
-        cel_kernel = gaussian_kde(1.0 / cel_data)
-
-    cel_vals = np.linspace(0.38, 0.18, 200)
-    rcel_pdf = cel_kernel(1.0 / cel_vals)
-
-    click.echo("  Generating fit to KDE...")
-    def rcel_func(rcel, wt1, wt2, wt3, mn1, mn2, mn3, std1, std2, std3):
-        result = (wt1 / std1) * norm.pdf((rcel - mn1) / std1)
-        result = result + (wt2 / std2) * norm.pdf((rcel - mn2) / std2)
-        result = result + (wt3 / std3) * norm.pdf((rcel - mn3) / std3)
-
-        return result
-    
-    popt, _ = curve_fit(rcel_func, 1.0 / cel_vals, rcel_pdf,
-                         p0=[0.0539, 0.0899, 0.8562, 
-                             1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26,
-                             0.066, 0.08, 0.33])
-    popt = np.round(popt, 3)
-
-    click.echo('\n' + "  Reciprocal celerity model parameters (CLI and config file formats):")
-    click.echo("    --rcel-wts '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "' --rcel-mns '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "' --rcel-sds '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
-
-    click.echo("    rcel_wts = '" + str(popt[0]) + ", " + str(popt[1]) + ", " + str(popt[2]) + "'")
-    click.echo("    rcel_mns = '" + str(popt[3]) + ", " + str(popt[4]) + ", " + str(popt[5]) + "'")
-    click.echo("    rcel_sds = '" + str(popt[6]) + ", " + str(popt[7]) + ", " + str(popt[8]) + "'" + '\n')
-
-    click.echo("    Note: mean reciprocal celerities: 1.0/" + str(np.round(1.0 / popt[3], 3)) + ", 1.0/" + str(np.round(1.0 / popt[4], 3)) + ", 1.0/" + str(np.round(1.0 / popt[5], 3)) + '\n')
-
-    plt.figure(figsize=(7, 4))
-    plt.plot(cel_vals, rcel_pdf, '-k', linewidth=4.0, label="Data KDE")
-    plt.plot(cel_vals, rcel_func(1.0 / cel_vals, popt[0], popt[1], popt[2],popt[3], popt[4], popt[5], 
-                                 popt[6], popt[7], popt[8]), '--r', linewidth=2.0, label="GMM Fit")
-    plt.xlabel("Celerity [km/s]")
-    plt.ylabel("Probability")
-    plt.legend()
-    plt.show()

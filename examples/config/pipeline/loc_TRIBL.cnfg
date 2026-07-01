@@ -1,0 +1,31 @@
+# TRIBL analysis of Humming Roadrunner 5 for testing
+# 
+# Ground Truth:
+# Location: 33.53969, −106.33562
+# Origin: 2012-08-27 @ 23:02 UTC
+
+
+
+[LOC]
+atmo_data = g2s/g2stxt_2012082800_33.5400_-106.3350.dat
+
+ll_corner = 33.0, -107.0
+ur_corner = 34.0, -106.0
+alt_bnds = 0, 0
+
+latlon_resol = 0.02
+alt_resol = 1.0
+
+tm_min = 2012-08-27T22:57:00
+tm_max = 2012-08-27T23:03:00
+tm_resol = 5.0
+
+rng_snd_spd_stdev = 5.0
+det_tm_stdev = 4.0
+
+local_temp_dir = temp/TRIBL
+cpu_cnt = 12
+
+
+
+

@@ -681,7 +681,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
     duration = int(endtime - starttime)
 
     # run clustering analysis
-    events, event_qls = [], []
+    events, ev_qls = [], []
     for dt in range(0, duration, analysis_window):
         window_start = starttime +  dt # np.timedelta64(dt, 'm')
         window_end = starttime + (dt + analysis_window + max_prop_time) # np.timedelta64(dt + int(analysis_window + max_prop_time), 'm')
@@ -698,20 +698,20 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
 
             for n in range(len(clusters)):
                 events += [[key[n] for n in clusters[n]]]
-                event_qls += [10.0**(-qualities[n])]
+                ev_qls += [10.0**(-qualities[n])]
 
     # clean up clusters
     print('\n' + "Cleaning up and merging clusters...")
-    event_cnt = len(events)
-    for n1 in range(event_cnt):
-        for n2 in range(n1 + 1, event_cnt):
+    ev_cnt = len(events)
+    for n1 in range(ev_cnt):
+        for n2 in range(n1 + 1, ev_cnt):
             if len(events[n1]) > 0 and len(events[n2]) > 0:
                 set1, set2 = set(events[n1]), set(events[n2])
                 rel_overlap = len(set1.intersection(set2)) / min(len(set1), len(set2))
 
                 if rel_overlap > 0.5:
                     events[n1], events[n2] = list(set1.union(set2)), []
-                    event_qls[n1], event_qls[n2] = max(event_qls[n1], event_qls[n2]), -1.0
+                    ev_qls[n1], ev_qls[n2] = max(ev_qls[n1], ev_qls[n2]), -1.0
 
     for n, ev_ids in enumerate(events):
         if len(ev_ids) > 0:
@@ -719,9 +719,28 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
             unique_cnt = max(len(np.unique(locs[:, 0])), len(np.unique(locs[:, 1])))
             if unique_cnt < cluster_array_population:
                 events[n] = []
-                event_qls[n] = -1.0
+                ev_qls[n] = -1.0
 
     events = [ei for ei in events if len(ei) > 0]
-    event_qls = [eqi for eqi in event_qls if eqi > 0]
+    ev_qls = [eqi for eqi in ev_qls if eqi > 0]
 
-    return events, event_qls
+    return events, ev_qls
+
+
+def id_events_dict(det_list, assoc_params, pl):
+    
+    return id_events(det_list,
+                     assoc_params['cluster_threshold'],
+                     starttime=assoc_params['starttime'],
+                     endtime=assoc_params['endtime'],
+                     dist_max=assoc_params['distance_matrix_max'],
+                     bm_width=assoc_params['back_az_width'],
+                     rng_max=assoc_params['range_max'],
+                     rad_min=100.0,
+                     rad_max=(assoc_params['range_max'] / 4.0), 
+                     resol=assoc_params['resolution'],
+                     linkage_method=assoc_params['cluster_linkage'],
+                     trimming_thresh=assoc_params['trimming_threshold'], 
+                     cluster_det_population=assoc_params['ev_population_min'],
+                     cluster_array_population=assoc_params['ev_station_min'],
+                     pool=pl)

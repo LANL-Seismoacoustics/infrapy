@@ -127,7 +127,7 @@ class IPSettingsManager(QFrame):
                 print("{} doesn't have a to_dict method yet".format(value))
         cli_dict = self.map_infraview_settings_to_cli(settings_dict)
 
-        # if self.current_config_file is the self.default_config_file, prompt for a new filename. (ie don't allow anyone to write over default config)
+        # if self.current_cnfg is the self.default_cnfg, prompt for a new filename. (ie don't allow anyone to write over default config)
         # otherwise, save to the current config path
         if self.current_config_path == self.default_config_path:
             filename = QFileDialog.getSaveFileName(self, "Config File", "", "Config Files (*.ini *.config)" )

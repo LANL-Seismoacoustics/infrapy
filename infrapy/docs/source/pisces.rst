@@ -15,7 +15,7 @@ Defining Database Connection Info
 
     .. code-block:: none
 
-        [WAVEFORM IO]
+        [DATA IO]
         db_config = /path/to/database_info.config
 
         station = I53*

@@ -1,0 +1,23 @@
+{
+    "GT data": " DTRA Verification database (previously available at http://www.rdss.info), IDC IRED, additional GT events.",
+    "citation": "Nippress, A., & Green, D. N. (2023). Global empirical models for infrasonic celerity and backazimuth. Geophysical Journal International, 235(2), 1912-1925.",
+    "description": "Global scale infrasound celerity model developed by AWE Blacknest infrasound SMEs using IDC Reviewed Events and DTRA Verification GT info.",
+    "weights": [
+        0.023,
+        0.198,
+        0.771
+    ],
+    "means": [
+        3.823, 
+        3.367,
+        3.4
+    ],
+    "stdevs": [
+        0.059,
+        0.057,
+        0.175
+    ]
+}
+
+
+

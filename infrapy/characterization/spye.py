@@ -274,6 +274,26 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
     return smn_spec
 
 
+def extract_json_spectra(det_spec):
+
+    if len(det_spec) > 1:
+        f_lim = np.min([spec["freq"][-1] for spec in det_spec])
+        df = np.min([spec["freq"][1] for spec in det_spec])
+        spec_freq = np.arange(0.0, f_lim, df)
+
+        signal_interps = [interp1d(spec["freq"], spec["signal"]) for spec in det_spec]
+        resid_interps = [interp1d(spec["freq"], spec["resid"]) for spec in det_spec]
+
+        spec_sig = np.mean(np.array([spec_fit(spec_freq) for spec_fit in signal_interps]), axis=0)
+        spec_res = np.mean(np.array([spec_fit(spec_freq) for spec_fit in resid_interps]), axis=0)
+    else:
+        spec_freq = det_spec[0]["freq"]
+        spec_sig = det_spec[0]["signal"]
+        spec_res = det_spec[0]["resid"]
+    
+    return spec_freq, spec_sig, spec_res
+
+
 def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """ 
         Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield

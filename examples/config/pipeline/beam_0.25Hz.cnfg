@@ -1,0 +1,18 @@
+# InfraPy beamforming detection file for 0.25 - 1.0 Hz frequency band
+# Window length is tuned to tuned to capture 6 cycles and have 33% overlap
+
+[FK]
+freq_min = 0.25
+freq_max = 1.00
+window_len = 24
+window_step = 8
+cpu_cnt = 12
+
+[FD]
+window_len = 3600
+p_value = 0.01
+min_duration = 20.0
+back_az_width = 20.0
+merge_dets = True
+
+

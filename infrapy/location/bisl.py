@@ -13,6 +13,8 @@ import warnings
 
 import numpy as np
 
+import matplotlib.pyplot as plt 
+
 from scipy.integrate import simps
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
@@ -299,42 +301,38 @@ def find_confidence(func, lims, conf_lvl):
 
         """
 
-    if conf_lvl > 1.0:
-        print('WARNING - find_confidence cannot use conf > 1.0')
-        return [lims[0], lims[1]]
+    resol = 400
 
-    def conf_func(x, thresh):
-        val = func(x)
-        if val >= thresh:
-            return val
-        else:
-            return 0.0
-
-    resol = 200
     x_vals = np.linspace(lims[0], lims[1], resol)
     f_vals = func(x_vals)
+ 
+    f_vals = f_vals / simps(f_vals, x_vals)
 
-    f_max = max(f_vals)
-    thresh_vals = np.linspace(0.0, f_max * 0.5, resol)
-
-    norm = simps(f_vals, x_vals)
-
-    conf_prev=1.0
-    bnds=[]
+    thresh_vals = np.linspace(min(f_vals), max(f_vals), resol)
     for n in range(resol):
-        conf = simps(np.array([conf_func(xj, thresh_vals[n]) for xj in x_vals]), x_vals) / norm
+        thresh = thresh_vals[n]
 
-        if conf < conf_lvl < conf_prev:
-            thresh = thresh_vals[n - 1] - (thresh_vals[n-1] - thresh_vals[n]) / (conf_prev - conf) * (conf_lvl - conf)
-            conf = simps(np.array([conf_func(xj, thresh_vals[n]) for xj in x_vals]), x_vals) / norm
+        temp_vals = f_vals.copy()
+        temp_vals[f_vals < thresh] = 0.0
+        conf = simps(temp_vals, x=x_vals)
 
-            for n in range(resol - 1):
-                if (f_vals[n] - thresh) * (f_vals[n+1] - thresh) < 0.0:
-                    bnds.append(x_vals[n])
+        '''
+        plt.clf()
+        plt.plot(x_vals, f_vals, '-k')
+        plt.fill_between(x_vals, temp_vals, color='blue')
+        plt.title("Integral = " + str(conf))
+        plt.pause(0.001)
+        plt.show()
+        '''
+
+        x_temp = x_vals[f_vals > thresh] 
+        bnds = [x_temp[0], x_temp[-1]]
+        
+
+        if conf < conf_lvl:
+            # plt.show()
             break
-
-        conf_prev=conf
-
+            
     return bnds, conf, thresh
 
 
@@ -345,6 +343,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
 
         tm_vals = np.sort(np.unique(tm_grid))
         dt_vals = (tm_vals - tm_vals[0]).astype('m8[s]').astype(float)
+        dt_step = dt_vals[1] - dt_vals[0]
 
         if verbose:
             print('\t' + "Analyzing localization pdf...")
@@ -353,7 +352,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
         spatial_pdf = simps(pdf, x=dt_vals)
         tm_pdf = simps(simps(pdf * np.cos(np.radians(lat_grid)), x=lon_vals, axis=1), x=lat_vals, axis=0)
         norm = simps(tm_pdf, dt_vals)
-
+        
         spatial_pdf = spatial_pdf / norm
         tm_pdf = tm_pdf / norm
 
@@ -379,9 +378,9 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
 
         dt_mean = simps(dt_vals * tm_pdf, x=dt_vals)
         dt_stdev = np.sqrt(simps((dt_vals - dt_mean)**2 * tm_pdf, x=dt_vals))
+        tm_mask = np.logical_and(dt_mean - 3.0 * dt_stdev - 2.0 * dt_step < dt_vals, dt_vals < dt_mean + 3.0 * dt_stdev + 2.0 * dt_step)
 
-        tm_mask = np.logical_and(dt_mean - 3.5 * dt_stdev < dt_vals, dt_vals < dt_mean + 3.5 * dt_stdev)
-        time_bnds_90 = find_confidence(interp1d(dt_vals[tm_mask], tm_pdf[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], 0.90)
+        time_bnds_90 = find_confidence(interp1d(dt_vals[tm_mask], tm_pdf[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], 0.90)
         
         MaP_index = np.argmax(pdf.flatten())
 
@@ -458,10 +457,8 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
         lat_vals = np.sort(np.unique(lat_grid))
         lon_vals = np.sort(np.unique(lon_grid))
 
-        tm_vals = np.sort(np.unique(tm_grid))
-        dt_vals = (tm_vals - tm_vals[0]).astype('m8[s]').astype(float)
-
         if verbose:
+            print('\t' + "Evaluating localization probability on grid...")
             print('\t\t Progress: ', end='')
             prog_bar.prep(5 * len(det_list))
             pdf = np.array([det.pdf(lat_grid, lon_grid, tm_grid, path_geo_model=path_geo_model, prog_step=5) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
@@ -525,6 +522,17 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
         
     return result 
     
+def run_dict(det_list, loc_params, tm_lims, pgm):
+    return run(det_list,
+               bm_width=loc_params['back_az_width'],
+               rng_max=loc_params['range_max'],
+               grid_resol=loc_params['grid_resol'],
+               ll_corner=loc_params['ll_corner'],
+               ur_corner=loc_params['ur_corner'],
+               latlon_resol=loc_params['latlon_resol'],
+               tm_lims=tm_lims,
+               tm_resol=loc_params['tm_resol'],
+               path_geo_model=pgm)
 
 def summarize(result, confidence_level=90):
     """Outputs results of BISL analysis
@@ -540,15 +548,14 @@ def summarize(result, confidence_level=90):
 
     if 't_MaP' in result:
         if confidence_level != 90:
-            dt_vals = np.array([(tm_val - result['temporal_pdf'][0][0]).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in result['temporal_pdf'][0]])
-
-            dt_mean = (result['t_mean'] - result['temporal_pdf'][0][0]).astype('m8[ms]').astype(float) / 1.0e3
+            dt_vals = np.array([(np.datetime64(tm_val) - np.datetime64(result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3 for tm_val in result['temporal_pdf'][0]])
+            dt_mean = (np.datetime64(result['t_mean']) - np.datetime64(result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
             tm_mask = np.logical_and(dt_mean - 4.0 * result['t_stdev'] < dt_vals, dt_vals < dt_mean + 4.0 * result['t_stdev'])
 
-            tm_conf = find_confidence(interp1d(dt_vals[tm_mask], np.array(result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+            tm_conf = find_confidence(interp1d(dt_vals[tm_mask], np.array(result['temporal_pdf'][1])[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
 
-            tm_min_val = result['temporal_pdf'][0][0] + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms')
-            tm_max_val = result['temporal_pdf'][0][0] + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms') 
+            tm_min_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms')
+            tm_max_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms') 
         else:
             tm_min_val = result['t_min']
             tm_max_val = result['t_max']

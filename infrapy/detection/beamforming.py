@@ -60,7 +60,7 @@ def MDL(eigenV,n,m):
 
 
 
-def detect_peaks(image,size=3,num_peaks=None):
+def det_peaks(image,size=3,num_peaks=None):
     """
     Takes an image and detect the peaks using the local maximum filter.
     Returns a boolean mask of the peaks (i.e. 1 when
@@ -458,7 +458,7 @@ def _fkMUSIC_dynamic(stream,sps,slow,mult_vectors,fN,x,y,timeSTAMP,func,freqN,nu
             ss3=np.power(np.abs(ss2),2)
             ss4=np.sum(ss3,axis=2)
             C[:,:,f_i]=1.0/ss4
-            posM,valM=detect_peaks(1.0/ss4,size=5,num_peaks=number_sources)
+            posM,valM=det_peaks(1.0/ss4,size=5,num_peaks=number_sources)
 
             for ii in range(number_sources):
                 RES=procPEAKS(posM[ii],slow)
@@ -681,7 +681,7 @@ def fkPROC(method,stream,sps,slow,mult_vectors,fN,x,y,timeSTAMP,func,freqN,aux,n
         exit()
 
     try:
-        posM,valM=detect_peaks(FK,size=5,num_peaks=num_sources)
+        posM,valM=det_peaks(FK,size=5,num_peaks=num_sources)
         streamF_T=np.fft.rfft(stream,axis=1)
         streamF=streamF_T*0
         streamF[:,fN.astype('int')] = streamF_T[:,fN.astype('int')]

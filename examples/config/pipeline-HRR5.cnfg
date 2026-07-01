@@ -1,0 +1,60 @@
+# Pipeline analysis of Humming Roadrunner 5 for testing
+# 
+# Ground Truth:
+# Location: 33.53969, −106.33562
+# Origin: 2012-08-27 @ 23:02 UTC
+
+[PIPELINE]
+# DIR INFO
+config_dir = config/pipeline/
+
+det_dir = HRR/dets/
+ev_dir = HRR/events/
+figs_dir = HRR/figs/
+temp_Dir = HRR/temp/
+
+# CONFIG FILE INFO
+beam_cnfgs = beam_0.10Hz.cnfg,
+             beam_0.25Hz.cnfg, 
+             beam_0.50Hz.cnfg, 
+             beam_1.00Hz.cnfg
+
+ev_build_cnfgs = ev_build_reg.cnfg
+
+ev_loc_cnfgs = loc_BISL_reg-hf.cnfg,
+               loc_BISL_reg-lf.cnfg
+
+# ev_char_cnfgs = char_SpYE.cnfg
+
+# DATA INFO
+fdsn = IRIS
+
+# trace_ids = 2D.N30*.*.*DF,
+#            2D.N34*.*.*DF,
+#            2D.N38*.*.*DF,
+#            2D.W22*.*.*DF,
+#            2D.W24*.*.*DF,
+#            2D.W34*.*.*DF,
+#            2D.W42*.*.*DF,
+#            2D.W46*.*.*DF,
+#            2D.W49*.*.*DF,
+#            2D.WNK*.*.*DF
+
+trace_ids = 2D.N30CN..CDF, 2D.N30CS..CDF, 2D.N30NE..CDF, 2D.N30NW..CDF, 2D.N30SE..CDF, 2D.N30SW..CDF |
+            2D.N34C..CDF,  2D.N34CE..CDF, 2D.N34CN..CDF, 2D.N34CS..CDF, 2D.N34CW..CDF, 2D.N34NE..CDF, 2D.N34NW..CDF, 2D.N34SE..CDF, 2D.N34SW..CDF |
+            2D.N38CN..CDF, 2D.N38NE..CDF, 2D.N38NW..CDF, 2D.N38SE..CDF, 2D.N38SW..CDF |
+            2D.W22CW..CDF, 2D.W22NE..CDF, 2D.W22NW..CDF, 2D.W22SE..CDF, 2D.W22SW..CDF |
+            2D.W24CE..CDF, 2D.W24NE..CDF, 2D.W24NW..CDF, 2D.W24SW..CDF |
+            2D.W34CE..CDF, 2D.W34CW..CDF, 2D.W34NE..CDF, 2D.W34NW..CDF, 2D.W34SE..CDF, 2D.W34SW..CDF |
+            2D.W42CE..CDF, 2D.W42CW..CDF, 2D.W42NE..CDF, 2D.W42NW..CDF, 2D.W42SE..CDF, 2D.W42SW..CDF |
+            2D.W46CE..CDF, 2D.W46CW..CDF, 2D.W46NE..CDF, 2D.W46NW..CDF, 2D.W46SE..CDF, 2D.W46SW..CDF |
+            2D.W49CE..CDF, 2D.W49CW..CDF, 2D.W49NE..CDF, 2D.W49NW..CDF, 2D.W49SE..CDF, 2D.W49SW..CDF |
+            2D.WNKCE..CDF, 2D.WNKNE..CDF, 2D.WNKNW..CDF, 2D.WNKSE..CDF, 2D.WNKSW..CDF
+
+starttime = 2012-08-27T23:00:00
+endtime = 2012-08-27T23:59:00
+
+# CUSTOMIZATION INFO
+# out_label = 2012-08-27
+cpu_cnt = 12
+

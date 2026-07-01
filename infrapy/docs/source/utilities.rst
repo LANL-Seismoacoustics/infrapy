@@ -150,13 +150,13 @@ Computing the best-beam waveform
           Shift and stack the array data to compute the best beam.  Can be run
           adaptively using the fk_results.dat file or along a specific beam.
 
-          Example usage (requires 'infrapy run_fk --config-file config/detection_local.config' run first):
-              infrapy utils best-beam --config-file config/detection_local.config
-              infrapy utils best-beam --config-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
-              infrapy utils best-beam --config-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
+          Example usage (requires 'infrapy run_fk --cnfg-file config/detection_local.config' run first):
+              infrapy utils best-beam --cnfg-file config/detection_local.config
+              infrapy utils best-beam --cnfg-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
+              infrapy utils best-beam --cnfg-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
 
         Options:
-          --config-file TEXT     Configuration file
+          --cnfg-file TEXT     Configuration file
           --local-wvfrms TEXT    Local waveform data files
           --fdsn TEXT            FDSN source for waveform data files
           --db-url TEXT          Database URL for waveform data files
@@ -183,7 +183,7 @@ Computing the best-beam waveform
 
     .. code-block:: bash
 
-        infrapy utils best-beam --config-file config/detection_local.config
+        infrapy utils best-beam --cnfg-file config/detection_local.config
 
     .. code-block:: none
 
@@ -231,7 +231,7 @@ Computing the best-beam waveform
 
     .. code-block:: bash
 
-        infrapy utils best-beam --config-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
+        infrapy utils best-beam --cnfg-file config/detection_local.config --back-az -39.0 --trace-vel 358.0
 
 - Note that instead of using the fk results file, this analysis applies the user specified beam parameters,
 
@@ -284,7 +284,7 @@ Computing the best-beam waveform
 
     .. code-block:: bash
 
-        infrapy utils best-beam --config-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
+        infrapy utils best-beam --cnfg-file config/detection_local.config --signal-start '2012-04-09T18:13:00' --signal-end '2012-04-09T18:15:00'
 
 - Analysis runs as above, but the data is trimmed to the specified start and end time before computing the best beam.  Note that this trimming doesn't change the file naming information.
 
@@ -348,10 +348,10 @@ Write waveforms from an FDSN or database source
         Write waveform data from an FDSN or database pull into local SAC files
 
         Example usage (detection_db.config will be unique to your database pull):
-          infrapy utils write-wvfrms --config-file config/detection_fdsn.config
+          infrapy utils write-wvfrms --cnfg-file config/detection_fdsn.config
 
         Options:
-          --config-file TEXT  Configuration file
+          --cnfg-file TEXT  Configuration file
           --db-url TEXT       Database URL for waveform data files
           --db-site TEXT      Database site table for waveform data files
           --db-wfdisc TEXT    Database wfdisc table for waveform data files
@@ -369,7 +369,7 @@ Write waveforms from an FDSN or database source
 
     .. code-block:: bash
 
-        infrapy utils write-wvfrms --config-file config/detection_fdsn.config
+        infrapy utils write-wvfrms --cnfg-file config/detection_fdsn.config
 
 - Data is pulled using the parameters in the config file and stored using the same network, station, and start- and endtime format into SAC files:
   

@@ -1,0 +1,23 @@
+{
+    "citation": "Blom, P., Waxler, R., & Frazier, G. (2023). Quantification of spatial and seasonal trends in the atmosphere and construction of statistical models for infrasonic propagation. Geophysical journal international, 235(2), 1007-1020.",
+    "description": "US Rock Mountain (Denver, CO) EOF re-sampling ensembles combined across seasons",
+    "arrivals file": "US_RM.arrivals.dat",
+    "atten_lim": -4.0,
+    "turn_ht_min": 4.15,
+    "broadening": 0.1,
+    "weights": [
+        0.1262,
+        0.3148,
+        0.5296
+    ],
+    "means": [
+        2.9885,
+        3.4099,
+        3.7648
+    ],
+    "stdevs": [
+        0.0551,
+        0.0942,
+        0.3849
+    ]
+}

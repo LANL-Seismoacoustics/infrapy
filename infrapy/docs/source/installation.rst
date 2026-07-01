@@ -86,19 +86,22 @@ If you have SSH keys set up for GitHub, you can alternately clone as,
     >> git clone git@github.com:LANL-Seismoacoustics/infraga.git
     >> git clone git@github.com:LANL-Seismoacoustics/stochprop.git
 
-Once the PyGS development environment is built, activate it using :code:`conda activate pygs_dev` and then use pip with the :code:`-e` flag to install infraGA/GeoAc and stochprop and compile the infraGA/GeoAc ray tracing methods,
+Once the PyGS development environment is built, activate it and use pip with the :code:`-e` flag to install infraGA/GeoAc and stochprop.  As with the non-dev install, compile the infraGA/GeoAc ray tracing methods,
 
 .. code-block:: bash
+
+    >> conda activate pygs_dev
+
+    >> cd /path/to/stochprop
+    >> pip install -e .
 
     >> cd /path/to/infraga
     >> pip install -e .
 
     >> infraga compile 
 
-    >> cd /path/to/stochprop
-    >> pip install -e .
 
-This installation will clone the example directories with all relevant data and also allow you to interact with other :code:`git` branches for customization.
+This installation will clone the example directories with all relevant data and also allow you to interact with other :code:`git` branches to access any in-development features and capabilities.
 
 -------------------------------------
 Testing

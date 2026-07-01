@@ -16,7 +16,7 @@ import json
 from importlib.util import find_spec
 
 if find_spec('infraga'):
-    import wget
+    import requests
     from netCDF4 import Dataset
 
 import numpy as np
@@ -25,86 +25,45 @@ from datetime import datetime
 from pyproj import Geod
 
 from scipy.integrate import simps
-from scipy.interpolate import interp1d, interp2d, RectBivariateSpline
-from scipy.stats import norm, gaussian_kde
-from scipy.signal import savgol_filter
-from scipy.special import gamma
+from scipy.interpolate import interp1d, interp2d
 
+from infraga.cli import utils as infraga_utils
 
 from . import bisl
 from ..utils import prog_bar
 
-
 sph_proj = Geod(ellps='sphere')
-
 resol = '100m'  # use data at this scale (not working at the moment)
-
-
-# ############################ #
-#       Back Projection        #
-#     Localization Methods     #
-# ############################ #
-def interp_etopo(ll_corner, ur_corner):
-    etopo1 = Dataset(find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd")
-
-    grid_lons = etopo1.variables['x'][:]
-    grid_lats = etopo1.variables['y'][:]
-    grid_elev = etopo1.variables['z'][:]
-
-    lat_mask = np.logical_and(ll_corner[0] - 2.0 <= grid_lats, grid_lats <= ur_corner[0] + 2.0).nonzero()[0]
-    lon_mask = np.logical_and(ll_corner[1] - 2.0 <= grid_lons, grid_lons <= ur_corner[1] + 2.0).nonzero()[0]
-
-    region_lat = grid_lats[lat_mask]
-    region_lon = grid_lons[lon_mask]
-    region_elev = grid_elev[lat_mask,:][:,lon_mask]
-
-    # Change underwater values to sea surface
-    region_elev[region_elev < 0.0] = 0.0
-
-    return interp2d(region_lon, region_lat, region_elev / 1000.0, kind='linear')
-
 
 def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latlon_bnds=None, bounces=100, cpu_cnt=None):
     lat_vals = [det.latitude for det in det_list]
     lon_vals = [det.longitude for det in det_list]
 
-    if os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd"):
-        topo = interp_etopo([min(lat_vals), min(lon_vals)], [max(lat_vals), max(lon_vals)])
-    else:
-        print("Topography file not found.  Downloading from https://www.ngdc.noaa.gov/mgg/global/")
-        download_url = "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/ice_surface/grid_registered/netcdf/ETOPO1_Ice_g_gmt4.grd.gz"
-        destination = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO1_Ice_g_gmt4.grd.gz"
-        try:
-            if not os.path.isdir(os.path.split(destination)[0]):
-                os.mkdir(os.path.split(destination)[0])
-            
-            print("Downloading ETOPO1 data...")
-            wget.download(download_url, destination)
-            print("Extracting...")
-            os.system("gzip -d " + destination)
-            print("ETOPO file successfully downloaded.")
-
-            topo = interp_etopo([min(lat_vals), min(lon_vals)], [max(lat_vals), max(lon_vals)])
-
-        except:
-            print("Download failed.")
-            print("Try manual download: " + download_url)
-            print("Place extracted .grd file in " + find_spec('infraga').submodule_search_locations[0] + "/resources/")
-
-    rcvr_elevs = np.array([topo(det.latitude, det.longitude)[0] for det in det_list])
+    # set elevation of stations from ETOPO1 
+    if not os.path.isfile(infraga_utils.etopo1_file):
+        print("Downloading ETOPO1...")
+        dwnld_result = infraga_utils._download_etopo1()
+        print(dwnld_result)
+    
+    topo = infraga_utils._interp_etopo([min(lat_vals), min(lon_vals)],
+                                       [max(lat_vals), max(lon_vals)],
+                                       use_etopo1=True)
+    
+    rcvr_elevs = np.array([topo((det.latitude, det.longitude)) for det in det_list])
 
     if grnd_snd_spd is None:
         # Compute sound speed from atmo file
         atmo = np.loadtxt(atmo_file)
         snd_spd = interp1d(atmo[:, 0], np.sqrt(0.14 * atmo[:, 5] / atmo[:, 4]))
         grnd_snd_spd = np.array([snd_spd(z_val) for z_val in rcvr_elevs])
-    
-    if len(grnd_snd_spd) == 1:
-        grnd_snd_spd = [grnd_snd_spd[0]] * len(det_list)
-
-    if len(grnd_snd_spd) != len(det_list):
+    elif len(np.atleast_1d(grnd_snd_spd)) == 1:
+        grnd_snd_spd = [grnd_snd_spd] * len(det_list)
+    elif len(np.atleast_1d(grnd_snd_spd)) != len(det_list):
         print('\t' + "Warning! Specificed grnd_snd_spd values don't match length of detections list.")
         return None
+    else:
+        # note sure how things would get here...
+        grnd_snd_spd = 340.0
 
     command_list = []
     for n, det in enumerate(det_list):
@@ -138,7 +97,7 @@ class BackProjection(object):
 
     r_earth = 6370.0
 
-    def __init__(self, detection, projection_file, det_time_std_dev=5.0, c0=340.0, c0_stdev=2.0, dt=1.0):
+    def __init__(self, detection, projection_file, det_time_std_dev=5.0, c0=340.0, c0_stdev=2.0, dt=1.0, az_limit=2.0):
 
         self.c0 = c0
         self.c0_stdev = c0_stdev
@@ -147,6 +106,8 @@ class BackProjection(object):
         v0 = detection.trace_velocity
 
         self.az_std_dev = np.degrees(1.0 / np.sqrt(2.0 * (detection.array_dim - 1.0) * detection.peakF_value))
+        self.az_std_dev = max(self.az_std_dev, az_limit)
+
         self.tr_vel_std_dev = v0 * np.radians(self.az_std_dev)
 
         v0_up = v0 + v0 * np.radians(self.az_std_dev)
@@ -192,11 +153,11 @@ class BackProjection(object):
         return np.sum(result, axis=0)
     
 
-def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0):
+def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0, az_limit=2.0):
 
     c0 = _compute_projections(dets_list, atmo_file, temp_dest=projection_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=latlon_bnds, cpu_cnt=cpu_cnt)
     if c0 is not None:
-        return [BackProjection(det, projection_path + ".det-" + str(n) + ".projection.dat", det_time_std_dev=det_time_std_dev, c0=c0[n], c0_stdev=c0_stdev) for n, det in enumerate(dets_list)]
+        return [BackProjection(det, projection_path + ".det-" + str(n) + ".projection.dat", det_time_std_dev=det_time_std_dev, c0=c0[n], c0_stdev=c0_stdev, az_limit=az_limit) for n, det in enumerate(dets_list)]
     else:
         return None
 
@@ -209,7 +170,7 @@ def eval_on_grid_wrapper(args):
 
 
 def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0,
-            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, verbose=True, show_prog=True, pool=None):
+            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, az_limit=2.0, verbose=True, show_prog=True, pool=None):
 
     if verbose:
         print("Running Time-Reversed Infrasonic Bayesian Localization (TRIBL) Analysis...")
@@ -217,6 +178,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     
     if alt_lims is None:
         alt_lims = [0.0, 0.0]
+        alt_resol = 1.0
 
     lat_grid, lon_grid, alt_grid, tm_grid = bisl.build_grid(det_list, bm_width=bm_width, rng_max=rng_max, grid_resol=grid_resol, ll_corner=ll_corner, ur_corner=ur_corner,
                                                     latlon_resol=latlon_resol, include_tms=True, tm_lims=tm_lims, tm_resol=tm_resol, alt_lims=alt_lims, alt_resol=alt_resol)
@@ -234,7 +196,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     else:
         cpu_cnt = None
 
-    projs = build_projections(det_list, atmo_file, temp_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=[[lat_vals[0], lat_vals[-1]], [lon_vals[0], lon_vals[-1]]], cpu_cnt=cpu_cnt, c0_stdev=c0_stdev, det_time_std_dev=det_time_stdev)
+    projs = build_projections(det_list, atmo_file, temp_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=[[lat_vals[0], lat_vals[-1]], [lon_vals[0], lon_vals[-1]]], cpu_cnt=cpu_cnt, c0_stdev=c0_stdev, det_time_std_dev=det_time_stdev, az_limit=az_limit)
 
     if verbose:
         print('\t' + "Evaluating localization probability on grid...")
@@ -257,9 +219,46 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     pdf = pdf.reshape(lat_grid.shape)
 
     np.savez_compressed(temp_path + ".pdf", lat_vals=lat_vals, lon_vals=lon_vals, alt_vals=alt_vals, tm_vals=tm_vals, pdf=pdf)
-    result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=verbose)
+
+    if np.max(pdf) > 0.0:
+        result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=verbose)
+    else:
+        result = {'norm' : 0.0}
+
+        print('\nOne of the detections is driving the PDF to zero...')
+        print('\tIndex\tmax(PDF)')
+        for j, det in enumerate(det_pdfs):
+            print('\t' + str(j) + '\t' + str(np.max(det)))
+
+        print("Once it's working, try --det-mask ", np.where(np.max(det) > 0.0))
 
     return result
+
+
+
+def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, show_prog=True, pool=None):
+
+    return run(det_list,
+               output_id,
+               temp_id,
+               bm_width=loc_params['back_az_width'],
+               rng_max=loc_params['range_max'],
+               grid_resol=loc_params['grid_resol'],
+               ll_corner=loc_params['ll_corner'],
+               ur_corner=loc_params['ur_corner'],
+               latlon_resol=loc_params['latlon_resol'],
+               tm_lims=tm_lims,
+               tm_resol=loc_params['tm_resol'],
+               alt_lims=loc_params['alt_lims'],
+               alt_resol=loc_params['alt_resol'],
+               grnd_snd_spd=loc_params['grnd_snd_spd'],
+               c0_stdev=loc_params['c0_stdev'],
+               det_time_stdev=loc_params['det_tm_stdev'],
+               az_limit=loc_params['az_limit'],
+               verbose=verbose,
+               show_prog=show_prog,
+               pool=pool) 
+
 
 
 

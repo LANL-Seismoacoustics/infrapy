@@ -77,7 +77,7 @@ class InfrasoundDetection(object):
     __array_dim = None      # integer number of elements in the detecting array
     __method = ''           # method used in the beamforming (eg bartlett)
     __name = ''             # string used to identify the detection (maybe only used in the GUI)
-    __event_id = ''         # string containing the event id the detection is associated with
+    __ev_id = ''         # string containing the event id the detection is associated with
     __note = ''             # optional note that can be added for a reminder etc...
     __network = ''          # network code for the detecting array
     __station = ''          # station code for the detecting array
@@ -399,13 +399,13 @@ class InfrasoundDetection(object):
 
     note = property(get_note, set_note, doc="(optional) Note regarding the detection")
 
-    def set_event_id(self, evt):
-        self.__event_id = evt
+    def set_ev_id(self, evt):
+        self.__ev_id = evt
 
-    def get_event_id(self):
-        return self.__event_id
+    def get_ev_id(self):
+        return self.__ev_id
 
-    event_id = property(get_event_id, set_event_id, doc="(optional) ID of the event")
+    ev_id = property(get_ev_id, set_ev_id, doc="(optional) ID of the event")
 
     def set_method(self, method):
         self.__method = method
@@ -490,7 +490,7 @@ class InfrasoundDetection(object):
                          'Freq Range': self.__freq_range,
                          'Array Dim.': self.__array_dim,
                          'Method': self.__method,
-                         'Event': self.__event_id,
+                         'Event': self.__ev_id,
                          'Note': self.__note,
                          'Network': self.__network,
                          'Station': self.__station}
@@ -530,7 +530,7 @@ class InfrasoundDetection(object):
         if 'Note' in dict:
             self.set_note(dict['Note'])
         if 'Event' in dict:
-            self.set_event_id(dict['Event'])
+            self.set_ev_id(dict['Event'])
         if 'Start' in dict:
             self.set_start(dict['Start'])
         if 'End' in dict:
@@ -552,8 +552,41 @@ class InfrasoundDetection(object):
         # some of the variables...
         self.calc_kappa_etc()
 
+    # the new version
+    def fillFromDict2(self, dict):
+        # set required parameters
+        if dict['peak f-stat time'] is not None:
+            self.set_peakF_UTCtime(UTCDateTime(dict['peak f-stat time']))
+        else:
+            self.set_peakF_UTCtime(UTCDateTime("9999-01-02T00:00:00"))
+
+        self.set_start(min(start_end[0] for start_end in dict['start/end']))
+        self.set_end(max(start_end[1] for start_end in dict['start/end']))
+
+        self.set_peakF_value(dict['f-stat'])
+        self.set_back_azimuth(dict['back az'])
+        self.set_trace_velocity(dict['tr vel'])
+
+        self.set_lat(dict['wvfrm_info'][0][0]['latitude'])
+        self.set_lon(dict['wvfrm_info'][0][0]['longitude'])
+        self.set_array_dim(len(dict['wvfrm_info'][0]))
+
+        self.set_network(dict['wvfrm_info'][0][0]['trace id'].split('.')[0])
+        self.set_station(dict['wvfrm_info'][0][0]['trace id'].split('.')[1])
+
+        f_min = min(fk_params['freq_min'] for fk_params in dict['fk_params'])
+        f_max = min(fk_params['freq_max'] for fk_params in dict['fk_params'])
+        self.set_freq_range([f_min, f_max])
+
+        # At this point, the array_dim, and peakF_value have probably changed, so we need to recalculate
+        # some of the variables...
+        self.calc_kappa_etc()
+        
+
     def __str__(self):
         return '{}'.format(self.generateDict())
+
+
 
 
 # ############################# #

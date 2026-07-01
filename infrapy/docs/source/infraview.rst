@@ -90,13 +90,13 @@ Network-Level Analyses
 
 - Load an example detection set for event ID...
 
-    .. image:: _static/_images/infraview/event_id1.png
+    .. image:: _static/_images/infraview/ev_id1.png
         :width: 1200px
         :align: center
 
 - Select an event in the distance matrix...
 
-    .. image:: _static/_images/infraview/event_id2.png
+    .. image:: _static/_images/infraview/ev_id2.png
         :width: 1200px
         :align: center
 

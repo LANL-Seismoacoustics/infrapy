@@ -67,44 +67,56 @@ def calc_thresh_wrapper(args):
 
 
 def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, times_history):
+        t0 = UTCDateTime(trace.stats.starttime)
 
-        t0 = trace.stats.starttime
+        dt_det = np.mean(det_pnts[:, 0])
+        tm_det = t0 + dt_det
 
-        t_mean = UTCDateTime(t0) + np.mean(det_pnts[:, 0])
-        t1 = UTCDateTime(t0) + min(det_pnts[:, 0])
-        t2 = UTCDateTime(t0) + max(det_pnts[:, 0])
+        dt_start = min(det_pnts[:, 0])
+        dt_end = max(det_pnts[:, 0])
+        
+        if dt_end == dt_start:
+            dt_start = dt_start - 1
+            dt_end = dt_end + 1
 
-        t_mid = UTCDateTime(t0) + np.mean(det_pnts[:, 0])
-        tm_index = np.argmin([abs(tn - t_mid) for tn in times_history])
+        det_buffer = (dt_end - dt_start) * 0.15
+        det_buffer = min(det_buffer, 60.0)
+        det_buffer = max(det_buffer, 15.0)
+
+        dt1 = dt_start - det_buffer
+        dt2 = dt_end + det_buffer
+
+        # write detection info into dictionary
+        det_info = dict()
+        det_info['peak f-stat time'] = str(tm_det)
+
+        # band passed wvform
+        tr_bandpass = trace.copy()
+        tr_bandpass.detrend()
+        tr_bandpass.filter('bandpass', freqmin=min(det_pnts[:, 1]), freqmax=max(det_pnts[:, 1]))
+        tr_bandpass.trim(t0 + dt1, t0 + dt2)
+        
+        det_info["waveform"] = [tr_bandpass.times() - (dt_det - dt1), tr_bandpass.data]
+
+        # spectrogram
+        det_pnts[:, 0] = det_pnts[:, 0] - dt_det
+        det_info['spec pnts'] = det_pnts
+
+        SXX_det_mask = np.logical_and(dt1 < t, t < dt2)
+        det_info['spectrogram'] = [f, t[SXX_det_mask] - dt_det, Sxx_log[:, SXX_det_mask]]
+
+        # spectral curves
+        SXX_det_mask = np.logical_and(dt_start < t, t < dt_end)
+        spec_mean = np.mean(Sxx_log[:, SXX_det_mask], axis=1)
+        spec_max = np.max(Sxx_log[:, SXX_det_mask], axis=1)
+
+        det_info['spec'] = [f, spec_mean, spec_max]
+        tm_index = np.argmin([abs(tn - dt_det) for tn in times_history])
+
         bg_freqs = f[peaks_history[tm_index] != 0]
         bg_peaks = peaks_history[tm_index][peaks_history[tm_index] != 0]
         bg_thresh = thresh_history[tm_index][peaks_history[tm_index] != 0]
-
-        det_info = dict()
-        det_info['Time (UTC)'] = str(t_mean)
-        det_info['Start'] = t1 - t_mean 
-        det_info['End'] = t2 - t_mean
-        det_info['Freq Range'] = [np.round(min(det_pnts[:, 1]), 2),
-                                  np.round(max(det_pnts[:, 1]), 2)]
-
-        try:
-            det_info['Latitude'] = float(trace.stats.sac['stla'])
-            det_info['Longitude'] = float(trace.stats.sac['stlo'])
-        except:
-            print("Lat/Lon info not in trace header, omitting from detection file.")
-
-        det_info['Network'] = trace.stats.network
-        det_info['Station'] = trace.stats.station
-        det_info['Channel'] = trace.stats.channel
-
-        det_info['Sxx_points'] = det_pnts
-
-        SXX_det_mask = np.logical_and(min(det_pnts[:, 0]) < t, t < max(det_pnts[:, 0]))
-        det_info['Sxx_det_mean'] = [f, np.mean(Sxx_log[:, SXX_det_mask], axis=1)]
-        det_info['Sxx_det_max'] = [f, np.max(Sxx_log[:, SXX_det_mask], axis=1)]
-
-        det_info['Background Peaks'] = [bg_freqs, bg_peaks]
-        det_info['Background Threshold'] = [bg_freqs, bg_thresh]
+        det_info['bg spec'] = [bg_freqs, bg_peaks, bg_thresh]
 
         return det_info
 
@@ -233,11 +245,12 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
  
     return spec_dets, cluster_results, history_info
  
+
 def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, cluster_window_len, pl):
 
     # Compute spectrogram from the trace
     dt = trace.stats.delta
-    nperseg = int((4.0 / freq_band[0]) / dt)
+    nperseg = int((8.0 / freq_band[0]) / dt)
     t_skip = 1
  
     if spec_option == "spectrogram":
@@ -256,10 +269,33 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     else:
         print("Error: unrecognized spectrogram option: " + spec_option + ".")
         return []
+    
+    if (t[1] - t[0]) > clustering_eps:
+        print("** Specified clustering linkage (" + str(clustering_eps) + " s) is less than spectrogram window step (" + str(t[1] - t[0]) + " s).  Adjusting to allow clusters to form.")
+        clustering_eps = (t[1] - t[0]) * 1.1
    
     _, cluster_results, history = run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, cluster_window_len, pl, t_skip, verbose=True)
  
     times_history = [UTCDateTime(trace.stats.starttime) + tn for tn in history[2]]
     det_list = [det2dict(f, t, Sxx_log, cluster_results[k], trace, history[0], history[1], times_history) for k in range(len(cluster_results))]
  
-    return det_list
+    return det_list, [f[::2], t[::2], Sxx_log[::2,::2]], history
+
+
+##########################
+## Dictionary Extaction ##
+##########################
+def spec_det_dict(trace, sd_params, pl):
+        return cli_sd(trace,
+                      sd_params["spectral_option"],
+                      sd_params["morlet_omega0"],
+                      [sd_params["freq_min"], sd_params["freq_max"]],
+                      0.9,  # hard coded 90% overlap of spectrogram
+                      sd_params["p_value"],
+                      sd_params["window_len"],
+                      sd_params["window_step"],
+                      sd_params["freq_tm_factor"],
+                      sd_params["cluster_eps"],
+                      sd_params["cluster_min_samples"],
+                      sd_params["cluster_window_len"], pl)
+        

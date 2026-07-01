@@ -16,4 +16,4 @@ Detection is run using the same configuration file as FK processing.  Detection 
 
 .. code-block:: python
 
-    >> infrapy run_fd --config_file BRPConfig.txt
+    >> infrapy run_fd --cnfg-file BRPConfig.txt

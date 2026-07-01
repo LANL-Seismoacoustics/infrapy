@@ -79,10 +79,10 @@ class IPLocationWidget(QWidget):
 
         # set up showgroundtruth widget
         self.showgroundtruth = ShowGroundTruth(self)
-        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.updateEventLines)
-        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.plotEventLines)
-        self.showgroundtruth.event_widget.sigEventWidgetChanged.connect(self.mapWidget.plot_ground_truth)
-        self.showgroundtruth.event_widget.showGT_cb.stateChanged.connect(self.mapWidget.show_hide_ground_truth)
+        self.showgroundtruth.ev_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.updateEventLines)
+        self.showgroundtruth.ev_widget.sigEventWidgetChanged.connect(self.parent.waveformWidget.plotViewer.pl_widget.plotEventLines)
+        self.showgroundtruth.ev_widget.sigEventWidgetChanged.connect(self.mapWidget.plot_ground_truth)
+        self.showgroundtruth.ev_widget.showGT_cb.stateChanged.connect(self.mapWidget.show_hide_ground_truth)
 
         # set up association settings widget
         self.assocSettings = AssociationSettings(self)
@@ -538,26 +538,26 @@ class ShowGroundTruth(QFrame):
         title_label.setStyleSheet("font-weight: bold;")
         title_label.setAlignment(Qt.AlignCenter)
 
-        self.event_widget = IPEventWidget.IPEventWidget(self)
+        self.ev_widget = IPEventWidget.IPEventWidget(self)
 
         layout = QVBoxLayout()
         layout.addWidget(title_label)
-        layout.addWidget(self.event_widget)
+        layout.addWidget(self.ev_widget)
 
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
     
     @pyqtSlot(dict)
-    def eventChanged(self, event_dict):
-        if event_dict['Latitude']:
-            self.event_widget.event_lat_edit.setValue(event_dict['Latitude'])
+    def eventChanged(self, ev_dict):
+        if ev_dict['Latitude']:
+            self.ev_widget.ev_lat_edit.setValue(ev_dict['Latitude'])
         else:
             self.lat_label.setText("0.0")
-        if event_dict['Longitude']:
-            self.event_widget.event_lon_edit.setValue(event_dict['Longitude'])
-        if event_dict['Evid']:
-            self.event_widget.event_name_edit.setText(str(event_dict['Evid']))
+        if ev_dict['Longitude']:
+            self.ev_widget.ev_lon_edit.setValue(ev_dict['Longitude'])
+        if ev_dict['Evid']:
+            self.ev_widget.ev_name_edit.setText(str(ev_dict['Evid']))
 
 
     @pyqtSlot(dict)

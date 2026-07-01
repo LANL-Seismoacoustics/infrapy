@@ -11,6 +11,8 @@ import pickle
 import time
 import itertools
 import warnings
+import json
+import gzip
 
 import numpy as np
 
@@ -38,6 +40,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #      General (Canonical)     #
 #      Propagation Models      #
 # ############################ #
+
 canon_rcel_wts = np.array([0.0539, 0.0899, 0.8562])
 canon_rcel_mns = np.array([1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26])
 canon_rcel_vrs = np.array([0.066, 0.08, 0.33])
@@ -50,36 +53,29 @@ def canonical_rcel(rcel):
         vals = np.asarray([canon_rcel_wts] * len(rcel)) / np.asarray([canon_rcel_vrs] * len(rcel)) * norm.pdf((np.asarray([rcel] * 3).T - np.asarray([canon_rcel_mns] * len(rcel))) / np.asarray([canon_rcel_vrs] * len(rcel)))
         return np.sum(vals, axis=1)
 
+
 # ########################### #
 #     Accessible Celerity     #
 #      Statistics Models      #
 # ########################### #
-def set_celerity_model(option, rcel_wts=None, rcel_mns=None, rcel_sds=None):
+def _load_celerity_model(option):
 
     global canon_rcel_wts
     global canon_rcel_mns
     global canon_rcel_vrs
-    
-    if option == "user":
-        globalcanon_rcel_wts = np.array([float(val) for val in rcel_wts.replace(" ","").split(",")])
-        canon_rcel_mns = np.array([float(val) for val in rcel_mns.replace(" ","").split(",")])
-        canon_rcel_vrs = np.array([float(val) for val in rcel_sds.replace(" ","").split(",")])
 
-        print("  Using user specified celerity model:")
-        print("    Reciprocal celerity weights: " + str(infrasound.canon_rcel_wts))
-        print("    Reciprocal celerity means: " + str(infrasound.canon_rcel_mns))
-        print("    Reciprocal celerity stdev: " + str(infrasound.canon_rcel_vrs))
-    
-    elif option == "regional_hf":
-        print("  Using built-in regional_hf celerity model")
-        canon_rcel_wts = np.array([0.072, 0.421, 0.513])
-        canon_rcel_mns = np.array([1.0/0.339, 1.0/0.293, 1.0/0.259])
-        canon_rcel_sds = np.array([0.053, 0.064, 0.274])
-    else:
-        print("  Using built-in regional_lf celerity model")
-        canon_rcel_wts = np.array([0.0539, 0.0899, 0.8562])
-        canon_rcel_mns = np.array([1.0 / 0.327, 1.0 / 0.293, 1.0 / 0.26])
-        canon_rcel_vrs = np.array([0.066, 0.08, 0.33])
+    if option in ["regional_hf", "regional_lf", "infGEM"]:
+        rcel_gmm_file = str(Path(__file__).parent.parent)
+        rcel_gmm_file = rcel_gmm_file + "/resources/travelTimeTables/" +  option + ".rcg.json"
+    else: 
+        rcel_gmm_file = option 
+
+    with open(rcel_gmm_file, 'r') as infile:
+        rcel_gmm = json.load(infile)
+        canon_rcel_wts = np.array(rcel_gmm["weights"])
+        canon_rcel_mns = np.array(rcel_gmm["means"])
+        canon_rcel_vrs = np.array(rcel_gmm["stdevs"])
+
 
 
 canon_tloss_rates = np.array([-0.87, -0.835, -0.81])
@@ -95,9 +91,12 @@ def canonical_tloss(rng, tloss):
     return np.sum(vals)
 
 
+'''
 # ############################ #
 #          Stochastic          #
 #      Propagation Models      #
+#      THIS HAS ALL BEING      #
+#      MOVED TO STOCHPROP      #
 # ############################ #
 def find_azimuth_bin(az, bin_cnt=8):
     reduced = np.degrees(np.arctan2(np.sin(np.radians(az)), np.cos(np.radians(az))))
@@ -847,3 +846,5 @@ class TLossModel(object):
         else:
             plt.pause(5)
             plt.close('all')
+'''
+
