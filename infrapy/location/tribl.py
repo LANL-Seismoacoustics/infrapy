@@ -27,70 +27,29 @@ from pyproj import Geod
 from scipy.integrate import simps
 from scipy.interpolate import interp1d, interp2d
 
+from infraga.cli import utils as infraga_utils
+
 from . import bisl
 from ..utils import prog_bar
 
 sph_proj = Geod(ellps='sphere')
 resol = '100m'  # use data at this scale (not working at the moment)
 
-
-etopo_2022_file = find_spec('infraga').submodule_search_locations[0] + "/resources/ETOPO_2022_v1_30s_N90W180_surface.nc"
-
-# ############################ #
-#       Back Projection        #
-#     Localization Methods     #
-# ############################ #
-def interp_etopo(ll_corner, ur_corner):
-    etopo_2022 = Dataset(etopo_2022_file)
-
-    grid_lats = etopo_2022.variables['lat'][:]
-    grid_lons = etopo_2022.variables['lon'][:]
-    grid_elev = etopo_2022.variables['z'][:]
-
-    lat_mask = np.logical_and(ll_corner[0] - 2.0 <= grid_lats, grid_lats <= ur_corner[0] + 2.0).nonzero()[0]
-    lon_mask = np.logical_and(ll_corner[1] - 2.0 <= grid_lons, grid_lons <= ur_corner[1] + 2.0).nonzero()[0]
-
-    region_lat = grid_lats[lat_mask]
-    region_lon = grid_lons[lon_mask]
-    region_elev = grid_elev[lat_mask,:][:,lon_mask]
-
-    # Change underwater values to sea surface
-    region_elev[region_elev < 0.0] = 0.0
-
-    return interp2d(region_lon, region_lat, region_elev / 1000.0, kind='linear')
-
-
 def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latlon_bnds=None, bounces=100, cpu_cnt=None):
     lat_vals = [det.latitude for det in det_list]
     lon_vals = [det.longitude for det in det_list]
 
-    if os.path.isfile(etopo_2022_file):
-        topo = interp_etopo([min(lat_vals), min(lon_vals)], [max(lat_vals), max(lon_vals)])
-    else:
-        print('\n' + "*" * 25 +'\n' + "ETOPO 2022 file not found" + '\n' + "Downloading from https://www.ngdc.noaa.gov/thredds/fileServer/global/")
-        etopo2022_url = "https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/30s/30s_surface_elev_netcdf/ETOPO_2022_v1_30s_N90W180_surface.nc"
-        destination = etopo_2022_file
-
-        try:
-            if not os.path.isdir(os.path.split(destination)[0]):
-                os.mkdir(os.path.split(destination)[0])
-
-            response = requests.get(etopo2022_url)
-            if response.status_code == 200:
-                with open(destination, "wb") as file:
-                    file.write(response.content)
-
-            print("ETOPO file successfully downloaded." + '\n' + "*" * 25 +'\n')
-            return True 
-        
-        except:
-            print("Download failed.")
-            print("Try manual download: " + etopo2022_url)
-            print("Place .nc file in " + find_spec('infraga').submodule_search_locations[0] + "/resources/")
-            print("*" * 25 +'\n')
-            return False 
-
-    rcvr_elevs = np.array([topo(det.latitude, det.longitude)[0] for det in det_list])
+    # set elevation of stations from ETOPO1 
+    if not os.path.isfile(infraga_utils.etopo1_file):
+        print("Downloading ETOPO1...")
+        dwnld_result = infraga_utils._download_etopo1()
+        print(dwnld_result)
+    
+    topo = infraga_utils._interp_etopo([min(lat_vals), min(lon_vals)],
+                                       [max(lat_vals), max(lon_vals)],
+                                       use_etopo1=True)
+    
+    rcvr_elevs = np.array([topo((det.latitude, det.longitude)) for det in det_list])
 
     if grnd_snd_spd is None:
         # Compute sound speed from atmo file

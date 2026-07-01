@@ -549,7 +549,7 @@ Event Analyses
         :width: 1200px
         :align: center
 
-    The full set of detections used in the analysis can be specified using wild cards,
+    The full set of detections used in the analysis can be specified using wild cards to ingest multiple detection files,
 
     .. code-block:: bash
     
@@ -559,25 +559,24 @@ Event Analyses
         :width: 1200px
         :align: center
 
-    Finally, the resulting event files can be visualized by specifying an :code:`--ev-file` instead of a detections file.  Note that this visualization can be made before any localization analysis has been applied.
+    Finally, the detections included in a given event files can be visualized by specifying :code:`--ev-file` instead of a detections file.  Note that this visualization can be made before any localization analysis has been applied to inform such analyses or as quality control before attempting localization (to ensure a spurious detection hasn't been included).
 
     .. code-block:: bash
 
         infrapy plot map_dets --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
 
     .. image:: _static/_images/map_dets-ev0.png
-
         :width: 1200px
         :align: center
 
 
-- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015) or using the Time-Reversed Infrasonic Bayesian Localization (TRIBL) algorithm more recently developed in Blom et al. (2025).  Localization analysis can be run using, :code:`infrapy event locate`
+- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015) or using the Time-Reversed Infrasonic Bayesian Localization (TRIBL) algorithm more recently developed in Blom et al. (2025).  Localization analysis is run using, :code:`infrapy event localize`,
 
     .. code-block:: bash
 
         infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-    The analysis steps are updated as localization is performed and the resulting location and origin time information is printed to screen as well as written into an output file ...
+    The default set of parameters uses the maximum range from the event building stage (1500 km for this example) and a 10.0 degree back azimuth width to identify the spatial region for analysis.  The default celerity model used in analysis is tuned for regional low-frequency signals (including contributions for tropospheric, stratospheric, and thermospheric waveguide travel times).  
 
     .. code-block:: none
 
@@ -622,26 +621,23 @@ Event Analyses
             Exact 90% confidence bounds: [2010-01-01T12:04:58.593500, 2010-01-01T12:11:27.064500]
 
             
-    The localization result can be visualized in a number of ways.  Firstly, the detecting arrays and location estimate can be plotted on map using,
+    The localization result is written into the existing event file and can be visualized using (note: event visualization is being actively updated, will be simplified in a future update).  For now, visualization can be done via,
 
     .. code-block:: bash
 
         infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-    .. image:: _static/_images/plot_loc1.png
+    .. image:: _static/_images/loc-bisl.png
         :width: 1200px
         :align: center
 
-
-
-- TRIBL usage...
+- The TRIBL methods require ray tracing back projection paths through an atmosphere specification and a more limited grid to evaluate results on.  Using the general region identified by BISL and accounting for some cross wind deviations, one can define the lower-left (ll) and upper-right (ur) corners as well as a range of origin times.  These various quantities could be defined item by item on the command line, but it's once again easier to save them into a configuration file and point the method at that.  An example configuration file is included here with the following informaiton:
 
     .. code-block:: bash
 
         [LOC]
         atmo_data = data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
 
-        range_max = 1250
         ll_corner = 40.5, -113.5
         ur_corner = 41.75, -112.0
         alt_bounds = 0, 0
@@ -659,24 +655,25 @@ Event Analyses
         local_temp_dir = data/Blom_etal2024_GJI/temp
 
 
-
-    More discussion
+    And TRIBL can be run using the :code:`infrapy event localize` method and pointing at the configuration file.  When the :code:`atmo_data` parameter is specified, the implementation uses the TRIBL algorithm instead of BISL.
 
 
     .. code-block:: bash
 
         infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config
 
+    Visualization is the same as above; however, the event JSON file now contains 2 localization entries and the index of the solution of interest is needed (the default index is 0, which is the BISL analysis above for this example).  As expected, the ray-tracing based analysis produces a higher precision estimate than that from the more general propagation models used by BISL.
+
     .. code-block:: bash
 
         infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --loc-index 1
 
-    .. image:: _static/_images/plot_loc1.png
+
+    .. image:: _static/_images/loc-tribl.png
         :width: 1200px
         :align: center
 
-
-- Summarizing event results...
+- Once some analysis has been completed, it's often useful to integrate the event file and identify what has been done.  A utility function is available to summarize the contents of an event file.  Running this on the event file we've generated localization results for,
 
     .. code-block:: bash
 
@@ -793,7 +790,6 @@ Event Analyses
             origin time: 2010-01-01T12:06:08.776 +/- 29.8 s.
 
 
-
 - When a location analysis is attempted, but results already exist in the file, the result is simply printed to screen.  For running examples, debugging, or related work, a location reset is avilable as a utilty function.  This will reset the JSON file localization field to an empty list, :code:`[]`.  A warning is given to confirm that this removal of existing analysis is desired,
 
     .. code-block:: bash
@@ -837,6 +833,9 @@ Event Analyses
 
         WARNING!!! This action will remove existing localization result(s) in this event file. 
         Do you want to proceed? (y/n): 
+
+
+**UPDATES DONE THROUGH HERE**
 
 
 - Infrasonic signals produced by above-ground explosive sources can be used to estimate the explosive yield via source models such as the Kinney & Graham blastwave scaling laws. InfraPy's Spectral Yield Estimate (SpYE) methods can be applied to relate regional infrasonic signal spectral amplitude to a near-source estimate and then the blastwave model to estimate yield.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository).  In the case of regional propagation for which the same transmission loss statistics are appropriate for all detections, the SpYE methods can be run via:
