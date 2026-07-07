@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "infrapy"
+version = "0.4.1.0"
+description = "A tool for processing infrasound and seismic array data."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "LANL Seismoacoustics Infrasound (LANL-SA) Team", email = "pblom@lanl.gov"}
+]
+keywords = ["infrasound", "geophysics", "seismic", "array"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "scipy",
+    "obspy",
+    "pisces",
+    "scikit-learn",
+    "pathos",
+    "numba",
+    "pyqtgraph",
+    "pyproj",
+    "ipython",
+    "matplotlib",
+    "cx_Oracle",
+]
+
+[project.urls]
+Homepage = "https://github.com/LANL-Seismoacoustics/infrapy"
+Documentation = "https://infrapy.readthedocs.io/en/latest/"
+Repository = "https://github.com/LANL-Seismoacoustics/infrapy.git"
+Issues = "https://github.com/LANL-Seismoacoustics/infrapy/issues"
+
+[project.scripts]
+infrapy = "infrapy.cli.__main__:main"
+infrapype = "infrapy.pipeline.__main__:pipeline"
+
+[project.gui-scripts]
+infraview = "InfraView.__main__:main"
+
+[tool.setuptools]
+packages = [
+    "infrapy",
+    "infrapy.association",
+    "infrapy.characterization",
+    "infrapy.cli",
+    "infrapy.detection",
+    "infrapy.location",
+    "infrapy.performance",
+    "infrapy.pipeline",
+    "infrapy.propagation",
+    "infrapy.resources",
+    "infrapy.resources.travelTimeTables",
+    "infrapy.utils",
+    "InfraView",
+    "InfraView.resources",
+    "InfraView.widgets",
+    "InfraView.widgets.settings_widgets",
+    "InfraView.resources.graphics",
+    "InfraView.resources.styles",
+]
+
+[tool.setuptools.package-data]
+"infrapy.propagation" = ["compass.png"]
+"infrapy.resources" = ["default.config"]
+"infrapy.resources.travelTimeTables" = [
+    "ak135_1st_arrivals.dat",
+    "regional_hf.rcg.json",
+    "regional_lf.rcg.json",
+    "infGEM.rcg.json",
+]

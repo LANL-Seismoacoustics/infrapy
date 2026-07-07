@@ -1,63 +1,15 @@
-# -*- coding: utf-8 -*-
-try:
-    import setuptools
-except ImportError:
-    pass
+"""
+This setup.py is maintained for backward compatibility.
+The project configuration has been moved to pyproject.toml.
 
-import os
-import glob
-from distutils.core import setup
+To install the package, use:
+    pip install .
+    
+For development installation:
+    pip install -e .
+"""
 
-setup(name = "infrapy",
-      license='LANL-MIT',
-      version = '0.4.1.0',
-      description = "A tool for processing infrasound and seismic array data.",
-      keywords=['infrasound', 'geophysics', 'seismic', 'array'],
-      author = "LANL Seismoacoustics Infrasound (LANL-SA) Team",
-      author_email = 'pblom@lanl.gov',
-      packages = ['infrapy',
-                  'infrapy.association',
-                  'infrapy.characterization',
-                  'infrapy.cli',
-                  'infrapy.detection',
-                  'infrapy.location',
-                  'infrapy.performance',
-                  'infrapy.pipeline',
-                  'infrapy.propagation',
-                  'infrapy.resources',
-                  'infrapy.resources.travelTimeTables',
-                  'infrapy.utils',
-                  'InfraView',
-                  'InfraView.resources',
-                  'InfraView.widgets',
-                  'InfraView.widgets.settings_widgets',
-                  'InfraView.resources.graphics',
-                  'InfraView.resources.styles'],
+from setuptools import setup
 
-      entry_points = {'console_scripts':['infrapy=infrapy.cli.__main__:main',
-                                         'infrapype=infrapy.pipeline.__main__:pipeline'],
-                      'gui_scripts':['infraview = InfraView.__main__:main']},
-
-      
-      package_dir={'infrapy.propagation' : 'infrapy/propagation'},
-      package_data={'infrapy.propagation' : ['compass.png'],
-                    'infrapy.resources' : ['default.config'],
-                    'infrapy.resources.travelTimeTables' : ['ak135_1st_arrivals.dat', 
-                                                            'regional_hf.rcg.json',
-                                                            'regional_lf.rcg.json',
-                                                            'infGEM.rcg.json']},
-                    
-
-      install_requires = ['numpy',
-                          'scipy',
-                          'obspy',
-                          'pisces',
-                          'scikit-learn',
-                          'pathos',
-                          'numba',
-                          'pyqtgraph',
-                          'pyproj',
-                          'ipython',
-                          'matplotlib',
-                          'cx_Oracle']
-     )
+# All configuration is now in pyproject.toml
+setup()
