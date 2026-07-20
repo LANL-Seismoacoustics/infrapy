@@ -76,8 +76,8 @@ class IPDetectionTableView(QTableView):
         if ret == deleteRows:
             # get the indexes of the selected rows
             rows_to_delete = [row]
-            if self.selectionModel.hasSelection():
-                selection = self.selectionModel.selectedRows()
+            if self.selectionModel().hasSelection():
+                selection = self.selectionModel().selectedRows()
                 for item in selection:
                     if item.row() not in rows_to_delete:
                         rows_to_delete.append(item.row())
