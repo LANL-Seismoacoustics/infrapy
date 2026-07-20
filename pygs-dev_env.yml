@@ -37,6 +37,7 @@ dependencies:
   - pyqtgraph=0.13.7
   - pygments
   - regex
+  - request
   - scipy
   - scikit-learn
   - sphinx

@@ -10,6 +10,7 @@ dependencies:
   - cx_oracle
   - dill
   - docutils
+  - gdal
   - ipython
   - jedi
   - joblib
@@ -36,6 +37,7 @@ dependencies:
   - pyqtgraph=0.13.7
   - pygments
   - regex
+  - request
   - scipy
   - scikit-learn
   - sphinx
