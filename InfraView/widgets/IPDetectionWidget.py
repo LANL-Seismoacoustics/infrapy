@@ -66,6 +66,10 @@ class IPDetectionWidget(QWidget):
         button_font.setPointSize(10)
         self.clearButton.setFont(button_font)
 
+        self.deleteSelectedButton = QPushButton('Delete')
+        self.deleteSelectedButton.setToolTip("Delete Selected Detections")
+        self.deleteSelectedButton.setFont(button_font)
+
         self.saveButton = QPushButton(' Save')
         self.saveButton.setIcon(self.saveIcon)
         self.saveButton.setFont(button_font)
@@ -83,10 +87,10 @@ class IPDetectionWidget(QWidget):
 
         savebutton_group.setLayout(savebutton_layout)
         savebutton_layout.addWidget(self.loadButton)
+        savebutton_layout.addWidget(self.deleteSelectedButton)
         savebutton_layout.addWidget(self.clearButton)
         savebutton_layout.addWidget(self.saveButton)
         savebutton_layout.addWidget(self.saveAsButton)
-        
         
         savebutton_layout.setSizeConstraint(QLayout.SetFixedSize)
 
@@ -119,6 +123,7 @@ class IPDetectionWidget(QWidget):
         self.clearButton.clicked.connect(self.clearDetections)
         self.saveButton.clicked.connect(self.saveDetections)
         self.saveAsButton.clicked.connect(self.saveDetectionsAs)
+        self.deleteSelectedButton.clicked.connect(self.detection_view.delete_selected)
 
         self.signal_detections_changed.connect(self.set_data)
 

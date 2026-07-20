@@ -85,6 +85,16 @@ class IPDetectionTableView(QTableView):
             self.signal_delete_detections.emit(rows_to_delete)
             self.clearSelection()
 
+    @pyqtSlot()
+    def delete_selected(self):
+        rows_to_delete = []
+        if self.selectionModel().hasSelection():
+            selection = self.selectionModel().selectedRows()
+            for item in selection:
+                rows_to_delete.append(item.row())
+            self.signal_delete_detections.emit(rows_to_delete)
+            self.clearSelection()
+
     @pyqtSlot(int)
     def sort(self, idx):
         self.pandas_table_model.sort(idx, Qt.DescendingOrder)
