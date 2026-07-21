@@ -11,14 +11,12 @@
 from datetime import datetime
 import itertools
 
-import json
-
 import numpy as np
 
 import obspy
 from obspy import UTCDateTime
 
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.interpolate import interp1d, interp2d
 from scipy.stats import norm
 from scipy.special import i0
@@ -42,7 +40,6 @@ sph_proj = Geod(ellps='sphere')
 #   InfrasoundDetection class      #
 #       Likelihood                  #
 # ################################# #
-
 
 class CustomError(Exception):
     pass
@@ -678,7 +675,7 @@ def marginal_spatial_pdf(lat, lon, det_list, path_geo_model=None, prog_step=0, r
             t_vals = np.array([t1 + (t2 - t1) / (resol - 1) * m for m in range(resol)])
             pdf_vals = joint_pdf(np.array([la] * resol),np.array([lo] * resol), t_vals, det_list, path_geo_model=path_geo_model)
 
-            return simps(pdf_vals, (t2 - t1).astype('m8[ms]').astype(float) * 1.0e-3 / (resol - 1) * range(resol))
+            return simpson(pdf_vals, (t2 - t1).astype('m8[ms]').astype(float) * 1.0e-3 / (resol - 1) * range(resol))
 
         if len(np.atleast_1d(lat)) == 1:
             return temp(lat, lon)

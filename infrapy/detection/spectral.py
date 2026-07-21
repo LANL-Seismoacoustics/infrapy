@@ -8,12 +8,13 @@ Author            Philip Blom (pblom@lanl.gov)
 
 """
 
+import pywt
 import numpy as np
 
 from obspy.core import UTCDateTime
 
-from scipy.integrate import simps
-from scipy.signal import spectrogram, stft, cwt, morlet2
+from scipy.integrate import simpson
+from scipy.signal import spectrogram, stft
 from scipy.stats import gaussian_kde, norm, skewnorm
 from scipy.optimize import curve_fit, minimize_scalar
 
@@ -29,8 +30,8 @@ def calc_thresh(Sxx_vals, p_val):
         spec_spread = np.max(Sxx_vals) - np.min(Sxx_vals)
         spec_vals = np.linspace(np.min(Sxx_vals) - 0.25 * spec_spread, np.max(Sxx_vals) + 0.25 * spec_spread, 100)
  
-        mean0 = simps(spec_vals * kernel(spec_vals), spec_vals)
-        stdev0 = np.sqrt(simps((spec_vals - mean0)**2 * kernel(spec_vals), spec_vals))
+        mean0 = simpson(spec_vals * kernel(spec_vals), spec_vals)
+        stdev0 = np.sqrt(simpson((spec_vals - mean0)**2 * kernel(spec_vals), spec_vals))
         thresh0 = norm.ppf(1.0 - p_val, loc=mean0, scale=stdev0)
  
         mask = np.logical_and(mean0 - 2.0 * stdev0 < spec_vals, spec_vals < mean0 + 2.0 * stdev0)
@@ -163,7 +164,7 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
     """
  
     if verbose:
-        print('\n' + "Running spectral detection (sd) analysis...")
+        print('\n' + "Running spectral detection analysis...")
  
     if freq_band[1] > f[-1]:
         print("Warning!  Maximum frequency is above Nyquist (" + str(f[-1]) + ")")
@@ -175,7 +176,7 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
  
     prog_bar_len, win_cnt = 50, np.ceil((t[-1] - t[0]) / adaptive_window_step)
     if verbose:
-        print('\t' + "Progress: ", end = '')
+        print("  Analyzing spectrogram... ", end = '\t')
         prog_bar.prep(prog_bar_len)
  
     for win_n, window_start in enumerate(np.arange(t[0], t[-1], adaptive_window_step)):
@@ -213,7 +214,10 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
  
     # Cluster into detections
     if verbose:
-        print("Clustering into detections...")
+        print("  Clustering into detections...", end = '\t')
+        prog_bar.prep(prog_bar_len)
+
+    win_cnt = np.ceil(np.max(spec_dets[:, 0]) / clustering_window_len)
 
     cluster_results = []
     for dt in np.arange(t[0], t[-1], clustering_window_len):
@@ -221,10 +225,18 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
         t2 = dt + clustering_window_len * 1.2
         
         tm_mask = np.logical_and(t1 <= spec_dets[:, 0], spec_dets[:, 0] <= t2)
-        spec_dets_logf = np.stack((spec_dets[tm_mask, 0], clustering_freq_scaling * np.log10(spec_dets[tm_mask, 1]))).T
+        if spec_dets[tm_mask].shape[0] > clustering_min_samples:
+            # spec_dets_logf = np.stack((spec_dets[tm_mask, 0], clustering_freq_scaling * np.log10(spec_dets[tm_mask, 1]))).T
+            spec_dets_logf = np.stack((spec_dets[tm_mask, 0], clustering_freq_scaling * np.log10(spec_dets[tm_mask, 1]) + 0.0 * spec_dets[tm_mask, 1])).T
 
-        clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
-        cluster_results += [spec_dets[tm_mask][clustering.labels_ == k] for k in range(0, max(clustering.labels_) + 1)]
+            clustering = DBSCAN(eps=clustering_eps, min_samples=clustering_min_samples).fit(spec_dets_logf)
+            cluster_results += [spec_dets[tm_mask][clustering.labels_ == k] for k in range(0, max(clustering.labels_) + 1)]
+        
+            if verbose:
+                prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
+
+        if verbose:
+            prog_bar.close()
 
     cluster_cnt = len(cluster_results)
     for n1 in range(cluster_cnt):
@@ -241,7 +253,7 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
     cluster_results = [cl for cl in cluster_results if len(list(cl)) > 0]
 
     if verbose:
-        print("Identified " + str(len(cluster_results)) + " detections." + '\n')
+        print('\nIdentified ' + str(len(cluster_results)) + " detections." + '\n')
  
     return spec_dets, cluster_results, history_info
  
@@ -252,6 +264,7 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     dt = trace.stats.delta
     nperseg = int((8.0 / freq_band[0]) / dt)
     t_skip = 1
+    cwt_t_skip = 4
  
     if spec_option == "spectrogram":
         f, t, Sxx = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
@@ -261,17 +274,21 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
         Sxx_log = 10.0 * np.log10(abs(Sxx))
     elif spec_option == "cwt":
         f, _, _ = spectrogram(trace.data, 1.0 / dt, nperseg=nperseg, noverlap=int(nperseg * spec_overlap))
-        t = trace.times()
-        t_skip = int(nperseg * (1.0 - spec_overlap))
-       
-        widths = morlet_omega0 / (2 * np.pi * f) * (1.0 / dt)
-        Sxx_log = 10.0 * np.log10(abs(cwt(trace.data, morlet2, widths, w=morlet_omega0)))
+
+        wavelet_name = 'cmor1.0-' + str(morlet_omega0 / (2 * np.pi))
+        scales = pywt.frequency2scale(wavelet_name, f[1:] * dt)      
+        coefficients, f = pywt.cwt(trace.data, scales, wavelet_name, sampling_period=dt)
+
+        t = trace.times()[::cwt_t_skip]
+        t_skip = max(1, int(nperseg * (1.0 - spec_overlap) / 4.0))
+
+        Sxx_log = 10.0 * np.log10(abs(coefficients[:, ::cwt_t_skip]))
     else:
         print("Error: unrecognized spectrogram option: " + spec_option + ".")
         return []
     
     if (t[1] - t[0]) > clustering_eps:
-        print("** Specified clustering linkage (" + str(clustering_eps) + " s) is less than spectrogram window step (" + str(t[1] - t[0]) + " s).  Adjusting to allow clusters to form.")
+        print("Warning!!  clustering_eps less than spectrogram temporal resolution, adjusting to " + str(clustering_eps))
         clustering_eps = (t[1] - t[0]) * 1.1
    
     _, cluster_results, history = run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step, clustering_freq_scaling, clustering_eps, clustering_min_samples, cluster_window_len, pl, t_skip, verbose=True)
@@ -279,7 +296,7 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
     times_history = [UTCDateTime(trace.stats.starttime) + tn for tn in history[2]]
     det_list = [det2dict(f, t, Sxx_log, cluster_results[k], trace, history[0], history[1], times_history) for k in range(len(cluster_results))]
  
-    return det_list, [f[::2], t[::2], Sxx_log[::2,::2]], history
+    return det_list, [f, t, Sxx_log], history
 
 
 ##########################

@@ -13,8 +13,6 @@ import numpy as np
 
 from obspy import Stream
 
-from scipy.integrate import simps
-
 from multiprocessing import Pool
 
 from ..location import bisl, tribl

@@ -2,7 +2,6 @@
 
 import configparser as cnfg
 
-from click.utils import echo
 from pathlib import Path
 
 # Set up default configuation

@@ -130,7 +130,7 @@ def loc_prob(rng, az, tloss_model, f0, W=100.0e3, noise_lvl="medium", resol=500)
         print("warning...")
 
     if len(tloss_pdf[mask]) > 2:
-        return simps(tloss_pdf[mask], src_amp + tloss_vals[mask])
+        return simpson(tloss_pdf[mask], src_amp + tloss_vals[mask])
     else:
         return 0.0
 

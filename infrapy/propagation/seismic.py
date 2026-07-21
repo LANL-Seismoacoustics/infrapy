@@ -4,11 +4,6 @@
 #
 # Author            Philip Blom (pblom@lanl.gov)
 
-import sys
-import pickle
-import time
-import itertools
-
 import numpy as np
 
 from pyproj import Geod

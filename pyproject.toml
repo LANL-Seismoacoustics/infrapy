@@ -36,7 +36,6 @@ dependencies = [
     "pyproj",
     "ipython",
     "matplotlib",
-    "cx_Oracle",
 ]
 
 [project.urls]

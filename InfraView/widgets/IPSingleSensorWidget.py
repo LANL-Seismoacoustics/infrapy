@@ -10,7 +10,8 @@ import pyqtgraph as pg
 
 import numpy as np
 
-from scipy.signal import spectrogram, stft, cwt, morlet2
+import pywt
+from scipy.signal import spectrogram, stft
 
 from sklearn.cluster import DBSCAN
 from obspy.core import UTCDateTime
@@ -710,9 +711,19 @@ class IPSpectrogramCalcWorker(QObject):
                                            nfft=self.nfft)
                 self.t = self.data[0]
         
+                '''
                 self.f = self.f[1:]
                 widths = self.morlet_omega0 / (2 * np.pi * self.f) * self.fs
                 self.Sxx = cwt(self.data[1], morlet2, widths, w=self.morlet_omega0)
+                '''
+
+                wavelet_name = 'cmor1.0-' + str(self.morlet_omega0 / (2 * np.pi))
+                scales = pywt.frequency2scale(wavelet_name, self.f[1:] / self.fs)      
+
+                self.Sxx, self.f = pywt.cwt(self.data[1],
+                                            scales,
+                                            wavelet_name,
+                                            sampling_period=1.0 / self.fs)
 
             except:
                 self.signal_runFinished.emit(False)

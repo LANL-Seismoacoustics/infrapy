@@ -376,7 +376,7 @@ def query2det_dict(query_line, array_dim):
     return det 
     
 
-def db2dets_json(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_list="I", db_schema="css3"):
+def db2dets(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_list="I", db_schema="css3"):
 
     array_dim = 5 
     
@@ -421,7 +421,7 @@ def db2dets_json(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, ph
     return det_dicts
 
 
-def db2ev_json(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
+def db2ev(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
 
     array_dim = 5
 

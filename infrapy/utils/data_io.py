@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-from threading import local 
 import warnings 
 import fnmatch
 import json
@@ -12,7 +11,7 @@ import numpy as np
 
 from obspy.clients.fdsn import Client
 from obspy import read as obspy_read
-from obspy import UTCDateTime, read_inventory
+from obspy import UTCDateTime
 
 from ..propagation import likelihoods as lklhds
 from . import database
@@ -45,7 +44,6 @@ def wvfrm_info(st, latlon):
 ##     Data Ingestion     ##
 ##         Methods        ##
 ############################
-
 def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, endtime):
     """
     connect to an FDSN server to pull data
@@ -81,11 +79,11 @@ def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, e
     t1 = UTCDateTime(starttime)
     t2 = UTCDateTime(endtime)
 
-    stream = client.get_waveforms(network, station, location, channel, t1, t2, attach_response = True)
-    stream.remove_response()
+    stream = client.get_waveforms(network, station, location, channel, t1, t2)
     stream.merge(fill_value=0)
 
-    inventory = client.get_stations(network=network, station=station, location=location, channel=channel, starttime=t1, endtime=t2, level="channel")
+    inventory = client.get_stations(network=network, station=station, location=location, channel=channel, starttime=t1, endtime=t2, level="response")
+    stream.remove_response(inventory=inventory, output="DEF")
 
     latlon = []
     for tr in stream:
@@ -93,7 +91,6 @@ def wvfrms_from_fdsn(fdsn_opt, network, station, location, channel, starttime, e
         latlon = latlon + [[coords['latitude'], coords['longitude']]]
 
     return stream, latlon
-
 
 
 def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, location=None, channel=None, starttime=None, endtime=None, local_latlon=None):

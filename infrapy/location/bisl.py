@@ -9,15 +9,10 @@
 # Author            Philip Blom (pblom@lanl.gov)
 
 
-import warnings
-
 import numpy as np
 
-import matplotlib.pyplot as plt 
-
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.interpolate import interp1d
-from scipy.optimize import minimize
 from scipy.stats import chi2
 
 from obspy import UTCDateTime
@@ -306,7 +301,7 @@ def find_confidence(func, lims, conf_lvl):
     x_vals = np.linspace(lims[0], lims[1], resol)
     f_vals = func(x_vals)
  
-    f_vals = f_vals / simps(f_vals, x_vals)
+    f_vals = f_vals / simpson(f_vals, x_vals)
 
     thresh_vals = np.linspace(min(f_vals), max(f_vals), resol)
     for n in range(resol):
@@ -314,7 +309,7 @@ def find_confidence(func, lims, conf_lvl):
 
         temp_vals = f_vals.copy()
         temp_vals[f_vals < thresh] = 0.0
-        conf = simps(temp_vals, x=x_vals)
+        conf = simpson(temp_vals, x=x_vals)
 
         '''
         plt.clf()
@@ -349,16 +344,16 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
             print('\t' + "Analyzing localization pdf...")
             print('\t\t' + "Normalizing and marginalizing...")
 
-        spatial_pdf = simps(pdf, x=dt_vals)
-        tm_pdf = simps(simps(pdf * np.cos(np.radians(lat_grid)), x=lon_vals, axis=1), x=lat_vals, axis=0)
-        norm = simps(tm_pdf, dt_vals)
+        spatial_pdf = simpson(pdf, x=dt_vals)
+        tm_pdf = simpson(simpson(pdf * np.cos(np.radians(lat_grid)), x=lon_vals, axis=1), x=lat_vals, axis=0)
+        norm = simpson(tm_pdf, dt_vals)
         
         spatial_pdf = spatial_pdf / norm
         tm_pdf = tm_pdf / norm
 
         def simps_spatial(vals):
-            result = simps(vals, x=lon_vals)
-            result = simps(result * np.cos(np.radians(lat_vals)), x=lat_vals)
+            result = simpson(vals, x=lon_vals)
+            result = simpson(result * np.cos(np.radians(lat_vals)), x=lat_vals)
             return result
 
         if verbose:
@@ -376,8 +371,8 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
         if verbose:
             print('\t\t' + "Analyzing temporal PDF...")
 
-        dt_mean = simps(dt_vals * tm_pdf, x=dt_vals)
-        dt_stdev = np.sqrt(simps((dt_vals - dt_mean)**2 * tm_pdf, x=dt_vals))
+        dt_mean = simpson(dt_vals * tm_pdf, x=dt_vals)
+        dt_stdev = np.sqrt(simpson((dt_vals - dt_mean)**2 * tm_pdf, x=dt_vals))
         tm_mask = np.logical_and(dt_mean - 3.0 * dt_stdev - 2.0 * dt_step < dt_vals, dt_vals < dt_mean + 3.0 * dt_stdev + 2.0 * dt_step)
 
         time_bnds_90 = find_confidence(interp1d(dt_vals[tm_mask], tm_pdf[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], 0.90)
@@ -489,8 +484,8 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
             print('\t' + "Analyzing localization pdf...")
 
         def simps_2dim(vals):
-            result = simps(vals, x=lon_vals)
-            result = simps(result, x=lat_vals)
+            result = simpson(vals, x=lon_vals)
+            result = simpson(result, x=lat_vals)
             return result
         
         integrand = pdf * np.cos(np.radians(lat_grid))

@@ -321,7 +321,8 @@ def compute_delays(dxdy, param_grid, param_opt='planar', sph_vel=340.0, sph_src_
 
 @jit(complex128[:](complex128[:,:], complex128[:]), nopython=True)
 def project_Ab(A, b):
-    """Project matrix of K vectors, a_k, onto a vector b
+    '''
+        Project matrix of K vectors, a_k, onto a vector b
 
         Projects a vector, b, of length M onto a set of K vectors, a_k,
         each of length M producing a vector, c, of length K
@@ -337,7 +338,7 @@ def project_Ab(A, b):
         ----------
         c : 1darray
             Vector c where each scalar c_k = a_k^\dagger b
-    """
+    '''
 
     K, M = A.shape
 
@@ -354,8 +355,8 @@ def project_Ab(A, b):
 
 @jit(float64[:](complex128[:,:], complex128[:,:]), nopython=True)
 def project_ABA(A, B):
-    """
-    Project matrix of K vectors, a_k, onto Hermitian matrix B
+    '''
+        Project matrix of K vectors, a_k, onto Hermitian matrix B
 
         Projects each of K vectors, a_k, in matrix, A, of dimension K x M
         onto a Hermitian matrix, B, of dimension M x M producing a
@@ -372,7 +373,8 @@ def project_ABA(A, B):
         ----------
         c : 1darray
             Vector c where each scalar c_k = a_k^\dagger B a_k
-    """
+    '''
+    
     K, M = A.shape
 
     result = np.zeros(K)

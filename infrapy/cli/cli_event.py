@@ -177,7 +177,7 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
         pl.close()
 
 
-@click.command('localize', short_help="Estimate source location and origin time")
+@click.command('locate', short_help="Estimate source location and origin time")
 @click.option("--ev-file", help="Event JSON file to be analyzed", default=None)
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--back-az-width", help="Width of beam projection (default: " + config.defaults['LOC']['back_az_width'] + " [deg])", default=None, type=float)
@@ -206,16 +206,17 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 
-def localize(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
+def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
     '''
-    Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
+    Run Bayesian Infrasonic Source Localization (BISL) or Time-Reversed Infrasonic Bayesian Localization (TRIBL) to estimate the source location and origin time for an event
 
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
-
-        '''
+    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config 
+    
+    '''
 
     click.echo("")
     click.echo("#####################################")

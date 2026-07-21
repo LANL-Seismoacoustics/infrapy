@@ -7,27 +7,18 @@
 # Author            Philip Blom (pblom@lanl.gov)
 
 import os
-import fnmatch
-import warnings
 import subprocess
-import tempfile
-import json
 
 from importlib.util import find_spec
 
-if find_spec('infraga'):
-    import requests
-    from netCDF4 import Dataset
-
 import numpy as np
 
-from datetime import datetime
 from pyproj import Geod
 
-from scipy.integrate import simps
-from scipy.interpolate import interp1d, interp2d
+from scipy.interpolate import interp1d
 
-from infraga.cli import utils as infraga_utils
+if find_spec('infraga'):
+    from infraga.cli import utils as infraga_utils
 
 from . import bisl
 from ..utils import prog_bar

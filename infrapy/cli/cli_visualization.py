@@ -929,6 +929,124 @@ def event(ev_file, loc_index, range_max, confidence_level, figure_out, show_figu
 
 
 
+@click.command('event', short_help="Visualize event analysis results")
+@click.option("--ev-file", help="Detection path and pattern", default=None)
+@click.option("--loc-index", help="Index of location results", default=None, type=int)
+@click.option("--char-index", help="Index of characterization results", default=None, type=int)
+@click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)
+@click.option("--figure-out", help="Destination for figure", default=None)
+@click.option("--show-figure", help="Generate figure on screeen", default=True)
+@click.option("--offline-maps-dir", help="Use directory for offline cartopy maps", default=None)
+def event(ev_file, loc_index, char_index, confidence_level, figure_out, show_figure, offline_maps_dir):
+    '''
+    Visualize event results
+
+    \b
+    Example usage (run from infrapy/examples directory):
+    \tinfrapy plot event --ev-file Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+    '''
+
+    click.echo("")
+    click.echo("###############################")
+    click.echo("##                           ##")
+    click.echo("##          InfraPy          ##")
+    click.echo("##    Event Visualization    ##")
+    click.echo("##                           ##")
+    click.echo("###############################")
+    click.echo("")  
+    
+    if offline_maps_dir:
+        click.echo("  Using offline maps directory: {}".format(offline_maps_dir))
+        loc_vis.use_offline_maps(offline_maps_dir)
+
+    click.echo('\n' + "Data summary:")
+    click.echo("  ev_file: " + str(ev_file))
+    ev_info = data_io._load_dets_json(ev_file)[0]
+    
+    # check if char_index is defined and loc isn't
+
+    click.echo("  loc_index: " + str(loc_index) + " (" + str(len(ev_info['location'])) + " location result(s) in file")
+    click.echo("  char_index: " + str(char_index)  + " (" + str(len(ev_info['characterization'])) + " characterization result(s) in file" + '\n')
+
+    range_max = ev_info["assoc_params"]["range_max"]
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_info["det_info"]]
+
+    if len(ev_info['location']) == 0 or loc_index is None:        
+        # if no localization results or index unspecified, just draw the map with DOA projections            
+        click.echo('\n' + "Drawing map with detection back azimuth projections...")
+        loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out, show_fig=show_figure)
+    
+    elif len(ev_info['characterization']) == 0 or char_index is None:
+        # if locations results are there, but not characterization, plot location result
+        loc = ev_info['location'][loc_index]
+
+        click.echo('Localization summary:')
+        click.echo("  params" + '\n  ' + "-" * 6)
+        for key in loc['params'].keys():
+            if loc['params'][key] is not None:
+                click.echo("    " + key + ": " + str(loc['params'][key]))
+
+        lat = str(np.round(loc['result']['lat_mean'], 3))
+        lon = str(np.round(loc['result']['lon_mean'], 3))
+        NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+        EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+        tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+        click.echo('\n' + "  result" + '\n  ' + "-" * 6)
+        click.echo("    Latitude: " + lat + " deg +/- " + NS_std + " km.")
+        click.echo("    Longitude: " + lon + " deg +/- " + EW_std + " km.")
+        click.echo("    90% confidence area: " + str(np.round(np.pi * loc['result']['NS_stdev'] * loc['result']['EW_stdev'] * chi2(2).ppf(0.9), 1)) + " sqr km" )
+        click.echo("    Origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s." + '\n')
+
+        loc_vis.plot_localization(det_list, loc, ev_info["ground truth"], range_max=range_max, confidence_level=confidence_level, output_path=figure_out, show_fig=show_figure)
+
+    else:
+        # if localization and characterization results are there, plot everything
+        loc = ev_info['location'][loc_index]
+        char = ev_info['characterization'][char_index]
+
+        if loc_index != char['params']['loc_index']:
+            click.echo("Warning! char_index [" + str(char_index) + "] analysis used loc_index [" + str(char['params']['loc_index']) + "], but that's not what you're plotting" + '\n')
+
+        lat = str(np.round(loc['result']['lat_mean'], 3))
+        lon = str(np.round(loc['result']['lon_mean'], 3))
+        NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+        EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+        tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+        click.echo('Localization summary:')
+        click.echo("  params" + '\n  ' + "-" * 6)
+        for key in loc['params'].keys():
+            if loc['params'][key] is not None:
+                click.echo("  " + key + ": " + str(loc['params'][key]))
+
+        click.echo('\n' + "  result" + '\n  ' + "-" * 6)
+        click.echo("    Latitude: " + lat + " deg +/- " + NS_std + " km.")
+        click.echo("    Longitude: " + lon + " deg +/- " + EW_std + " km.")
+        click.echo("    90% confidence area: " + str(np.round(np.pi * loc['result']['NS_stdev'] * loc['result']['EW_stdev'] * chi2(2).ppf(0.9), 1)) + " sqr km" )
+        click.echo("    Origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s." + '\n')
+
+        click.echo('Characterization summary:')
+        click.echo("  params" + '\n  ' + "-" * 6)
+        for key in char['params'].keys():
+            if char['params'][key] is not None:
+                click.echo("    " + key + ": " + str(char['params'][key]))
+
+        click.echo('\n' + "  result" + '\n  ' + "-" * 6)
+        click.echo("    Yield: " + str(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])]))
+        click.echo("    68% conf. bounds: " + str(char['result']['conf_bnds'][0]))
+        click.echo("    95% conf. bounds: " + str(char['result']['conf_bnds'][1]) + '\n')
+
+        loc_vis.plot_characterization(ev_info["det_info"], loc, char, ev_info["ground truth"], range_max=range_max, confidence_level=float(confidence_level), output_path=figure_out, show_fig=show_figure)
+
+
+
+
+
+
+
+
 
 
 

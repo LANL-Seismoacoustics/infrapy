@@ -90,83 +90,31 @@ detect.add_command(cli_detection.run_beam_detect)
 detect.add_command(cli_detection.run_spec_detect)
 
 event.add_command(cli_event.build)
-event.add_command(cli_event.localize)
+event.add_command(cli_event.locate)
 event.add_command(cli_event.characterize)
 
 # Visualizations
-# plot.add_command(cli_visualization.beam_detect)
-# plot.add_command(cli_visualization.spec_detect)
+plot.add_command(cli_visualization.beam_detect)
+plot.add_command(cli_visualization.spec_detect)
 plot.add_command(cli_visualization.detect_combined)
 
 plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
 plot.add_command(cli_visualization.ev_loc)
 plot.add_command(cli_visualization.ev_char)
+plot.add_command(cli_visualization.event)
 
 # Utilities
 utils.add_command(cli_utils.check_db_wvfrm)
 utils.add_command(cli_utils.write_wvfrms)
-
-utils.add_command(cli_utils.db2dets_json)
-utils.add_command(cli_utils.db2ev_json)
+# utils.add_command(cli_utils.db2dets)
+# utils.add_command(cli_utils.db2ev)
 
 utils.add_command(cli_utils.merge_dets)
-utils.add_command(cli_utils.convert_dets)
+
 utils.add_command(cli_utils.ev_gt)
 utils.add_command(cli_utils.ev_summary)
 utils.add_command(cli_utils.ev_loc_reset)
-
-# moving to stochprop
-utils.add_command(cli_utils.fit_celerity)
-
-
-
-
-
-
-####################
-## DEPRECATED CLI ##
-####################
-main.add_command(cli_detection.run_fk)
-main.add_command(cli_detection.run_fd)
-main.add_command(cli_detection.run_fkd)
-main.add_command(cli_detection.run_sd)
-main.add_command(cli_assoc.run_assoc)
-main.add_command(cli_loc.run_loc)
-
-# SpYE
-@click.group('run_spye', short_help="Spectral yield methods", context_settings={'help_option_names': ['-h', '--help']}, hidden=True)
-def run_spye():
-    '''
-    infrapy run_spye - run spectral yield methods
-    '''
-    pass 
-
-
-main.add_command(run_spye)
-run_spye.add_command(cli_loc.regional)
-run_spye.add_command(cli_loc.single_station)
-run_spye.add_command(cli_loc.combine)
-
-# visualizations
-plot.add_command(cli_visualization.fk)
-plot.add_command(cli_visualization.fd)
-plot.add_command(cli_visualization.sd)
-
-plot.add_command(cli_visualization.dets)
-plot.add_command(cli_visualization.loc)
-plot.add_command(cli_visualization.origin_time)
-plot.add_command(cli_visualization.yield_plot)
-
-# Utilities
-utils.add_command(cli_utils.arrivals2json)
-utils.add_command(cli_utils.arrival_time)
-utils.add_command(cli_utils.calc_celerity)
-utils.add_command(cli_utils.best_beam)
-
-
-
-
 
 if __name__ == '__main__':
     main()
