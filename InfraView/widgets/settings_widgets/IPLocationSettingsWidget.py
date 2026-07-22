@@ -260,7 +260,7 @@ class IPBISLSettingsWidget(IPBaseWidgets.IPSettingsGroupBox):
         self.rng_max_edit = QSpinBox()
         self.rng_max_edit.setMinimum(100)
         self.rng_max_edit.setSingleStep(100)
-        self.rng_max_edit.setMaximum(np.pi * self.earth_radius)
+        self.rng_max_edit.setMaximum(int(np.pi * self.earth_radius))
         self.rng_max_edit.setValue(3000)
         self.rng_max_edit.setSuffix(' km')
         self.rng_max_edit.valueChanged.connect(self.enable_update_dm_button)
@@ -313,7 +313,7 @@ class IPBISLSettingsWidget(IPBaseWidgets.IPSettingsGroupBox):
     def from_dict(self, s_dict):
         sd = s_dict['bisl_dict']
         self.bm_width_edit.setValue(float(sd['bisl_bm_width']))
-        self.rng_max_edit.setValue(float(sd['bisl_rng_max']))
+        self.rng_max_edit.setValue(int(float(sd['bisl_rng_max'])))
     
     @pyqtSlot(float)
     @pyqtSlot(int)

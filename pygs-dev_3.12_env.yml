@@ -4,7 +4,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - python>=3.12
+  - python>=3.14
   - cartopy
   - click
   - docutils
@@ -41,7 +41,6 @@ dependencies:
   - sphinx_rtd_theme
 
   - pip:
-    - pyqtdarktheme
     - darkdetect
     - pisces>=0.4.5.3
     - -e .

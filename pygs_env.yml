@@ -46,7 +46,6 @@ dependencies:
   - python-wget
 
   - pip:
-    - pyqtdarktheme
     - darkdetect
     - pisces==0.4.4
     - git+https://github.com/LANL-Seismoacoustics/infrapy.git#egg=infrapy

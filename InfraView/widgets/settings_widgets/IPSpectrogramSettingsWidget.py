@@ -98,9 +98,9 @@ class IPSpectrogramSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
         clust_eps_label = QLabel("Clustering EPS: ")
         self.clust_eps_spin = QSpinBox()
-        self.clust_eps_spin.setMinimum(1.0)
-        self.clust_eps_spin.setMaximum(10000.0)
-        self.clust_eps_spin.setValue(10.0)
+        self.clust_eps_spin.setMinimum(1)
+        self.clust_eps_spin.setMaximum(10000)
+        self.clust_eps_spin.setValue(10)
         self.clust_eps_spin.setMinimumWidth(70)
         self.clust_eps_spin.setMaximumWidth(70)
 
@@ -176,8 +176,8 @@ class IPSpectrogramSettingsWidget(IPBaseWidgets.IPSettingsWidget):
 
         cwt_clust_eps_label = QLabel("Clustering EPS: ")
         self.cwt_clust_eps_spin = QSpinBox()
-        self.cwt_clust_eps_spin.setMinimum(1.0)
-        self.cwt_clust_eps_spin.setMaximum(10000.0)
+        self.cwt_clust_eps_spin.setMinimum(1)
+        self.cwt_clust_eps_spin.setMaximum(10000)
         self.cwt_clust_eps_spin.setValue(5)
         self.cwt_clust_eps_spin.setMinimumWidth(70)
         self.cwt_clust_eps_spin.setMaximumWidth(70)
@@ -261,23 +261,23 @@ class IPSpectrogramSettingsWidget(IPBaseWidgets.IPSettingsWidget):
         self.colormap_cb.setCurrentText(sd['gui_colormap'])
         self.colorbar_rb.setChecked(bool_map[sd['gui_colorbar']])
         
-        self.omega0_spin.setValue(float(sd['omega0']))
+        self.omega0_spin.setValue(int(float(sd['omega0'])))
 
         self.pval_spin.setValue(float(sd['pval']))
         self.fmin_spin.setValue(float(sd['fmin']))
         self.fmax_spin.setValue(float(sd['fmax']))
         self.clust_freq_scale_spin.setValue(float(sd['cluster_freq_scale']))
-        self.clust_eps_spin.setValue(float(sd['cluster_eps']))
+        self.clust_eps_spin.setValue(int(float(sd['cluster_eps'])))
         self.clust_min_samples_spin.setValue(int(sd['cluster_min_samples']))
-        self.adaptive_win_len_spin.setValue(float(sd['adapt_win_len']))
+        self.adaptive_win_len_spin.setValue(int(float(sd['adapt_win_len'])))
 
         self.cwt_pval_spin.setValue(float(sd['cwt_pval']))
         self.cwt_fmin_spin.setValue(float(sd['cwt_fmin']))
         self.cwt_fmax_spin.setValue(float(sd['cwt_fmax']))
         self.cwt_clust_freq_scale_spin.setValue(float(sd['cwt_cluster_freq_scale']))
-        self.cwt_clust_eps_spin.setValue(float(sd['cwt_cluster_eps']))
+        self.cwt_clust_eps_spin.setValue(int(float(sd['cwt_cluster_eps'])))
         self.cwt_clust_min_samples_spin.setValue(int(sd['cwt_cluster_min_samples']))
-        self.cwt_adaptive_win_len_spin.setValue(float(sd['cwt_adapt_win_len']))
+        self.cwt_adaptive_win_len_spin.setValue(int(float(sd['cwt_adapt_win_len'])))
 
         self.update_button.clicked.emit()
 

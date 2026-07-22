@@ -32,7 +32,6 @@ dependencies:
 
   - pip:
     #- git+https://github.com/LANL-Seismoacoustics/pisces.git#egg=pisces
-    - pyqtdarktheme
     - darkdetect
     - pisces==0.4.4
     - -e .

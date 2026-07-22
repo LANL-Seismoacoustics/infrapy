@@ -42,7 +42,7 @@ class IPDetectorSettingsWidget(QGroupBox):
         self.back_az_limit.setMaximum(360.0)
         self.back_az_limit.setToolTip("This is the range in degrees of variation in back azimuths used to determine if a value is part of a detection.")
 
-        self.min_peak_width = QSpinBox()
+        self.min_peak_width = QDoubleSpinBox()
         self.min_peak_width.setSuffix(' sec.')
         self.min_peak_width.setValue(10)
         self.min_peak_width.setMinimum(1)

@@ -35,7 +35,7 @@ class IPColorButton(QPushButton):
 
     def paintEvent(self, a0: QPaintEvent) -> None:
         super().paintEvent(a0)
-        r = QRect(0, 0, self.width() * 0.75, self.height() * 0.75)
+        r = QRect(0, 0, int(self.width() * 0.75), int(self.height() * 0.75))
         r.moveTo(self.rect().center() - r.center())
         painter = QPainter(self)
         painter.setBrush(self.current_color)
