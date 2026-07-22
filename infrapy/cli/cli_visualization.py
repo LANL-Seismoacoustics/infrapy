@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+
 import os
 import warnings 
 
@@ -16,16 +16,16 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import chi2
 from obspy import UTCDateTime
-
-from multiprocessing import Pool
-
-
 from ..utils import config
 from ..utils import data_io
 from ..detection import visualization as det_vis
 from ..location import visualization as loc_vis
 from ..location import bisl
 
+warnings.filterwarnings(
+    "ignore", 
+    message="no explicit representation of timezones available for np.datetime64"
+)
 
 @click.command('beam', short_help="Plot detections from beamforming")
 @click.option("--dets-file", help="Detection GZIP file", default=None)
@@ -549,8 +549,6 @@ def wvfrms(dets_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, loc_in
         loc_vis.plot_ev_wvfrms(ev_data, use_loc=use_loc, loc_index=loc_index, use_gt=use_gt)
            
 
-
-
 @click.command('map_dets', short_help="Plot detections on a map")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--dets-files", help="Detection path and pattern (option 1)", default=None)
@@ -629,7 +627,6 @@ def map_dets(cnfg_file, dets_files, ev_file, range_max, figure_out, offline_maps
 
     click.echo('\n' + "Drawing map with detection back azimuth projections...")
     loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out, show_fig=show_figure)
-
 
 
 @click.command('localize', short_help="Plot localization result on a map")
@@ -876,16 +873,12 @@ def event(ev_file, loc_index, range_max, confidence_level, figure_out, show_figu
 
     '''
 
-
     click.echo('\n' + "Data summary:")
     click.echo("  ev_file: " + str(ev_file))
     ev_info = data_io._load_dets_json(ev_file)[0]
 
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_info["det_info"]]
-
     loc = ev_info['location'][loc_index]
-
-
     range_max = ev_info["assoc_params"]["range_max"]
 
     if offline_maps_dir:
@@ -909,8 +902,6 @@ def event(ev_file, loc_index, range_max, confidence_level, figure_out, show_figu
                 click.echo("  " + key + ": " + str(loc['params'][key]))
         click.echo("")
 
-
-
     else:
         # if localization and characterization results are there, plot all
         click.echo('\n' + "Plotting event with localization and characterization results...")
@@ -920,13 +911,6 @@ def event(ev_file, loc_index, range_max, confidence_level, figure_out, show_figu
             if loc['params'][key] is not None:
                 click.echo("  " + key + ": " + str(loc['params'][key]))
         click.echo("")
-
-
-
-
-
-
-
 
 
 @click.command('event', short_help="Visualize event analysis results")

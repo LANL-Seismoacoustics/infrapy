@@ -235,8 +235,8 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
             if verbose:
                 prog_bar.increment(prog_bar.set_step(win_n, win_cnt, prog_bar_len))
 
-        if verbose:
-            prog_bar.close()
+    if verbose:
+        prog_bar.close()
 
     cluster_cnt = len(cluster_results)
     for n1 in range(cluster_cnt):

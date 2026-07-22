@@ -133,10 +133,9 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
                 det_dicts[-1]["det_params"] = entry["det_params"]
 
     # Check if an event file exists with matching parameter configuration and detections from this list
-    result_check = False
     if os.path.isfile(ev_label + "-0.ev.json.gz"):
+        click.echo('\nWARNING!!! An event file (' + ev_label + '-0.ev.json.gz) already exists and will be overwritten.')
         ev0_data = data_io._load_dets_json(ev_label + "-0.ev.json.gz")[0]
-
         param_check = False
         try:
             np.testing.assert_equal(assoc_params, ev0_data['assoc_params'])
@@ -144,33 +143,40 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
         except:
             pass
 
+        if not param_check:
+            click.echo("  Note: parameters don't match between existing result and this event build")
+                       
         dets_check = True
         for ev_det in ev0_data['det_info']:
             check = np.any([np.all([ev_det[key] == list_det[key] for key in ['peak f-stat time', 'f-stat', 'back az', 'tr vel']]) for list_det in det_dicts])
             dets_check = dets_check and check 
 
-        result_check = param_check and dets_check
+        if not dets_check:
+            click.echo("  Note: detection sets don't match between existing result and this event build")
 
-        if not result_check:
-            warning_message = "Event result exists, but parameters or detections don't match.  I hope you're meaning to overwrite existing results from another event building run!"
-            warnings.warn((warning_message))
-        
-    if result_check:
-        click.echo("Event results found matching this parameter configuration and detection set.  Skipping event building to avoid overwriting existing results.")
-    else:
-        det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
+        user_opt = input('  Do you want to proceed? (y/n): ').lower().strip()
+        while True:
+            if user_opt in ['y', 'yes']:
+                break
+            elif user_opt in ['n', 'no']:
+                click.echo("")
+                return 
+            else:
+                user_opt = input('  Invalid input. Proceed and overwrite event file(s)? (y/n): ').lower().strip()
+            
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
-        infrasound._load_celerity_model(assoc_params['celerity_model'])
-        events, ev_qls = hjl.id_events_dict(det_list, assoc_params, pl)
-        
-        click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
-        for j, ev in enumerate(events):
-            dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
-                                                rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
+    infrasound._load_celerity_model(assoc_params['celerity_model'])
+    events, ev_qls = hjl.id_events_dict(det_list, assoc_params, pl)
+    
+    click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
+    for j, ev in enumerate(events):
+        dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
+                                            rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
 
-            ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
-            with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
-                json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+        ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
+        with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
     if pl is not None:
         pl.terminate()
@@ -380,12 +386,6 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                                       verbose=False,
                                                       show_prog=True,
                                                       pool=pl)
-                                '''
-                                temp = tribl.run(det_list, file_path + file_name, temp_path + "-" + str(k), bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'],
-                                                ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'],
-                                                alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
-                                                det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=False, show_prog=True, pool=pl) 
-                                '''
                                 norms = norms + [temp['norm']]
 
                             norms = norms / np.sum(norms)
@@ -424,12 +424,6 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                                     verbose=True,
                                                     show_prog=True,
                                                     pool=pl)
-                            '''
-                            result = tribl.run(det_list, loc_params['atmo_data'], temp_path, bm_width=loc_params['back_az_width'], rng_max=loc_params['range_max'], grid_resol=loc_params['grid_resol'], 
-                                                ll_corner=loc_params['ll_corner'], ur_corner=loc_params['ur_corner'], latlon_resol=loc_params['latlon_resol'], tm_lims=tm_lims, tm_resol=loc_params['tm_resol'], 
-                                                alt_lims=loc_params['alt_lims'], alt_resol=loc_params['alt_resol'], grnd_snd_spd=loc_params['grnd_snd_spd'], c0_stdev=loc_params['c0_stdev'],
-                                                det_time_stdev=loc_params['det_tm_stdev'], az_limit=loc_params['az_limit'], verbose=True, pool=pl)
-                            '''
             else:
                 click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
                 return
