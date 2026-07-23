@@ -13,9 +13,6 @@ from . import cli_event
 from . import cli_visualization
 from . import cli_utils
 
-from . import cli_assoc
-from . import cli_loc
-
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
 def main():

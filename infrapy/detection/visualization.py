@@ -17,7 +17,7 @@ from scipy.signal import spectrogram, stft
 import matplotlib.pyplot as plt 
 from matplotlib import cm
 
-from . import beamforming_new
+from . import beam
 
 
 

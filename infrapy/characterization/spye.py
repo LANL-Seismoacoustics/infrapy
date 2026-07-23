@@ -13,7 +13,7 @@ from scipy.integrate import quad, simpson
 from scipy.interpolate import interp1d, interp2d, LinearNDInterpolator
 from scipy.signal import savgol_filter
 
-from ..detection import beamforming_new
+from ..detection import beam
 from ..utils import prog_bar, confidence
 
 from scipy.special import gamma
@@ -168,9 +168,9 @@ def blastwave_spectrum(f, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"
         blastwave model.
         
         Note: the peak of the spectrum occurs at
-        f_0 = \frac{1}{2 \pi t_0} \frac{1}{\sqrt{\alpha + 1}
+        f_0 = \\frac{1}{2 \\pi t_0} \\frac{1}{\\sqrt{\\alpha + 1}
         and t0 corresponding to a given peak frequency is
-        t_0 = \frac{1}{2 \pi f_0} \frac{1}{\sqrt{\alpha + 1}
+        t_0 = \\frac{1}{2 \\pi f_0} \\frac{1}{\\sqrt{\\alpha + 1}
         
         Parameters
         ----------
@@ -242,12 +242,12 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
         t_ref = (det_list[j].peakF_UTCtime - np.datetime64(st[j].stats.starttime)).astype('m8[s]').astype(float)
         det_len = det_list[j].end - det_list[j].start
         
-        x, t, t0, geom = beamforming_new.stream_to_array_data(st)
+        x, t, t0, geom = beam.stream_to_array_data(st)
         
         sig_t1 = t_ref + det_list[j].start - det_len * win_buffer
         sig_t2 = t_ref + det_list[j].end + det_len * win_buffer
         if ns_opt == "pre" or ns_opt == "post":
-            X_sig, _, f_sig = beamforming_new.fft_array_data(x, t, window=[sig_t1, sig_t2], fft_window="tukey")
+            X_sig, _, f_sig = beam.fft_array_data(x, t, window=[sig_t1, sig_t2], fft_window="tukey")
             X_sig = np.mean(abs(X_sig), axis=0)
             if ns_opt == "pre":
                 ns_t1 = t_ref + det_list[j].start - det_len * win_buffer - det_len * (1.0 + 2.0 * win_buffer)
@@ -255,12 +255,12 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
             else:
                 ns_t1 = t_ref + det_list[j].end + det_len * win_buffer
                 ns_t2 = t_ref + det_list[j].end + det_len * win_buffer + det_len * (1.0 + 2.0 * win_buffer)
-            X_ns, _, f_ns = beamforming_new.fft_array_data(x, t, window=[ns_t1, ns_t2], fft_window="tukey")
+            X_ns, _, f_ns = beam.fft_array_data(x, t, window=[ns_t1, ns_t2], fft_window="tukey")
             X_ns = np.mean(abs(X_ns), axis=0)
     
         elif ns_opt == "beam":
-            X_temp, _, f_sig = beamforming_new.fft_array_data(x, t, window=[sig_t1, sig_t2], fft_window="tukey")
-            X_sig, residual = beamforming_new.extract_signal(X_temp, f_sig, np.array([det_list[j].back_azimuth, det_list[j].trace_velocity]), geom)
+            X_temp, _, f_sig = beam.fft_array_data(x, t, window=[sig_t1, sig_t2], fft_window="tukey")
+            X_sig, residual = beam.extract_signal(X_temp, f_sig, np.array([det_list[j].back_azimuth, det_list[j].trace_velocity]), geom)
             
             X_sig = abs(X_sig)
             f_ns = f_sig

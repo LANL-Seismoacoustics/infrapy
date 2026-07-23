@@ -154,7 +154,7 @@ class IPNewDetectionsDialog(QDialog):
         self.prev_button.setEnabled(self.current_idx > 0)
 
         self.detection_group_box.setTitle(str(self.current_idx + 1) + ' of ' + str(self.detection_count))
-        # beamforming_new returns detections in the order det_time, det_start, det_end, back_az, trc_vel, fstat
+        # beam returns detections in the order det_time, det_start, det_end, back_az, trc_vel, fstat
         data_string = ("Time (UTC): {t}\n"
                        "F Statistic: {fs:.2f}\n"
                        "Trace Velocity: {tv:.2f} m/s\n"

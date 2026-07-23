@@ -978,14 +978,14 @@ Scripting and Notebook-Based Analysis
 | example_yield.py        | Run spectral yield estimation methods                     |
 +-------------------------+-----------------------------------------------------------+
 
-- The beamforming and detection analysis can be imported from the :code:`infrapy.detection.beamforming_new` library.  Beamforming analysis includes setting up an ObsPy stream, converting it to an array data instance, and then scanning through with a defined analysis window.
+- The beamforming and detection analysis can be imported from the :code:`infrapy.detection.beam` library.  Beamforming analysis includes setting up an ObsPy stream, converting it to an array data instance, and then scanning through with a defined analysis window.
 
     .. code-block:: python
 
         import numpy as np
 
         from obspy.core import read
-        from infrapy.detection import beamforming_new
+        from infrapy.detection import beam
 
         if __name__ == '__main__':
 
@@ -1006,12 +1006,12 @@ Scripting and Notebook-Based Analysis
             # ######################### #
 
             # Read data and convert to array format
-            x, t, t0, geom = beamforming_new.stream_to_array_data(read(sac_glob))
+            x, t, t0, geom = beam.stream_to_array_data(read(sac_glob))
             M, N = x.shape
 
             # Define slowness and delays
-            slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
-            delays = beamforming_new.compute_delays(geom, slowness)
+            slowness = beam.build_slowness(back_az_vals, trc_vel_vals)
+            delays = beam.compute_delays(geom, slowness)
 
             # Run beamforming in each window and find best beam info
             times, beam_results = [],[]
@@ -1019,9 +1019,9 @@ Scripting and Notebook-Based Analysis
                 if window_start + fk_win_len > sig_end:
                     break
 
-                X, S, f = beamforming_new.fft_array_data(x, t, window=[window_start, window_start + fk_win_len])
-                beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max])
-                peaks = beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals)
+                X, S, f = beam.fft_array_data(x, t, window=[window_start, window_start + fk_win_len])
+                beam_power = beam.run(X, S, f, geom, delays, [freq_min, freq_max])
+                peaks = beam.find_peaks(beam_power, back_az_vals, trc_vel_vals)
                 
                 times = times + [[t0 + np.timedelta64(int(window_start), 's')]]
                 beam_results = beam_results + [[peaks[0][0], peaks[0][1], peaks[0][2] / (1.0 - peaks[0][2]) * (x.shape[0] - 1)]]
@@ -1040,7 +1040,7 @@ Scripting and Notebook-Based Analysis
             back_az_lim = 10
 
             TB_prod = (freq_max - freq_min) * fk_window_len
-            dets = beamforming_new.det_signals(times, beam_results, fd_win_len, TB_prod, M, min_seq=min_seq, back_az_lim=back_az_lim)
+            dets = beam.det_signals(times, beam_results, fd_win_len, TB_prod, M, min_seq=min_seq, back_az_lim=back_az_lim)
 
             for det in dets:
                 print("Detection time:", det[0], '\t', "Rel. detection onset:", det[1], '\t',"Rel. detection end:", det[2], '\t',end=' ')

@@ -13,20 +13,15 @@ import numpy as np
 from multiprocessing import Pool
 from importlib.util import find_spec
 
-import matplotlib.pyplot as plt 
+from ..propagation import infrasound
+
+from ..association import hjl
+from ..location import bisl, tribl
+from ..characterization import spye
+from ..utils import config, data_io
 
 if find_spec('stochprop'):
     import stochprop.propagation as sp_prop
-
-from ..utils import config
-from ..utils import data_io
-
-from ..association import hjl
-
-from ..location import bisl, tribl
-from ..propagation import infrasound
-
-from ..characterization import spye
 
 
 @click.command('build', short_help="Associate detections into events")

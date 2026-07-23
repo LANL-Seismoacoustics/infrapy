@@ -1,5 +1,5 @@
 """
-infrapy.detection.beamforming_new.py
+infrapy.detection.beam.py
 
 Methods for reading in time series data, analyzing
 it, and identifying infrasonic signals using various
@@ -337,7 +337,7 @@ def project_Ab(A, b):
         Returns:
         ----------
         c : 1darray
-            Vector c where each scalar c_k = a_k^\dagger b
+            Vector c where each scalar c_k = a_k^\\dagger b
     '''
 
     K, M = A.shape
@@ -372,7 +372,7 @@ def project_ABA(A, B):
         Returns:
         ----------
         c : 1darray
-            Vector c where each scalar c_k = a_k^\dagger B a_k
+            Vector c where each scalar c_k = a_k^\\dagger B a_k
     '''
     
     K, M = A.shape
@@ -406,7 +406,7 @@ def project_ABc(A, B, c):
         Returns:
         ----------
         d : 1darray
-            Vector d where each scalar d_k = a_k^\dagger B c
+            Vector d where each scalar d_k = a_k\\dagger B c
     """
     K, M = A.shape
 
@@ -617,7 +617,7 @@ def pure_state_filter(S):
         ----------
         S : 3darray
             Covariance matrix of data in analysis window for all frequencies,
-            x(t) --> S(f) = mean(X(f) X^\dagger(f))
+            x(t) --> S(f) = mean(X(f) X^\\dagger(f))
 
         Returns:
         ----------

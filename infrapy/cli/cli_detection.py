@@ -3,7 +3,6 @@
 import os 
 import click
 import warnings
-import re 
 
 import json
 import gzip
@@ -18,7 +17,7 @@ from obspy import UTCDateTime
 from scipy.signal import hilbert
 
 from ..utils import config, data_io
-from ..detection import beamforming_new as fkd
+from ..detection import beam as fkd
 from ..detection import spectral
 
 @click.command('beam', short_help="Run beamforming-based detection on an array")
@@ -586,9 +585,6 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
                 return 
             else:
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
-
-
-
 
     det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, pl)
     det_output = {'wvfrm_info' : wvfrm_info, 'sd_params' : sd_params, 'spectrogram': spectrogram, 'history': history, 'det_info' : det_list}

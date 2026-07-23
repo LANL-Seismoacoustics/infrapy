@@ -20,7 +20,7 @@ from obspy.core import read
 
 from scipy import signal
 
-from infrapy.detection import beamforming_new
+from infrapy.detection import beam
 
 # ######################### #
 #     Define Parameters     #
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     ######################################
     #detect_signals(times, beam_results, win_len, TB_prod, channel_cnt, det_p_val=0.99, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False)
 
-    dets = beamforming_new.detect_signals(times, beam_results, det_win_len, TB_prod, channel_cnt, min_seq=min_seq, back_az_lim=back_az_lim)
+    dets = beam.detect_signals(times, beam_results, det_win_len, TB_prod, channel_cnt, min_seq=min_seq, back_az_lim=back_az_lim)
 
     print('\n' + "Detection Summary:")
     for det in dets:

@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSlot
 
 from InfraView.widgets import IPBaseWidgets
 # import infrapy modules here
-from infrapy.detection import beamforming_new
+from infrapy.detection import beam
 
 class IPDetectorSettingsWidget(QGroupBox):
 
@@ -119,7 +119,7 @@ class IPDetectorSettingsWidget(QGroupBox):
 
     @pyqtSlot(dict)
     def calculate_auto_threshold_level(self, fstat_dict):
-        self.auto_threshold_level = beamforming_new.calc_det_thresh(fstat_dict['fvals'], fstat_dict['det_pval'], fstat_dict['tb_prod'], fstat_dict['ch_cnt'])
+        self.auto_threshold_level = beam.calc_det_thresh(fstat_dict['fvals'], fstat_dict['det_pval'], fstat_dict['tb_prod'], fstat_dict['ch_cnt'])
 
     def get_auto_threshold_level(self):
         return self.auto_threshold_level

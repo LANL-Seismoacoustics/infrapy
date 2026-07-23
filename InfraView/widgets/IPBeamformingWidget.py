@@ -28,7 +28,7 @@ from InfraView.widgets import IPSaveBeamformingResultsDialog
 from InfraView.widgets import IPUtils
 
 # import infrapy modules here
-from infrapy.detection import beamforming_new
+from infrapy.detection import beam
 from infrapy.utils import data_io
 
 # import obspy modules here
@@ -1197,7 +1197,7 @@ class IPBeamformingWidget(QWidget):
         # the detections will be placed at the center of the array
         center = self.parent.waveformWidget.stationViewer.get_current_center()
 
-        # beamforming_new uses numpy datetime64 to hold the times, so we have to 
+        # beam uses numpy datetime64 to hold the times, so we have to 
         # convert our times to that format
         numpy_times = []
         for t in self._t:
@@ -1227,7 +1227,7 @@ class IPBeamformingWidget(QWidget):
         self.plot_threshold_line(threshold=threshold)
 
         with warnings.catch_warnings(record=True) as w_array:
-            dets = beamforming_new.run_fd(numpy_times, 
+            dets = beam.run_fd(numpy_times, 
                                             beam_results, 
                                             det_window_length, 
                                             tb_prod, 
@@ -1379,18 +1379,18 @@ class ThresholdWorkerObject(QtCore.QObject):
             metadata = self.inv.get_channel_metadata(trace.id)
             latlon.append([metadata['latitude'], metadata['longitude']])
 
-        x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
+        x, t, _, geom = beam.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
 
         # define slowness_grid... these are the x,y values that correspond to the beam_power values
         back_az_vals = np.arange(self.back_az_start, self.back_az_end, self.back_az_resolution)
         trc_vel_vals = np.arange(self.trace_v_range[0], self.trace_v_range[1], self.trace_v_resolution)
-        slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
-        delays = beamforming_new.compute_delays(geom, slowness)
+        slowness = beam.build_slowness(back_az_vals, trc_vel_vals)
+        delays = beam.compute_delays(geom, slowness)
 
         # Compute the noise covariance if using GLS and the detection threshold
         if self.method == "gls":
-            _, S, _ = beamforming_new.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
+            _, S, _ = beam.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
             ns_covar_inv = np.empty_like(S)
             for n in range(S.shape[2]):
                 S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
@@ -1434,7 +1434,7 @@ class ThresholdWorkerObject(QtCore.QObject):
             tb_prod = self.win_length * (self.freqRange[1] - self.freqRange[0])
 
             #print("Fval type: {}".format(type(f_vals)))
-            det_thresh = beamforming_new.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
+            det_thresh = beam.calc_det_thresh(f_vals, self.det_pval, self.win_length * (self.freqRange[1] - self.freqRange[0]), M)
 
             # thresh_dict is a dictionary containing info needed to calculate the threshold
             thresh_dict = {'fvals': f_vals, 'det_pval': self.det_pval, 'tb_prod': tb_prod, 'ch_cnt': M}
@@ -1537,19 +1537,19 @@ class BeamformingWorkerObject(QtCore.QObject):
             metadata = self._inv.get_channel_metadata(trace.id)
             latlon.append([metadata['latitude'], metadata['longitude']])
 
-        x, t, _, geom = beamforming_new.stream_to_array_data(self.streams, latlon)
+        x, t, _, geom = beam.stream_to_array_data(self.streams, latlon)
         M, _ = x.shape
 
         # define slowness_grid... these are the x,y values that correspond to the beam_power values
 
-        slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
+        slowness = beam.build_slowness(back_az_vals, trc_vel_vals)
         self.signal_slownessUpdated.emit(slowness)
 
-        delays = beamforming_new.compute_delays(geom, slowness)
+        delays = beam.compute_delays(geom, slowness)
 
         # Compute the noise covariance if using GLS and the detection threshold
         if self.method == "gls":
-            _, S, _ = beamforming_new.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
+            _, S, _ = beam.fft_array_data(x, t, window=[self.noiseRange[0], self.noiseRange[1]], sub_window_len=self.sub_window_len)
             ns_covar_inv = np.empty_like(S)
             for n in range(S.shape[2]):
                 S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
@@ -1574,9 +1574,9 @@ class BeamformingWorkerObject(QtCore.QObject):
 
             self.signal_timeWindowChanged.emit((self.window_start, self.window_start + self.win_length))
 
-            X, S, f = beamforming_new.fft_array_data(x, t, window=[self.window_start, self.window_start + self.win_length], sub_window_len=self.sub_window_len)
+            X, S, f = beam.fft_array_data(x, t, window=[self.window_start, self.window_start + self.win_length], sub_window_len=self.sub_window_len)
 
-            beam_power = beamforming_new.run(X,
+            beam_power = beam.run(X,
                                              S,
                                              f,
                                              geom,
@@ -1592,13 +1592,13 @@ class BeamformingWorkerObject(QtCore.QObject):
             avg_beam_power = np.average(beam_power, axis=0)
 
             # Analyze distribution to find peaks and compute the f-value of the peak
-            peaks = beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=self.signal_cnt)
+            peaks = beam.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=self.signal_cnt)
 
             self.resultData['t'].append(self.window_start + self.win_length / 2.0)
             self.resultData['backaz'].append(peaks[0][0])
             self.resultData['tracev'].append(peaks[0][1])
 
-            sig_est, residual = beamforming_new.extract_signal(X, f, np.array([peaks[0][0], peaks[0][1]]), geom)
+            sig_est, residual = beam.extract_signal(X, f, np.array([peaks[0][0], peaks[0][1]]), geom)
             signal_wvfrm = np.fft.irfft(sig_est)/(t[1]-t[0])
 
             if self.method == "bartlett_covar" or self.method == "bartlett" or self.method == "gls":
@@ -1611,7 +1611,7 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.signal_dataUpdated.emit()
 
             # Compute back azimuth projection of distribution
-            az_proj, _ = beamforming_new.project_beam(beam_power, back_az_vals, trc_vel_vals)
+            az_proj, _ = beam.project_beam(beam_power, back_az_vals, trc_vel_vals)
             projection = np.c_[back_az_vals, az_proj]
 
             # signal projection plot to update
@@ -1642,7 +1642,7 @@ def window_beamforming_map(x,
                            back_az_vals,
                            trace_vel_vals):
 
-    X, S, f = beamforming_new.fft_array_data(x,
+    X, S, f = beam.fft_array_data(x,
                                              t,
                                              window,
                                              sub_window_len=sub_win_len, 
@@ -1650,7 +1650,7 @@ def window_beamforming_map(x,
                                              fft_window=fft_win, 
                                              normalize_windowing=norm_win)
         
-    beam_power = beamforming_new.run(X, 
+    beam_power = beam.run(X, 
                                      S, 
                                      f, 
                                      geom,
@@ -1661,6 +1661,6 @@ def window_beamforming_map(x,
                                      signal_cnt=sig_count, 
                                      normalize_beam=norm_beam)
        
-    return beamforming_new.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)
+    return beam.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)
 
     

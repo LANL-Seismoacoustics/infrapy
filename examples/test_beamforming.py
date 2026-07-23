@@ -20,7 +20,7 @@ from obspy.core import read
 
 from scipy import signal
 
-from infrapy.detection import beamforming_new
+from infrapy.detection import beam
 
 if __name__ == '__main__':
     # ######################### #
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     #  Read, Shift Start Time,  #
     #      and Filter Data      #
     # ######################### #
-    x, t, t0, geom = beamforming_new.stream_to_array_data(read(sac_glob))
+    x, t, t0, geom = beam.stream_to_array_data(read(sac_glob))
     M, N = x.shape
 
     # ######################### #
@@ -74,12 +74,12 @@ if __name__ == '__main__':
     # ######################### #
 
     # define slowness and delays
-    slowness = beamforming_new.build_slowness(back_az_vals, trc_vel_vals)
-    delays = beamforming_new.compute_delays(geom, slowness)
+    slowness = beam.build_slowness(back_az_vals, trc_vel_vals)
+    delays = beam.compute_delays(geom, slowness)
 
     # define the noise covariance if using generalized least squares method
     if method == "gls":
-        _, S, _ = beamforming_new.fft_array_data(x, t, window=[ns_start, ns_end], sub_window_len=window_length)
+        _, S, _ = beam.fft_array_data(x, t, window=[ns_start, ns_end], sub_window_len=window_length)
 
         ns_covar_inv = np.empty_like(S)
         for n in range(S.shape[2]):
@@ -113,9 +113,9 @@ if __name__ == '__main__':
         print("Running analysis on time window " + str(window_start) + " - " + str(window_start + window_length), end=' ')
         print(" seconds in frequency band " + str(freq_min) + " - " + str(freq_max) + " Hz...")
         times = times + [[t0 + np.timedelta64(int(window_start), 's')]]
-        X, S, f = beamforming_new.fft_array_data(x, t, window=[window_start, window_start + window_length])
-        beam_power = beamforming_new.run(X, S, f, geom, delays, [freq_min, freq_max], method="bartlett", pool=p, normalize_beam=True, ns_covar_inv=ns_covar_inv)
-        peaks = beamforming_new.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=1)
+        X, S, f = beam.fft_array_data(x, t, window=[window_start, window_start + window_length])
+        beam_power = beam.run(X, S, f, geom, delays, [freq_min, freq_max], method="bartlett", pool=p, normalize_beam=True, ns_covar_inv=ns_covar_inv)
+        peaks = beam.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=1)
         beam_results = beam_results + [[peaks[0][0], peaks[0][1], peaks[0][2] / (1.0 - peaks[0][2]) * (x.shape[0] - 1)]]
 
         if method == "music":
@@ -139,8 +139,8 @@ if __name__ == '__main__':
     back_az = beam_results[np.argmax(beam_results[:, 2]), 0]
     tr_vel = beam_results[np.argmax(beam_results[:, 2]), 1]
 
-    X, S, f = beamforming_new.fft_array_data(x, t, window=[sig_start, sig_end], fft_window="boxcar")
-    sig_est, residual = beamforming_new.extract_signal(X, f, np.array([back_az, tr_vel]), geom)
+    X, S, f = beam.fft_array_data(x, t, window=[sig_start, sig_end], fft_window="boxcar")
+    sig_est, residual = beam.extract_signal(X, f, np.array([back_az, tr_vel]), geom)
 
     plt.figure(3)
     plt.loglog(f, abs(sig_est), '-b', linewidth=1.0)
