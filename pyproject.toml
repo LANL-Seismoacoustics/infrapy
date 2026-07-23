@@ -7,7 +7,7 @@ name = "infrapy"
 version = "0.4.1.0"
 description = "A tool for processing infrasound and seismic array data."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "LANL Seismoacoustics Infrasound (LANL-SA) Team", email = "pblom@lanl.gov"}
 ]
@@ -15,24 +15,30 @@ keywords = ["infrasound", "geophysics", "seismic", "array"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "numpy",
-    "scipy",
-    "obspy",
-    "pisces",
-    "scikit-learn",
-    "pathos",
-    "numba",
-    "pyqtgraph",
-    "pyproj",
-    "ipython",
+    "cartopy",
+    "click",
+    "darkdetect",
     "matplotlib",
+    "numba",
+    "numpy",
+    "obspy",
+    "pandas",
+    "pisces",
+    "pyproj",
+    "pyQT5",
+    "pyqtgraph",
     "pyqtdarktheme-fork",
+    "pywavelets",
+    "scikit-learn",
+    "scipy",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sqlalchemy",
 ]
 
 [project.urls]
@@ -56,7 +62,6 @@ packages = [
     "infrapy.cli",
     "infrapy.detection",
     "infrapy.location",
-    "infrapy.performance",
     "infrapy.pipeline",
     "infrapy.propagation",
     "infrapy.resources",

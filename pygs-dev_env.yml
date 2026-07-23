@@ -4,50 +4,33 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.9
-  - cartopy>=0.21.0
+  - python>=3.14
+  - cartopy
   - click
-  - cx_oracle
-  - dill
-  - docutils
   - gdal
-  - ipython
-  - jedi
-  - joblib
-  - jupyterlab
-  - libtiff
   - matplotlib-base
-  - multiprocess
   - netcdf4
-  - numpy=1.24.3
+  - numpy
   - numpydoc
   - numba
-  - obspy>=1.4.1
+  - obspy
+  - oracledb
   - pandas
-  - pandoc
-  - parso
-  - pathos
-  - pexpect
   - pip
-  - pox
-  - ppft
-  - prompt_toolkit
   - pyproj
-  - pyqt=5.15.7
-  - pyqtgraph=0.13.7
-  - pygments
-  - regex
+  - pyqt
+  - pyqtgraph
+  - pywavelets
   - requests
   - scipy
   - scikit-learn
   - sphinx
   - sphinx_rtd_theme
-  - tensorflow
-  - python-wget
 
   - pip:
+    - pyqtdarktheme
     - darkdetect
-    - pisces==0.4.4
+    - pisces>=0.4.5.3
     - -e .
     
 
