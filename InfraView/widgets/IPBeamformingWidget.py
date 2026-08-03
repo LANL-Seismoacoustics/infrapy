@@ -1621,7 +1621,7 @@ class BeamformingWorkerObject(QtCore.QObject):
             self.signal_beamUpdated.emit(avg_beam_power)
 
 
-# the pathos multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
+# the multiprocessing pool map can't pickle a QObject.  So we can't pass self to this method.
 # as a result we must make this a static method and pass all variables through the call instead of using the
 # standard "self.x" way.
 

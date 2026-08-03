@@ -12,7 +12,7 @@ import os
 import numpy as np
 import json 
 
-import pathos.multiprocessing as mp
+import multiprocessing as mp
 
 import matplotlib.pyplot as plt
 from matplotlib import cm

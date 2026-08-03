@@ -10,7 +10,7 @@
 
 import numpy as np
 
-import pathos.multiprocessing as mp
+import multiprocessing as mp
 from multiprocessing import cpu_count
 
 import matplotlib.pyplot as plt

@@ -10,7 +10,7 @@
 
 import numpy as np
 
-import pathos.multiprocessing as mp
+import multiprocessing as mp
 from multiprocessing import cpu_count
 from multiprocess import Pool
 import matplotlib.pyplot as plt
@@ -39,7 +39,6 @@ if __name__ == '__main__':
 
     method="bartlett"
 
-    #p = mp.ProcessingPool(cpu_count())
     p = Pool(cpu_count() - 1)
     # ######################### #
     #  Read, Shift Start Time,  #

@@ -306,7 +306,7 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             Maximum radius of the integration region [km]
         resol : int
             Number of radial and azimuthal points used in the polar projection of the likelihood PDFs
-        pool : pathos.multiprocessing.ProcessingPool
+        pool : multiprocessing.Pool
             Multiprocessing pool for accelerating calculations
 
         Returns:
@@ -605,7 +605,7 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
             Linkage method used by scipy.cluster.hierarchy.linkage
         trim_thresh_scalar : float
             Scalar modifying the threshold value for linkage cutoff in the trimmed result
-        pool : pathos.multiprocessing.ProcessingPool
+        pool : multiprocessing.Pool
             Multiprocessing pool for accelerating calculations
 
         Returns:

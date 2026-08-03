@@ -36,7 +36,7 @@ from InfraView.widgets import IPWaveformWidget
 
 
 # multiprocessing modules
-import pathos.multiprocessing as mp
+import multiprocessing as mp
 from multiprocessing import cpu_count
 
 # for tracking down warnings...
@@ -75,7 +75,7 @@ class IPApplicationWindow(QtWidgets.QMainWindow):
         self.progversion = progversion
 
         # initialize the multiproccessor pool
-        self.mp_pool = mp.ProcessingPool(cpu_count() - 1)
+        self.mp_pool = mp.Pool(cpu_count() - 1)
 
         font = self.font()
         font.setFamily('monospace')

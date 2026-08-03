@@ -22,7 +22,6 @@ dependencies:
   - pandas
   - pandoc
   - parso
-  - pathos
   - pexpect
   - pip
   - pox
