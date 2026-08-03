@@ -5,5 +5,5 @@
 
 [LOC]
 range_max = 500.0
-celerity_model = 'regional_lf'
+celerity_model = regional_lf
 

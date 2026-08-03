@@ -37,8 +37,6 @@ def comm_str(str_list):
 @click.option("--out-label", help="Specify a file output prefix (default 'YYYY-MM-DD')", default=None)
 @click.option("--starttime", help="Start time of automated analysis", default=None)
 @click.option("--endtime", help="End time of automated analysis", default=None)
-
-
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     '''
@@ -161,22 +159,21 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     click.echo(command)
                     if not test_commands:
                         os.system(command)
-
-                command = "infrapy utils merge-dets --dets-files '" + temp_path + det_label + "-*' --merged-label " + pipe_params["det_dir"] + det_label
+                        
+                command = "infrapy utils merge_dets --dets-files '" + temp_path + det_label + "-*' --merged-label " + pipe_params["det_dir"] + det_label
                 click.echo(command)
                 if not test_commands:
                     os.system(command)
 
             fig_label = det_label.replace(".","_")              
             if not os.path.isfile(pipe_params["figs_dir"] + fig_label + "_det0.png"):
-                command = "infrapy plot beam --dets-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
+                command = "infrapy plot detect --dets-file " + pipe_params["det_dir"] + det_label + ".dets.json.gz"
                 command = command + " --figure-out " + pipe_params["figs_dir"] + fig_label
-                command = command + " --plot-all-dets true  --show-figure False"
+                command = command + " --plot-all true  --show-figure False"
                 click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
                 click.echo("")
-
 
         # Build and analyze events if config file(s) are specified 
         if "ev_build_cnfgs" not in pipe_params.keys(): return 
@@ -198,18 +195,18 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
         for ev_file in ev_files:
             fig_path = pipe_params["figs_dir"] + ev_file.split(".ev")[0]
 
-            command = "infrapy plot map_dets --ev-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
+            command = "infrapy plot event --ev-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
             click.echo('\n' + command) 
             if not test_commands:
                 os.system(command)
 
             for k, loc_config in enumerate(pipe_params["ev_loc_cnfgs"]):
-                command = "infrapy event localize --ev-file " + pipe_params["ev_dir"] + ev_file + " --cnfg-file " + pipe_params["config_dir"] + loc_config
+                command = "infrapy event locate --ev-file " + pipe_params["ev_dir"] + ev_file + " --cnfg-file " + pipe_params["config_dir"] + loc_config
                 click.echo('\n' + command) 
                 if not test_commands:
                     os.system(command)
 
-                command = "infrapy plot localize --ev-file " + pipe_params["ev_dir"] + ev_file + "  --loc-index " + str(k) 
+                command = "infrapy plot event --ev-file " + pipe_params["ev_dir"] + ev_file + "  --loc-index " + str(k) 
                 command = command + " --figure-out " + fig_path + ".loc-" + str(k) + ".png --show-figure False"
                 click.echo(command) 
                 if not test_commands:

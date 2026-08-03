@@ -27,7 +27,7 @@ ev_loc_cnfgs = loc_BISL_reg-hf.cnfg,
 # ev_char_cnfgs = char_SpYE.cnfg
 
 # DATA INFO
-fdsn = IRIS
+fdsn = EARTHSCOPE
 
 # trace_ids = 2D.N30*.*.*DF,
 #            2D.N34*.*.*DF,

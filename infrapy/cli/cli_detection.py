@@ -70,8 +70,8 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4 \n
-    \tinfrapy detect beam --cnfg-file config/detection_local.config --cpu-cnt 4 \n
+    \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
+    \tinfrapy detect beam --cnfg-file config/detection_local.config --cpu-cnt 4
     \tinfrapy detect beam --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
