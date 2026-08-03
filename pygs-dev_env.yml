@@ -16,6 +16,7 @@ dependencies:
   - obspy
   - oracledb
   - pandas
+  - pathos
   - pip
   - pyproj
   - pyqt
