@@ -21,6 +21,7 @@ dependencies:
   - pyqt
   - pyqtgraph
   - pywavelets
+  - pyyaml
   - requests
   - scipy
   - scikit-learn
