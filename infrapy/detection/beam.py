@@ -14,12 +14,13 @@ import numpy as np
 
 from numba import jit, float64, complex128
 
-from scipy import signal
-from scipy import stats
+from scipy import signal, stats
 from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar, root
+from scipy.optimize import minimize_scalar
 
 from pyproj import Geod
+
+from obspy import UTCDateTime
 
 from ..utils import prog_bar
 
@@ -800,6 +801,7 @@ def project_beam(beam_power, back_az_vals, trc_vel_vals, freq_weights=None, meth
 
     return back_az_proj, trc_vel_proj
 
+
 def extract_signal(X, f, slowness, dxdy):
     """Extract the signal along the beam for a given slowness vector
 
@@ -888,7 +890,6 @@ def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays
 
     prog_bar.increment(prog_n)
     return find_peaks(beam_power, back_az_vals, trc_vel_vals)
-
 
 
 def beam_window_wrapper(args):
@@ -1144,6 +1145,77 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 def det_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq=5, back_az_lim=15, fixed_thresh=None, return_thresh=False):
     return run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq, back_az_lim, fixed_thresh, return_thresh)
 
+
+def det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info):
+
+        det_dict = {}
+        det_dict['peak f-stat time'] = det_info[0]
+        det_dict['start/end'] = [[det_info[1], det_info[2]]]
+        det_dict['f-stat'] = det_info[5]
+
+        # update to use weighted mean of values across detection
+        dt_ref = UTCDateTime(str(det_info[0])) - min([UTCDateTime(tr.stats.starttime) for tr in stream])
+        dt = np.array([(tn - np.datetime64(stream[0].stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+        det_mask = np.logical_and(det_info[1] <= dt - dt_ref, dt - dt_ref <= det_info[2])
+
+        det_dict['back az'] = np.average(beam_peaks[:, 0][det_mask], weights=beam_peaks[:, 2][det_mask])
+        det_dict['tr vel'] = np.average(beam_peaks[:, 1][det_mask], weights=beam_peaks[:, 2][det_mask])
+        
+        # add a buffer for outputing detection info
+        det_duration = det_info[2] - det_info[1]
+        det_buffer = det_duration * 0.15
+        det_buffer = max(min(det_buffer, 60.0), 15.0)
+        det_buffer = fk_params['window_step'] * np.round(det_buffer/fk_params['window_step'])
+        
+        det_mask = np.logical_and(det_info[1] - det_buffer <= dt - dt_ref, dt - dt_ref <= det_info[2] + det_buffer)
+
+        det_dict['fk'] = [{}]
+        det_dict['fk'][0]['time'] = np.arange(det_info[1] - det_buffer, det_info[2] + det_buffer + fk_params['window_step'], fk_params['window_step'])[-np.sum(det_mask):]
+        det_dict['fk'][0]['back az'] = beam_peaks[:, 0][det_mask]
+        det_dict['fk'][0]['tr vel'] = beam_peaks[:, 1][det_mask]
+        det_dict['fk'][0]['f-stat'] = beam_peaks[:, 2][det_mask]
+
+        # compute beamed waveform and residuals
+        st_bm = stream.copy()
+
+        t_ref = UTCDateTime(str(det_info[0]))
+        t1 = t_ref + det_info[1] - det_buffer
+        t2 = t_ref + det_info[2] + det_buffer
+
+        st_bm.detrend().filter('bandpass', freqmin=fk_params['freq_min'], freqmax=fk_params['freq_max'])
+        st_bm.trim(t1, t2)
+
+        x_bm, t_bm, _, geom_bm = stream_to_array_data(st_bm, latlon=latlon)
+        X_bm, _, f_bm = fft_array_data(x_bm, t_bm, fft_window="boxcar")
+
+        sig_est, residual = extract_signal(X_bm, f_bm, [det_dict['back az'], det_dict['tr vel']], geom_bm)
+
+        sig_wvfrm = np.fft.irfft(sig_est)[:len(t_bm)] / (t_bm[1] - t_bm[0])
+        resid_wvfrms = np.fft.irfft(residual, axis=1)[:, :len(t_bm)]  / (t_bm[1] - t_bm[0])
+        resid_env = np.mean([np.abs(signal.hilbert(resid_wvfrms[nM])) for nM in range(len(resid_wvfrms))], axis=0)
+ 
+        det_dict['beam'] = [{}]
+        det_dict['beam'][0]['time'] = t_bm + det_info[1] - det_buffer
+        det_dict['beam'][0]['signal'] = sig_wvfrm
+        det_dict['beam'][0]['resid'] = resid_env
+
+        # repeat without the bandpass filter or buffer for the spectra
+        t1 = t_ref + det_info[1]
+        t2 = t_ref + det_info[2]
+
+        st_bm2 = stream.copy()
+        st_bm2.trim(t1, t2)
+
+        x_bm2, t_bm2, _, geom_bm2 = stream_to_array_data(st_bm2, latlon=latlon)
+        X_bm2, _, f_bm2 = fft_array_data(x_bm2, t_bm2, fft_window="boxcar")
+        sig_est2, residual2 = extract_signal(X_bm2, f_bm2, [det_dict['back az'], det_dict['tr vel']], geom_bm2)
+
+        det_dict['spec'] = [{}]
+        det_dict['spec'][0]['freq'] = f_bm2
+        det_dict['spec'][0]['signal'] = np.abs(sig_est2)
+        det_dict['spec'][0]['resid'] = np.mean(np.abs(residual2), axis=0)
+
+        return det_dict
 
 ##########################
 ## Dictionary Extaction ##

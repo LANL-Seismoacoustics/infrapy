@@ -275,7 +275,7 @@ def calc_conf_ellipse(means, st_devs, conf_lvl, pnts=100):
 def find_confidence(func, lims, conf_lvl):
     """Computes the bounds for a function given a confidence level
 
-        Identifies the points for which \int_{x_1}^{x_2}{f(x) dx} includes a given
+        Identifies the points for which \\int_{x_1}^{x_2}{f(x) dx} includes a given
         fraction of the overall integral such that f(x_1) = f(x_2)
 
         Parameters
@@ -429,7 +429,7 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
                 'lon_mean' : Mean longitude for the marginalized spatial distribution
                 'EW_stdev': Standard deviation of the marginalized spatial distribution in the east/west direction in km
                 'NS_stdev': Standard deviation of the marginalized spatial distribution in the north/south direction in km
-                'covar': Relative covariance, \sigma_{xy}^2 / (\sigma_x \sigma_y)
+                'covar': Relative covariance, \\sigma_{xy}^2 / (\\sigma_x \\sigma_y)
                 't_mean': Mean marginalized temporal distribution
                 't_stdev': Standard deviation of the marginalized temporal distribution
                 't_min' : 95% confidence bound lower limit for the marginalized temporal distribution
