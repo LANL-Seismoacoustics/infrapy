@@ -589,8 +589,10 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
         models[1] = [0] * len(tlm_files)
         for n in range(len(tlm_files)):
+            print("  " + tlm_files[n])
             models[1][n] = sp_prop.TLossModel()
-            models[1][n].load(tlm_dir + "/" + tlm_files[n])
+            models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
+        print('')
         
         # ######################## #
         #         Run Yield        #

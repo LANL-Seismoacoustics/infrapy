@@ -4,44 +4,32 @@
 
 import numpy as np
 
-from scipy.integrate import quad
+from scipy.integrate import simpson
 
 
-def find_confidence(func, lims, conf_aim):
+def find_confidence(func, lims, conf_aim, resol=1e3):
     if conf_aim > 1.0:
         print("WARNING - find_confidence cannot use conf > 1.0")
-        return lims
+        return lims, 1.0, 0.0
 
-    def conf_func(x, thresh):
-        val = func(x)
-        if val >= thresh:
-            return val
-        else:
-            return 0.0
-
-    resol = int(1e3)
+    resol = int(resol)
     x_vals = np.linspace(lims[0], lims[1], resol)
     f_vals = func(x_vals)
 
-    f_max = max(f_vals)
+    norm = simpson(f_vals, x_vals)
+
+    f_max = np.max(f_vals)
     thresh_vals = np.linspace(0.0, f_max, resol)
-    
-    norm = quad(func, lims[0], lims[1], limit=100, epsrel=1.0e-3)[0]
-    
-    conf_prev=1.0
-    bnds=[]
+
     for n in range(resol):
-        conf = quad(conf_func, lims[0], lims[1], (thresh_vals[n],), limit=100, epsrel=1.0e-3)[0] / norm
-        
-        if conf < conf_aim < conf_prev:
-            thresh = thresh_vals[n - 1] - (thresh_vals[n-1] - thresh_vals[n]) / (conf_prev - conf) * (conf_aim - conf)
-            conf = quad(conf_func, lims[0], lims[1], (thresh,), limit=100, epsrel=1.0e-3)[0] / norm
-            
-            for n in range(resol - 1):
-                if (f_vals[n] - thresh) * (f_vals[n+1] - thresh) < 0.0:
-                    bnds.append(x_vals[n])
+        temp = f_vals.copy()
+        temp[temp < thresh_vals[n]] = 0.0
+
+        conf = simpson(temp, x_vals) / norm
+
+        if conf < conf_aim:
+            thresh = thresh_vals[n]
+            bnds = [np.min(x_vals[f_vals > thresh]), np.max(x_vals[f_vals > thresh])]
             break
         
-        conf_prev=conf
-
     return bnds, conf, thresh

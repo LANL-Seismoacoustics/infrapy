@@ -17,7 +17,7 @@ import obspy
 from obspy import UTCDateTime
 
 from scipy.integrate import simpson
-from scipy.interpolate import interp1d, interp2d
+from scipy.interpolate import interp1d, RegularGridInterpolator
 from scipy.stats import norm
 from scipy.special import i0
 
@@ -245,6 +245,8 @@ class InfrasoundDetection(object):
         elif prop_az > 180.0:
             prop_az -= 360.0
 
+        smn_interp = interp1d(smn_spec[0], smn_spec[1])
+
         # Interpolate the transmission loss at the source-receiver range and
         # azimuth to define tloss_interp(f, tloss)
         tloss_freqs = np.asarray(tloss_models[0])
@@ -254,17 +256,12 @@ class InfrasoundDetection(object):
         for nf in range(len(tloss_freqs)):
             tloss_grid[nf] = tloss_models[1][nf].eval(np.array([rng] * len(tloss_vals)), tloss_vals, np.array([prop_az] * len(tloss_vals)))
 
-        tloss_interp = interp2d(tloss_freqs, tloss_vals, tloss_grid.T, bounds_error=False, fill_value=0.0)
+        tloss_interp = RegularGridInterpolator((tloss_freqs, tloss_vals), tloss_grid, bounds_error=False, fill_value=0.0)
+        freq_grid, spec_grid = np.meshgrid(freqs, src_spec, indexing='ij')
+        pdf = tloss_interp(np.stack([freq_grid, smn_interp(freq_grid) - spec_grid], axis=-1)).flatten()
 
-        smn_interp = interp1d(smn_spec[0], smn_spec[1])
+        return freq_grid.flatten(), spec_grid.flatten(), pdf
 
-        freq_grid, spec_grid = np.meshgrid(freqs, src_spec)
-        F = freq_grid.flatten()
-        SPEC = spec_grid.flatten()
-
-        pdf = np.array([tloss_interp(F[n], smn_interp(F[n]) - SPEC[n]) for n in range(len(F))]).T[0]
-
-        return F, SPEC, pdf
 
     # ################################
     # Accessor methods.  Useful to check the type and values before setting the local variables

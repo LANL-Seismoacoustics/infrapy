@@ -638,6 +638,57 @@ def ev_loc_reset(ev_file):
 
 
 
+@click.command('ev_char_reset', short_help="Reset characterization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_char_reset(ev_file):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       Reset Event File      ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+
+    if len(ev_data['characterization']) > 0:
+        click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+        for char_k, char in enumerate(ev_data['characterization']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(char_k) + " ##")
+            click.echo("#" * 14)
+
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in char['params'].keys():
+                if char['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(char['params'][key]))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+            click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+            click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]))
+
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
+
+    user_opt = input('WARNING!!! This action will remove existing characterization result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+    if user_opt in ['y', 'yes']:
+        confirm = True
+    else:
+        confirm = False
+
+    if confirm:
+        click.echo('\nRemoving characterization results from event file...')
+        ev_data['characterization'] = []
+        with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
+
+
 ##########################################
 ## THE REST OF THESE ARE DEPRECATED AND ## 
 ##  WILL BE REMOVED IN A FUTURE UPDATE  ##

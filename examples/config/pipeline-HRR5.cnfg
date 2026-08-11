@@ -24,7 +24,7 @@ ev_build_cnfgs = ev_build_reg.cnfg
 ev_loc_cnfgs = loc_BISL_reg-hf.cnfg,
                loc_BISL_reg-lf.cnfg
 
-# ev_char_cnfgs = char_SpYE.cnfg
+ev_char_cnfgs = char_SpYE.cnfg
 
 # DATA INFO
 fdsn = EARTHSCOPE
