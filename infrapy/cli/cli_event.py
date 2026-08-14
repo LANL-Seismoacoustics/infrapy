@@ -164,12 +164,12 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
     infrasound._load_celerity_model(assoc_params['celerity_model'])
-    events, ev_qls = hjl.id_events_dict(det_list, assoc_params, pl)
+    events, ev_qls = hjl.id_events_dict(det_list, assoc_params, cpu_cnt)
     
     click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
     for j, ev in enumerate(events):
         dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
-                                            rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
+                                            rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  cpu_cnt=cpu_cnt, progress=False)
 
         ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
         with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:

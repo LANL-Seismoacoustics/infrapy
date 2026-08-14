@@ -9,10 +9,7 @@
 # Author(s) Philip Blom (pblom@lanl.gov)
 #           Garrett Euler (ggeuler@lanl.gov)
 
-import time
 import itertools
-import random
-import sys
 import os
 
 import numpy as np
@@ -20,6 +17,8 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+
+from concurrent.futures import ProcessPoolExecutor
 
 from datetime import datetime
 
@@ -286,7 +285,7 @@ def compute_assoc_pair_wrapper(args):
     return compute_assoc_pair(*args)
 
 
-def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180,  pool=None, progress=False):
+def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180,  cpu_cnt=1, progress=False):
     """Computes the joint-likelihood for all pairs of detections to define the distance matrix
 
         Computes the joint-likelihood value for each unique pair of detections in a provided list and
@@ -319,32 +318,30 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
     det_cnt = len(det_list)
     n_tot, n_ref = det_cnt * (det_cnt - 1) / 2, 0
 
+    args, result, ids = [], [], []
+    for n, m in itertools.combinations(list(range(det_cnt)), 2):
+        if progress:
+            # step = int(np.floor((50.0 * (n_ref + 1)) / n_tot) - np.floor((50.0 * n_ref) / n_tot))
+            step = prog_bar.set_step(n_ref, n_tot, 50)
+        else:
+            step = 0        
+        args.append([det_list[n], det_list[m], bm_width, rng_max, rad_min, rad_max, resol, step])
+        ids.append([n, m])
+        n_ref += 1
+
     if progress:
         print('\t\tProgress: \t', end='')
         prog_bar.prep(50)
-    if pool:
-        args, result, ids = [], [], []
-        for n, m in itertools.combinations(list(range(det_cnt)), 2):
-            if progress:
-                step = int(np.floor((50.0 * (n_ref + 1)) / n_tot) - np.floor((50.0 * n_ref) / n_tot))
-            else:
-                step = 0        
-            args.append([det_list[n], det_list[m], bm_width, rng_max, rad_min, rad_max, resol, step])
-            ids.append([n, m])
-            n_ref += 1
-        out = pool.map(compute_assoc_pair_wrapper, args)
-        for n in range(int(n_tot)):
-            result.append([ids[n][0], ids[n][1], out[n]])
+
+    if cpu_cnt > 1:
+        with ProcessPoolExecutor(max_workers=min(cpu_cnt, os.cpu_count() - 1)) as executor:
+            futures = [executor.submit(compute_assoc_pair, *arg_set) for arg_set in args]
+            temp = np.array([future.result() for future in futures])
     else:
-        result = []
-        for n, m in itertools.combinations(list(range(det_cnt)), 2):
-            if progress:
-                step = int(np.floor((50.0 * (n_ref + 1)) / n_tot) - np.floor((50.0 * n_ref) / n_tot))
-            else:
-                step = 0
-            assoc = compute_assoc_pair(det_list[n], det_list[m], bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, prog_step=step)
-            result.append([n, m, assoc])
-            n_ref += 1
+        temp = np.array([compute_assoc_pair(*arg_set) for arg_set in args])
+
+    for n in range(int(n_tot)):
+        result.append([ids[n][0], ids[n][1], temp[n]])
     if progress:
         prog_bar.close()
 
@@ -573,7 +570,7 @@ def summarize_clusters(labels, distance_matrix, population_min=3, show_result=Fa
 
     return clusters, qualities
 
-def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, prg_bar=False, pool=None):
+def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, prg_bar=False, cpu_cnt=1):
     """Run the Hierarchical Joint-Likelihood (HJL) association analysis
 
         Runs the clustering analysis on a list of detecctions and returns the
@@ -620,13 +617,13 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
         if os.path.isfile(file_id + "-dm.npy"):
             dists = np.load(file_id + "-dm.npy")
         else:
-            dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool, progress=prg_bar))
+            dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, cpu_cnt=cpu_cnt, progress=prg_bar))
             np.save(file_id + "-dm", dists)
         dists[dists > dist_max] = dist_max
         print('\t' + "Clustering detections into events...")
         _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
     else :
-        dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, pool=pool, progress=prg_bar))
+        dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, cpu_cnt=cpu_cnt, progress=prg_bar))
         dists[dists > dist_max] = dist_max
         print('\t' + "Clustering detections into events...")
         _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
@@ -657,7 +654,7 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
 
 
 def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0, 
-    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, pool=None):
+    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, cpu_cnt=1):
     """
     
     
@@ -693,7 +690,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
 
         if len(temp) >= cluster_det_population:
             labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, 
-                linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, pool=pool)
+                linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, cpu_cnt=cpu_cnt)
             clusters, qualities = summarize_clusters(labels, dists, population_min=cluster_det_population)
 
             for n in range(len(clusters)):
@@ -727,7 +724,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
     return events, ev_qls
 
 
-def id_events_dict(det_list, assoc_params, pl):
+def id_events_dict(det_list, assoc_params, cpu_cnt):
     
     return id_events(det_list,
                      assoc_params['cluster_threshold'],
@@ -743,4 +740,4 @@ def id_events_dict(det_list, assoc_params, pl):
                      trimming_thresh=assoc_params['trimming_threshold'], 
                      cluster_det_population=assoc_params['ev_population_min'],
                      cluster_array_population=assoc_params['ev_station_min'],
-                     pool=pl)
+                     cpu_cnt=cpu_cnt)
