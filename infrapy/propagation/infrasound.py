@@ -48,9 +48,9 @@ def _load_celerity_model(option):
     global canon_rcel_mns
     global canon_rcel_vrs
 
-    if option in ["regional_hf", "regional_lf", "infGEM"]:
+    if option.lower() in ["regional_hf", "regional_lf", "infgem"]:
         rcel_gmm_file = str(Path(__file__).parent.parent)
-        rcel_gmm_file = rcel_gmm_file + "/resources/travelTimeTables/" +  option + ".rcg.json"
+        rcel_gmm_file = rcel_gmm_file + "/resources/travelTimeTables/" +  option.lower() + ".rcg.json"
     else: 
         rcel_gmm_file = option 
 

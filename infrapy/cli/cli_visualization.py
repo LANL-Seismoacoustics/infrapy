@@ -276,6 +276,13 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
         det_data = json.load(open(dets_file))
 
     # Need to add a catch here if there are no detections and no fk or spectral results to plot (e.g., combined files, no dets)
+    if plot_all and len(det_data['det_info']) < 1:
+        click.echo('No detection results to visualize.\n')
+        return
+    elif det_index is not None:
+        if det_index > len(det_data['det_info']):
+            click.echo('Invalid det_index.  ' + str(len(det_data['det_info'])) + ' detections in file.\n')
+            return
 
     if 'fk_params' in det_data.keys() or 'fk_params' in det_data['det_info'][0].keys():
         if "wvfrm_info" in det_data:

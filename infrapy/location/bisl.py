@@ -151,6 +151,13 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
     return center, radius
 
 
+def prop_distance(det_list, bm_width, rng_max):
+    center, _ = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=100.0, rad_max=rng_max/4.0)
+    rngs = np.array(sph_proj.inv([center[1]] * len(det_list), [center[0]] * len(det_list), [det.longitude for det in det_list], [det.latitude for det in det_list], return_back_azimuth=True, radians=False)[2]) / 1e3
+
+    return rngs
+
+
 def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, include_tms=False, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0):
 
     # Set spatial grid
@@ -234,7 +241,6 @@ def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner
     tm_grid = np.squeeze(tm_grid)
     
     return lat_grid, lon_grid, alt_grid, tm_grid
-
 
 
 def calc_conf_ellipse(means, st_devs, conf_lvl, pnts=100):

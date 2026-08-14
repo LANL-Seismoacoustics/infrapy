@@ -10,6 +10,8 @@ import warnings
 import configparser as cnfg
 import numpy as np
 
+import matplotlib.pyplot as plt 
+
 from multiprocessing import Pool
 from importlib.util import find_spec
 
@@ -263,7 +265,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     loc_params['tm_max'] = config.set_param(user_config, 'LOC', 'tm_max', tm_max, 'str')
     loc_params['tm_resol'] = config.set_param(user_config, 'LOC', 'tm_resol', tm_resol, 'float')
 
-    loc_params['celerity_model'] = config.set_param(user_config, 'LOC', 'celerity_model', celerity_model, 'str')
+    loc_params['celerity_model'] = config.set_param(user_config, 'LOC', 'celerity_model', celerity_model, 'str').lower()
     loc_params['pgm_file'] = config.set_param(user_config, 'LOC', 'pgm_file', pgm_file, 'str')
 
     loc_params['atmo_data'] = config.set_param(user_config, 'LOC', 'atmo_data', atmo_data, 'str')
@@ -313,7 +315,11 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                 click.echo('\n' + "Can't use a PGM without stochprop installed." + '\n' + "Built-in celerity model options are: 'regional_hf', 'regional_lf', and 'infGEM'" + '\n')
                 return 
         else:
-            infrasound._load_celerity_model(loc_params["celerity_model"])
+            if "auto" in loc_params['celerity_model']:
+                # pre-load the infGEM model and update once integration region is identified
+                infrasound._load_celerity_model('infgem')
+            else:
+                infrasound._load_celerity_model(loc_params["celerity_model"])
             pgm = None
     else:
         loc_params["celerity_model"] = None
@@ -324,6 +330,35 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
         if loc_params[key] is not None:
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
+
+
+    # Set optimal celerity model if needed
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
+    if "auto" in loc_params['celerity_model']:
+        infgem_rng_thresh = 1000.0
+        low_freq_thresh = 0.5
+
+        click.echo("Optimizing celerity model for analysis")         
+        prop_dist = bisl.prop_distance(det_list, loc_params['back_az_width'], loc_params['range_max'])
+        snr_band = np.array(spye.find_snr_band(ev_data['det_info']))
+        click.echo('\tEst. Range [km]\tMin Freq [Hz]\tUpper Freq [Hz]')
+        for k in range(len(ev_data['det_info'])):
+            click.echo('\t' + str(np.round(prop_dist[k],1)) + '\t\t' + str(np.round(snr_band[k][0], 2)) +'\t\t' + str(np.round(snr_band[k][1], 2)))
+
+        if np.mean(prop_dist) > infgem_rng_thresh:
+            click.echo('\n\tMean estimated source-receiver distance (' + str(np.mean(prop_dist)) + ') exceeds ' + str(infgem_rng_thresh) + ' km.')
+            click.echo('\tUsing infGEM global-scale celerity model.')
+            loc_params['celerity_model'] = 'infgem'
+        elif np.min(snr_band[:,0] < low_freq_thresh):                  
+            click.echo('\n\tMean estimated source-receiver distance (' + str(np.round(np.mean(prop_dist), 2)) + ') less than ' + str(infgem_rng_thresh) + ' km.')
+            click.echo('\tMinimum frequency of SNR > 1 (' + str(np.round(np.min(snr_band[:,0]), 2)) + ') less than ' + str(low_freq_thresh) + ' Hz.')
+            click.echo('\tUsing regional low-frequency celerity model.')
+            loc_params['celerity_model'] = 'regional_lf'
+        else:
+            click.echo('\n\tMean estimated source-receiver distance (' + str(np.round(np.mean(prop_dist), 2)) + ') less than ' + str(infgem_rng_thresh) + ' km.')
+            click.echo('\tMinimum frequency of SNR > 1 (' + str(np.round(np.min(snr_band[:,0]), 2)) + ') greater than ' + str(low_freq_thresh) + ' Hz.')
+            click.echo('\tUsing regional high-frequency celerity model.')
+            loc_params['celerity_model'] = 'regional_hf'
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -339,10 +374,8 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
             pass
 
     if new_param_set:
-        det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
-
         click.echo("")
-        if loc_params['atmo_data'] is None:           
+        if loc_params['atmo_data'] is None:
             result = bisl.run_dict(det_list, loc_params, tm_lims, pgm)         
         else:
             if find_spec('infraga'):

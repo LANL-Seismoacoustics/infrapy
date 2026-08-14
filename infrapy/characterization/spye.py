@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import simpson
 from scipy.interpolate import interp1d, LinearNDInterpolator, RegularGridInterpolator
 from scipy.signal import savgol_filter
+from scipy.stats import gaussian_kde
 
 from ..detection import beam
 from ..utils import prog_bar, confidence
@@ -292,6 +293,39 @@ def extract_json_spectra(det_spec):
         spec_res = det_spec[0]["resid"]
     
     return spec_freq, spec_sig, spec_res
+
+
+def find_snr_band(det_info):
+    bands = []
+    for det in det_info:
+        spec_freq, spec_sig, spec_res = extract_json_spectra(det['spec'])
+
+        spec_freq = np.array(spec_freq)
+        spec_sig = np.array(spec_sig)
+        spec_res = np.array(spec_res)
+
+        snr = spec_sig / spec_res
+        snr_mask = snr > 1.0
+
+        log_freq = np.log10(spec_freq)
+        freq_kde = gaussian_kde(log_freq[snr_mask], weights = snr[snr_mask] / spec_freq[snr_mask])
+        kde_eval = freq_kde(spec_freq) * spec_freq
+
+        norm_kde = kde_eval / np.max(kde_eval)
+        bands = bands + [[np.min(spec_freq[norm_kde > 0.5]),
+                          np.max(spec_freq[norm_kde > 0.1])]]
+
+        '''
+        plt.figure(1)
+        plt.loglog(spec_freq, snr, '-k', linewidth=1.0)
+        plt.loglog(spec_freq[snr_mask], snr[snr_mask], 'or')
+
+        plt.figure(2)
+        plt.semilogx(spec_freq, kde_eval, '-r')
+        '''
+    # plt.show()
+
+    return bands 
 
 
 def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
