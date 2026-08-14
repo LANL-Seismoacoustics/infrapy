@@ -165,11 +165,12 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     fk_params['sub_window_len'] = config.set_param(user_config, 'FK', 'sub_window_len', fk_sub_window_len, 'float')
     fk_params['window_step'] = config.set_param(user_config, 'FK', 'window_step', fk_window_step, 'float')
     fk_params['cpu_cnt'] = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
-
+    '''
     if fk_params['cpu_cnt'] is not None:
         pl = Pool(fk_params['cpu_cnt'])
     else:
         pl = None
+    '''
 
     click.echo('\n' + "fk (beam) parameters:")
     for key in fk_params.keys():
@@ -271,7 +272,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 
     # Run beamforming (fk)
-    beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl)
+    beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt)
 
     print("Running adaptive f-detector..." + '\n')
     dets, thresh_vals = fkd.run_afd_dict(beam_times, beam_peaks, fk_params, det_params, len(stream))
@@ -292,10 +293,6 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
     with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
-    if pl is not None:
-        pl.terminate()
-        pl.close()
 
 
 @click.command('spectral', short_help="Run spectral detection on a single channel")
@@ -440,11 +437,6 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     sd_params["cluster_window_len"] = config.set_param(user_config, 'SD', 'cluster_window_len', cluster_window_len, 'float')
     sd_params["cpu_cnt"] = config.set_param(user_config, 'SD', 'cpu_cnt', cpu_cnt, 'int')
 
-    if sd_params['cpu_cnt'] is not None:
-        pl = Pool(sd_params['cpu_cnt'])
-    else:
-        pl = None
-
     if 'cwt' not in sd_params['spectral_option']:
         sd_params['morlet_omega0'] = None
 
@@ -513,12 +505,8 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             else:
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 
-    det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, pl)
+    det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, cpu_cnt)
     det_output = {'wvfrm_info' : wvfrm_info, 'sd_params' : sd_params, 'spectrogram': spectrogram, 'history': history, 'det_info' : det_list}
     with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
-    if pl is not None:
-        pl.terminate()
-        pl.close()
 

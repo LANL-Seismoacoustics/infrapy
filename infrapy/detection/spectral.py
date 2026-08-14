@@ -7,9 +7,11 @@ identifying detections via a spectrogram
 Author            Philip Blom (pblom@lanl.gov)
 
 """
-
+import os 
 import pywt
 import numpy as np
+
+from concurrent.futures import ProcessPoolExecutor
 
 from obspy.core import UTCDateTime
 
@@ -124,7 +126,7 @@ def det2dict(f, t, Sxx_log, det_pnts, trace, peaks_history, thresh_history, time
 
 def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_window_step,
             clustering_freq_scaling, clustering_eps, clustering_min_samples, clustering_window_len,
-            pl, t_skip, verbose=False):
+            cpu_cnt, t_skip, verbose=False):
 
     """Run the spectral detection (sd) methods
  
@@ -154,8 +156,8 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
             Count of required members in a cluster in DBSCAN
         clustering_window_len : float
             Length of window used in DBSCAN (avoids memory issues)
-        pl: multiprocessing.Pool
-            Multiprocessing pool for simultaneous analysis of windows
+        cpu_cnt: int
+            Number of CPUs used by concurrent.futures for multithreading
  
         Returns:
         ----------
@@ -183,13 +185,23 @@ def run_sd(f, t, Sxx_log, freq_band, p_val, adaptive_window_length, adaptive_win
         window_mask = np.logical_and(window_start <= t, t <= window_start + adaptive_window_length)
         Sxx_window = Sxx_log[:, window_mask]
         t_window = t[window_mask]
- 
+
+        if cpu_cnt > 1:
+            args = [[Sxx_window[:, ::t_skip][fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
+            with ProcessPoolExecutor(max_workers=min(cpu_cnt, os.cpu_count() - 1)) as executor:
+                futures = [executor.submit(calc_thresh, *arg_set) for arg_set in args]
+                temp = np.array([future.result() for future in futures])
+        else:
+            temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (0.0, 0.0) for fn in range(len(f))])
+
+        '''
         if pl is not None:
             args = [[Sxx_window[:, ::t_skip][fn], p_val] if freq_band[0] < f[fn] and f[fn] < freq_band[1] else [None, False] for fn in range(len(f))]
             temp = pl.map(calc_thresh_wrapper, args)
         else:
             temp = np.array([calc_thresh(Sxx_window[:, ::t_skip][fn], p_val) if freq_band_mask[fn] else (0.0, 0.0) for fn in range(len(f))])
- 
+        '''
+
         threshold = np.array(temp)[:, 0]
         peaks = np.array(temp)[:, 1]
  
@@ -302,7 +314,7 @@ def cli_sd(trace, spec_option, morlet_omega0, freq_band, spec_overlap, p_val, ad
 ##########################
 ## Dictionary Extaction ##
 ##########################
-def spec_det_dict(trace, sd_params, pl):
+def spec_det_dict(trace, sd_params, cpu_cnt):
         return cli_sd(trace,
                       sd_params["spectral_option"],
                       sd_params["morlet_omega0"],
@@ -314,5 +326,5 @@ def spec_det_dict(trace, sd_params, pl):
                       sd_params["freq_tm_factor"],
                       sd_params["cluster_eps"],
                       sd_params["cluster_min_samples"],
-                      sd_params["cluster_window_len"], pl)
+                      sd_params["cluster_window_len"], cpu_cnt)
         
