@@ -331,34 +331,32 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
 
-
     # Set optimal celerity model if needed
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
-    if "auto" in loc_params['celerity_model']:
-        infgem_rng_thresh = 1000.0
-        low_freq_thresh = 0.5
+    if loc_params['celerity_model'] is not None:   
+        if "auto" in loc_params['celerity_model']:
+            infgem_rng_thresh = 1000.0
+            low_freq_thresh = 0.5
 
-        click.echo("Optimizing celerity model for analysis")         
-        prop_dist = bisl.prop_distance(det_list, loc_params['back_az_width'], loc_params['range_max'])
-        snr_band = np.array(spye.find_snr_band(ev_data['det_info']))
-        click.echo('\tEst. Range [km]\tMin Freq [Hz]\tUpper Freq [Hz]')
-        for k in range(len(ev_data['det_info'])):
-            click.echo('\t' + str(np.round(prop_dist[k],1)) + '\t\t' + str(np.round(snr_band[k][0], 2)) +'\t\t' + str(np.round(snr_band[k][1], 2)))
+            click.echo("Optimizing celerity model for analysis")         
+            prop_dist = bisl.prop_distance(det_list, loc_params['back_az_width'], loc_params['range_max'])
+            rng_bnds = [np.min(prop_dist), np.max(prop_dist)]
 
-        if np.mean(prop_dist) > infgem_rng_thresh:
-            click.echo('\n\tMean estimated source-receiver distance (' + str(np.mean(prop_dist)) + ') exceeds ' + str(infgem_rng_thresh) + ' km.')
-            click.echo('\tUsing infGEM global-scale celerity model.')
-            loc_params['celerity_model'] = 'infgem'
-        elif np.min(snr_band[:,0] < low_freq_thresh):                  
-            click.echo('\n\tMean estimated source-receiver distance (' + str(np.round(np.mean(prop_dist), 2)) + ') less than ' + str(infgem_rng_thresh) + ' km.')
-            click.echo('\tMinimum frequency of SNR > 1 (' + str(np.round(np.min(snr_band[:,0]), 2)) + ') less than ' + str(low_freq_thresh) + ' Hz.')
-            click.echo('\tUsing regional low-frequency celerity model.')
-            loc_params['celerity_model'] = 'regional_lf'
-        else:
-            click.echo('\n\tMean estimated source-receiver distance (' + str(np.round(np.mean(prop_dist), 2)) + ') less than ' + str(infgem_rng_thresh) + ' km.')
-            click.echo('\tMinimum frequency of SNR > 1 (' + str(np.round(np.min(snr_band[:,0]), 2)) + ') greater than ' + str(low_freq_thresh) + ' Hz.')
-            click.echo('\tUsing regional high-frequency celerity model.')
-            loc_params['celerity_model'] = 'regional_hf'
+            snr_bands = np.array(spye.find_snr_band(ev_data['det_info']))
+            snr_band = [np.min(snr_bands[:, 0]), np.max(snr_bands[:, 1])]
+
+            click.echo('  Range limits [km]: ' + str(rng_bnds[0]) + ", " + str(rng_bnds[1]))
+            click.echo('  Freq band [Hz]: ' + str(snr_band[0]) + ", " + str(snr_band[1]))
+
+            if rng_bnds[0] > infgem_rng_thresh:
+                click.echo('  Using infGEM global-scale celerity model.\n')
+                loc_params['celerity_model'] = 'infgem'
+            elif snr_band[0] < low_freq_thresh:                  
+                click.echo('  Using regional low-frequency celerity model.\n')
+                loc_params['celerity_model'] = 'regional_lf'
+            else:
+                click.echo('  Using regional high-frequency celerity model.\n')
+                loc_params['celerity_model'] = 'regional_hf'
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -409,6 +407,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                 print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
                                 temp = tribl.run_dict(det_list,
                                                       file_path + file_name,
+                                                      temp_path,
                                                       loc_params,
                                                       tm_lims,
                                                       verbose=False,

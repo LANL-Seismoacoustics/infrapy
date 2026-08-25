@@ -445,8 +445,6 @@ Event Analyses
     
         infrapy event build --dets-files 'data/Blom_etal2020_GJI/SY*dets.json.gz' --ev-label Blom_etal2020_GJI --range-max 1500.0 --cpu-cnt 4
 
-**UPDATES THROUGH HERE**
-
     Note that once again quotes are needed to define multiple files for ingestion.  This analysis can be on the slow side, so it's recommended to use the :code:`--cpu-cnt` option and multithread the computation of the joint-likelihood values.  For this analysis, multi-threading distributes the individual joint-likelihood calculations between pairs of detections to available threads.  The analysis results will be summarized to the screen,
 
     .. code-block:: none
@@ -570,11 +568,11 @@ Event Analyses
         :align: center
 
 
-- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015) or using the Time-Reversed Infrasonic Bayesian Localization (TRIBL) algorithm more recently developed in Blom et al. (2025).  Localization analysis is run using, :code:`infrapy event localize`,
+- Once an event has been identified, the detections can be analyzed using the Bayesian Infrasonic Source Localization (BISL) methods as discussed in Blom et al. (2015) or using the Time-Reversed Infrasonic Bayesian Localization (TRIBL) algorithm more recently developed in Blom et al. (2025).  Localization analysis is run using, :code:`infrapy event locate`,
 
     .. code-block:: bash
 
-        infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+        infrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
     The default set of parameters uses the maximum range from the event building stage (1500 km for this example) and a 10.0 degree back azimuth width to identify the spatial region for analysis.  The default celerity model used in analysis is tuned for regional low-frequency signals (including contributions for tropospheric, stratospheric, and thermospheric waveguide travel times).  
 
@@ -621,23 +619,112 @@ Event Analyses
             Exact 90% confidence bounds: [2010-01-01T12:04:58.593500, 2010-01-01T12:11:27.064500]
 
             
-    The localization result is written into the existing event file and can be visualized using (note: event visualization is being actively updated, will be simplified in a future update).  For now, visualization can be done via,
+    The localization result is written into the existing event file and can be visualized by specifying the location solution index.  If no location index is provided, only the back azimuth projections are visualized reproducing the above visualization from :code:`maps_dets` and a summary of available event analysis results is printed to screen.
+    
+    
+        .. code-block:: bash
+
+        infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+        .. code-block:: none
+
+
+            ###############################
+            ##                           ##
+            ##          InfraPy          ##
+            ##    Event Visualization    ##
+            ##                           ##
+            ###############################
+
+
+            Data summary:
+              ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+              loc_index: None (1 location result(s) in file
+              char_index: None (0 characterization result(s) in file
+
+
+            Drawing map with detection back azimuth projections...
+    
+
+    Specifying the first localization result in the visualization command produces a figure summarizing the localization result and a summary printed to screen matching the above informaiton when the analysis was initially run.
 
     .. code-block:: bash
 
-        infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
-
-    .. image:: _static/_images/loc-bisl.png
+        infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz  --loc-index 0
+    
+    .. image:: _static/_images/plot_ev1.png
         :width: 1200px
         :align: center
 
-- The TRIBL methods require ray tracing back projection paths through an atmosphere specification and a more limited grid to evaluate results on.  Using the general region identified by BISL and accounting for some cross wind deviations, one can define the lower-left (ll) and upper-right (ur) corners as well as a range of origin times.  These various quantities could be defined item by item on the command line, but it's once again easier to save them into a configuration file and point the method at that.  An example configuration file is included here with the following informaiton:
+
+    Several different celerity (horizonal group velocity) models are built into InraPy and can be used by specifying them via the :code:`--celerity-model` option.  The Infrasound Global Empirical Model (infGEM) that is tuned for use in larger propagation distance scenarios (see Nippress et al, 2023) can be used and the result visualized via,
+
+    .. code-block:: bash
+
+        infrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
+
+
+    .. code-block:: none
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##      Localization Analysis      ##
+        ##                                 ##
+        #####################################
+
+
+        Data summary:
+        ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+        localization parameters:
+          back_az_width: 10.0
+          range_max: 1500.0
+          grid_resol: 180
+          celerity_model: infgem
+
+
+        Running Bayesian Infrasonic Source Localization (BISL) Analysis...
+            Identifying integration region...
+            Evaluating localization probability on grid...
+                Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Analyzing localization pdf...
+                Normalizing and marginalizing...
+                Analyzing spatial PDF...
+                Analyzing temporal PDF...
+
+        Localization Summary:
+        Maximum a posteriori analysis: 
+            Source location: 41.357, -112.037 
+            Source time: 2010-01-01T12:10:11.515500 
+        Source location analysis:
+            Latitude (mean and standard deviation): 41.349 +/- 14.105 km. 
+            Longitude (mean and standard deviation): -111.952 +/- 14.286 km.
+            Covariance: -0.273.
+            Area of 90% confidence ellipse: 2915.259 square kilometers
+        Source time analysis:
+            Mean and standard deviation: 2010-01-01T12:10:35.531500 +/- 43.012 second
+            Exact 90% confidence bounds: [2010-01-01T12:09:30.144500, 2010-01-01T12:11:47.106500]
+            
+
+    Once again, visualization without a specified location index just plots the back projections and summarizes the available informaiton (2 location results now).  Specifying this new location index,
+
+    .. code-block:: bash
+
+        infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz  --loc-index 1
+    
+    .. image:: _static/_images/plot_ev2.png
+        :width: 1200px
+        :align: center
+
+- The Time-Reversed Infrasonic Bayesian Localization (TRIBL) methods require ray tracing back projection paths through an atmosphere specification and a more limited grid to evaluate results on.  Using the general region identified by BISL and accounting for some cross wind deviations, one can define the lower-left (ll) and upper-right (ur) corners as well as a range of origin times.  These various quantities could be defined item by item on the command line, but it's once again easier to save them into a configuration file and point the method at that.  An example configuration file is included here with the following informaiton:
 
     .. code-block:: bash
 
         [LOC]
         atmo_data = data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
 
+        range_max = 1250
         ll_corner = 40.5, -113.5
         ur_corner = 41.75, -112.0
         alt_bounds = 0, 0
@@ -655,139 +742,199 @@ Event Analyses
         local_temp_dir = data/Blom_etal2024_GJI/temp
 
 
-    And TRIBL can be run using the :code:`infrapy event localize` method and pointing at the configuration file.  When the :code:`atmo_data` parameter is specified, the implementation uses the TRIBL algorithm instead of BISL.
-
-
-    .. code-block:: bash
-
-        infrapy event localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config
-
-    Visualization is the same as above; however, the event JSON file now contains 2 localization entries and the index of the solution of interest is needed (the default index is 0, which is the BISL analysis above for this example).  As expected, the ray-tracing based analysis produces a higher precision estimate than that from the more general propagation models used by BISL.
+    TRIBL can be run using the :code:`infrapy event locate` method and pointing at the configuration file.  When the :code:`--atmo-data` parameter is specified, the implementation uses the TRIBL algorithm instead of BISL.
 
     .. code-block:: bash
 
-        infrapy plot localize --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --loc-index 1
+        infrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config
+
+    .. code-block:: none
+
+        #####################################
+        ##                                 ##
+        ##             InfraPy             ##
+        ##      Localization Analysis      ##
+        ##                                 ##
+        #####################################
 
 
-    .. image:: _static/_images/loc-tribl.png
+        Loading configuration info from: config/tribl_example.config
+
+        Data summary:
+        ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+
+        localization parameters:
+          ll_corner: [  40.5 -113.5]
+          ur_corner: [  41.75 -112.  ]
+          latlon_resol: 0.04
+          tm_min: 2010-01-01T12:03:00
+          tm_max: 2010-01-01T12:09:00
+          tm_resol: 10.0
+          atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
+          alt_resol: 1.0
+          c0_stdev: 5.0
+          det_tm_stdev: 5.0
+          az_limit: 2.0
+          local_temp_dir: data/Blom_etal2024_GJI/temp
+
+
+        Running Time-Reversed Infrasonic Bayesian Localization (TRIBL) Analysis...
+            Identifying integration region and building grid...
+            Computing back projections for detection list...
+            Evaluating localization probability on grid...
+                Progress: [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
+            Analyzing localization pdf...
+                Normalizing and marginalizing...
+                Analyzing spatial PDF...
+                Analyzing temporal PDF...
+
+        Localization Summary:
+        Maximum a posteriori analysis: 
+            Source location: 41.18, -112.86 
+            Source time: 2010-01-01T12:06:20.000 
+        Source location analysis:
+            Latitude (mean and standard deviation): 41.185 +/- 9.521 km. 
+            Longitude (mean and standard deviation): -112.854 +/- 8.363 km.
+            Covariance: 0.094.
+            Area of 90% confidence ellipse: 1151.876 square kilometers
+        Source time analysis:
+            Mean and standard deviation: 2010-01-01T12:06:21.542 +/- 28.952 second
+            Exact 90% confidence bounds: [2010-01-01T12:05:33.634, 2010-01-01T12:07:08.872]
+
+
+    Visualization is once again done through :code:`plot event` with the new location index specified.
+
+    .. code-block:: bash
+
+        infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz  --loc-index 2
+    
+    .. image:: _static/_images/plot_ev3.png
         :width: 1200px
         :align: center
 
-- Once some analysis has been completed, it's often useful to integrate the event file and identify what has been done.  A utility function is available to summarize the contents of an event file.  Running this on the event file we've generated localization results for,
+- Once these various location results completed, it's useful to interrogate the event file and identify what has been done.  A utility function is available to summarize the contents of an event file.  Running this on the event file we've generated localization results for,
 
     .. code-block:: bash
 
         infrapy utils ev_summary --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-    .. code-block:: bash
+    .. code-block:: none
 
-        #################################
-        ##                             ##
-        ##      InfraPy Utilities      ##
-        ##     Summarize Event File    ##
-        ##                             ##
-        #################################
+            #################################
+            ##                             ##
+            ##      InfraPy Utilities      ##
+            ##     Summarize Event File    ##
+            ##                             ##
+            #################################
 
-        Loading information from ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+            Loading information from ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-        =================
-        Detection Summary
-        =================
+            =================
+            Detection Summary
+            =================
 
-        SY.PDIAR..BDF
-          location: 42.767, -109.594
-          detection time: 2010-01-01T12:22:23.133690
-          back azimuth [deg]: -122.3
-          trace velocity [m/s]: 341.1
-          f-stat: 25.0
+            SY.PDIAR..BDF
+              location: 42.767, -109.594
+              detection time: 2010-01-01T12:22:23.133690
+              back azimuth [deg]: -122.3
+              trace velocity [m/s]: 341.1
+              f-stat: 25.0
 
-        SY.PDIAR..BDF
-          location: 42.767, -109.594
-          detection time: 2010-01-01T12:25:26.940400
-          back azimuth [deg]: -127.24
-          trace velocity [m/s]: 388.3
-          f-stat: 25.0
+            SY.PDIAR..BDF
+              location: 42.767, -109.594
+              detection time: 2010-01-01T12:25:26.940400
+              back azimuth [deg]: -127.24
+              trace velocity [m/s]: 388.3
+              f-stat: 25.0
 
-        SY.PDIAR..BDF
-          location: 42.767, -109.594
-          detection time: 2010-01-01T12:26:37.228000
-          back azimuth [deg]: -126.32
-          trace velocity [m/s]: 471.5
-          f-stat: 25.0
+            SY.PDIAR..BDF
+              location: 42.767, -109.594
+              detection time: 2010-01-01T12:26:37.228000
+              back azimuth [deg]: -126.32
+              trace velocity [m/s]: 471.5
+              f-stat: 25.0
 
-        SY.DLIAR..BDF
-          location: 35.857, -106.315
-          detection time: 2010-01-01T12:50:00.631600
-          back azimuth [deg]: -37.52
-          trace velocity [m/s]: 363.9
-          f-stat: 25.0
+            SY.DLIAR..BDF
+              location: 35.857, -106.315
+              detection time: 2010-01-01T12:50:00.631600
+              back azimuth [deg]: -37.52
+              trace velocity [m/s]: 363.9
+              f-stat: 25.0
 
-        SY.DLIAR..BDF
-          location: 35.857, -106.315
-          detection time: 2010-01-01T12:55:44.045400
-          back azimuth [deg]: -34.75
-          trace velocity [m/s]: 391.0
-          f-stat: 25.0
+            SY.DLIAR..BDF
+              location: 35.857, -106.315
+              detection time: 2010-01-01T12:55:44.045400
+              back azimuth [deg]: -34.75
+              trace velocity [m/s]: 391.0
+              f-stat: 25.0
 
-        SY.NVIAR..BDF
-          location: 38.43, -118.304
-          detection time: 2010-01-01T12:50:10.199500
-          back azimuth [deg]: 58.03
-          trace velocity [m/s]: 365.5
-          f-stat: 25.0
+            SY.NVIAR..BDF
+              location: 38.43, -118.304
+              detection time: 2010-01-01T12:50:10.199500
+              back azimuth [deg]: 58.03
+              trace velocity [m/s]: 365.5
+              f-stat: 25.0
 
 
-        ====================
-        Localization Summary
-        ====================
+            ====================
+            Localization Summary
+            ====================
 
-        ##############
-        ## index: 0 ##
-        ##############
-        parameters
-        ----------
-            ll_corner: [40.5, -113.5]
-            ur_corner: [41.75, -112.0]
-            latlon_resol: 0.04
-            tm_min: 2010-01-01T12:03:00
-            tm_max: 2010-01-01T12:09:00
-            tm_resol: 10.0
-            atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
-            alt_resol: 1.0
-            c0_stdev: 5.0
-            det_tm_stdev: 5.0
-            az_limit: 2.0
-            local_temp_dir: data/Blom_etal2024_GJI/temp
+            ##############
+            ## index: 0 ##
+            ##############
+            parameters
+            ----------
+                back_az_width: 10.0
+                range_max: 1500.0
+                grid_resol: 180
+                celerity_model: regional_lf
 
-        result
-        ------
-            latitude: 41.17 deg +/- 9.69 km.
-            longitude: -112.869 deg +/- 8.64 km.
-            origin time: 2010-01-01T12:06:08.776 +/- 29.8 s.
+            result
+            ------
+                latitude: 41.341 deg +/- 25.45 km.
+                longitude: -112.119 deg +/- 25.39 km.
+                origin time: 2010-01-01T12:08:04.896500 +/- 125.2 s.
 
-        ##############
-        ## index: 1 ##
-        ##############
-        parameters
-        ----------
-            ll_corner: [40.5, -113.5]
-            ur_corner: [41.75, -112.0]
-            latlon_resol: 0.04
-            tm_min: 2010-01-01T12:03:00
-            tm_max: 2010-01-01T12:09:00
-            tm_resol: 10.0
-            atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
-            alt_resol: 1.0
-            c0_stdev: 5.0
-            det_tm_stdev: 5.0
-            az_limit: 2.0
-            local_temp_dir: data/Blom_etal2024_GJI/temp
+            ##############
+            ## index: 1 ##
+            ##############
+            parameters
+            ----------
+                back_az_width: 10.0
+                range_max: 1500.0
+                grid_resol: 180
+                celerity_model: infgem
 
-        result
-        ------
-            latitude: 41.17 deg +/- 9.69 km.
-            longitude: -112.869 deg +/- 8.64 km.
-            origin time: 2010-01-01T12:06:08.776 +/- 29.8 s.
+            result
+            ------
+                latitude: 41.349 deg +/- 14.1 km.
+                longitude: -111.952 deg +/- 14.29 km.
+                origin time: 2010-01-01T12:10:35.531500 +/- 43.0 s.
+
+            ##############
+            ## index: 2 ##
+            ##############
+            parameters
+            ----------
+                ll_corner: [40.5, -113.5]
+                ur_corner: [41.75, -112.0]
+                latlon_resol: 0.04
+                tm_min: 2010-01-01T12:03:00
+                tm_max: 2010-01-01T12:09:00
+                tm_resol: 10.0
+                atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
+                alt_resol: 1.0
+                c0_stdev: 5.0
+                det_tm_stdev: 5.0
+                az_limit: 2.0
+                local_temp_dir: data/Blom_etal2024_GJI/temp
+
+            result
+            ------
+                latitude: 41.185 deg +/- 9.52 km.
+                longitude: -112.854 deg +/- 8.36 km.
+                origin time: 2010-01-01T12:06:21.542 +/- 29.0 s.
 
 
 - When a location analysis is attempted, but results already exist in the file, the result is simply printed to screen.  For running examples, debugging, or related work, a location reset is avilable as a utilty function.  This will reset the JSON file localization field to an empty list, :code:`[]`.  A warning is given to confirm that this removal of existing analysis is desired,
@@ -797,7 +944,7 @@ Event Analyses
         infrapy utils ev_loc_reset --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
 
 
-    .. code-block:: bash
+    .. code-block:: none
 
         #################################
         ##                             ##
@@ -827,6 +974,46 @@ Event Analyses
             latitude: 41.341 deg +/- 25.45 km.
             longitude: -112.119 deg +/- 25.39 km.
             origin time: 2010-01-01T12:08:04.896500 +/- 125.2 s.
+
+        ##############
+        ## index: 1 ##
+        ##############
+        parameters
+        ----------
+            back_az_width: 10.0
+            range_max: 1500.0
+            grid_resol: 180
+            celerity_model: infgem
+
+        result
+        ------
+            latitude: 41.349 deg +/- 14.1 km.
+            longitude: -111.952 deg +/- 14.29 km.
+            origin time: 2010-01-01T12:10:35.531500 +/- 43.0 s.
+
+        ##############
+        ## index: 2 ##
+        ##############
+        parameters
+        ----------
+            ll_corner: [40.5, -113.5]
+            ur_corner: [41.75, -112.0]
+            latlon_resol: 0.04
+            tm_min: 2010-01-01T12:03:00
+            tm_max: 2010-01-01T12:09:00
+            tm_resol: 10.0
+            atmo_data: data/Blom_etal2024_GJI/g2stxt_2010010100_41.1310_-112.8960.dat
+            alt_resol: 1.0
+            c0_stdev: 5.0
+            det_tm_stdev: 5.0
+            az_limit: 2.0
+            local_temp_dir: data/Blom_etal2024_GJI/temp
+
+        result
+        ------
+            latitude: 41.185 deg +/- 9.52 km.
+            longitude: -112.854 deg +/- 8.36 km.
+            origin time: 2010-01-01T12:06:21.542 +/- 29.0 s.
 
         ########################################
         ########################################
