@@ -20,8 +20,7 @@ amb_temp = 288.15
 grnd_burst = True
 exp_type = chemical
 
-tlm_label = /Users/pblom/Research/Coding/Packages/infrapy/infrapy/propagation/priors/tloss/2007_08-
-
+tlm_label = data/TLMs/2007_08-
 
 
 
