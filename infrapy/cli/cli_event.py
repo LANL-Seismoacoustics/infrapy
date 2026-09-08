@@ -218,6 +218,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config 
+    \tinfrapy event locate --ev-file data/HRR-5.ev.json.gz 
     
     '''
 
@@ -492,8 +493,8 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy characterize --ev-file GJI_example-ev0
+    Example usage (run from infrapy/examples directory; run location on HRR-5 event file first):
+    \tinfrapy event characterize --ev-file data/HRR-5.ev.json.gz  --cnfg-file config/SpYE_HRR.cnfg 
     '''
 
     click.echo("")
@@ -579,18 +580,18 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_info]
     det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info]
 
-    click.echo("=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+    click.echo("=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17)
     for k, det in enumerate(det_info):
         freq = det_specs[k][0]
         mask = (det_specs[k][1] / det_specs[k][2]) > 2.0
 
-        click.echo(det['wvfrm_info'][0][0]['trace id'])
-        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
-        click.echo("  detection time: " + det['peak f-stat time'])
-        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
-        click.echo("  tface velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
-        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
-        click.echo("  high snr band: " + str(np.round(freq[mask][0], 2)) + " - " + str(np.round(freq[mask][-1], 2)) + ' Hz\n')
+        click.echo(det['wvfrm_info'][0][0]['trace id'] + '\t', nl=False)
+        click.echo("  loc: " + f"{det['wvfrm_info'][0][0]['latitude']:>7.4f}" + ", " + f"{det['wvfrm_info'][0][0]['longitude']:>8.4f}" + '\t', nl=False)
+        click.echo("  time: " + det['peak f-stat time'].split(".")[0] + '\t', nl=False)
+        click.echo("  back az [deg]: " + f"{det["back az"]:>8.2f}" + '\t', nl=False)
+        click.echo("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}" + '\t', nl=False)
+        click.echo("  f-stat: " + f"{det["f-stat"]:>5.1f}" + '\t', nl=False)
+        click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
 
     # drop residual spectra and scale to dB
     det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
@@ -612,7 +613,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         # ######################### #
         #     Load TLoss Models     #
         # ######################### #
-        click.echo("Loading transmission loss statistics...")
+        click.echo('\nLoading transmission loss statistics...')
         tlm_dir = os.path.dirname(char_params['tlm_label'])
         tlm_pattern = char_params['tlm_label'].split("/")[-1]
         tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
@@ -648,7 +649,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     else:
         spye_result = ev_data['characterization'][param_index]['result']
 
-        click.echo("Characterization result already exists in this event file for this parameter set:")
+        click.echo('\n' + "Characterization result already exists in this event file for this parameter set:")
         click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
         click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
         click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))

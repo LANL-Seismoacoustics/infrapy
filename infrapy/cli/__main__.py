@@ -111,8 +111,10 @@ utils.add_command(cli_utils.merge_dets)
 
 utils.add_command(cli_utils.ev_gt)
 utils.add_command(cli_utils.ev_summary)
-utils.add_command(cli_utils.ev_loc_reset)
-utils.add_command(cli_utils.ev_char_reset)
+utils.add_command(cli_utils.ev_reset)
+
+# utils.add_command(cli_utils.ev_loc_reset)
+# utils.add_command(cli_utils.ev_char_reset)
 
 
 if __name__ == '__main__':

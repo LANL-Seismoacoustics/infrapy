@@ -14,8 +14,6 @@ from multiprocessing import Pool
 
 from obspy import UTCDateTime 
 
-from scipy.signal import hilbert
-
 from ..utils import config, data_io
 from ..detection import beam as fkd
 from ..detection import spectral

@@ -832,48 +832,12 @@ Event Analyses
             =================
             Detection Summary
             =================
-
-            SY.PDIAR..BDF
-              location: 42.767, -109.594
-              detection time: 2010-01-01T12:22:23.133690
-              back azimuth [deg]: -122.3
-              trace velocity [m/s]: 341.1
-              f-stat: 25.0
-
-            SY.PDIAR..BDF
-              location: 42.767, -109.594
-              detection time: 2010-01-01T12:25:26.940400
-              back azimuth [deg]: -127.24
-              trace velocity [m/s]: 388.3
-              f-stat: 25.0
-
-            SY.PDIAR..BDF
-              location: 42.767, -109.594
-              detection time: 2010-01-01T12:26:37.228000
-              back azimuth [deg]: -126.32
-              trace velocity [m/s]: 471.5
-              f-stat: 25.0
-
-            SY.DLIAR..BDF
-              location: 35.857, -106.315
-              detection time: 2010-01-01T12:50:00.631600
-              back azimuth [deg]: -37.52
-              trace velocity [m/s]: 363.9
-              f-stat: 25.0
-
-            SY.DLIAR..BDF
-              location: 35.857, -106.315
-              detection time: 2010-01-01T12:55:44.045400
-              back azimuth [deg]: -34.75
-              trace velocity [m/s]: 391.0
-              f-stat: 25.0
-
-            SY.NVIAR..BDF
-              location: 38.43, -118.304
-              detection time: 2010-01-01T12:50:10.199500
-              back azimuth [deg]: 58.03
-              trace velocity [m/s]: 365.5
-              f-stat: 25.0
+            SY.PDIAR..BDF	  loc: 42.7670, -109.5940	  time: 2010-01-01T12:22:23	  back az [deg]:  -122.30	  tr vel [m/s]: 341.1	  f-stat:  25.0
+            SY.PDIAR..BDF	  loc: 42.7670, -109.5940	  time: 2010-01-01T12:25:26	  back az [deg]:  -127.24	  tr vel [m/s]: 388.3	  f-stat:  25.0
+            SY.PDIAR..BDF	  loc: 42.7670, -109.5940	  time: 2010-01-01T12:26:37	  back az [deg]:  -126.32	  tr vel [m/s]: 471.5	  f-stat:  25.0
+            SY.DLIAR..BDF	  loc: 35.8570, -106.3150	  time: 2010-01-01T12:50:00	  back az [deg]:   -37.52	  tr vel [m/s]: 363.9	  f-stat:  25.0
+            SY.DLIAR..BDF	  loc: 35.8570, -106.3150	  time: 2010-01-01T12:55:44	  back az [deg]:   -34.75	  tr vel [m/s]: 391.0	  f-stat:  25.0
+            SY.NVIAR..BDF	  loc: 38.4300, -118.3040	  time: 2010-01-01T12:50:10	  back az [deg]:    58.03	  tr vel [m/s]: 365.5	  f-stat:  25.0
 
 
             ====================
@@ -937,11 +901,11 @@ Event Analyses
                 origin time: 2010-01-01T12:06:21.542 +/- 29.0 s.
 
 
-- When a location analysis is attempted, but results already exist in the file, the result is simply printed to screen.  For running examples, debugging, or related work, a location reset is avilable as a utilty function.  This will reset the JSON file localization field to an empty list, :code:`[]`.  A warning is given to confirm that this removal of existing analysis is desired,
+- When a location analysis is attempted, but results already exist in the file, the result is simply printed to screen.  For running examples, debugging, or related work, an event file reset utility is avilable.  This will reset the JSON file localization and/or characterization fields to empty lists, :code:`[]`.  A warning is given to confirm that this removal of existing analysis is desired,
 
     .. code-block:: bash
 
-        infrapy utils ev_loc_reset --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
+        infrapy utils ev_reset --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --reset-loc True
 
 
     .. code-block:: none
@@ -954,6 +918,8 @@ Event Analyses
         #################################
 
         Loading information from ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+          3 location result(s) in file
+          0 characterization result(s) in file
 
         ====================
         Localization Summary
@@ -1018,19 +984,24 @@ Event Analyses
         ########################################
         ########################################
 
-        WARNING!!! This action will remove existing localization result(s) in this event file. 
-        Do you want to proceed? (y/n): 
+        WARNING!!! This action will remove existing result(s) in this event file. 
+        Do you want to proceed? (y/n): y
+
+        Removing localization analysis result(s) from event file...
+
+- Infrasonic signals produced by above-ground explosive sources can be used to estimate the explosive yield via source models such as the Kinney & Graham blastwave scaling laws. InfraPy's Spectral Yield Estimate (SpYE) methods can be applied to relate regional infrasonic signal spectral amplitude to a near-source estimate and then the blastwave model to estimate yield.  Usage of these methods requires an event file for which the detections have spectral amplitude data as well as transmission loss models (TLMs) generated using the *stochprop* software.  An example set of TLMs are included in the data/TLMs/ directory for the western US during the month of August.  These models were developed during testing of the SpYE methods and applied to estimate the yield of the Humming Roadrunner experiments (see Blom et al., 2018).  An event file for HRR-5 is included in the example data directory to demonstrate yield estimation.  
+- 
+    .. code:: bash
+
+        infrapy event locate --ev-file data/HRR-5.ev.json.gz
 
 
-**UPDATES DONE THROUGH HERE**
-
-
-- Infrasonic signals produced by above-ground explosive sources can be used to estimate the explosive yield via source models such as the Kinney & Graham blastwave scaling laws. InfraPy's Spectral Yield Estimate (SpYE) methods can be applied to relate regional infrasonic signal spectral amplitude to a near-source estimate and then the blastwave model to estimate yield.  Usage of these methods requires a detection file, waveform data for detecting stations, and transmission loss models relating downrange observations to a near-source reference point.  Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository).  In the case of regional propagation for which the same transmission loss statistics are appropriate for all detections, the SpYE methods can be run via:
+-   Analysis of the Humming Roadrunner 5 event is included (requires downloading the separate infrapy-data repository).  In the case of regional propagation for which the same transmission loss statistics are appropriate for all detections, the SpYE methods can be run via:
 
     .. code:: bash
 
-        infrapy run_spye regional --local-wvfrms '../infrapy-data/hrr-5/*/*.sac' --local-det-label data/HRR-5.dets.json --src-lat 33.5377 --src-lon -106.333961 --tlm-label "../infrapy/propagation/priors/tloss/2007_08-" --local-yld-label "HRR-5"
-
+        infrapy event characterize --ev-file data/HRR-5.ev.json.gz  --cnfg-file config/SpYE_HRR.cnfg
+        
     As with other analysis methods, parameter information will be summarized and high level results:
 
     .. code:: none
@@ -1038,83 +1009,73 @@ Event Analyses
         #####################################
         ##                                 ##
         ##             InfraPy             ##
-        ##    Yield Estimation Analysis    ##
+        ##    Characterization Analysis    ##
         ##                                 ##
         #####################################
 
 
-        Data parameters:
-        det_label: data/HRR-5.dets.json
-        tlm_label: ../infrapy/propagation/priors/tloss/2007_08-
-        local_loc_label: None
-          src_lat: 33.5377
-          src_lon: -106.333961
-        local_wvfrms: ../infrapy-data/hrr-5/*/*.sac
+        Loading configuration info from: config/SpYE_HRR.cnfg
 
-        Algorithm parameters:
-          freq_min: 0.25
+        Data summary:
+          ev_file: data/HRR-5.ev.json.gz
+
+        characterization parameters:
+          det_mask: [0, 0, 1, 1, 1, 0, 1, 1]
+          loc_index: 0
+          tlm_label: data/TLMs/2007_08-
+          freq_min: 0.2
           freq_max: 1.0
           yld_min: 1.0
           yld_max: 1000.0
-          ref_rng: 1.0
           resolution: 200
-          noise_option: post
-          window_buffer: 0.2
+          ref_rng: 1.0
           amb_press: 101.325
           amb_temp: 288.15
           grnd_burst: True
           exp_type: chemical
 
-        Loading local data from ../infrapy-data/hrr-5/*/*.sac
-        Collecting waveform data for each detection...
+        =================
+        Detection Summary
+        =================
+        2D.W22CW..CDF	  loc: 34.3109, -108.6895	  time: 2012-08-27T23:14:56	  back az [deg]:   109.19	  tr vel [m/s]: 358.2	  f-stat: 380.4	  high snr band: 0.17 - 7.00 Hz
+        2D.W24CE..CDF	  loc: 34.2289, -108.8677	  time: 2012-08-27T23:15:32	  back az [deg]:   108.97	  tr vel [m/s]: 362.4	  f-stat:  48.8	  high snr band: 0.17 - 5.40 Hz
+        2D.W34CE..CDF	  loc: 34.2877, -110.0220	  time: 2012-08-27T23:22:23	  back az [deg]:   100.72	  tr vel [m/s]: 364.5	  f-stat:  12.5	  high snr band: 0.60 - 1.01 Hz
+        2D.W46CE..CDF	  loc: 33.0742, -111.3568	  time: 2012-08-27T23:28:04	  back az [deg]:    81.67	  tr vel [m/s]: 362.5	  f-stat:  60.0	  high snr band: 0.29 - 3.34 Hz
+        2D.W49CE..CDF	  loc: 32.9786, -111.7163	  time: 2012-08-27T23:29:36	  back az [deg]:    82.26	  tr vel [m/s]: 357.8	  f-stat:  66.8	  high snr band: 0.18 - 3.30 Hz
 
-        Detection network.station: NCPA.W220
-        4 Trace(s) in Stream:
-        .W220CW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-        .W220NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-        .W220NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-        .W220SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-
-        Detection network.station: NCPA.W240
-        3 Trace(s) in Stream:
-        .W240NE..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-        .W240NW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-        .W240SW..HDF | 2012-08-27T23:10:00.000000Z - 2012-08-27T23:24:59.998055Z | 500.0 Hz, 450000 samples
-
-        Detection network.station: .W340
-        4 Trace(s) in Stream:
-        .W340CW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
-        .W340NW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
-        .W340SE..HDF | 2012-08-27T23:14:44.000000Z - 2012-08-27T23:34:43.998073Z | 500.0 Hz, 600000 samples
-        .W340SW..HDF | 2012-08-27T23:15:00.000000Z - 2012-08-27T23:34:59.998073Z | 500.0 Hz, 600000 samples
-
-        Detection network.station: .W420
-        6 Trace(s) in Stream:
-        .W420CE..HDF | 2012-08-27T23:20:01.000000Z - 2012-08-27T23:40:00.998073Z | 500.0 Hz, 600000 samples
-        .W420CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W420NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W420NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W420SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W420SW..HDF | 2012-08-27T23:19:44.000000Z - 2012-08-27T23:39:43.998073Z | 500.0 Hz, 600000 samples
-
-        Detection network.station: .W460
-        6 Trace(s) in Stream:
-        .W460CE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W460CW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W460NE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W460NW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W460SE..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-        .W460SW..HDF | 2012-08-27T23:20:00.000000Z - 2012-08-27T23:39:59.998073Z | 500.0 Hz, 600000 samples
-
-        Computing detection spectra...        
         Loading transmission loss statistics...
+          2007_08-0.025Hz.tlm.json.gz
+          2007_08-0.030Hz.tlm.json.gz
+          2007_08-0.037Hz.tlm.json.gz
+          2007_08-0.044Hz.tlm.json.gz
+          2007_08-0.054Hz.tlm.json.gz
+          2007_08-0.065Hz.tlm.json.gz
+          2007_08-0.079Hz.tlm.json.gz
+          2007_08-0.096Hz.tlm.json.gz
+          2007_08-0.116Hz.tlm.json.gz
+          2007_08-0.141Hz.tlm.json.gz
+          2007_08-0.170Hz.tlm.json.gz
+          2007_08-0.206Hz.tlm.json.gz
+          2007_08-0.250Hz.tlm.json.gz
+          2007_08-0.303Hz.tlm.json.gz
+          2007_08-0.367Hz.tlm.json.gz
+          2007_08-0.445Hz.tlm.json.gz
+          2007_08-0.539Hz.tlm.json.gz
+          2007_08-0.653Hz.tlm.json.gz
+          2007_08-0.791Hz.tlm.json.gz
+          2007_08-0.958Hz.tlm.json.gz
+          2007_08-1.160Hz.tlm.json.gz
+          2007_08-1.406Hz.tlm.json.gz
+          2007_08-1.703Hz.tlm.json.gz
+          2007_08-2.064Hz.tlm.json.gz
+          2007_08-2.500Hz.tlm.json.gz
+
         Estimating yield using spectral amplitudes...
-        Writing yield estimate result into HRR-5.yld.json
 
         Results Summary (tons eq. TNT):
-      	    Maximum a Posteriori Yield: 45.5293507487
-	        68% Confidence Bounds: [  21.  115.]
-        	95% Confidence Bounds: [   3.  358.]
+            Maximum a Posteriori Yield: 43.97603609302721
+            68% Confidence Bounds: [27. 71.]
+            95% Confidence Bounds: [  8. 139.]
 
     The example here utilizes a ground truth location for the source; though, the method can also accept a location result file from BISL (:code:`[...].loc.json`) and extract the location from that source.  The current implementation can only utilize locally saved waveform data ingested as a single large stream and sub-divided using the network and station info in the detection file.  Eventually, it is planned to allow the methods to pull from an FDSN or database, but for now analysis requires pulling waveform files (this can be done using :code:`infrapy utils write-wvfrms`).
 

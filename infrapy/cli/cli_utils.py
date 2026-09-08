@@ -239,12 +239,10 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
-
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
@@ -526,15 +524,14 @@ def ev_summary(ev_file):
     click.echo("Loading information from ev_file: " + str(ev_file))
     ev_data = data_io._load_dets_json(ev_file)[0]
 
-    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17)
     for det in ev_data['det_info']:
-        click.echo(det['wvfrm_info'][0][0]['trace id'])
-        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
-        click.echo("  detection time: " + det['peak f-stat time'])
-        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
-        click.echo("  trace velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
-        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
-        click.echo("")
+        click.echo(det['wvfrm_info'][0][0]['trace id'] + '\t', nl=False)
+        click.echo("  loc: " + f"{det['wvfrm_info'][0][0]['latitude']:>7.4f}" + ", " + f"{det['wvfrm_info'][0][0]['longitude']:>8.4f}" + '\t', nl=False)
+        click.echo("  time: " + det['peak f-stat time'].split(".")[0] + '\t', nl=False)
+        click.echo("  back az [deg]: " + f"{det["back az"]:>8.2f}" + '\t', nl=False)
+        click.echo("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}" + '\t', nl=False)
+        click.echo("  f-stat: " + f"{det["f-stat"]:>5.1f}")
 
     if len(ev_data['location']) > 0:
         click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
@@ -636,6 +633,102 @@ def ev_loc_reset(ev_file):
         with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
             json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
+
+@click.command('ev_reset', short_help="Reset location and/or characterization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+@click.option("--reset-loc", help="Flag to reset location info", default=False)
+@click.option("--reset-char", help="Flag to reset characterization info", default=False)
+def ev_reset(ev_file, reset_loc, reset_char):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       Reset Event File      ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")  
+
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+    click.echo("  " + str(len(ev_data['location'])) + " location result(s) in file")
+    click.echo("  " + str(len(ev_data['characterization'])) + " characterization result(s) in file" + '\n')
+
+    if not reset_loc and not reset_char:
+        click.echo("Set '--reset-loc' and/or '--reset-char' to 'True' to remove existing solutions from file." + '\n')
+        return
+
+    if reset_loc:
+        if len(ev_data['location']) == 0:
+            click.echo("No location results to remove.")
+            reset_loc = False 
+        else:
+            click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+            for loc_k, loc in enumerate(ev_data['location']):
+                click.echo("#" * 14)
+                click.echo("## " + "index: " + str(loc_k) + " ##")
+                click.echo("#" * 14)
+
+                click.echo("parameters" + '\n' + "-" * 10)
+                for key in loc['params'].keys():
+                    if loc['params'][key] is not None:
+                        click.echo("    " + key + ": " + str(loc['params'][key]))
+
+                lat = str(np.round(loc['result']['lat_mean'], 3))
+                lon = str(np.round(loc['result']['lon_mean'], 3))
+                NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+                EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+                tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+                click.echo('\n' + "result" + '\n' + "-" * 6)
+                click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+                click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+                click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+    if reset_char:
+        if len(ev_data['characterization']) == 0:
+            click.echo("No characterization results to remove.")
+            reset_char = False 
+        else:
+            click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+            for char_k, char in enumerate(ev_data['characterization']):
+                click.echo("#" * 14)
+                click.echo("## " + "index: " + str(char_k) + " ##")
+                click.echo("#" * 14)
+
+                click.echo("parameters" + '\n' + "-" * 10)
+                for key in char['params'].keys():
+                    if char['params'][key] is not None:
+                        click.echo("    " + key + ": " + str(char['params'][key]))
+
+                click.echo('\n' + "result" + '\n' + "-" * 6)
+                click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+                click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+                click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]) + '\n')
+
+    if reset_loc or reset_char:
+        click.echo('#' * 40 + '\n' + '#' * 40 + '\n')
+        while True:
+            user_opt = input('WARNING!!! This action will remove existing result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+            if user_opt in ['y', 'yes']:
+                confirm = True
+                break
+            elif user_opt in ['n', 'no']:
+                click.echo("")
+                confirm = False  
+            else:
+                user_opt = input('Invalid input. Proceed and remove result(s) from event file? (y/n): ').lower().strip()
+
+        if confirm:
+            if reset_loc:
+                click.echo('\nRemoving localization result(s) from event file...')
+                ev_data['location'] = []
+            if reset_char:
+                click.echo('\nRemoving characterization result(s) from event file...')
+                ev_data['characterization'] = []
+
+            with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 
 @click.command('ev_char_reset', short_help="Reset characterization in an event file")
