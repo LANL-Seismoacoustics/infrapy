@@ -1,5 +1,5 @@
 # Spectral Yield Estimation (SpYE) analysis of Humming Roadrunner 5 for testing
-# 
+#
 # Ground Truth:
 # Location: 33.53969, −106.33562
 # Origin: 2012-08-27 @ 23:02 UTC
@@ -7,7 +7,7 @@
 
 [YIELD]
 
-det_mask = 0, 0, 1, 1,  1, 0, 1, 1
+det_mask = 0, 0, 1, 1,  0, 0, 1, 1
 
 freq_min = 0.2
 freq_max = 1.0
