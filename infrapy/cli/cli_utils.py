@@ -526,11 +526,12 @@ def ev_summary(ev_file):
     ev_data = data_io._load_dets_json(ev_file)[0]
 
     click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17)
-    det_specs = [spye.extract_json_spectra(det['spec']) for det in ev_data['det_info']]
+    try:
+        det_specs = [spye.extract_json_spectra(det['spec']) for det in ev_data['det_info']]
+    except:
+        det_specs = None
 
     for k, det in enumerate(ev_data['det_info']):
-        freq = np.array(det_specs[k][0])
-        mask = np.array((np.array(det_specs[k][1]) / np.array(det_specs[k][2])) > 2.0)
 
         click.echo(det['wvfrm_info'][0][0]['trace id'] + '\t', nl=False)
         click.echo("  loc: " + f"{det['wvfrm_info'][0][0]['latitude']:>7.4f}" + ", " + f"{det['wvfrm_info'][0][0]['longitude']:>8.4f}" + '\t', nl=False)
@@ -538,8 +539,12 @@ def ev_summary(ev_file):
         click.echo("  back az [deg]: " + f"{det["back az"]:>8.2f}" + '\t', nl=False)
         click.echo("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}" + '\t', nl=False)
         click.echo("  f-stat: " + f"{det["f-stat"]:>5.1f}" + '\t', nl=False)
-        click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
-
+        if det_specs is not None:
+            freq = np.array(det_specs[k][0])
+            mask = np.array((np.array(det_specs[k][1]) / np.array(det_specs[k][2])) > 2.0)
+            click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
+        else:
+            click.echo('')
 
     if len(ev_data['location']) > 0:
         click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
@@ -715,7 +720,7 @@ def ev_reset(ev_file, reset_loc, reset_char):
                 click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]) + '\n')
 
     if reset_loc or reset_char:
-        click.echo('#' * 40 + '\n' + '#' * 40 + '\n')
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
         while True:
             user_opt = input('WARNING!!! This action will remove existing result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
             if user_opt in ['y', 'yes']:

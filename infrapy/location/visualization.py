@@ -5,6 +5,8 @@
 # Philip Blom (pblom@lanl.gov)
 
 
+import pathlib
+
 import numpy as np
 
 from pyproj import Geod
@@ -12,10 +14,10 @@ from pyproj import Geod
 from scipy.interpolate import interp1d
 from scipy.stats import chi2
 
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from matplotlib import cm
 
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.ticker as mticker
 import matplotlib.dates as mdates
@@ -123,7 +125,7 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
     '''
     Visualize detections on a Cartopy map
 
-    '''   
+    '''
 
     array_lats = np.array([det.latitude for det in det_list])
     array_lons = np.array([det.longitude for det in det_list])
@@ -153,7 +155,7 @@ def plot_dets_on_map(det_list, range_max=1000.0, title=None, output_path=None, s
         plt.title(title)
 
     if output_path:
-        plt.savefig(output_path, dpi=300) 
+        plt.savefig(output_path, dpi=300)
 
     if show_fig:
         plt.show()
@@ -186,8 +188,6 @@ def plot_ev_wvfrms(ev_data, use_loc=False, loc_index=0, use_gt=False):
 
     elif use_gt:
         print("Plotting using ground truth location for ranges...")
-    
-
 
     else:
         print("Plotting event waveforms station-by-station...")
@@ -306,7 +306,7 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     dt_mean = (np.datetime64(loc_result['t_mean']) - np.datetime64(loc_result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
     tm_mask = np.logical_and(dt_mean - 5.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 5.0 * loc_result['t_stdev'])
     if confidence_level != 90.0:
-            tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+            tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='cubic'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)
             tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
             tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
     else:
@@ -317,7 +317,7 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     origin_time_pdf = np.array(loc_result['temporal_pdf'][1])
 
     conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
-    
+
     ax_tm.plot(origin_times[tm_mask], origin_time_pdf[tm_mask], '-k', linewidth=2.5)
     ax_tm.fill_between(origin_times[conf_mask], 0.0, origin_time_pdf[conf_mask], color=conf_color, alpha=0.5)
     if 'orig_tm' in grnd_truth_dict.keys():
@@ -328,13 +328,13 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     ax_tm.yaxis.set_ticklabels([])
 
     # annotation
-    ax_an.axis('off')   
+    ax_an.axis('off')
     conf_area = np.round(np.pi * loc_result['NS_stdev'] * loc_result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 2)
 
     def round_str(val):
         return str(np.round(val, 2))
 
-    if loc_params['atmo_data'] is None: 
+    if loc_params['atmo_data'] is None:
         loc_summary = 'BISL Summary\n' + '-' * 20 + '\n'
     else:
         loc_summary = 'TRIBL Summary\n' + '-' * 26 + '\n'
@@ -345,31 +345,33 @@ def plot_localization(det_list, loc_dict, grnd_truth_dict, confidence_level=90.0
     loc_summary = loc_summary + str(confidence_level) + "% confidence area: " + str(conf_area) + " sq km" + '\n'
     loc_summary = loc_summary + str(confidence_level) + "% confidence origin time:" + '\n  ' + tm_min_val + '\n  ' + tm_max_val + '\n'
 
-    if loc_params['atmo_data'] is None: 
+    if loc_params['atmo_data'] is None:
         if loc_params['pgm_file'] is None:
             loc_summary = loc_summary + '\n' + "Celerity model: " + loc_params['celerity_model']
         else:
             loc_summary = loc_summary + '\n' + "PGM file: " + loc_params['pgm_file']
     else:
-        loc_summary = loc_summary + '\n' "atmo_data: " + loc_params['atmo_data']
+        temp = pathlib.Path(loc_params['atmo_data'])
+        loc_summary = loc_summary + '\n' "atmo_data (file): " + str(temp.name)
+        loc_summary = loc_summary + '\n' "atmo_data (path): " + str(temp.parent)
 
     ax_an.text(0.0, 1.0, loc_summary, va="top", fontsize=10, bbox=dict(boxstyle="round, pad=0.2", fc="lightsteelblue", ec="black", lw=1))
 
     if output_path:
-        plt.savefig(output_path, dpi=300) 
+        plt.savefig(output_path, dpi=300)
 
     if show_fig:
         plt.show()
-        
+
 
 
 
 def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confidence_level=90.0, range_max=None, output_path=None, show_fig=True):
 
     scaling = 15.0
-    use_reduced_time = True 
+    use_reduced_time = True
 
-    loc_params, char_params = loc_dict['params'], char_dict['params'] 
+    loc_params, char_params = loc_dict['params'], char_dict['params']
     loc_result, char_result = loc_dict['result'], char_dict['result']
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_info]
 
@@ -432,7 +434,7 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
                 else:
                     t_vals = [t0 + np.timedelta64(int(dt * 1000.0), 'ms') for dt in det_k["beam"][l]["time"]]
 
-                    ax_wvfm.set_xlabel(t0.astype('datetime64[D]'))                    
+                    ax_wvfm.set_xlabel(t0.astype('datetime64[D]'))
                     formatter = mdates.DateFormatter('%H:%M:%S')
                     ax_wvfm.xaxis.set_major_formatter(formatter)
 
@@ -475,7 +477,7 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     tm_mask = np.logical_and(dt_mean - 4.0 * loc_result['t_stdev'] < dt_vals, dt_vals < dt_mean + 4.0 * loc_result['t_stdev'])
 
     if confidence_level != 90:
-        tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+        tm_conf = bisl.find_confidence(interp1d(dt_vals[tm_mask], np.array(loc_result['temporal_pdf'][1])[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)
 
         tm_min_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms'))
         tm_max_val = str(np.datetime64(loc_result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms'))
@@ -485,8 +487,8 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
 
     origin_times = np.array([np.datetime64(tn) for tn in loc_result['temporal_pdf'][0]])
     origin_time_pdf = np.array(loc_result['temporal_pdf'][1])
-    conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))    
-    
+    conf_mask = np.logical_and(np.datetime64(tm_min_val) <= origin_times, origin_times <= np.datetime64(tm_max_val))
+
     ax_orig.plot(origin_times[tm_mask], origin_time_pdf[tm_mask], '-k', linewidth=2.5)
     ax_orig.fill_between(origin_times[conf_mask], 0.0, origin_time_pdf[conf_mask], color=conf_color, alpha=0.5)
 
@@ -530,13 +532,13 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     ax_yield.plot(np.array(char_result['yld_vals']), char_result['yld_pdf'], '-k')
 
     if confidence_level != 90.0:
-        yld_conf = bisl.find_confidence(interp1d(char_result['yld_vals'],  char_result['yld_pdf']), [char_result['yld_vals'][0], char_result['yld_vals'][-1]], confidence_level / 100.0)                  
+        yld_conf = bisl.find_confidence(interp1d(char_result['yld_vals'],  char_result['yld_pdf']), [char_result['yld_vals'][0], char_result['yld_vals'][-1]], confidence_level / 100.0)
         yld_min_val = float(yld_conf[0][0])
         yld_max_val = float(yld_conf[0][1])
     else:
         yld_min_val = char_result['conf_bnds'][1][0]
         yld_max_val = char_result['conf_bnds'][1][1]
-    
+
     ax_yield.fill_between(np.array(char_result['yld_vals']), char_result['yld_pdf'], where=np.logical_and(yld_min_val <= np.array(char_result['yld_vals']), np.array(char_result['yld_vals']) <= yld_max_val), color=conf_color, alpha=0.5)
     ax_yield.set_xlabel("Yield (eq. TNT) [tons]")
 
@@ -547,9 +549,9 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     ax_yield.yaxis.set_ticklabels([])
 
     # annotation
-    ax_info.axis('off')   
+    ax_info.axis('off')
     conf_area = np.round(np.pi * loc_result['NS_stdev'] * loc_result['EW_stdev'] * chi2(2).ppf(confidence_level / 100.0), 2)
-    
+
     def round_str(val):
         return str(np.round(val, 2))
 
@@ -560,22 +562,24 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
     ev_summary = ev_summary + str(confidence_level) + "% confidence area: " + str(conf_area) + " sq km" + '\n'
     ev_summary = ev_summary + str(confidence_level) + "% confidence origin time:" + '\n    ' + tm_min_val + '\n    ' + tm_max_val + '\n'
 
-    if loc_params['atmo_data'] is None: 
+    if loc_params['atmo_data'] is None:
         if loc_params['pgm_file'] is None:
             ev_summary = ev_summary + '\n' + "Celerity model: " + loc_params['celerity_model']
         else:
             ev_summary = ev_summary + '\n' + "PGM file: " + loc_params['pgm_file']
     else:
-        ev_summary = ev_summary + '\n' "atmo_data: " + loc_params['atmo_data']
+        temp = pathlib.Path(loc_params['atmo_data'])
+        loc_summary = loc_summary + '\n' "atmo_data (file): " + str(temp.name)
+        loc_summary = loc_summary + '\n' "atmo_data (path): " + str(temp.parent)
 
     ax_info.text(0.0, 1.0, ev_summary, va="top", fontsize=10, bbox=dict(boxstyle="round, pad=0.2", fc="lightsteelblue", ec="black", lw=1))
 
     if output_path:
-        plt.savefig(output_path, dpi=300) 
+        plt.savefig(output_path, dpi=300)
 
     if show_fig:
         plt.show()
-        
+
 
 
 
@@ -584,7 +588,7 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
 
 
 ##########################################
-## THE REST OF THESE ARE DEPRECATED AND ## 
+## THE REST OF THESE ARE DEPRECATED AND ##
 ##  WILL BE REMOVED IN A FUTURE UPDATE  ##
 ##########################################
 
@@ -596,8 +600,8 @@ def plot_characterization(det_info, loc_dict, char_dict, grnd_truth_dict, confid
 def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, output_path=None, grnd_truth=None, show_fig=True):
     '''
     Visualize detections on a Cartopy map along with BISL analysis result
-    
-    '''   
+
+    '''
 
     array_lats = np.array([det.latitude for det in det_list])
     array_lons = np.array([det.longitude for det in det_list])
@@ -623,7 +627,7 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
 
     fig = plt.figure()
     ax = _setup_map(fig, [[lat_min, lat_max], [lon_min, lon_max]])
-    
+
     spatial_pdf = np.array(bisl_result['spatial_pdf'])
     ax.scatter(spatial_pdf[0].flatten(), spatial_pdf[1].flatten(), c=spatial_pdf[2].flatten(), marker="s", s=5.0, cmap=pdf_cm, transform=map_proj, alpha=0.5, edgecolor='none', vmin=0.0)
     ax.plot(conf_latlon[0], conf_latlon[1], color=conf_color, linewidth=1.5, transform=map_proj)
@@ -643,7 +647,7 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
         plt.set_title(title)
 
     if output_path:
-        plt.savefig(output_path, dpi=300) 
+        plt.savefig(output_path, dpi=300)
 
     if show_fig:
         plt.show()
@@ -652,9 +656,9 @@ def plot_loc(det_list, bisl_result, range_max=1000.0, zoom=False, title=None, ou
 def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True, grnd_truth=None):
     '''
     Visualize the origin time PDF computed in BISL
-    
-    '''  
-        
+
+    '''
+
     origin_times = np.array([np.datetime64(tn) for tn in bisl_results['temporal_pdf'][0]])
     origin_time_pdf = np.array(bisl_results['temporal_pdf'][1])
 
@@ -671,12 +675,12 @@ def plot_origin_time(bisl_results, title=None, output_path=None, show_fig=True, 
     if grnd_truth is not None:
         print('\t' + "Including ground truth origin time...")
         plt.axvline(np.datetime64(grnd_truth), color='m', linewidth=3.33)
-        
+
     if title:
         plt.title(title)
 
     if output_path:
-        plt.savefig(output_path, dpi=300) 
+        plt.savefig(output_path, dpi=300)
 
     if show_fig:
         plt.show()
@@ -709,10 +713,10 @@ def plot_spye(spye_result, title=None, output_path=None, show_fig=True):
 
     if title:
         plt.title(title)
-        
+
     if output_path:
-        plt.savefig(output_path + ".spye.png", dpi=300) 
-    
+        plt.savefig(output_path + ".spye.png", dpi=300)
+
     if show_fig:
         plt.show()
 

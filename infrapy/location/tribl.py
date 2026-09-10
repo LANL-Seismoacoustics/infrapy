@@ -1,6 +1,6 @@
 # infrapy.location.projection.py
 #
-# Back projection localization methods using the infraGA ray 
+# Back projection localization methods using the infraGA ray
 # tracing with auxiliary parameters to map direction-of-arrival
 # (DOA) confidence into spatial and temporal confidence.
 #
@@ -30,16 +30,15 @@ def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latl
     lat_vals = [det.latitude for det in det_list]
     lon_vals = [det.longitude for det in det_list]
 
-    # set elevation of stations from ETOPO1 
+    # set elevation of stations from ETOPO1
     if not os.path.isfile(infraga_utils.etopo1_file):
-        print("Downloading ETOPO1...")
         dwnld_result = infraga_utils._download_etopo1()
         print(dwnld_result)
-    
+
     topo = infraga_utils._interp_etopo([min(lat_vals), min(lon_vals)],
                                        [max(lat_vals), max(lon_vals)],
                                        use_etopo1=True)
-    
+
     rcvr_elevs = np.array([topo((det.latitude, det.longitude)) for det in det_list])
 
     if grnd_snd_spd is None:
@@ -66,7 +65,7 @@ def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latl
         command = command + " azimuth=" + str(det.back_azimuth) + " inclination=" + str(np.degrees(np.arccos(min(grnd_snd_spd[n] / det.trace_velocity, 1.0))))
         command = command + " max_rng=" + str(max_rng) + " bounces=" + str(bounces) + " z_grnd=" + str(rcvr_elevs[n])
         command = command + " output_id=" + temp_dest + ".det-" + str(n) + " > /dev/null"
-        
+
         command_list = command_list + [command]
 
     if cpu_cnt is not None:
@@ -137,12 +136,12 @@ class BackProjection(object):
         t0 = np.atleast_1d(t0)
         dt = np.array([np.timedelta64(self.det_time - np.datetime64(tn)).astype('m8[ms]').astype(float) / 1.0e3 for tn in t0])
 
-        result = np.array([self.norm[n] * np.exp(-1.0 / 2.0 * (((lat0 - self.lat[n]) / self.sd_lat[n])**2 + ((lon0 - self.lon[n]) / self.sd_lon[n])**2 
+        result = np.array([self.norm[n] * np.exp(-1.0 / 2.0 * (((lat0 - self.lat[n]) / self.sd_lat[n])**2 + ((lon0 - self.lon[n]) / self.sd_lon[n])**2
                                                                 + ((alt0 - self.alt[n]) / self.sd_alt[n])**2 + ((dt - self.tms[n]) / self.sd_tm[n])**2)) for n in range(len(self.norm))])
 
         prog_bar.increment(n=prog_step)
         return np.sum(result, axis=0)
-    
+
 
 def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0, az_limit=2.0):
 
@@ -166,7 +165,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     if verbose:
         print("Running Time-Reversed Infrasonic Bayesian Localization (TRIBL) Analysis...")
         print('\t' + "Identifying integration region and building grid...")
-    
+
     if alt_lims is None:
         alt_lims = [0.0, 0.0]
         alt_resol = 1.0
@@ -200,13 +199,13 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
         else:
             det_pdfs = np.array([eval_on_grid(proj, lat_grid, lon_grid, alt_grid, tm_grid, prog_step=5) for proj in projs])
         prog_bar.close()
-    else:   
+    else:
         if pool:
             det_pdfs = pool.map(eval_on_grid_wrapper, [[proj, lat_grid, lon_grid, alt_grid, tm_grid, 0] for proj in projs])
         else:
             det_pdfs = np.array([eval_on_grid(proj, lat_grid, lon_grid, alt_grid, tm_grid, prog_step=0) for proj in projs])
 
-    pdf = np.prod(det_pdfs, axis=0)    
+    pdf = np.prod(det_pdfs, axis=0)
     pdf = pdf.reshape(lat_grid.shape)
 
     np.savez_compressed(temp_path + ".pdf", lat_vals=lat_vals, lon_vals=lon_vals, alt_vals=alt_vals, tm_vals=tm_vals, pdf=pdf)
@@ -248,7 +247,7 @@ def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, s
                az_limit=loc_params['az_limit'],
                verbose=verbose,
                show_prog=show_prog,
-               pool=pool) 
+               pool=pool)
 
 
 

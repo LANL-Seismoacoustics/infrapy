@@ -618,28 +618,28 @@ Event Analyses
     The localization result is written into the existing event file and can be visualized by specifying the location solution index.  If no location index is provided, only the back azimuth projections are visualized reproducing the above visualization from :code:`maps_dets` and a summary of available event analysis results is printed to screen.
 
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+        infrapy plot event --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
 
-        .. code-block:: none
-
-
-            ###############################
-            ##                           ##
-            ##          InfraPy          ##
-            ##    Event Visualization    ##
-            ##                           ##
-            ###############################
+    .. code-block:: none
 
 
-            Data summary:
-              ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
-              loc_index: None (1 location result(s) in file
-              char_index: None (0 characterization result(s) in file
+        ###############################
+        ##                           ##
+        ##          InfraPy          ##
+        ##    Event Visualization    ##
+        ##                           ##
+        ###############################
 
 
-            Drawing map with detection back azimuth projections...
+        Data summary:
+            ev_file: data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
+            loc_index: None (1 location result(s) in file
+            char_index: None (0 characterization result(s) in file
+
+
+        Drawing map with detection back azimuth projections...
 
 
     Specifying the first localization result in the visualization command produces a figure summarizing the localization result and a summary printed to screen matching the above informaiton when the analysis was initially run.
