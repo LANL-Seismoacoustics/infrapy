@@ -16,8 +16,7 @@ _____________________________________
     :members:
 
 .. toctree::
-    :maxdepth: 5
-    :titlesonly:
+    :maxdepth: 3
 
     userguide
     authorship

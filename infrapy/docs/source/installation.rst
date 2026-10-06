@@ -4,25 +4,24 @@
 Installation
 =====================================
 
--------------------------------------
-Operating Systems
--------------------------------------
+------------
+Dependencies
+------------
 
-Infrapy can currently be installed on machines running newer versions of Linux or Apple OSX.  A Windows-compatible version is in development.
+**Operating Systems**
 
--------------------------------------
-Anaconda
--------------------------------------
+Infrapy can currently be installed on machines running newer versions of Linux or Apple OS X.  A Windows-compatible version is in development.
 
-The installation of infrapy currently depends on Anaconda to resolve and download the correct python libraries. So if you don't currently have anaconda installed
-on your system, please do that first.
+**Python Environment Management**
 
-Anaconda can be downloaded from https://www.anaconda.com/distribution/. Either 3.x or 2.x will work since the numbers refer to the Python version of the default
-environment.  Infrapy's installation will create a new environment and will install the version of Python that it needs into that environment.
+The installation of infrapy currently depends on `Anaconda <https://docs.anaconda.com/free/anaconda/install/index.html>`_, `Miniconda <https://www.anaconda.com/docs/getting-started/miniconda/system-requirements>`_, `Miniforge <https://github.com/conda-forge/miniforge>`_ or some similar Python package and environment manager to resolve and download the correct python libraries. So if you don't currently have anaconda installed
+on your system, please do that first.  Infrapy's installation will create a new environment and will install the version of Python that it needs into that environment.
 
--------------------------------------
-Infrapy Installation
--------------------------------------
+-----------------------------------------
+Environment Construction and Installation 
+-----------------------------------------
+
+**Infrapy Installation**
 
 Once Anaconda is installed, you can install infrapy by navigating to the base directory of the infrapy package (there will be a file there
 named infrapy_env.yml), and run:
@@ -45,9 +44,8 @@ To deactivate an active environment, use
 
     >> conda deactivate
 
--------------------------------------------
-Python Geophysics Suite (PyGS) Installation
--------------------------------------------
+**Python Geophysics Suite (PyGS) Installation**
+
 
 Infrasound software tools developed by LANL SMEs have become increasing coupled in usage so that having them in a common Python environment is useful.  An in-development Python Geophysics Suite (PyGS) YML file is included in the InfraPy repository that will build an environment and install InfraPy, infraGA/GeoAc, and stochprop from GitHub.  It can be run using the same syntax as above,
 
@@ -62,9 +60,8 @@ All dependencies will be installed and the LANL Python libraries pulled from Git
     >> conda activate pygs
     >> infraga compile 
 
----------------------------------------------------------
-Python Geophysics Suite (PyGS) Installation - Dev Version
----------------------------------------------------------
+**Python Geophysics Suite (PyGS) Installation - Dev Version**
+
 
 Because the PyGS YML file installs via GitHub cloning, it doesn't copy the examples/ directories from the various libraries for demonstration and also doesn't leave the source code easily accessible for any de-bugging or customization.  A separate developer version is also included that requires a few more steps.  Build an instance of the environment with just InfraPy included using the included YML file,
 
@@ -103,9 +100,9 @@ Once the PyGS development environment is built, activate it and use pip with the
 
 This installation will clone the example directories with all relevant data and also allow you to interact with other :code:`git` branches to access any in-development features and capabilities.
 
--------------------------------------
+-------
 Testing
--------------------------------------
+-------
 
 Once the installation is complete, you can test that the InfraPy methods are set up and accessible by first activating the environment with:
 
@@ -133,13 +130,11 @@ The usage information should be displayed:
       -h, --help  Show this message and exit.
 
     Commands:
-      dets              Visualize infrapy analysis results
-      run_assoc         Associate detections into events
-      run_fd            Identify detections from beamforming results
-      run_fk            Run beamforming methods on waveform data
-      run_fkd           Run beamforming and detection methods in sequence
-      run_loc           Estimate source locations and times for events
-      utils             Various utility functions for infrapy analysis
+      detect  Detect signatures in infrasound data
+      doc     Open infrapy manual
+      event   Build and analyse events
+      plot    Visualize infrapy analysis results
+      utils   Various utility functions for infrapy analysis
 
-Each of the individual methods have usage information (e.g., :code:`infrapy run_fk --help`) that will be discussed in the :ref:`quickstart`
+Each of the individual methods have usage information (e.g., :code:`infrapy detect beam --help`) that will be discussed in the :ref:`quickstart`
 

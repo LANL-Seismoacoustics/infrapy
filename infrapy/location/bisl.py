@@ -151,6 +151,13 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
     return center, radius
 
 
+def prop_distance(det_list, bm_width, rng_max):
+    center, _ = set_region(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=100.0, rad_max=rng_max/4.0)
+    rngs = np.array(sph_proj.inv([center[1]] * len(det_list), [center[0]] * len(det_list), [det.longitude for det in det_list], [det.latitude for det in det_list], return_back_azimuth=True, radians=False)[2]) / 1e3
+
+    return rngs
+
+
 def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, include_tms=False, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0):
 
     # Set spatial grid
@@ -236,7 +243,6 @@ def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner
     return lat_grid, lon_grid, alt_grid, tm_grid
 
 
-
 def calc_conf_ellipse(means, st_devs, conf_lvl, pnts=100):
     """Compute the confidence ellipse around a latitude longitude point
 
@@ -275,7 +281,7 @@ def calc_conf_ellipse(means, st_devs, conf_lvl, pnts=100):
 def find_confidence(func, lims, conf_lvl):
     """Computes the bounds for a function given a confidence level
 
-        Identifies the points for which \int_{x_1}^{x_2}{f(x) dx} includes a given
+        Identifies the points for which \\int_{x_1}^{x_2}{f(x) dx} includes a given
         fraction of the overall integral such that f(x_1) = f(x_2)
 
         Parameters
@@ -429,7 +435,7 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
                 'lon_mean' : Mean longitude for the marginalized spatial distribution
                 'EW_stdev': Standard deviation of the marginalized spatial distribution in the east/west direction in km
                 'NS_stdev': Standard deviation of the marginalized spatial distribution in the north/south direction in km
-                'covar': Relative covariance, \sigma_{xy}^2 / (\sigma_x \sigma_y)
+                'covar': Relative covariance, \\sigma_{xy}^2 / (\\sigma_x \\sigma_y)
                 't_mean': Mean marginalized temporal distribution
                 't_stdev': Standard deviation of the marginalized temporal distribution
                 't_min' : 95% confidence bound lower limit for the marginalized temporal distribution

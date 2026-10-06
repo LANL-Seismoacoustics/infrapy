@@ -215,7 +215,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             if "ev_char_cnfgs" not in pipe_params.keys(): return 
             for l, char_config in enumerate(pipe_params["ev_char_cnfgs"]):
                 # run yield estimation
-                command = "infrapy event characterize --ev-file HRR/events/HRR5_0-0.ev.json.gz --cnfg-file " + pipe_params["config_dir"] + char_config
+                command = "infrapy event characterize --ev-file " + pipe_params["ev_dir"] + ev_file + " --cnfg-file " + pipe_params["config_dir"] + char_config
                 click.echo(command)
                 if not test_commands:
                     os.system(command)

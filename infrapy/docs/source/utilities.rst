@@ -77,12 +77,12 @@ Estimating Arrival Time Bounds
 
           Propagation range: 1111.95 km
           Propagation azimuth: 0.0 degrees
-  
+
           Estimated arrival back azimuth: 180.0 degrees
           Estimated arrival time range:
             2020-12-25T00:52:57
             2020-12-25T01:17:13
-                
+
 
 - For a source propagating to an IMS infrasound station, simply specify the station ID information (note that the 'I57US' station can be referenced using just 'I57', so the full station ID isn't needed, only the station number):
 
@@ -110,7 +110,7 @@ Estimating Arrival Time Bounds
 
           Propagation range: 729.75 km
           Propagation azimuth: -55.01 degrees
-  
+
           Estimated arrival back azimuth: 121.59 degrees
           Estimated arrival time range:
             2020-12-25T00:34:45
@@ -288,7 +288,7 @@ Computing the best-beam waveform
 
 - Analysis runs as above, but the data is trimmed to the specified start and end time before computing the best beam.  Note that this trimming doesn't change the file naming information.
 
-    .. code-block:: none 
+    .. code-block:: none
 
         #################################
         ##                             ##
@@ -341,8 +341,8 @@ Write waveforms from an FDSN or database source
 
 - In some cases, working with data from IRIS remotely is sufficient, but in other scenarios it's useful to simply pull waveform data and save it locally for analysis.  This can be done using the :code:`infrapy utils write-wvfrms` function.  Usage of this function requires either an FDSN or database waveform data source and is easiest to do with a config file.
 
-    .. code-block:: none 
-        
+    .. code-block:: none
+
         Usage: infrapy utils write-wvfrms [OPTIONS]
 
         Write waveform data from an FDSN or database pull into local SAC files
@@ -363,7 +363,7 @@ Write waveforms from an FDSN or database source
           --starttime TEXT    Start time of analysis window
           --endtime TEXT      End time of analysis window
           -h, --help          Show this message and exit.
-  
+
 
 - An example usage of this is to pull the I53 waveform data used in the FDSN detection example and saving them locally for analysis instead of repeatedly downloading it from IRIS:
 
@@ -372,8 +372,8 @@ Write waveforms from an FDSN or database source
         infrapy utils write-wvfrms --cnfg-file config/detection_fdsn.config
 
 - Data is pulled using the parameters in the config file and stored using the same network, station, and start- and endtime format into SAC files:
-  
-    .. code-block:: none 
+
+    .. code-block:: none
 
         #################################
         ##                             ##
@@ -416,6 +416,6 @@ Other Utility Functions
 
 - A utility function is available to create synthetic detections from propagation modeling results in InfraGA/GeoAc, :code:`infrapy utils arrivals2json`.  This function takes an [...].arrivals.dat file from InfraGA/GeoAc's eigenray analysis and creates a detection file from the arrival information.
 
-- As database interfacing is more fully established using pisces, utility functions will be implemented to enable related tasks.  Currently planned functions include methods to write/read detection and event information between [...].dets.json files and a database.  The :code:`run_fd` and :code:`run_fkd` methods are likely going to stay the same producing detection files after analysis and a utility function will be used to write detection info to a database.  Similarly, one might specify a latitude/longitude box and start/end time bounds to pull all detections from the database into a .dets.json file for event identification, localization, and characterization analyses. 
+- As database interfacing is more fully established using pisces, utility functions will be implemented to enable related tasks.  Currently planned functions include methods to write/read detection and event information between [...].dets.json files and a database.  The :code:`run_fd` and :code:`run_fkd` methods are likely going to stay the same producing detection files after analysis and a utility function will be used to write detection info to a database.  Similarly, one might specify a latitude/longitude box and start/end time bounds to pull all detections from the database into a .dets.json file for event identification, localization, and characterization analyses.
 
 - As work is done and feedback is provided to the InfraPy authors, additional utility functions are being considered and implemented.  If you find have a utility function that would be useful to have included here, sent information to the authors or submit your idea on the github repo.

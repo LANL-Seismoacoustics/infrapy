@@ -14,12 +14,13 @@ import numpy as np
 
 from numba import jit, float64, complex128
 
-from scipy import signal
-from scipy import stats
+from scipy import signal, stats
 from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar, root
+from scipy.optimize import minimize_scalar
 
 from pyproj import Geod
+
+from obspy import UTCDateTime
 
 from ..utils import prog_bar
 
@@ -374,7 +375,7 @@ def project_ABA(A, B):
         c : 1darray
             Vector c where each scalar c_k = a_k^\\dagger B a_k
     '''
-    
+
     K, M = A.shape
 
     result = np.zeros(K)
@@ -701,20 +702,20 @@ def find_peaks(beam_power, slowness_vals1, slowness_vals2, signal_cnt=1, freq_we
 
         ddPds1s1 = (avg_beam[m][n_up] - 2.0 * avg_beam[m][n] + avg_beam[m][n_dn]) / ((slowness_vals1[n_up] - slowness_vals1[n_dn]) / 2.0)**2
         ddPds2s2 = (avg_beam[m_up][n] - 2.0 * avg_beam[m][n] + avg_beam[m_dn][n]) / ((slowness_vals2[m_up] - slowness_vals2[m_dn]) / 2.0)**2
-        
+
         ddPds1s2 = (avg_beam[m_up][n_up] - avg_beam[m_up][n_dn] - avg_beam[m_dn][n_up] + avg_beam[m_dn][n_dn])
         ddPds1s2 = ddPds1s2 / ((slowness_vals1[n_up] - slowness_vals1[n_dn]) * (slowness_vals2[m_up] - slowness_vals2[m_dn]))
-        
+
         if ddPds1s1 * ddPds2s2 - ddPds1s2**2 > 0.0:
             ds1 = - (ddPds2s2 * dPds1 - dPds2 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)
-            ds2 = - (ddPds1s1 * dPds2 - dPds1 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)        
+            ds2 = - (ddPds1s1 * dPds2 - dPds1 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)
             dP = dPds1 * ds1 + dPds2 * ds2 + (ddPds1s1 / 2.0) * ds1**2 + (ddPds2s2 / 2.0) * ds2**2 + ddPds1s2 * ds1 * ds2
         else:
             ds1 = 0.0
             ds2 = 0.0
             dP = 0.0
 
-        peaks.append([slowness_vals1[n] + ds1, slowness_vals2[m] + ds2, avg_beam[m][n] + dP, n, m])        
+        peaks.append([slowness_vals1[n] + ds1, slowness_vals2[m] + ds2, avg_beam[m][n] + dP, n, m])
     else :
         for n in range(1, len(avg_beam[0, :-1])):
             if np.max(avg_beam[:, n - 1]) <= np.max(avg_beam[:, n]) >= np.max(avg_beam[:, n + 1]):
@@ -728,20 +729,20 @@ def find_peaks(beam_power, slowness_vals1, slowness_vals2, signal_cnt=1, freq_we
 
                 ddPds1s1 = (avg_beam[m][n_up] - 2.0 * avg_beam[m][n] + avg_beam[m][n_dn]) / ((slowness_vals1[n_up] - slowness_vals1[n_dn]) / 2.0)**2
                 ddPds2s2 = (avg_beam[m_up][n] - 2.0 * avg_beam[m][n] + avg_beam[m_dn][n]) / ((slowness_vals2[m_up] - slowness_vals2[m_dn]) / 2.0)**2
-        
+
                 ddPds1s2 = (avg_beam[m_up][n_up] - avg_beam[m_up][n_dn] - avg_beam[m_dn][n_up] + avg_beam[m_dn][n_dn])
                 ddPds1s2 = ddPds1s2 / ((slowness_vals1[n_up] - slowness_vals1[n_dn]) * (slowness_vals2[m_up] - slowness_vals2[m_dn]))
-        
+
                 if ddPds1s1 * ddPds2s2 - ddPds1s2**2 > 0.0:
                     ds1 = - (ddPds2s2 * dPds1 - dPds2 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)
-                    ds2 = - (ddPds1s1 * dPds2 - dPds1 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)        
+                    ds2 = - (ddPds1s1 * dPds2 - dPds1 * ddPds1s2) / (ddPds1s1 * ddPds2s2 - ddPds1s2**2)
                     dP = dPds1 * ds1 + dPds2 * ds2 + (ddPds1s1 / 2.0) * ds1**2 + (ddPds2s2 / 2.0) * ds2**2 + ddPds1s2 * ds1 * ds2
                 else:
                     ds1 = 0.0
                     ds2 = 0.0
                     dP = 0.0
 
-                peaks.append([slowness_vals1[n] + ds1, slowness_vals2[m] + ds2, avg_beam[m][n] + dP, n, m]) 
+                peaks.append([slowness_vals1[n] + ds1, slowness_vals2[m] + ds2, avg_beam[m][n] + dP, n, m])
 
     peaks = np.array(peaks)
     sorting = peaks[:, 2].argsort()[::-1]
@@ -799,6 +800,7 @@ def project_beam(beam_power, back_az_vals, trc_vel_vals, freq_weights=None, meth
         raise ValueError(msg)
 
     return back_az_proj, trc_vel_proj
+
 
 def extract_signal(X, f, slowness, dxdy):
     """Extract the signal along the beam for a given slowness vector
@@ -858,8 +860,8 @@ def calc_det_thresh(fstat_vals, det_p_val, TB_prod, channel_cnt, fstat_ref_peak=
         def temp_fstat(f):
             return -stats.f(TB_prod, TB_prod * (channel_cnt - 1)).pdf(f)
         fstat_peak = minimize_scalar(temp_fstat, bracket=(fstat_min, fstat_max)).x
-        
-    # compute 
+
+    # compute
     kde = stats.gaussian_kde(fstat_vals)
     def temp_kde(f):
         return -kde.pdf(f)[0]
@@ -881,14 +883,13 @@ def beam_window(x, t, geom, freq_band, method, window, sub_window_length, delays
         x_interp = [interp1d(t_win, x_k[tm_mask], bounds_error=False, fill_value=0.0) for x_k in x]
         beams = np.mean(np.array([[x_k(t_win - delays_j[k]) for k, x_k in enumerate(x_interp)] for delays_j in delays]), axis=1)
         beam_power = np.atleast_2d([np.mean(np.abs(signal.hilbert(beam_k))**2 / norm_env**2) for beam_k in beams])
-        
+
     else:
         X, S, f = fft_array_data(x, t, window, sub_window_len=sub_window_length)
         beam_power = run(X, S, f, geom, delays, freq_band, method=method, ns_covar_inv=ns_covar_inv, signal_cnt=signal_cnt, normalize_beam=True)
 
     prog_bar.increment(prog_n)
     return find_peaks(beam_power, back_az_vals, trc_vel_vals)
-
 
 
 def beam_window_wrapper(args):
@@ -899,7 +900,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     """Run the beamforming (fk) analysis on a stream with various parameter specifications
 
         Convert a stream to an array data set on a consistent set of time samples
-        and then run beamforming for the data and return the analysis window times 
+        and then run beamforming for the data and return the analysis window times
         with peak f-stat and direction of arrival (DOA) information (back azimuth
         and trace velocity)
 
@@ -927,7 +928,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
         ns_covar_inv: ndarray
             Noise covariance inverse used in GLS beam
         signal_cnt: int
-            Number of assumed signals for MUSIC beam            
+            Number of assumed signals for MUSIC beam
         pl: multiprocessing.Pool
             Multiprocessing pool for simulatenous analysis of windows
 
@@ -971,7 +972,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
         for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
             if window_start + window_length > t[-1]:
                 break
-            
+
             peaks = beam_window(x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len))
             beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
             beam_peaks = beam_peaks + [[peaks[0][0], peaks[0][1], peaks[0][2]]]
@@ -999,8 +1000,8 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             Times of beamforming results as numpy datetime64's
         beam_peaks: 2darray
             Beamforming results consisting of back azimuth, trace velocity, and
-            f-value at each time step. This is a 2D array with dimensions (len(times), 3), 
-            where the first column has back azimuth values, the second has trace velocity 
+            f-value at each time step. This is a 2D array with dimensions (len(times), 3),
+            where the first column has back azimuth values, the second has trace velocity
             values, and the third has f-statistic values
         win_len: float
             Window length to define the adaptive fstat threshold
@@ -1017,10 +1018,10 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
             Threshold below which the maximum separation of back azimuths must be
             in order to declare a detection
         fixed_thresh: float
-            A fixed detection threshold for fstat values (overrides adaptive 
+            A fixed detection threshold for fstat values (overrides adaptive
                 threshold calculation)
         thresh_ceil: float
-            A custom detection threshold ceiling value. When used, it modifies the 
+            A custom detection threshold ceiling value. When used, it modifies the
                 detection criterion: fstat > min(thresh_ceil, adaptive_thresh)
         return_thresh: boolean
             Flag to output the adaptive detection threshold computed across times
@@ -1057,19 +1058,19 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
             t1 = min(t1, times[-1] - np.timedelta64(int(win_len), 's'))
             t2 = min(t2, times[-1])
-            
+
             # compute detection threshold from the masked f-stat values
             win_mask = np.logical_and(t1 <= times, times <= t2)
             thresh = calc_det_thresh(fstat_vals[win_mask], det_p_val, TB_prod, channel_cnt, fstat_ref_peak=fstat_ref_peak)
 
             if thresh_ceil:
                 thresh_vals[n] = min(thresh, thresh_ceil)
-                det_mask[n] = fstat_vals[n] >= min(thresh, thresh_ceil)        
+                det_mask[n] = fstat_vals[n] >= min(thresh, thresh_ceil)
             else:
                 thresh_vals[n] = thresh
                 det_mask[n] = fstat_vals[n] >= thresh
 
-    # Check for detections shorter than the minimum sequence 
+    # Check for detections shorter than the minimum sequence
     #   length and with too large of back azimuth deviations
     n, dets = 0, []
     while n < (len(det_mask) - min_seq):
@@ -1080,15 +1081,15 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                 det_len += 1
 
             back_az_95conf = stats.circstd(back_az_vals[n:n + det_len], high=360.0) * 2.0
-            
+
             if back_az_95conf < back_az_lim:
-                pk_index = np.argmax(fstat_vals[n:n + det_len]) 
+                pk_index = np.argmax(fstat_vals[n:n + det_len])
 
                 try:
                     det_time = times[n + pk_index]
                     det_start = (times[n] - times[n + pk_index]).astype('m8[s]').astype(float)
                     det_end = (times[n + det_len - 1] - times[n + pk_index]).astype('m8[s]').astype(float)
-                    
+
                     back_az = back_az_vals[n + pk_index]
                     trc_vel = trc_vel_vals[n + pk_index]
                     fstat = fstat_vals[n + pk_index]
@@ -1112,7 +1113,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                 if back_az_diff > 180.0:
                     back_az_diff = abs(back_az_diff - 360.0)
 
-                if back_az_diff < back_az_lim: 
+                if back_az_diff < back_az_lim:
                     t1 = dets[j][0] + np.timedelta64(int(dets[j][2] * 1e3), 'ms')
                     t2 = dets[j + 1][0] + np.timedelta64(int(dets[j + 1][1] * 1e3), 'ms')
                     dt = (t2 - t1).astype('m8[s]').astype(float)
@@ -1132,8 +1133,8 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
 
             if dets.count(None) == 0:
                 break
-            
-            dets = [det for det in dets if det is not None]                    
+
+            dets = [det for det in dets if det is not None]
 
     if return_thresh:
         return dets, thresh_vals
@@ -1145,9 +1146,160 @@ def det_signals(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min
     return run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val, min_seq, back_az_lim, fixed_thresh, return_thresh)
 
 
-##########################
-## Dictionary Extaction ##
-##########################
+def det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info):
+
+        det_dict = {}
+        det_dict['peak f-stat time'] = det_info[0]
+        det_dict['start/end'] = [[det_info[1], det_info[2]]]
+        det_dict['f-stat'] = det_info[5]
+
+        # update to use weighted mean of values across detection
+        dt_ref = UTCDateTime(str(det_info[0])) - min([UTCDateTime(tr.stats.starttime) for tr in stream])
+        dt = np.array([(tn - np.datetime64(stream[0].stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+        det_mask = np.logical_and(det_info[1] <= dt - dt_ref, dt - dt_ref <= det_info[2])
+
+        det_dict['back az'] = np.average(beam_peaks[:, 0][det_mask], weights=beam_peaks[:, 2][det_mask])
+        det_dict['tr vel'] = np.average(beam_peaks[:, 1][det_mask], weights=beam_peaks[:, 2][det_mask])
+
+        # add a buffer for outputing detection info
+        det_duration = det_info[2] - det_info[1]
+        det_buffer = det_duration * 0.15
+        det_buffer = max(min(det_buffer, 60.0), 15.0)
+        det_buffer = fk_params['window_step'] * np.round(det_buffer/fk_params['window_step'])
+
+        det_mask = np.logical_and(det_info[1] - det_buffer <= dt - dt_ref, dt - dt_ref <= det_info[2] + det_buffer)
+
+        det_dict['fk'] = [{}]
+        det_dict['fk'][0]['time'] = np.arange(det_info[1] - det_buffer, det_info[2] + det_buffer + fk_params['window_step'], fk_params['window_step'])[-np.sum(det_mask):]
+        det_dict['fk'][0]['back az'] = beam_peaks[:, 0][det_mask]
+        det_dict['fk'][0]['tr vel'] = beam_peaks[:, 1][det_mask]
+        det_dict['fk'][0]['f-stat'] = beam_peaks[:, 2][det_mask]
+
+        # compute beamed waveform and residuals
+        st_bm = stream.copy()
+
+        t_ref = UTCDateTime(str(det_info[0]))
+        t1 = t_ref + det_info[1] - det_buffer
+        t2 = t_ref + det_info[2] + det_buffer
+
+        st_bm.detrend().filter('bandpass', freqmin=fk_params['freq_min'], freqmax=fk_params['freq_max'])
+        st_bm.trim(t1, t2)
+
+        x_bm, t_bm, _, geom_bm = stream_to_array_data(st_bm, latlon=latlon)
+        X_bm, _, f_bm = fft_array_data(x_bm, t_bm, fft_window="boxcar")
+
+        sig_est, residual = extract_signal(X_bm, f_bm, [det_dict['back az'], det_dict['tr vel']], geom_bm)
+
+        sig_wvfrm = np.fft.irfft(sig_est)[:len(t_bm)] / (t_bm[1] - t_bm[0])
+        resid_wvfrms = np.fft.irfft(residual, axis=1)[:, :len(t_bm)]  / (t_bm[1] - t_bm[0])
+        resid_env = np.mean([np.abs(signal.hilbert(resid_wvfrms[nM])) for nM in range(len(resid_wvfrms))], axis=0)
+
+        det_dict['beam'] = [{}]
+        det_dict['beam'][0]['time'] = t_bm + det_info[1] - det_buffer
+        det_dict['beam'][0]['signal'] = sig_wvfrm
+        det_dict['beam'][0]['resid'] = resid_env
+
+        # repeat without the bandpass filter or buffer for the spectra
+        t1 = t_ref + det_info[1]
+        t2 = t_ref + det_info[2]
+
+        st_bm2 = stream.copy()
+        st_bm2.trim(t1, t2)
+
+        x_bm2, t_bm2, _, geom_bm2 = stream_to_array_data(st_bm2, latlon=latlon)
+        X_bm2, _, f_bm2 = fft_array_data(x_bm2, t_bm2, fft_window="boxcar")
+        sig_est2, residual2 = extract_signal(X_bm2, f_bm2, [det_dict['back az'], det_dict['tr vel']], geom_bm2)
+
+        det_dict['spec'] = [{}]
+        det_dict['spec'][0]['freq'] = f_bm2
+        det_dict['spec'][0]['signal'] = np.abs(sig_est2)
+        det_dict['spec'][0]['resid'] = np.mean(np.abs(residual2), axis=0)
+
+        return det_dict
+
+#######################
+## Detection Merging ##
+#######################
+
+def merge_dets(det_list):
+    dets_out = []
+
+    while len(det_list) > 0:
+        merge_indices = [0]
+        print("")
+
+        for k, det_k in enumerate(det_list[1:]):
+            # check at least one station ID matches
+            ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
+            ids_k = [ch['trace id'] for ch in det_k['wvfrm_info'][0]]
+
+            if any(id in ids_0 for id in ids_k):
+                # compute detection time overlap
+                dt = abs(UTCDateTime(det_list[0]["peak f-stat time"]) - UTCDateTime(det_k["peak f-stat time"]))
+
+                dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
+                dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
+                dt = dt / (2.0 * max(dur1, dur2))
+
+                # check back azimuths are within tolerance
+                daz = abs(det_list[0]["back az"] - det_k["back az"])
+                if daz > 360.0:
+                    daz = daz - 360.0
+                daz = daz / 30.0
+
+                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
+
+                if np.sqrt(dt**2 + daz**2) < 0.75:
+                    merge_indices = merge_indices + [k + 1]
+
+        dets_to_merge = [det_list[j] for j in merge_indices]
+        print('\n' + "Detections to merge:")
+        for det in dets_to_merge:
+            print("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
+
+        f_stat_vals = [det["f-stat"] for det in dets_to_merge]
+        tm_vals = [det["peak f-stat time"] for det in dets_to_merge]
+        t0 = tm_vals[np.argmax(f_stat_vals)]
+
+        dets_out = dets_out + [det_list[0]]
+        dets_out[-1]["f-stat"] = np.max(f_stat_vals)
+        dets_out[-1]["peak f-stat time"] = t0
+
+        dt = UTCDateTime(dets_to_merge[0]["peak f-stat time"]) - UTCDateTime(t0)
+        dets_out[-1]["fk"][0]["time"] = np.array(dets_out[-1]["fk"][0]["time"]) + dt
+        dets_out[-1]["beam"][0]["time"] = np.array(dets_out[-1]["beam"][0]["time"]) + dt
+        dets_out[-1]["start/end"][0] = np.array(dets_out[-1]["start/end"][0]) + dt
+
+        for det in dets_to_merge[1:]:
+            for key in ["wvfrm_info", "fk_params", "det_params", "start/end", "fk", "beam", "spec"]:
+                dets_out[-1][key] = dets_out[-1][key] + det[key]
+
+            dt = UTCDateTime(det["peak f-stat time"]) - UTCDateTime(t0)
+            dets_out[-1]["start/end"][-1] = np.array(det["start/end"][-1]) + dt
+            dets_out[-1]["fk"][-1]["time"] = np.array(det["fk"][-1]["time"]) + dt
+            dets_out[-1]["beam"][-1]["time"] = np.array(det["beam"][-1]["time"]) + dt
+
+        # update back azimuth and trace velocity using weighted mean...
+        az_all, tr_all, fs_all = [np.array([])] * 3
+        for det in dets_to_merge:
+            tm_mask = np.logical_and(det["start/end"][0][0] <= det["fk"][-1]["time"], det["fk"][-1]["time"] <= det["start/end"][0][1])
+            az_all = np.append(az_all, np.array(det["fk"][-1]["back az"])[tm_mask])
+            tr_all = np.append(tr_all, np.array(det["fk"][-1]["tr vel"])[tm_mask])
+            fs_all = np.append(fs_all, np.array(det["fk"][-1]["f-stat"])[tm_mask])
+
+        dets_out[-1]["back az"] = np.average(az_all, weights=fs_all)
+        dets_out[-1]["tr vel"] = np.average(tr_all, weights=fs_all)
+
+        # remove merged detections from the original list and continue
+        det_list = [det_list[j] for j in range(len(det_list)) if j not in merge_indices]
+
+    return dets_out
+
+
+
+#########################
+## Dictionary Wrappers ##
+#########################
 
 def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
 

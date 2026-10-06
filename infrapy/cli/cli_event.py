@@ -10,6 +10,8 @@ import warnings
 import configparser as cnfg
 import numpy as np
 
+import matplotlib.pyplot as plt 
+
 from multiprocessing import Pool
 from importlib.util import find_spec
 
@@ -216,6 +218,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config 
+    \tinfrapy event locate --ev-file data/HRR-5.ev.json.gz 
     
     '''
 
@@ -263,7 +266,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     loc_params['tm_max'] = config.set_param(user_config, 'LOC', 'tm_max', tm_max, 'str')
     loc_params['tm_resol'] = config.set_param(user_config, 'LOC', 'tm_resol', tm_resol, 'float')
 
-    loc_params['celerity_model'] = config.set_param(user_config, 'LOC', 'celerity_model', celerity_model, 'str')
+    loc_params['celerity_model'] = config.set_param(user_config, 'LOC', 'celerity_model', celerity_model, 'str').lower()
     loc_params['pgm_file'] = config.set_param(user_config, 'LOC', 'pgm_file', pgm_file, 'str')
 
     loc_params['atmo_data'] = config.set_param(user_config, 'LOC', 'atmo_data', atmo_data, 'str')
@@ -313,7 +316,11 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                 click.echo('\n' + "Can't use a PGM without stochprop installed." + '\n' + "Built-in celerity model options are: 'regional_hf', 'regional_lf', and 'infGEM'" + '\n')
                 return 
         else:
-            infrasound._load_celerity_model(loc_params["celerity_model"])
+            if "auto" in loc_params['celerity_model']:
+                # pre-load the infGEM model and update once integration region is identified
+                infrasound._load_celerity_model('infgem')
+            else:
+                infrasound._load_celerity_model(loc_params["celerity_model"])
             pgm = None
     else:
         loc_params["celerity_model"] = None
@@ -324,6 +331,33 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
         if loc_params[key] is not None:
             click.echo("  " + key + ": " + str(loc_params[key]))
     click.echo("")
+
+    # Set optimal celerity model if needed
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
+    if loc_params['celerity_model'] is not None:   
+        if "auto" in loc_params['celerity_model']:
+            infgem_rng_thresh = 1000.0
+            low_freq_thresh = 0.5
+
+            click.echo("Optimizing celerity model for analysis")         
+            prop_dist = bisl.prop_distance(det_list, loc_params['back_az_width'], loc_params['range_max'])
+            rng_bnds = [np.min(prop_dist), np.max(prop_dist)]
+
+            snr_bands = np.array(spye.find_snr_band(ev_data['det_info']))
+            snr_band = [np.min(snr_bands[:, 0]), np.max(snr_bands[:, 1])]
+
+            click.echo('  Range limits [km]: ' + str(rng_bnds[0]) + ", " + str(rng_bnds[1]))
+            click.echo('  Freq band [Hz]: ' + str(snr_band[0]) + ", " + str(snr_band[1]))
+
+            if rng_bnds[0] > infgem_rng_thresh:
+                click.echo('  Using infGEM global-scale celerity model.\n')
+                loc_params['celerity_model'] = 'infgem'
+            elif snr_band[0] < low_freq_thresh:                  
+                click.echo('  Using regional low-frequency celerity model.\n')
+                loc_params['celerity_model'] = 'regional_lf'
+            else:
+                click.echo('  Using regional high-frequency celerity model.\n')
+                loc_params['celerity_model'] = 'regional_hf'
 
     # Check if results already exist for this parameter set
     new_param_set = True
@@ -339,10 +373,8 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
             pass
 
     if new_param_set:
-        det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
-
         click.echo("")
-        if loc_params['atmo_data'] is None:           
+        if loc_params['atmo_data'] is None:
             result = bisl.run_dict(det_list, loc_params, tm_lims, pgm)         
         else:
             if find_spec('infraga'):
@@ -376,6 +408,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                 print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
                                 temp = tribl.run_dict(det_list,
                                                       file_path + file_name,
+                                                      temp_path,
                                                       loc_params,
                                                       tm_lims,
                                                       verbose=False,
@@ -460,8 +493,8 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     Run Bayesian Infrasonic Source Localization (BISL) methods to estimate the source location and origin time for an event
 
     \b
-    Example usage (run from infrapy/examples directory):
-    \tinfrapy characterize --ev-file GJI_example-ev0
+    Example usage (run from infrapy/examples directory; run location on HRR-5 event file first):
+    \tinfrapy event characterize --ev-file data/HRR-5.ev.json.gz  --cnfg-file config/SpYE_HRR.cnfg 
     '''
 
     click.echo("")
@@ -547,18 +580,18 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_info]
     det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info]
 
-    click.echo("=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
+    click.echo("=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17)
     for k, det in enumerate(det_info):
         freq = det_specs[k][0]
         mask = (det_specs[k][1] / det_specs[k][2]) > 2.0
 
-        click.echo(det['wvfrm_info'][0][0]['trace id'])
-        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
-        click.echo("  detection time: " + det['peak f-stat time'])
-        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
-        click.echo("  tface velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
-        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
-        click.echo("  high snr band: " + str(np.round(freq[mask][0], 2)) + " - " + str(np.round(freq[mask][-1], 2)) + ' Hz\n')
+        click.echo(det['wvfrm_info'][0][0]['trace id'] + '\t', nl=False)
+        click.echo("  loc: " + f"{det['wvfrm_info'][0][0]['latitude']:>7.4f}" + ", " + f"{det['wvfrm_info'][0][0]['longitude']:>8.4f}" + '\t', nl=False)
+        click.echo("  time: " + det['peak f-stat time'].split(".")[0] + '\t', nl=False)
+        click.echo("  back az [deg]: " + f"{det["back az"]:>8.2f}" + '\t', nl=False)
+        click.echo("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}" + '\t', nl=False)
+        click.echo("  f-stat: " + f"{det["f-stat"]:>5.1f}" + '\t', nl=False)
+        click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
 
     # drop residual spectra and scale to dB
     det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
@@ -580,7 +613,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         # ######################### #
         #     Load TLoss Models     #
         # ######################### #
-        click.echo("Loading transmission loss statistics...")
+        click.echo('\nLoading transmission loss statistics...')
         tlm_dir = os.path.dirname(char_params['tlm_label'])
         tlm_pattern = char_params['tlm_label'].split("/")[-1]
         tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
@@ -589,8 +622,10 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
         models[1] = [0] * len(tlm_files)
         for n in range(len(tlm_files)):
+            print("  " + tlm_files[n])
             models[1][n] = sp_prop.TLossModel()
-            models[1][n].load(tlm_dir + "/" + tlm_files[n])
+            models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
+        print('')
         
         # ######################## #
         #         Run Yield        #
@@ -614,7 +649,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     else:
         spye_result = ev_data['characterization'][param_index]['result']
 
-        click.echo("Characterization result already exists in this event file for this parameter set:")
+        click.echo('\n' + "Characterization result already exists in this event file for this parameter set:")
         click.echo('\t' + "Maximum a Posteriori Yield: " + str(spye_result['yld_vals'][np.argmax(spye_result['yld_pdf'])]))
         click.echo('\t' + "68% Confidence Bounds: " + str(spye_result['conf_bnds'][0]))
         click.echo('\t' + "95% Confidence Bounds: " + str(spye_result['conf_bnds'][1]))

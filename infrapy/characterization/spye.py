@@ -9,9 +9,10 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-from scipy.integrate import quad, simpson
-from scipy.interpolate import interp1d, interp2d, LinearNDInterpolator
+from scipy.integrate import simpson
+from scipy.interpolate import interp1d, LinearNDInterpolator, RegularGridInterpolator
 from scipy.signal import savgol_filter
+from scipy.stats import gaussian_kde
 
 from ..detection import beam
 from ..utils import prog_bar, confidence
@@ -294,6 +295,39 @@ def extract_json_spectra(det_spec):
     return spec_freq, spec_sig, spec_res
 
 
+def find_snr_band(det_info):
+    bands = []
+    for det in det_info:
+        spec_freq, spec_sig, spec_res = extract_json_spectra(det['spec'])
+
+        spec_freq = np.array(spec_freq)
+        spec_sig = np.array(spec_sig)
+        spec_res = np.array(spec_res)
+
+        snr = spec_sig / spec_res
+        snr_mask = snr > 1.0
+
+        log_freq = np.log10(spec_freq)
+        freq_kde = gaussian_kde(log_freq[snr_mask], weights = snr[snr_mask] / spec_freq[snr_mask])
+        kde_eval = freq_kde(spec_freq) * spec_freq
+
+        norm_kde = kde_eval / np.max(kde_eval)
+        bands = bands + [[np.min(spec_freq[norm_kde > 0.5]),
+                          np.max(spec_freq[norm_kde > 0.1])]]
+
+        '''
+        plt.figure(1)
+        plt.loglog(spec_freq, snr, '-k', linewidth=1.0)
+        plt.loglog(spec_freq[snr_mask], snr[snr_mask], 'or')
+
+        plt.figure(2)
+        plt.semilogx(spec_freq, kde_eval, '-r')
+        '''
+    # plt.show()
+
+    return bands 
+
+
 def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """ 
         Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield
@@ -338,29 +372,27 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     print("Estimating yield using spectral amplitudes...")
     det_cnt = len(det_list)
     
-    freqs = np.logspace(np.log10(max(tloss_models[0][0], freq_band[0])), np.log10(min(tloss_models[0][-1], freq_band[1])), resol)
-    pdf = np.empty((det_cnt, resol**2))
-    
-    obs_spec_ref = np.mean([max(smn_spec[j][1]) for j in range(det_cnt)])
+    freqs = np.logspace(np.log10(max(tloss_models[0][0], freq_band[0])), np.log10(min(tloss_models[0][-1], freq_band[1])), resol)   
+    obs_spec_ref = np.mean([max(smn_spec[j][1]) for j in range(det_cnt)])    
     src_spec_vals = np.linspace(obs_spec_ref - 10.0, obs_spec_ref + 40.0, resol)
 
     # Compute the combined near-source spectral amplitude   
+    pdf = np.empty((det_cnt, resol**2))
     for j in range(det_cnt):
         _, _, pdf[j] = det_list[j].src_spec_pdf(src_loc[0], src_loc[1], freqs, src_spec_vals, smn_spec[j], tloss_models)
+    pdf_combined = np.prod(pdf, axis=0).reshape((resol, resol))
+    psd_fit = RegularGridInterpolator((freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng)), pdf_combined)   
 
-    psd_fit = interp2d(freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), np.product(pdf, axis=0).reshape((resol, resol)))
     yld_vals = np.logspace(np.log10(yld_rng[0]), np.log10(yld_rng[1]), resol)
+    if grnd_brst:
+        yld_scaling = 2.0
+    else:
+        yld_scaling = 1.0
+        
     yld_pdf = np.empty_like(yld_vals)
-
     for n in range(len(yld_vals)):
-        if grnd_brst:
-            def temp(f):
-                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 2.0, ref_src_rng, p_amb, T_amb, exp_type))) / f
-        else:
-            def temp(f):
-                return psd_fit(f, 10.0 * np.log10(blastwave_spectrum(f, yld_vals[n] * 1.0, ref_src_rng, p_amb, T_amb, exp_type))) / f
-
-        yld_pdf[n] = quad(temp, freqs[0], freqs[-1], limit=250, epsrel=5.0e-3)[0]
+        psd_pdf = psd_fit(np.stack([freqs, 10.0 * np.log10(blastwave_spectrum(freqs, yld_vals[n] * yld_scaling, ref_src_rng, p_amb, T_amb, exp_type))], axis=-1)).T / freqs
+        yld_pdf[n] = simpson(psd_pdf, freqs)
 
     yld_interp = interp1d(yld_vals, yld_pdf)
 
@@ -368,8 +400,8 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     conf_bnds[0], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.68)
     conf_bnds[1], _, _ = confidence.find_confidence(yld_interp, [yld_vals[0], yld_vals[-1]], 0.95)
 
-    # NOTE: converts kg to tons for returned result
-    result = {'spec_freqs': freqs, 'spec_vals': src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), 'spec_pdf': np.product(pdf, axis=0).reshape((resol, resol)),
+    # note: converts kg to tons for returned result
+    result = {'spec_freqs': freqs, 'spec_vals': src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), 'spec_pdf': np.prod(pdf, axis=0).reshape((resol, resol)).T,
                 'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
 
     return result 

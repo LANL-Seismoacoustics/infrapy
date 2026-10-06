@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import os 
+import os
 import click
 import webbrowser
 import subprocess
 import shlex
 
-from importlib.util import find_spec 
+from importlib.util import find_spec
 
 from . import cli_detection
 from . import cli_event
@@ -28,36 +28,36 @@ def main():
 def detect():
     '''
     infrapy detect - run detection analysis
-    
+
     '''
-    pass 
+    pass
 
 
 @click.group('event', short_help="Build and analyse events", context_settings={'help_option_names': ['-h', '--help']})
 def event():
     '''
     infrapy detect - run detection analysis
-    
+
     '''
-    pass 
+    pass
 
 
 @click.group('plot', short_help="Visualize infrapy analysis results", context_settings={'help_option_names': ['-h', '--help']})
 def plot():
     '''
     infrapy plot - visualization methods for analysis results
-    
+
     '''
-    pass 
+    pass
 
 
 @click.group('utils', short_help="Various utility functions for infrapy analysis", context_settings={'help_option_names': ['-h', '--help']})
 def utils():
     '''
     infrapy utils - various utility functions for infrapy usage
-    
+
     '''
-    pass 
+    pass
 
 
 #######################
@@ -69,7 +69,7 @@ def open_doc():
     pkg_loc = find_spec('infrapy').submodule_search_locations[0]
     filename = pkg_loc + '/docs/build/html/index.html'
 
-    if not os.path.isfile(filename):      
+    if not os.path.isfile(filename):
         print("Compiling manual...")
         subprocess.run(shlex.split("make html -C " + pkg_loc + "/docs/"), shell=False)
 
@@ -91,15 +91,11 @@ event.add_command(cli_event.locate)
 event.add_command(cli_event.characterize)
 
 # Visualizations
-plot.add_command(cli_visualization.beam_detect)
-plot.add_command(cli_visualization.spec_detect)
 plot.add_command(cli_visualization.detect_combined)
+plot.add_command(cli_visualization.event)
 
 plot.add_command(cli_visualization.wvfrms)
 plot.add_command(cli_visualization.map_dets)
-plot.add_command(cli_visualization.ev_loc)
-plot.add_command(cli_visualization.ev_char)
-plot.add_command(cli_visualization.event)
 
 # Utilities
 utils.add_command(cli_utils.check_db_wvfrm)
@@ -111,7 +107,9 @@ utils.add_command(cli_utils.merge_dets)
 
 utils.add_command(cli_utils.ev_gt)
 utils.add_command(cli_utils.ev_summary)
-utils.add_command(cli_utils.ev_loc_reset)
+utils.add_command(cli_utils.ev_reset)
+
+
 
 if __name__ == '__main__':
     main()

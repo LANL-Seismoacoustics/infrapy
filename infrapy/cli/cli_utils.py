@@ -4,7 +4,7 @@ cli_utils.py
 
 Utility methods accessible in the command line interface (CLI) of infrapy
 
-Author: pblom@lanl.gov    
+Author: pblom@lanl.gov
 """
 
 import os
@@ -16,8 +16,10 @@ import configparser as cnfg
 
 import numpy as np
 
-from obspy import UTCDateTime 
+from obspy import UTCDateTime
 
+from infrapy.characterization import spye
+from infrapy.detection import beam
 from infrapy.propagation import likelihoods as lklhds
 from infrapy.utils import config, data_io, database
 
@@ -50,7 +52,7 @@ def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, st
     click.echo("##       check_db_wvfrms       ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")    
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -63,14 +65,14 @@ def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, st
     else:
         user_config = None
 
-    # Database and data IO parameters   
+    # Database and data IO parameters
     db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
     network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
     station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
     location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
 
     starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
     endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
@@ -94,7 +96,7 @@ def check_db_wvfrm(cnfg_file, db_config, network, station, location, channel, st
     for tr in stream:
         click.echo(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
-    click.echo('\nLocation info:')    
+    click.echo('\nLocation info:')
     for line in latlon:
         click.echo(str(line[0]) + '\t' +  str(line[1]))
 
@@ -117,7 +119,7 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     click.echo("##           db2dets           ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
+    click.echo("")
 
     lat_lims = [float(val) for val in lat_bnds.split(",")]
     lon_lims = [float(val) for val in lon_bnds.split(",")]
@@ -146,7 +148,7 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
         db_session.get_bind().connect()
     except Exception as e:
         print("Database connection failed")
-        return 
+        return
 
     det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list, db_schema="kbcore")
 
@@ -184,8 +186,8 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
     click.echo("##            db2ev            ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
-    
+    click.echo("")
+
     db_info = cnfg.ConfigParser()
     db_info.read(db_config)
 
@@ -203,7 +205,7 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
         db_session.get_bind().connect()
     except:
         print("Database connection failed")
-        return 
+        return
 
     ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list, db_schema="kbcore")
 
@@ -213,8 +215,8 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
             print('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
             print('  Origin time: ' + str(ev_output['ground truth']['origin time']))
             print('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
-            
-            for det in ev_output['det_info']:                
+
+            for det in ev_output['det_info']:
                 print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
                 print(det['phase id'], end='\t')
                 if "I" in det['phase id']:
@@ -239,12 +241,10 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
 @click.option("--fdsn", help="FDSN source for waveform data files", default=None)
-
 @click.option("--network", help="Network code for FDSN and database", default=None)
 @click.option("--station", help="Station code for FDSN and database", default=None)
 @click.option("--location", help="Location code for FDSN and database", default=None)
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
-
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
 def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime):
@@ -264,7 +264,7 @@ def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel
     click.echo("##         write-wvfrms        ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")   
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -277,16 +277,16 @@ def write_wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel
     else:
         user_config = None
 
-    # Database and data IO parameters   
+    # Database and data IO parameters
     db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
     # FDSN DATA IO parameters
-    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')
     network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
     station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
     location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
 
     # Trimming times
     starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
@@ -337,7 +337,7 @@ def merge_dets(dets_files, merged_label):
     click.echo("##         merge_dets          ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
+    click.echo("")
 
     dets_data = data_io._load_dets_json(dets_files)
 
@@ -350,7 +350,7 @@ def merge_dets(dets_files, merged_label):
                 vals = vals[0]
         else:
             if all(val is None for val in vals):
-                vals = None 
+                vals = None
 
         click.echo("  " + key + ": " + str(vals))
 
@@ -363,10 +363,10 @@ def merge_dets(dets_files, merged_label):
                 vals = vals[0]
         else:
             if all(val is None for val in vals):
-                vals = None 
+                vals = None
         click.echo("  " + key + ": " + str(vals))
 
-    click.echo('\n' + "Merging detections...")
+    # Copy waveform and parameter info into individual detections
     det_list = []
     for entry in dets_data:
         for det in entry["det_info"]:
@@ -375,77 +375,8 @@ def merge_dets(dets_files, merged_label):
             det_list[-1]["fk_params"] = entry["fk_params"]
             det_list[-1]["det_params"] = entry["det_params"]
 
-    dets_out = []
-    while len(det_list) > 0:
-        merge_indices = [0]
-        print("")
-
-        for k, det_k in enumerate(det_list[1:]):
-            # check at least one station ID matches
-            ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
-            ids_k = [ch['trace id'] for ch in det_k['wvfrm_info'][0]]
-
-            if any(id in ids_0 for id in ids_k):
-                # compute detection time overlap
-                dt = abs(UTCDateTime(det_list[0]["peak f-stat time"]) - UTCDateTime(det_k["peak f-stat time"]))
-
-                dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
-                dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
-                dt = dt / (2.0 * max(dur1, dur2))
-
-                # check back azimuths are within tolerance 
-                daz = abs(det_list[0]["back az"] - det_k["back az"])
-                if daz > 360.0:
-                    daz = daz - 360.0
-                daz = daz / 30.0
-
-                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
-
-                if np.sqrt(dt**2 + daz**2) < 0.75:
-                    merge_indices = merge_indices + [k + 1]
-
-        dets_to_merge = [det_list[j] for j in merge_indices]
-        click.echo('\n' + "Detections to merge:")
-        for det in dets_to_merge:
-            click.echo("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
-
-        f_stat_vals = [det["f-stat"] for det in dets_to_merge]
-        tm_vals = [det["peak f-stat time"] for det in dets_to_merge]
-        t0 = tm_vals[np.argmax(f_stat_vals)]
-
-        dets_out = dets_out + [det_list[0]]
-        dets_out[-1]["f-stat"] = np.max(f_stat_vals)
-        dets_out[-1]["peak f-stat time"] = t0
-
-        dt = UTCDateTime(dets_to_merge[0]["peak f-stat time"]) - UTCDateTime(t0)
-        dets_out[-1]["fk"][0]["time"] = np.array(dets_out[-1]["fk"][0]["time"]) + dt
-        dets_out[-1]["beam"][0]["time"] = np.array(dets_out[-1]["beam"][0]["time"]) + dt
-        dets_out[-1]["start/end"][0] = np.array(dets_out[-1]["start/end"][0]) + dt
-
-        for det in dets_to_merge[1:]:
-            for key in ["wvfrm_info", "fk_params", "det_params", "start/end", "fk", "beam", "spec"]:
-                dets_out[-1][key] = dets_out[-1][key] + det[key]
-                
-            dt = UTCDateTime(det["peak f-stat time"]) - UTCDateTime(t0)
-            dets_out[-1]["start/end"][-1] = np.array(det["start/end"][-1]) + dt
-            dets_out[-1]["fk"][-1]["time"] = np.array(det["fk"][-1]["time"]) + dt
-            dets_out[-1]["beam"][-1]["time"] = np.array(det["beam"][-1]["time"]) + dt
-
-        # update back azimuth and trace velocity using weighted mean...        
-        az_all, tr_all, fs_all = [np.array([])] * 3
-        for det in dets_to_merge:
-            tm_mask = np.logical_and(det["start/end"][0][0] <= det["fk"][-1]["time"], det["fk"][-1]["time"] <= det["start/end"][0][1])
-            az_all = np.append(az_all, np.array(det["fk"][-1]["back az"])[tm_mask])
-            tr_all = np.append(tr_all, np.array(det["fk"][-1]["tr vel"])[tm_mask])
-            fs_all = np.append(fs_all, np.array(det["fk"][-1]["f-stat"])[tm_mask])
-
-        dets_out[-1]["back az"] = np.average(az_all, weights=fs_all)
-        dets_out[-1]["tr vel"] = np.average(tr_all, weights=fs_all)
-
-        # remove merged detections from the original list and continue
-        det_list = [det_list[j] for j in range(len(det_list)) if j not in merge_indices]
-
-    det_output = {'det_info' : dets_out}
+    click.echo('\n' + "Merging detections...")
+    det_output = {'det_info' : beam.merge_dets(det_list)}
     with gzip.open(merged_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
@@ -470,8 +401,8 @@ def ev_gt(ev_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode)
     click.echo("##     Write Event GT Info     ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
-    
+    click.echo("")
+
     click.echo("Loading event information from ev_file: " + str(ev_file))
     ev_data = data_io._load_dets_json(ev_file)[0]
     gt_dict = ev_data['ground truth']
@@ -483,7 +414,7 @@ def ev_gt(ev_file, latitude, longitude, orig_tm, eq_tnt, user_entry, entry_mode)
             if gt_dict[key] is None:
                 gt_dict[key] = val
             elif entry_mode == 'replace':
-                click.echo("** replacing existing entry for '" + key + "': " + gt_dict[key])            
+                click.echo("** replacing existing entry for '" + key + "': " + gt_dict[key])
                 gt_dict[key] = val
             else:
                 click.echo("Skipping '" + str(key) + "' that already has an entry.")
@@ -521,20 +452,31 @@ def ev_summary(ev_file):
     click.echo("##     Summarize Event File    ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
+    click.echo("")
 
     click.echo("Loading information from ev_file: " + str(ev_file))
     ev_data = data_io._load_dets_json(ev_file)[0]
 
-    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17 + '\n')
-    for det in ev_data['det_info']:
-        click.echo(det['wvfrm_info'][0][0]['trace id'])
-        click.echo("  location: " + str(det['wvfrm_info'][0][0]['latitude']) + ", " + str(det['wvfrm_info'][0][0]['longitude']))
-        click.echo("  detection time: " + det['peak f-stat time'])
-        click.echo("  back azimuth [deg]: " + str(np.round(det["back az"], 2)))
-        click.echo("  trace velocity [m/s]: " + str(np.round(det["tr vel"], 2)))
-        click.echo("  f-stat: " + str(np.round(det["f-stat"], 2)))
-        click.echo("")
+    click.echo('\n' + "=" * 17 + '\n' + "Detection Summary" + '\n' + "=" * 17)
+    try:
+        det_specs = [spye.extract_json_spectra(det['spec']) for det in ev_data['det_info']]
+    except:
+        det_specs = None
+
+    for k, det in enumerate(ev_data['det_info']):
+
+        click.echo(det['wvfrm_info'][0][0]['trace id'] + '\t', nl=False)
+        click.echo("  loc: " + f"{det['wvfrm_info'][0][0]['latitude']:>7.4f}" + ", " + f"{det['wvfrm_info'][0][0]['longitude']:>8.4f}" + '\t', nl=False)
+        click.echo("  time: " + det['peak f-stat time'].split(".")[0] + '\t', nl=False)
+        click.echo("  back az [deg]: " + f"{det["back az"]:>8.2f}" + '\t', nl=False)
+        click.echo("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}" + '\t', nl=False)
+        click.echo("  f-stat: " + f"{det["f-stat"]:>5.1f}" + '\t', nl=False)
+        if det_specs is not None:
+            freq = np.array(det_specs[k][0])
+            mask = np.array((np.array(det_specs[k][1]) / np.array(det_specs[k][2])) > 2.0)
+            click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
+        else:
+            click.echo('')
 
     if len(ev_data['location']) > 0:
         click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
@@ -594,7 +536,7 @@ def ev_loc_reset(ev_file):
     click.echo("##       Reset Event File      ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")  
+    click.echo("")
 
     click.echo("Loading information from ev_file: " + str(ev_file))
     ev_data = data_io._load_dets_json(ev_file)[0]
@@ -637,55 +579,150 @@ def ev_loc_reset(ev_file):
             json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 
+@click.command('ev_reset', short_help="Reset location and/or characterization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+@click.option("--reset-loc", help="Flag to reset location info", default=False)
+@click.option("--reset-char", help="Flag to reset characterization info", default=False)
+def ev_reset(ev_file, reset_loc, reset_char):
 
-##########################################
-## THE REST OF THESE ARE DEPRECATED AND ## 
-##  WILL BE REMOVED IN A FUTURE UPDATE  ##
-##########################################
-
-@click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file", hidden=True)
-@click.option("--arrivals-file", help="InfraGA/GeoAc arrivals file", default=None)
-@click.option("--json-file", help="JSON format detection file", default=None)
-@click.option("--grnd-snd-spd", help="Ground sound speed", default=340.0)
-@click.option("--src-time", help="Source time", default="2020-01-01T00:00:00")
-@click.option("--peakf-value", help="Fixed F-value", default=25.0)
-@click.option("--array-dim", help="Array dimension", default=6)
-def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value, array_dim):
-    '''
-    Convert infraGA/GeoAc eigenray arrival results into a json detection list usable in InfraPy
-    
-    \b
-    Example usage (requires InfraGA/GeoAc arrival output):
-    \tinfrapy arrivals2json --arrivals-file example.arrivals.dat --json-file example.dets.json --grnd-snd-spd 335.0 --src-time "2020-12-25T00:00:00"
-
-    '''
     click.echo("")
     click.echo("#################################")
     click.echo("##                             ##")
     click.echo("##      InfraPy Utilities      ##")
-    click.echo("##        arrivals2json        ##")
+    click.echo("##       Reset Event File      ##")
     click.echo("##                             ##")
     click.echo("#################################")
-    click.echo("")     
-    
     click.echo("")
-    click.echo("  arrivals_file: " + str(arrivals_file))
-    click.echo("  json_file: " + str(json_file))
+
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
+    click.echo("  " + str(len(ev_data['location'])) + " location result(s) in file")
+    click.echo("  " + str(len(ev_data['characterization'])) + " characterization result(s) in file" + '\n')
+
+    if not reset_loc and not reset_char:
+        click.echo("Set '--reset-loc' and/or '--reset-char' to 'True' to remove existing solutions from file." + '\n')
+        return
+
+    if reset_loc:
+        if len(ev_data['location']) == 0:
+            click.echo("No location results to remove.")
+            reset_loc = False
+        else:
+            click.echo('\n' + "=" * 20 + '\n' + "Localization Summary" + '\n' + "=" * 20)
+            for loc_k, loc in enumerate(ev_data['location']):
+                click.echo("#" * 14)
+                click.echo("## " + "index: " + str(loc_k) + " ##")
+                click.echo("#" * 14)
+
+                click.echo("parameters" + '\n' + "-" * 10)
+                for key in loc['params'].keys():
+                    if loc['params'][key] is not None:
+                        click.echo("    " + key + ": " + str(loc['params'][key]))
+
+                lat = str(np.round(loc['result']['lat_mean'], 3))
+                lon = str(np.round(loc['result']['lon_mean'], 3))
+                NS_std = str(np.round(loc['result']['NS_stdev'], 2))
+                EW_std = str(np.round(loc['result']['EW_stdev'], 2))
+                tm_std = str(np.round(loc['result']['t_stdev'], 1))
+
+                click.echo('\n' + "result" + '\n' + "-" * 6)
+                click.echo("    latitude: " + lat + " deg +/- " + NS_std + " km.")
+                click.echo("    longitude: " + lon + " deg +/- " + EW_std + " km.")
+                click.echo("    origin time: " + loc['result']['t_mean'] + " +/- " + tm_std + " s.")
+
+    if reset_char:
+        if len(ev_data['characterization']) == 0:
+            click.echo("No characterization results to remove.")
+            reset_char = False
+        else:
+            click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+            for char_k, char in enumerate(ev_data['characterization']):
+                click.echo("#" * 14)
+                click.echo("## " + "index: " + str(char_k) + " ##")
+                click.echo("#" * 14)
+
+                click.echo("parameters" + '\n' + "-" * 10)
+                for key in char['params'].keys():
+                    if char['params'][key] is not None:
+                        click.echo("    " + key + ": " + str(char['params'][key]))
+
+                click.echo('\n' + "result" + '\n' + "-" * 6)
+                click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+                click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+                click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]) + '\n')
+
+    if reset_loc or reset_char:
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
+        while True:
+            user_opt = input('WARNING!!! This action will remove existing result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+            if user_opt in ['y', 'yes']:
+                confirm = True
+                break
+            elif user_opt in ['n', 'no']:
+                click.echo("")
+                confirm = False
+            else:
+                user_opt = input('Invalid input. Proceed and remove result(s) from event file? (y/n): ').lower().strip()
+
+        if confirm:
+            if reset_loc:
+                click.echo('\nRemoving localization result(s) from event file...')
+                ev_data['location'] = []
+            if reset_char:
+                click.echo('\nRemoving characterization result(s) from event file...')
+                ev_data['characterization'] = []
+
+            with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+                json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+@click.command('ev_char_reset', short_help="Reset characterization in an event file")
+@click.option("--ev-file", help="Event GZIP JSON files", default=None)
+def ev_char_reset(ev_file):
 
     click.echo("")
-    click.echo("  grnd_snd_spd: " + str(grnd_snd_spd))
-    click.echo("  src_time: " + str(src_time))
-    click.echo("  peakF_value: " + str(peakf_value))
-    click.echo("  array_dim: " + str(array_dim))
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##       Reset Event File      ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")
 
-    arrivals = np.loadtxt(arrivals_file)
+    click.echo("Loading information from ev_file: " + str(ev_file))
+    ev_data = data_io._load_dets_json(ev_file)[0]
 
-    det_list = []
-    for line in arrivals:
-        det = lklhds.InfrasoundDetection(lat_loc=np.round(line[3], 3), lon_loc=np.round(line[4], 3), time=(UTCDateTime(src_time) + line[5]), azimuth=np.round(line[9], 2), f_stat=peakf_value, array_d=array_dim)
-        det.trace_velocity = np.round(grnd_snd_spd / np.cos(np.radians(line[8])), 1)
-        det.note = "InfraGA/GeoAc arrival output"
-        det_list = det_list + [det]
+    if len(ev_data['characterization']) > 0:
+        click.echo('\n' + "=" * 24 + '\n' + "Characterization Summary" + '\n' + "=" * 24)
+        for char_k, char in enumerate(ev_data['characterization']):
+            click.echo('\n' + "#" * 14)
+            click.echo("## " + "index: " + str(char_k) + " ##")
+            click.echo("#" * 14)
 
-    data_io.detection_list_to_json(json_file, det_list)
+            click.echo("parameters" + '\n' + "-" * 10)
+            for key in char['params'].keys():
+                if char['params'][key] is not None:
+                    click.echo("    " + key + ": " + str(char['params'][key]))
+
+            click.echo('\n' + "result" + '\n' + "-" * 6)
+            click.echo("    maximum likelihood yield: " + str(np.round(char['result']['yld_vals'][np.argmax(char['result']['yld_pdf'])], 2)) + " tons eq. TNT")
+            click.echo("    68% confidence bounds: " + str(char['result']['conf_bnds'][0]))
+            click.echo("    95% confidence bounds: " + str(char['result']['conf_bnds'][1]))
+
+        click.echo('\n' + '#' * 40 + '\n' + '#' * 40 + '\n')
+
+    user_opt = input('WARNING!!! This action will remove existing characterization result(s) in this event file. \nDo you want to proceed? (y/n): ').lower().strip()
+    if user_opt in ['y', 'yes']:
+        confirm = True
+    else:
+        confirm = False
+
+    if confirm:
+        click.echo('\nRemoving characterization results from event file...')
+        ev_data['characterization'] = []
+        with gzip.open(ev_file, 'wt', encoding='UTF-8') as zipfile:
+            json.dump(ev_data, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+
+
 

@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 
 import os
-import warnings 
+import warnings
 import click
 import json
 import gzip
 
 import configparser as cnfg
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
 from scipy.stats import chi2
 
-from ..utils import config
-from ..utils import data_io
+from ..utils import config, data_io
 from ..detection import visualization as det_vis
 from ..location import visualization as loc_vis
 from ..location import bisl
+from ..propagation import likelihoods as lklhds
+
 
 warnings.filterwarnings(
-    "ignore", 
+    "ignore",
     message="no explicit representation of timezones available for np.datetime64"
 )
 
@@ -47,13 +48,13 @@ def beam_detect(dets_file, det_index, plot_all_dets, param_index, figure_out, sh
     click.echo("##       Visualization       ##")
     click.echo("##                           ##")
     click.echo("###############################")
-    click.echo("")    
+    click.echo("")
 
     if os.path.splitext(dets_file)[-1] == ".gz":
         det_data = json.load(gzip.open(dets_file, 'rt'))
     else:
         det_data = json.load(open(dets_file))
-    
+
     if "wvfrm_info" in det_data:
         click.echo('\n' + "waveform summary:")
         for wvfrm in det_data['wvfrm_info'][0]:
@@ -102,7 +103,7 @@ def beam_detect(dets_file, det_index, plot_all_dets, param_index, figure_out, sh
                 print("   time: " + det['peak f-stat time'], end='\t')
                 print("   f-stat: " + str(np.round(det['f-stat'], 1)), end='\t')
                 print("   back azimuth: " + str(np.round(det['back az'], 1)), end='\t')
-                print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')                
+                print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')
                 print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]))
             if plot_all_dets:
                 click.echo('\n' + "Plotting all detections...")
@@ -115,7 +116,7 @@ def beam_detect(dets_file, det_index, plot_all_dets, param_index, figure_out, sh
                 click.echo('\n' + "Plotting full set of fk results and windowed detections...")
                 det_vis.plot_fk_json(det_data, output_path=figure_out, show_fig=show_figure)
 
-    else: 
+    else:
         if det_index is None:
             det_index = 0
 
@@ -132,7 +133,7 @@ def beam_detect(dets_file, det_index, plot_all_dets, param_index, figure_out, sh
                 click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
                 click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
                 click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
-            
+
 
                 det_vis.plot_det_json(det_data, k, output_path=figure_out + "_det" + str(k), show_fig=False)
             if show_figure:
@@ -149,7 +150,7 @@ def beam_detect(dets_file, det_index, plot_all_dets, param_index, figure_out, sh
             click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
             click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
             click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
-            
+
             click.echo('\n' + "Plotting detection...")
             det_vis.plot_det_json(det_data, det_index, param_index, output_path=figure_out, show_fig=show_figure)
 
@@ -179,7 +180,7 @@ def spec_detect(dets_file, log_scale_freq, det_index, figure_out, show_figure):
     click.echo("##          Visualization          ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")    
+    click.echo("")
 
     if os.path.splitext(dets_file)[-1] == ".gz":
         det_data = json.load(gzip.open(dets_file, 'rt'))
@@ -220,7 +221,7 @@ def spec_detect(dets_file, log_scale_freq, det_index, figure_out, show_figure):
             print("   time: " + det['peak f-stat time'])
             print("   duration [s]: " + str(np.round(t2 - t1, 2)))
             print("   frequency range [Hz]: " + str(f1) + " - " + str(f2))
-        
+
             click.echo('\n' + "Plotting detection index " + str(det_index))
             det_vis.plot_sd_single_json(det_data, det_index, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
 
@@ -268,7 +269,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
     click.echo("##     Detection Visualization     ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")    
+    click.echo("")
 
     if os.path.splitext(dets_file)[-1] == ".gz":
         det_data = json.load(gzip.open(dets_file, 'rt'))
@@ -276,6 +277,13 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
         det_data = json.load(open(dets_file))
 
     # Need to add a catch here if there are no detections and no fk or spectral results to plot (e.g., combined files, no dets)
+    if plot_all and len(det_data['det_info']) < 1:
+        click.echo('No detection results to visualize.\n')
+        return
+    elif det_index is not None:
+        if det_index > len(det_data['det_info']):
+            click.echo('Invalid det_index.  ' + str(len(det_data['det_info'])) + ' detections in file.\n')
+            return
 
     if 'fk_params' in det_data.keys() or 'fk_params' in det_data['det_info'][0].keys():
         if "wvfrm_info" in det_data:
@@ -326,7 +334,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
                     print("   time: " + det['peak f-stat time'], end='\t')
                     print("   f-stat: " + str(np.round(det['f-stat'], 1)), end='\t')
                     print("   back azimuth: " + str(np.round(det['back az'], 1)), end='\t')
-                    print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')                
+                    print("   trace velocity: " + str(np.round(det['tr vel'], 1)), end='\t')
                     print("   duration: " + str(det['start/end'][0][-1] - det['start/end'][0][0]))
 
                 if plot_all:
@@ -339,7 +347,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
                     click.echo('\n' + "Plotting full set of fk results and windowed detections...")
                     det_vis.plot_fk_json(det_data, output_path=figure_out, show_fig=show_figure)
 
-        else: 
+        else:
             if det_index is None:
                 det_index = 0
 
@@ -356,7 +364,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
                     click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
                     click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
                     click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
-                
+
 
                     det_vis.plot_det_json(det_data, k, output_path=figure_out + "_det" + str(k), show_fig=False)
                 if show_figure:
@@ -373,7 +381,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
                 click.echo('Windows (len, step, sub) [s]:' + ''.join(['\t' + str(fk_j["window_len"]) + ", " + str(fk_j["window_step"]) + ", " + str(fk_j["sub_window_len"]) + '\t' for fk_j in det['fk_params']]))
                 click.echo('Back Azimuth Grid [deg]:' + ''.join(['\t' + str(fk_j["back_az_min"]) + ", " + str(fk_j["back_az_max"]) + ", " + str(fk_j["back_az_step"]) for fk_j in det['fk_params']]))
                 click.echo('Trace Vel. Grid [m/s]:\t' + ''.join(['\t' + str(fk_j["trace_vel_min"]) + ", " + str(fk_j["trace_vel_max"]) + ", " + str(fk_j["trace_vel_step"]) for fk_j in det['fk_params']]))
-                
+
                 click.echo('\n' + "Plotting detection...")
                 det_vis.plot_det_json(det_data, det_index, param_index, output_path=figure_out, show_fig=show_figure)
 
@@ -389,7 +397,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
         click.echo('\n' + "sd (spectral detector) parameters:")
         for key in det_data['sd_params'].keys():
             click.echo("  " + key + ": " + str(det_data['sd_params'][key]))
-                
+
         if det_index is not None:
             if det_index > len(det_data["det_info"]):
                 click.echo('\n' + "detection index (" + str(det_index) + ") doesn't correspond to a detection in this file.")
@@ -415,7 +423,7 @@ def detect_combined(dets_file, det_index, param_index, log_scale_freq, figure_ou
                 print("   time: " + det['peak f-stat time'])
                 print("   duration [s]: " + str(np.round(t2 - t1, 2)))
                 print("   frequency range [Hz]: " + str(f1) + " - " + str(f2))
-            
+
                 click.echo('\n' + "Plotting detection index " + str(det_index))
                 det_vis.plot_sd_single_json(det_data, det_index, log_scale_freq=log_scale_freq, output_path=figure_out, show_fig=show_figure)
 
@@ -460,7 +468,7 @@ def wvfrms(dets_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, loc_in
     click.echo("##     Waveform Visualization      ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")  
+    click.echo("")
 
     if dets_file is not None:
         if os.path.splitext(dets_file)[-1] == ".gz":
@@ -541,9 +549,9 @@ def wvfrms(dets_file, ev_file, det_index, plot_all_dets, use_loc, use_gt, loc_in
             for key in ev_data['ground truth']:
                 click.echo("  " + key + ': ' + str(ev_data['ground truth'][key]))
             click.echo("")
-        
+
         loc_vis.plot_ev_wvfrms(ev_data, use_loc=use_loc, loc_index=loc_index, use_gt=use_gt)
-           
+
 
 @click.command('map_dets', short_help="Plot detections on a map")
 @click.option("--cnfg-file", help="Configuration file", default=None)
@@ -560,7 +568,7 @@ def map_dets(cnfg_file, dets_files, ev_file, range_max, figure_out, offline_maps
     \b
     Example usage (run from infrapy/examples directory after running run_assoc example):
     \tinfrapy plot map_dets --dets-files 'data/Blom_etal2020_GJI/SY*' --range-max 1500
-    \tinfrapy plot map_dets --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz 
+    \tinfrapy plot map_dets --ev-file data/Blom_etal2020_GJI/Blom_etal2020_GJI-0.ev.json.gz
 
     '''
 
@@ -572,7 +580,7 @@ def map_dets(cnfg_file, dets_files, ev_file, range_max, figure_out, offline_maps
     click.echo("##             Mapping             ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")    
+    click.echo("")
 
 
     if cnfg_file:
@@ -614,10 +622,10 @@ def map_dets(cnfg_file, dets_files, ev_file, range_max, figure_out, offline_maps
         det_dicts = ev_info["det_info"]
         range_max = ev_info["assoc_params"]["range_max"]
         click.echo("Updating range max from event building parameters: " + str(range_max) + " km")
-        
+
     else:
         click.echo("Requires either detection file(s) or event file to plot detection projections)")
-        return 
+        return
 
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
@@ -651,7 +659,7 @@ def ev_loc(cnfg_file, ev_file, loc_index, range_max, confidence_level, figure_ou
     click.echo("##   Localization visualization   ##")
     click.echo("##                                ##")
     click.echo("####################################")
-    click.echo("")  
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -745,7 +753,7 @@ def ev_char(cnfg_file, ev_file, loc_index, char_index, range_max, confidence_lev
     click.echo("##        Visualization         ##")
     click.echo("##                              ##")
     click.echo("##################################")
-    click.echo("")  
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -843,7 +851,7 @@ def ev_char(cnfg_file, ev_file, loc_index, char_index, range_max, confidence_lev
     click.echo("Localization Result Summary")
     click.echo("-" * 27)
     click.echo(bisl.summarize(loc['result'], confidence_level=float(confidence_level)))
-    
+
     loc_vis.plot_characterization(ev_data["det_info"], loc, char, ev_data["ground truth"], range_max=range_max, confidence_level=float(confidence_level), output_path=figure_out, show_fig=show_figure)
 
 
@@ -872,8 +880,8 @@ def event(ev_file, loc_index, char_index, confidence_level, figure_out, show_fig
     click.echo("##    Event Visualization    ##")
     click.echo("##                           ##")
     click.echo("###############################")
-    click.echo("")  
-    
+    click.echo("")
+
     if offline_maps_dir:
         click.echo("  Using offline maps directory: {}".format(offline_maps_dir))
         loc_vis.use_offline_maps(offline_maps_dir)
@@ -881,7 +889,7 @@ def event(ev_file, loc_index, char_index, confidence_level, figure_out, show_fig
     click.echo('\n' + "Data summary:")
     click.echo("  ev_file: " + str(ev_file))
     ev_info = data_io._load_dets_json(ev_file)[0]
-    
+
     # check if char_index is defined and loc isn't
 
     click.echo("  loc_index: " + str(loc_index) + " (" + str(len(ev_info['location'])) + " location result(s) in file")
@@ -890,11 +898,11 @@ def event(ev_file, loc_index, char_index, confidence_level, figure_out, show_fig
     range_max = ev_info["assoc_params"]["range_max"]
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_info["det_info"]]
 
-    if len(ev_info['location']) == 0 or loc_index is None:        
-        # if no localization results or index unspecified, just draw the map with DOA projections            
+    if len(ev_info['location']) == 0 or loc_index is None:
+        # if no localization results or index unspecified, just draw the map with DOA projections
         click.echo('\n' + "Drawing map with detection back azimuth projections...")
         loc_vis.plot_dets_on_map(det_list, range_max=range_max, output_path=figure_out, show_fig=show_figure)
-    
+
     elif len(ev_info['characterization']) == 0 or char_index is None:
         # if locations results are there, but not characterization, plot location result
         loc = ev_info['location'][loc_index]
