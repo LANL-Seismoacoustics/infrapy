@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "infrapy"
-version = "4.2.0"
+version = "4.2.261006"
 description = "A tool for processing infrasound and seismic array data."
 readme = "README.md"
 license = "MIT"
