@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os 
+import os
 import click
 import warnings
 
@@ -12,7 +12,7 @@ import numpy as np
 
 from multiprocessing import Pool
 
-from obspy import UTCDateTime 
+from obspy import UTCDateTime
 
 from ..utils import config, data_io
 from ..detection import beam as fkd
@@ -59,13 +59,13 @@ from ..detection import spectral
 @click.option("--thresh-ceil", help="Hybrid f-stat threshold (default: None)", default=None, type=float)
 @click.option("--merge-dets", help="Merge detections (default: " + config.defaults['FD']['merge_dets'] + ")", default=None, type=bool)
 @click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
-def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    det_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start, 
-    signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration, 
+def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
+    det_label, freq_min, freq_max, back_az_min, back_az_max, back_az_step, trace_vel_min, trace_vel_max, trace_vel_step, method, signal_start,
+    signal_end, noise_start, noise_end, fk_window_len, fk_sub_window_len, fk_window_step, cpu_cnt, fd_window_len, p_value, min_duration,
     back_az_width, fixed_thresh, thresh_ceil, merge_dets, auto_overwrite):
     '''
     Run combined beamforming (fk) and detection analysis to identify detection in array waveform data.
-    
+
     \b
     Example usage (run from infrapy/examples directory):
     \tinfrapy detect beam --local-wvfrms 'data/YJ.BRP*.SAC' --cpu-cnt 4
@@ -73,7 +73,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     \tinfrapy detect beam --cnfg-file config/detection_fdsn.config --cpu-cnt 4
 
     '''
-    
+
     click.echo("")
     click.echo("######################################")
     click.echo("##                                  ##")
@@ -81,7 +81,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     click.echo("##  Beamforming Detection Analyses  ##")
     click.echo("##                                  ##")
     click.echo("######################################")
-    click.echo("")    
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -94,7 +94,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     else:
         user_config = None
 
-    # Database configuration and info   
+    # Database configuration and info
     db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
@@ -103,11 +103,11 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
     # FDSN DATA IO parameters
-    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')
     network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
     station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
     location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
 
     # Trimming times
     starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
@@ -143,7 +143,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
         click.echo("  local_wvfrms")
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
-        
+
     click.echo("  det_label: " + str(det_label))
 
     # Algorithm parameters
@@ -218,7 +218,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             t1 = UTCDateTime(fk_params["signal_start"])
         else:
             t1 = stream[0].stats.starttime
-    
+
         if fk_params["signal_end"] is not None:
             t2 = UTCDateTime(fk_params["signal_end"])
         else:
@@ -231,13 +231,13 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             if t1 < stream[0].stats.starttime:
                 warning_message = "Specified signal_start before data start time."
                 warnings.warn((warning_message))
-                t1 = stream[0].stats.starttime 
-        
+                t1 = stream[0].stats.starttime
+
             if t2 > stream[0].stats.endtime:
                 warning_message = "Specified signal_end after data end time."
                 warnings.warn((warning_message))
-                t2 = stream[0].stats.endtime 
-        
+                t2 = stream[0].stats.endtime
+
             click.echo('\n' + "Trimming data to signal analysis window...")
             click.echo('\t' + "start time: " + str(t1))
             click.echo('\t' + "end time: " + str(t2))
@@ -266,7 +266,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
                 break
             elif user_opt in ['n', 'no']:
                 click.echo("")
-                return 
+                return
             else:
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 
@@ -284,10 +284,10 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     fk_out['back az'] = beam_peaks[:, 0]
     fk_out['tr vel'] = beam_peaks[:, 1]
     fk_out['f-stat'] = beam_peaks[:, 2]
-    fk_out['thresh'] = thresh_vals 
+    fk_out['thresh'] = thresh_vals
 
-    dets_out = [fkd.det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info) for det_info in dets] 
-    
+    dets_out = [fkd.det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info) for det_info in dets]
+
     click.echo("Writing beamforming and detection results into " + det_label + ".dets.json.gz" + '\n')
     det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
     with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
@@ -296,7 +296,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     if pl is not None:
         pl.terminate()
         pl.close()
-        
+
 
 @click.command('spectral', short_help="Run spectral detection on a single channel")
 @click.option("--cnfg-file", help="Configuration file", default=None)
@@ -332,19 +332,19 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
 @click.option("--cluster-window-len", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_window_len'] + ")", default=None, type=float)
 @click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
 @click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
-def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime, 
-    det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step, 
+def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
+    det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step,
     p_value, freq_tm_factor, cluster_eps, cluster_min_samples, cluster_window_len, cpu_cnt, auto_overwrite):
     '''
     Run spectral detection methods on a single channel to identify signals of interest.
-    
+
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4   
+    \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4
     \tinfrapy detect spectral --local-wvfrms 'data/YJ.BRP1..EDF.SAC' --cpu-cnt 4 --spectral-option cwt --cluster-min-samples 500 --cluster-eps 4
-    
+
     '''
-    
+
 
     click.echo("")
     click.echo("#####################################")
@@ -353,7 +353,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     click.echo("##   Spectral Detection Analyses   ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("") 
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -366,7 +366,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     else:
         user_config = None
 
-    # Database configuration and info   
+    # Database configuration and info
     db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
     db_info = None
 
@@ -375,11 +375,11 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     local_latlon = config.set_param(user_config, 'DATA IO', 'local_latlon', local_latlon, 'string')
 
     # FDSN DATA IO parameters
-    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')   
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')
     network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
     station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
     location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
-    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')       
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
 
     # Trimming times
     starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
@@ -415,7 +415,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
         click.echo("  local_wvfrms")
         click.echo("  fdsn")
         click.echo("  db_url (and other database info)")
-        
+
     click.echo("  det_label: " + str(det_label))
     if cpu_cnt is not None:
         click.echo("  cpu_cnt: " + str(cpu_cnt))
@@ -426,7 +426,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     # Algorithm parameters
     sd_params = {}
     sd_params["spectral_option"] = config.set_param(user_config, 'SD', 'spectral_option', spectral_option, 'string')
-    sd_params["morlet_omega0"] = config.set_param(user_config, 'SD', 'morlet_omega0', morlet_omega0, 'float')    
+    sd_params["morlet_omega0"] = config.set_param(user_config, 'SD', 'morlet_omega0', morlet_omega0, 'float')
     sd_params["freq_min"] = config.set_param(user_config, 'SD', 'freq_min', freq_min, 'float')
     sd_params["freq_max"] = config.set_param(user_config, 'SD', 'freq_max', freq_max, 'float')
     sd_params["signal_start"] = config.set_param(user_config, 'SD', 'signal_start', signal_start, 'string')
@@ -461,7 +461,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             t1 = UTCDateTime(sd_params["signal_start"])
         else:
             t1 = stream[0].stats.starttime
-    
+
         if sd_params["signal_end"] is not None:
             t2 = UTCDateTime(sd_params["signal_end"])
         else:
@@ -474,13 +474,13 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             if t1 < stream[0].stats.starttime:
                 warning_message = "Specified signal_start before data start time."
                 warnings.warn((warning_message))
-                t1 = stream[0].stats.starttime 
-        
+                t1 = stream[0].stats.starttime
+
             if t2 > stream[0].stats.endtime:
                 warning_message = "Specified signal_end after data end time."
                 warnings.warn((warning_message))
-                t2 = stream[0].stats.endtime 
-        
+                t2 = stream[0].stats.endtime
+
             click.echo('\n' + "Trimming data to signal analysis window...")
             click.echo('\t' + "start time: " + str(t1))
             click.echo('\t' + "end time: " + str(t2))
@@ -509,7 +509,7 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
                 break
             elif user_opt in ['n', 'no']:
                 click.echo("")
-                return 
+                return
             else:
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 

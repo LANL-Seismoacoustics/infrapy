@@ -19,6 +19,7 @@ import numpy as np
 from obspy import UTCDateTime
 
 from infrapy.characterization import spye
+from infrapy.detection import beam
 from infrapy.propagation import likelihoods as lklhds
 from infrapy.utils import config, data_io, database
 
@@ -365,7 +366,7 @@ def merge_dets(dets_files, merged_label):
                 vals = None
         click.echo("  " + key + ": " + str(vals))
 
-    click.echo('\n' + "Merging detections...")
+    # Copy waveform and parameter info into individual detections
     det_list = []
     for entry in dets_data:
         for det in entry["det_info"]:
@@ -374,77 +375,8 @@ def merge_dets(dets_files, merged_label):
             det_list[-1]["fk_params"] = entry["fk_params"]
             det_list[-1]["det_params"] = entry["det_params"]
 
-    dets_out = []
-    while len(det_list) > 0:
-        merge_indices = [0]
-        print("")
-
-        for k, det_k in enumerate(det_list[1:]):
-            # check at least one station ID matches
-            ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
-            ids_k = [ch['trace id'] for ch in det_k['wvfrm_info'][0]]
-
-            if any(id in ids_0 for id in ids_k):
-                # compute detection time overlap
-                dt = abs(UTCDateTime(det_list[0]["peak f-stat time"]) - UTCDateTime(det_k["peak f-stat time"]))
-
-                dur1 = max(60.0, det_list[0]["start/end"][0][1] - det_list[0]["start/end"][0][0])
-                dur2 = max(60.0, det_k["start/end"][0][1] - det_k["start/end"][0][0])
-                dt = dt / (2.0 * max(dur1, dur2))
-
-                # check back azimuths are within tolerance
-                daz = abs(det_list[0]["back az"] - det_k["back az"])
-                if daz > 360.0:
-                    daz = daz - 360.0
-                daz = daz / 30.0
-
-                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
-
-                if np.sqrt(dt**2 + daz**2) < 0.75:
-                    merge_indices = merge_indices + [k + 1]
-
-        dets_to_merge = [det_list[j] for j in merge_indices]
-        click.echo('\n' + "Detections to merge:")
-        for det in dets_to_merge:
-            click.echo("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
-
-        f_stat_vals = [det["f-stat"] for det in dets_to_merge]
-        tm_vals = [det["peak f-stat time"] for det in dets_to_merge]
-        t0 = tm_vals[np.argmax(f_stat_vals)]
-
-        dets_out = dets_out + [det_list[0]]
-        dets_out[-1]["f-stat"] = np.max(f_stat_vals)
-        dets_out[-1]["peak f-stat time"] = t0
-
-        dt = UTCDateTime(dets_to_merge[0]["peak f-stat time"]) - UTCDateTime(t0)
-        dets_out[-1]["fk"][0]["time"] = np.array(dets_out[-1]["fk"][0]["time"]) + dt
-        dets_out[-1]["beam"][0]["time"] = np.array(dets_out[-1]["beam"][0]["time"]) + dt
-        dets_out[-1]["start/end"][0] = np.array(dets_out[-1]["start/end"][0]) + dt
-
-        for det in dets_to_merge[1:]:
-            for key in ["wvfrm_info", "fk_params", "det_params", "start/end", "fk", "beam", "spec"]:
-                dets_out[-1][key] = dets_out[-1][key] + det[key]
-
-            dt = UTCDateTime(det["peak f-stat time"]) - UTCDateTime(t0)
-            dets_out[-1]["start/end"][-1] = np.array(det["start/end"][-1]) + dt
-            dets_out[-1]["fk"][-1]["time"] = np.array(det["fk"][-1]["time"]) + dt
-            dets_out[-1]["beam"][-1]["time"] = np.array(det["beam"][-1]["time"]) + dt
-
-        # update back azimuth and trace velocity using weighted mean...
-        az_all, tr_all, fs_all = [np.array([])] * 3
-        for det in dets_to_merge:
-            tm_mask = np.logical_and(det["start/end"][0][0] <= det["fk"][-1]["time"], det["fk"][-1]["time"] <= det["start/end"][0][1])
-            az_all = np.append(az_all, np.array(det["fk"][-1]["back az"])[tm_mask])
-            tr_all = np.append(tr_all, np.array(det["fk"][-1]["tr vel"])[tm_mask])
-            fs_all = np.append(fs_all, np.array(det["fk"][-1]["f-stat"])[tm_mask])
-
-        dets_out[-1]["back az"] = np.average(az_all, weights=fs_all)
-        dets_out[-1]["tr vel"] = np.average(tr_all, weights=fs_all)
-
-        # remove merged detections from the original list and continue
-        det_list = [det_list[j] for j in range(len(det_list)) if j not in merge_indices]
-
-    det_output = {'det_info' : dets_out}
+    click.echo('\n' + "Merging detections...")
+    det_output = {'det_info' : beam.merge_dets(det_list)}
     with gzip.open(merged_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
@@ -793,56 +725,4 @@ def ev_char_reset(ev_file):
 
 
 
-
-
-##########################################
-## THE REST OF THESE ARE DEPRECATED AND ##
-##  WILL BE REMOVED IN A FUTURE UPDATE  ##
-##########################################
-
-@click.command('arrivals2json', short_help="Convert infraGA/GeoAc arrivals to detection file", hidden=True)
-@click.option("--arrivals-file", help="InfraGA/GeoAc arrivals file", default=None)
-@click.option("--json-file", help="JSON format detection file", default=None)
-@click.option("--grnd-snd-spd", help="Ground sound speed", default=340.0)
-@click.option("--src-time", help="Source time", default="2020-01-01T00:00:00")
-@click.option("--peakf-value", help="Fixed F-value", default=25.0)
-@click.option("--array-dim", help="Array dimension", default=6)
-def arrivals2json(arrivals_file, json_file, grnd_snd_spd, src_time, peakf_value, array_dim):
-    '''
-    Convert infraGA/GeoAc eigenray arrival results into a json detection list usable in InfraPy
-
-    \b
-    Example usage (requires InfraGA/GeoAc arrival output):
-    \tinfrapy arrivals2json --arrivals-file example.arrivals.dat --json-file example.dets.json --grnd-snd-spd 335.0 --src-time "2020-12-25T00:00:00"
-
-    '''
-    click.echo("")
-    click.echo("#################################")
-    click.echo("##                             ##")
-    click.echo("##      InfraPy Utilities      ##")
-    click.echo("##        arrivals2json        ##")
-    click.echo("##                             ##")
-    click.echo("#################################")
-    click.echo("")
-
-    click.echo("")
-    click.echo("  arrivals_file: " + str(arrivals_file))
-    click.echo("  json_file: " + str(json_file))
-
-    click.echo("")
-    click.echo("  grnd_snd_spd: " + str(grnd_snd_spd))
-    click.echo("  src_time: " + str(src_time))
-    click.echo("  peakF_value: " + str(peakf_value))
-    click.echo("  array_dim: " + str(array_dim))
-
-    arrivals = np.loadtxt(arrivals_file)
-
-    det_list = []
-    for line in arrivals:
-        det = lklhds.InfrasoundDetection(lat_loc=np.round(line[3], 3), lon_loc=np.round(line[4], 3), time=(UTCDateTime(src_time) + line[5]), azimuth=np.round(line[9], 2), f_stat=peakf_value, array_d=array_dim)
-        det.trace_velocity = np.round(grnd_snd_spd / np.cos(np.radians(line[8])), 1)
-        det.note = "InfraGA/GeoAc arrival output"
-        det_list = det_list + [det]
-
-    data_io.detection_list_to_json(json_file, det_list)
 
