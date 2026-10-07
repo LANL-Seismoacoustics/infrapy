@@ -49,7 +49,7 @@ from ..detection import spectral
 @click.option("--fk-window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--fk-sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--fk-window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
 
 @click.option("--fd-window-len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['FD']['p_value'] + ")", default=None, type=float)
@@ -165,12 +165,6 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     fk_params['sub_window_len'] = config.set_param(user_config, 'FK', 'sub_window_len', fk_sub_window_len, 'float')
     fk_params['window_step'] = config.set_param(user_config, 'FK', 'window_step', fk_window_step, 'float')
     fk_params['cpu_cnt'] = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
-    '''
-    if fk_params['cpu_cnt'] is not None:
-        pl = Pool(fk_params['cpu_cnt'])
-    else:
-        pl = None
-    '''
 
     click.echo('\n' + "fk (beam) parameters:")
     for key in fk_params.keys():
@@ -327,7 +321,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
 @click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'] + ")", default=None, type=float)
 @click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'] + ")", default=None, type=int)
 @click.option("--cluster-window-len", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_window_len'] + ")", default=None, type=float)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
 @click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
 def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step,
