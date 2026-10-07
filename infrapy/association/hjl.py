@@ -219,7 +219,7 @@ def compute_assoc_pair(det1, det2,  bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             The joint-likelihood value for the pair of detections
     """
 
-    array_sep = sph_proj.inv(det1.longitude, det1.latitude, det2.longitude, det2.latitude)[2] / 1000.0 
+    array_sep = sph_proj.inv(det1.longitude, det1.latitude, det2.longitude, det2.latitude)[2] / 1000.0
     if array_sep < 1.0:
         # Integration separates into a product of 1-dimensional
         # integrals for detections on the same array
@@ -324,7 +324,7 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             # step = int(np.floor((50.0 * (n_ref + 1)) / n_tot) - np.floor((50.0 * n_ref) / n_tot))
             step = prog_bar.set_step(n_ref, n_tot, 50)
         else:
-            step = 0        
+            step = 0
         args.append([det_list[n], det_list[m], bm_width, rng_max, rad_min, rad_max, resol, step])
         ids.append([n, m])
         n_ref += 1
@@ -524,7 +524,7 @@ def trim_clusters(labels, distance_matrix, population_min=3, ratio_thresh=3.0):
                 m1 = np.argmax([np.nanmean(col) for col in distance_submatrix])
                 m2 = np.nanargmin(distance_submatrix[:, m1])
                 trim_indices = trim_indices + [[indices[m1], indices[m2]]]
-    
+
     return trim_indices
 
 
@@ -653,11 +653,11 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
     return labels, sorted_dists
 
 
-def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0, 
+def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0,
     resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, cpu_cnt=1):
     """
-    
-    
+
+
     """
 
 
@@ -689,7 +689,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
         new_list = [pair[1] for pair in temp]
 
         if len(temp) >= cluster_det_population:
-            labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, 
+            labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol,
                 linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, cpu_cnt=cpu_cnt)
             clusters, qualities = summarize_clusters(labels, dists, population_min=cluster_det_population)
 
@@ -725,7 +725,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
 
 
 def id_events_dict(det_list, assoc_params, cpu_cnt):
-    
+
     return id_events(det_list,
                      assoc_params['cluster_threshold'],
                      starttime=assoc_params['starttime'],
@@ -734,10 +734,10 @@ def id_events_dict(det_list, assoc_params, cpu_cnt):
                      bm_width=assoc_params['back_az_width'],
                      rng_max=assoc_params['range_max'],
                      rad_min=100.0,
-                     rad_max=(assoc_params['range_max'] / 4.0), 
+                     rad_max=(assoc_params['range_max'] / 4.0),
                      resol=assoc_params['resolution'],
                      linkage_method=assoc_params['cluster_linkage'],
-                     trimming_thresh=assoc_params['trimming_threshold'], 
+                     trimming_thresh=assoc_params['trimming_threshold'],
                      cluster_det_population=assoc_params['ev_population_min'],
                      cluster_array_population=assoc_params['ev_station_min'],
                      cpu_cnt=cpu_cnt)
