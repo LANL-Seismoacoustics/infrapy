@@ -64,7 +64,7 @@ class IPLocationWidget(QWidget):
     def buildUI(self):
 
         # BottomTab widgets go here...
-        
+
         self.bisl_resultsWidget = IPBISLResultsWidget(self)
 
         # set up the map widget
@@ -111,7 +111,7 @@ class IPLocationWidget(QWidget):
         bottomRow_layout.addWidget(self.bisl_resultsWidget)
         bottomRow_layout.addWidget(self.showgroundtruth)
         self.bottomRow.setLayout(bottomRow_layout)
-    
+
         self.lhWidget = QWidget()
         lh_layout = QVBoxLayout()
         lh_layout.addWidget(self.mapWidget)
@@ -122,7 +122,7 @@ class IPLocationWidget(QWidget):
         self.mainSplitter.addWidget(self.lhWidget)
         self.mainSplitter.addWidget(self.assoc_splitter)
 
-        
+
         main_layout = QBoxLayout(QBoxLayout.TopToBottom)
         main_layout.addWidget(self.mainSplitter)
         self.setLayout(main_layout)
@@ -176,7 +176,7 @@ class IPLocationWidget(QWidget):
         self.dm_view.clear()
         self.dendrogram.clear_plot()
         self.bisl_resultsWidget.clearConsole()
-    
+
     def get_detections(self):
         return self.detections
 
@@ -211,7 +211,7 @@ class IPLocationWidget(QWidget):
     @pyqtSlot(list, str)
     def trim_detections(self, indicies, linecolor='gray'):
 
-        # the detections to show has been changed, which means we probably don't 
+        # the detections to show has been changed, which means we probably don't
         # want the bisl results showing anymore.  So lets remove those first.
         self.mapWidget.remove_conf_ellipse()
         self.mapWidget.remove_bisl_result()
@@ -267,14 +267,14 @@ class IPLocationWidget(QWidget):
 
     @pyqtSlot(dict, str)
     def bisl_run_finished(self, result, exception_str):
-        
+
         self.bisl_result = result
 
         if exception_str != "":
             # bisl exited with and exception.  Pop up window with possible useful info.
             IPUtils.errorPopup(exception_str)
             return
-        
+
         if result:
             # if result has data, then bisl ran and found a location
             self.bisl_resultsWidget.setResults(result)
@@ -503,7 +503,7 @@ class IPLocationWidget(QWidget):
 
         # self.update_dm_button = QPushButton('Update Dist. Matrix')
         # self.update_dm_button.setFont(button_font)
-        
+
         # mainlayout = QVBoxLayout()
         # mainlayout.addWidget(title_label)
         # # mainlayout.addLayout(layout)
@@ -533,7 +533,7 @@ class ShowGroundTruth(QFrame):
 
     def buildUI(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-        
+
         title_label = QLabel('Event/Ground Truth')
         title_label.setStyleSheet("font-weight: bold;")
         title_label.setAlignment(Qt.AlignCenter)
@@ -547,7 +547,7 @@ class ShowGroundTruth(QFrame):
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-    
+
     @pyqtSlot(dict)
     def eventChanged(self, ev_dict):
         if ev_dict['Latitude']:
@@ -883,8 +883,7 @@ class DistanceMatrixWorkerObject(QObject):
                                                          rng_max=self.rng_max,
                                                          rad_min=self.rad_min,
                                                          rad_max=self.rad_max,
-                                                         resol=self.resol,
-                                                         pool=self.pool)
+                                                         resol=self.resol)
         except Exception:
             IPUtils.errorPopup("Error while calculating the distance matrix: {}".format(sys.exc_info()[0]))
             self.thread_stopped = True
@@ -900,7 +899,7 @@ class DistanceMatrixWorkerObject(QObject):
 class BISLWorkerObject(QObject):
 
     signal_runFinished = pyqtSignal(dict, str)
-    
+
 
     def __init__(self, detections,
                  beam_width=10,
@@ -1001,7 +1000,7 @@ class ClusterWorkerObject(QObject):
 
 
 class IPBISLResultsWidget(QWidget):
-    
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -1066,7 +1065,7 @@ class IPBISLResultsWidget(QWidget):
             if save_filename == '':
                 # dialog was cancelled, just leave
                 return
-            
+
             json_string = json.dumps(self.results, indent=4, default=str)
             with open(save_filename, "w") as ofile:
                 ofile.write(json_string)
@@ -1108,7 +1107,7 @@ class IPDendrogramWidget(QWidget):
             self.fig.patch.set_facecolor('w')
         elif t == 'dark':
             self.fig.patch.set_facecolor(IPUtils.ip_dark_grey_hex)
-        
+
         self.fig.canvas.draw()
 
     def set_data(self, links, threshold):
