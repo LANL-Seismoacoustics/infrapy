@@ -10,9 +10,6 @@ import warnings
 import configparser as cnfg
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-from multiprocessing import Pool
 from importlib.util import find_spec
 
 from ..propagation import infrasound

@@ -931,15 +931,9 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
         ns_covar_inv: ndarray
             Noise covariance inverse used in GLS beam
         signal_cnt: int
-<<<<<<< HEAD
-            Number of assumed signals for MUSIC beam
-        pl: multiprocessing.Pool
-            Multiprocessing pool for simulatenous analysis of windows
-=======
             Number of assumed signals for MUSIC beam
         cpu_cnt: int
             Number of CPUs used by concurrent.futures for multithreading
->>>>>>> 2ae66b3 (concurrent futures updates done for beam and spectral detection, need to do event building and localization next)
 
 
         Returns:

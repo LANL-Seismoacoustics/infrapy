@@ -408,11 +408,6 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
         click.echo("  db_url (and other database info)")
 
     click.echo("  det_label: " + str(det_label))
-    if cpu_cnt is not None:
-        click.echo("  cpu_cnt: " + str(cpu_cnt))
-        pl = Pool(cpu_cnt)
-    else:
-        pl = None
 
     # Algorithm parameters
     sd_params = {}
