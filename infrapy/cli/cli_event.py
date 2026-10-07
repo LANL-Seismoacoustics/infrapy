@@ -271,11 +271,6 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     loc_params['local_temp_dir'] = config.set_param(user_config, 'LOC', 'local_temp_dir', local_temp_dir, 'str')
     loc_params['cpu_cnt'] = config.set_param(user_config, 'LOC', 'cpu_cnt', cpu_cnt, 'int')
 
-    if loc_params['cpu_cnt'] is not None:
-        pl = Pool(loc_params['cpu_cnt'])
-    else:
-        pl = None
-
     if loc_params['ll_corner'] is not None:
         # set grid from corners
         loc_params['ll_corner'] = np.array([float(val) for val in loc_params['ll_corner'].replace(" ","").split(",")])
@@ -398,12 +393,11 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                 print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
                                 temp = tribl.run_dict(det_list,
                                                       file_path + file_name,
-                                                      temp_path,
+                                                      temp_path + "-" + str(k),
                                                       loc_params,
                                                       tm_lims,
                                                       verbose=False,
-                                                      show_prog=True,
-                                                      pool=pl)
+                                                      show_prog=True)
                                 norms = norms + [temp['norm']]
 
                             norms = norms / np.sum(norms)
@@ -440,8 +434,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                                                     loc_params,
                                                     tm_lims,
                                                     verbose=True,
-                                                    show_prog=True,
-                                                    pool=pl)
+                                                    show_prog=True)
             else:
                 click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
                 return
