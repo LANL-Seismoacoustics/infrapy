@@ -191,23 +191,18 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
     db_info = cnfg.ConfigParser()
     db_info.read(db_config)
 
-    print("Setting up database configuration...")
     # set up the session and check connection
-    if 'url' in db_info['DATABASE'].keys():
-        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
-        db_session = database.db_connect_url( db_info['DATABASE']['url'])
-    else:
-        # clean up the above to simplify this or just require a url?
-        db_session = database.db_connect2(db_info)
+    print("Setting up database configuration...")
+    db_session = database.set_session(dict(db_info['DATABASE']))
 
-    # check the session works
     try:
         db_session.get_bind().connect()
     except:
         print("Database connection failed")
         return
 
-    ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list, db_schema="kbcore")
+    # Pull arrival information
+    ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list)
 
     if len(ev_output['det_info']) > 0:
         if verbose:
