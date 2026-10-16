@@ -7,7 +7,7 @@
 
 [YIELD]
 
-det_mask = 0, 0, 1, 1,  0, 0, 1, 1
+det_mask = 0, 0, 1, 1, 0, 0, 1, 1
 
 freq_min = 0.2
 freq_max = 1.0
