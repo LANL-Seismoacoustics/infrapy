@@ -1,5 +1,5 @@
 # Pipeline analysis of Humming Roadrunner 5 for testing
-# 
+#
 # Ground Truth:
 # Location: 33.53969, −106.33562
 # Origin: 2012-08-27 @ 23:02 UTC
@@ -15,8 +15,8 @@ temp_Dir = HRR/temp/
 
 # CONFIG FILE INFO
 beam_cnfgs = beam_0.10Hz.cnfg,
-             beam_0.25Hz.cnfg, 
-             beam_0.50Hz.cnfg, 
+             beam_0.25Hz.cnfg,
+             beam_0.50Hz.cnfg,
              beam_1.00Hz.cnfg
 
 ev_build_cnfgs = ev_build_reg.cnfg
@@ -29,16 +29,16 @@ ev_char_cnfgs = char_SpYE.cnfg
 # DATA INFO
 fdsn = EARTHSCOPE
 
-# trace_ids = 2D.N30*.*.*DF,
-#            2D.N34*.*.*DF,
-#            2D.N38*.*.*DF,
-#            2D.W22*.*.*DF,
-#            2D.W24*.*.*DF,
-#            2D.W34*.*.*DF,
-#            2D.W42*.*.*DF,
-#            2D.W46*.*.*DF,
-#            2D.W49*.*.*DF,
-#            2D.WNK*.*.*DF
+# trace_ids = 2D.N30*.*.*DF |
+#             2D.N34*.*.*DF |
+#             2D.N38*.*.*DF |
+#             2D.W22*.*.*DF |
+#             2D.W24*.*.*DF |
+#             2D.W34*.*.*DF |
+#             2D.W42*.*.*DF |
+#             2D.W46*.*.*DF |
+#             2D.W49*.*.*DF |
+#             2D.WNK*.*.*DF
 
 trace_ids = 2D.N30CN..CDF, 2D.N30CS..CDF, 2D.N30NE..CDF, 2D.N30NW..CDF, 2D.N30SE..CDF, 2D.N30SW..CDF |
             2D.N34C..CDF,  2D.N34CE..CDF, 2D.N34CN..CDF, 2D.N34CS..CDF, 2D.N34CW..CDF, 2D.N34NE..CDF, 2D.N34NW..CDF, 2D.N34SE..CDF, 2D.N34SW..CDF |
