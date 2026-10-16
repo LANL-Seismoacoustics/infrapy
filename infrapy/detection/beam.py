@@ -1296,7 +1296,7 @@ def merge_dets(det_list):
 ## Dictionary Wrappers ##
 #########################
 
-def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
+def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt):
 
     back_az_vals = np.arange(fk_params['back_az_min'],
                              fk_params['back_az_max'],
@@ -1316,7 +1316,7 @@ def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
                   trc_vel_vals,
                   ns_covar_inv,
                   1, # hard code picking only 1 peak
-                  pl)
+                  cpu_cnt)
 
 
 def run_afd_dict(beam_times, beam_peaks, fk_params, det_params, chan_cnt):
