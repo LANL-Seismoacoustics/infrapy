@@ -3,74 +3,38 @@
 # test_bisl.py
 #
 # Author    Philip Blom (pblom@lanl.gov)
+import json
+import gzip
 
-import numpy as np
-
-from infrapy.location import bisl
-from infrapy.utils import data_io
-from infrapy.propagation import infrasound as infsnd
-from infrapy.location import visualization as vis
-
-
-# ######################### #
-#       Define Inputs       #
-# ######################### #
-
-# Define ground_truth if known (41.131, -112.896 for UTTR; Test includes show in June 2004)
-grnd_trth = [41.131, -112.896, np.datetime64('2004-06-02T17:23:04.0')]
-
-# Define localization parameters
-bm_width = 12.5
-rad_min, rad_max = 50.0, 500.0
-rng_max = np.pi / 2.0 * 6370.0
-resolution = int(np.sqrt(1e5))
-
-# Load detection list from json file
-det_list = data_io.json_to_detection_list('data/example2.dets.json')
-
-# Plot detections
-vis.plot_dets_on_map(det_list)
-
-# ########################## #
-#          Run BISL          #
-#       in Verbose Mode      #
-# ########################## #
-
-# Run analysis without priors
-result = bisl.run(det_list,
-                    bm_width=bm_width,
-                    rad_min=rad_min, 
-                    rad_max=rad_max, 
-                    rng_max=rng_max, 
-                    resol=resolution,angle=[-180,180])
-
-print('-' * 75)
-print('BISL Summary\n')
-print(bisl.summarize(result))
-print('\n' + '-'*75 + '\n')
-
-# ###############################
-# plot the results from bisl ####
-
-vis.plot_loc(det_list, result)
-
-# Define priors, load from file, and display
-model = infsnd.PathGeometryModel()
-model.load("../infrapy/propagation/priors/UTTR_models/UTTR_06_1800UTC.pgm")
-
-# Re-run analysis with priors
-result = bisl.run(det_list, 
-                    bm_width=bm_width,
-                    rad_min=rad_min, 
-                    rad_max=rad_max, 
-                    rng_max=rng_max, 
-                    resol=resolution,angle=[-180,180],
-                    path_geo_model=model)
+from infrapy.location import bisl, visualization
+from infrapy.propagation import infrasound
+from infrapy.utils import config, data_io
 
 
-print('-' * 75)
-print('BISL Summary\n')
-print(bisl.summarize(result))
-print('\n' + '-'*75 + '\n')
 
-vis.plot_loc(det_list, result)
+if __name__ == '__main__':
+    # ######################### #
+    #       Define Inputs       #
+    # ######################### #
+
+    # Define ground_truth if known (41.131, -112.896 for UTTR; Test includes show in June 2004)
+    ev_file = 'data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz'
+
+    # Define localization parameters
+    loc_params = dict(config.defaults['LOC'])
+    loc_params['celerity_model'] = 'regional_lf'
+    loc_params['back_az_width'] = 10.0
+    loc_params['range_max'] = 1500.0
+    loc_params['grid_resol'] = 180
+
+    for key in loc_params.keys():
+        if 'none' in str(loc_params[key]).lower():
+            loc_params[key] = None
+
+    # Load detection list from json file
+    ev_data = data_io._load_dets_json(ev_file)[0]
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
+    result = bisl.run_dict(det_list, loc_params, None, None)
+
+    print('\n' + "Localization Summary:")
+    print(bisl.summarize(result))

@@ -32,7 +32,6 @@ if __name__ == '__main__':
 
     fk_params['window_len'] = 10.0
     fk_params['window_step'] = 2.5
-    fk_params['sub_window_len'] = None
 
     fk_params['back_az_min'] = -180.0
     fk_params['back_az_max'] = 180.0
@@ -47,9 +46,12 @@ if __name__ == '__main__':
     det_params['p_value'] = 0.02
     det_params['back_az_width'] = 15.0
     det_params['min_duration'] = 20.0
-    det_params['fixed_thresh'] = None
-    det_params['thresh_ceil'] = None
     det_params['merge_dets'] = True
+
+    # convert string 'None' to Python None for logic flow
+    for key in det_params.keys():
+        if 'none' in str(det_params[key]).lower():
+            det_params[key] = None
 
     # ######################### #
     #  Read Data and Summarize  #

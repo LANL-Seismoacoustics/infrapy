@@ -37,7 +37,6 @@ if __name__ == '__main__':
     sd_params["cluster_min_samples"] = 40
     sd_params["cluster_window_len"] = 600.0
 
-
     # ##################### #
     #     Read data and     #
     #     run detector      #
