@@ -899,7 +899,7 @@ def beam_window_wrapper(args):
     return beam_window(*args)
 
 
-def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, cpu_cnt):
+def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, cpu_cnt, verbose=True):
     """Run the beamforming (fk) analysis on a stream with various parameter specifications
 
         Convert a stream to an array data set on a consistent set of time samples
@@ -944,7 +944,9 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
             Residual across the array once beamed signal is extracted
         """
 
-    print('\n' + "Running beamforming analysis..." + '\n\t' + "Progress: ", end = '')
+    if verbose:
+        print('\n' + "Running beamforming analysis..." + '\n\t' + "Progress: ", end = '')
+
     if method == "time_domain":
         st_copy = stream.copy()
         st_copy.detrend().filter("bandpass", freqmin=freq_band[0], freqmax=freq_band[1])
@@ -957,7 +959,7 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     slowness = build_slowness(back_az_vals, trc_vel_vals)
     delays = compute_delays(geom, slowness)
 
-    prog_bar_len, win_cnt = 50, int((t[-1] - t[0]) / window_step) - 1
+    prog_bar_len, win_cnt = 50, int((t[-1] - t[0] - window_step) / window_step) - 1
 
     beam_times, args = [], []
     for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
@@ -1218,11 +1220,8 @@ def det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info):
 
 def merge_dets(det_list):
     dets_out = []
-
     while len(det_list) > 0:
         merge_indices = [0]
-        print("")
-
         for k, det_k in enumerate(det_list[1:]):
             # check at least one station ID matches
             ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
@@ -1242,13 +1241,11 @@ def merge_dets(det_list):
                     daz = daz - 360.0
                 daz = daz / 30.0
 
-                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
-
                 if np.sqrt(dt**2 + daz**2) < 0.75:
                     merge_indices = merge_indices + [k + 1]
 
         dets_to_merge = [det_list[j] for j in merge_indices]
-        print('\n' + "Detections to merge:")
+        print("Detections to merge:")
         for det in dets_to_merge:
             print("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
 
@@ -1296,7 +1293,7 @@ def merge_dets(det_list):
 ## Dictionary Wrappers ##
 #########################
 
-def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt):
+def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt, verbose=True):
 
     back_az_vals = np.arange(fk_params['back_az_min'],
                              fk_params['back_az_max'],
@@ -1316,7 +1313,8 @@ def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt):
                   trc_vel_vals,
                   ns_covar_inv,
                   1, # hard code picking only 1 peak
-                  cpu_cnt)
+                  cpu_cnt,
+                  verbose)
 
 
 def run_afd_dict(beam_times, beam_peaks, fk_params, det_params, chan_cnt):

@@ -306,29 +306,26 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     pipe_params['out_label'] = config.set_param(user_config, 'PIPELINE', 'out_label', out_label, 'string')
     pipe_params['starttime'] = config.set_param(user_config, 'PIPELINE', 'starttime', starttime, 'string')
     pipe_params['endtime'] = config.set_param(user_config, 'PIPELINE', 'endtime', endtime, 'string')
-    cpu_cnt = config.set_param(user_config, 'PIPELINE', 'cpu_cnt', cpu_cnt, 'int')
+    pipe_params['cpu_cnt'] = config.set_param(user_config, 'PIPELINE', 'cpu_cnt', cpu_cnt, 'int')
 
     # Check data source (local files, FDSN, DB)
+    pipe_params['local_wvfrm_data'] = config.set_param(user_config, 'PIPELINE', 'local_wvfrm_data', None, 'string')
     pipe_params['fdsn'] = config.set_param(user_config, 'PIPELINE', 'fdsn', None, 'string')
     pipe_params['db_config'] = config.set_param(user_config, 'PIPELINE', 'db_config', None, 'string')
-
-    # Set automatic output label if needed
-    if pipe_params['out_label'] is None:
-        t0 = UTCDateTime(pipe_params['starttime'])
-        pipe_params['out_label'] = str(t0.datetime).replace(" ","T").replace(":",".")
 
     # summarize pipeline parameters
     click.echo('\n' + "pipeline parameters:")
     for key in pipe_params.keys():
         if pipe_params[key] is not None:
-            if 'trace_ids' in key:
-                pipe_params[key] = pipe_params[key].replace('\n','').split('|')
+            if type(pipe_params[key]) is str:
+                if '|' in pipe_params[key]:
+                    pipe_params[key] = pipe_params[key].replace('\n','').replace(' ','').split('|')
 
-            if "," in pipe_params[key]:
-                pipe_params[key] = pipe_params[key].replace('\n','').split(',')
+                if "," in pipe_params[key]:
+                    pipe_params[key] = pipe_params[key].replace('\n','').replace(' ','').split(',')
 
-            if 'cnfgs' in key and not isinstance(pipe_params[key], list):
-                pipe_params[key] = [pipe_params[key]]
+                if 'cnfgs' in key and not isinstance(pipe_params[key], list):
+                    pipe_params[key] = [pipe_params[key]]
 
             if type(pipe_params[key]) is list:
                 if len(pipe_params[key]) > 1:
@@ -339,9 +336,17 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     click.echo("  " + key + ": " + str(pipe_params[key][0]))
             else:
                 click.echo("  " + key + ": " + str(pipe_params[key]))
-    click.echo("  cpu_cnt: " + str(cpu_cnt) + '\n')
 
-    # Build directories (if needed)
+    # Set automatic output label if needed
+    if pipe_params['starttime'] is not None:
+        t0 = UTCDateTime(pipe_params['starttime'])
+        pipe_params['out_label'] = str(t0.datetime).replace(" ","T").replace(":",".")
+    else:
+        click.echo('\n' + "Warning!! Configuration file does not incluce 'starttime' or 'out_label' parameter.")
+        click.echo('\t' + "Using general 'infrapype' output label.")
+        pipe_params['out_label'] = 'infrapype'
+
+    # Build directories if needed
     for dir_key in ['det_dir', 'ev_dir', 'figs_dir']:
         if not os.path.isdir(pipe_params[dir_key]):
             click.echo("Creating directory: " + pipe_params[dir_key])
@@ -356,40 +361,53 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
         if temp_path[-1] != "/":
             temp_path = temp_path + "/"
 
+        # Extract waveform info and set up for iterating over
+        if pipe_params['local_wvfrm_data'] is not None:
+            wvfrm_sets = [{'local_wvfrms': wvfrms, "fdsn": None, "db_config" : None,
+                           'net' : None, 'sta' : None, 'loc' : None, 'cha' : None} for wvfrms in pipe_params['local_wvfrm_data']]
+
+        elif pipe_params['fdsn'] is not None or pipe_params['db_config'] is not None:
+            # Parse network, station, channel, location info and set local_wvfrm to Nones
+            wvfrm_sets = []
+            for id in pipe_params['trace_ids']:
+                wvfrm_sets = wvfrm_sets + [{"local_wvfrms" : None, "fdsn": pipe_params['fdsn'], "db_config" : pipe_params['db_config']}]
+                if '*' in id:
+                    wvfrm_sets[-1]['net'] = id.split(".")[0]
+                    wvfrm_sets[-1]['sta'] = id.split(".")[1]
+                    wvfrm_sets[-1]['loc'] = id.split(".")[2]
+                    wvfrm_sets[-1]['cha'] = id.split(".")[3]
+                else:
+                    wvfrm_sets[-1]['net'] = ",".join(np.unique([item.split(".")[0] for item in id.replace(" ","").split(",")]))
+                    wvfrm_sets[-1]['sta'] = ",".join(np.unique([item.split(".")[1] for item in id.replace(" ","").split(",")]))
+                    wvfrm_sets[-1]['loc'] = ",".join(np.unique([item.split(".")[2] for item in id.replace(" ","").split(",")]))
+                    wvfrm_sets[-1]['cha'] = ",".join(np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")]))
+
         # Run detection, merge, and plot
-        for id in pipe_params['trace_ids']:
-            # Need to add a catch for local file use here
+        for info in wvfrm_sets:
+            click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
+            stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_config"],
+                                                info['net'], info['sta'], info['loc'], info['cha'],
+                                                pipe_params['starttime'], pipe_params['endtime'], None)
 
-            if '*' in id:
-                net, sta, loc, cha = id.split(".")
-                det_label = pipe_params['out_label'] + "_" + id.replace("*","")
-            else:
-                net = np.unique([item.split(".")[0] for item in id.replace(" ","").split(",")])
-                sta = np.unique([item.split(".")[1] for item in id.replace(" ","").split(",")])
-                loc = np.unique([item.split(".")[2] for item in id.replace(" ","").split(",")])
-                cha = np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")])
-
-                det_label = pipe_params['out_label'] + "_" + comm_str(net) + "." + comm_str(sta) + "." + comm_str(loc) + "." + comm_str(cha)
-
-                net = ",".join(net)
-                sta = ",".join(sta)
-                loc = ",".join(loc)
-                cha = ",".join(cha)
-
-            stream, latlon = data_io.set_stream(None, pipe_params["fdsn"], pipe_params["db_config"],
-                                                net, sta, loc, cha, pipe_params['starttime'], pipe_params['endtime'], None)
             wvfrm_info = data_io.wvfrm_info(stream, latlon)
             click.echo("Data summary:")
             for tr in stream:
-                click.echo('\t' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+                click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+            click.echo('')
+
+            det_label = pipe_params['out_label'] + "_"
+            det_label = det_label + comm_str(np.unique([tr.id.split(".")[0] for tr in stream])) + "."
+            det_label = det_label + comm_str(np.unique([tr.id.split(".")[1] for tr in stream])) + "."
+            det_label = det_label + comm_str(np.unique([tr.id.split(".")[2] for tr in stream])) + "."
+            det_label = det_label + comm_str(np.unique([tr.id.split(".")[3] for tr in stream]))
 
             # Run beamforming and combine results
             if not os.path.isfile(pipe_params["det_dir"] + det_label + ".dets.json.gz"):
                 for bm_j, bm_config_file in enumerate(pipe_params["beam_cnfgs"]):
-                    click.echo('\n' + "Running beam analysis using " + bm_config_file)
+                    click.echo("Running beam analysis using " + bm_config_file + '\t', nl=False)
 
                     bm_params, det_params = set_bm_config(pipe_params["config_dir"] + bm_config_file)
-                    beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, bm_params, None, cpu_cnt)
+                    beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, bm_params, None, cpu_cnt, verbose=False)
                     dets, _ = beam.run_afd_dict(beam_times, beam_peaks, bm_params, det_params, len(stream))
                     dets_out = [beam.det2dict(stream, latlon, beam_times, beam_peaks, bm_params, det_info) for det_info in dets]
 
@@ -401,7 +419,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     with gzip.open(temp_path + det_label + "-" + str(bm_j) + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
                         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
-                click.echo("Merging detections...")
+                click.echo('')
                 dets_all = data_io._load_dets_json(temp_path + det_label + "-*.dets.json.gz")
                 det_combined = []
                 for entry in dets_all:
@@ -422,7 +440,6 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     det_vis.plot_det_json(det_data, k, output_path=pipe_params["figs_dir"] + det_label.replace(".","_") + "_det" + str(k), show_fig=False)
 
         '''
-
         # Build and analyze events if config file(s) are specified
         if "ev_build_cnfgs" not in pipe_params.keys(): return
 
