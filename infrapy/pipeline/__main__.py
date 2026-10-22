@@ -13,7 +13,11 @@ import configparser as cnfg
 from obspy import UTCDateTime
 
 from ..utils import config, data_io
+from ..propagation import infrasound
+
 from ..detection import beam
+from ..association import hjl
+from ..location import bisl, tribl
 
 from ..detection import visualization as det_vis
 from ..location import visualization as loc_vis
@@ -229,7 +233,6 @@ def pipeline_old(cnfg_file, out_label, starttime, endtime, cpu_cnt):
 
 
 def set_bm_config(cnfg_file):
-
     bm_config = cnfg.ConfigParser()
     bm_config.read(cnfg_file)
 
@@ -250,7 +253,6 @@ def set_bm_config(cnfg_file):
     bm_params['window_len'] = config.set_param(bm_config, 'FK', 'window_len', None, 'float')
     bm_params['sub_window_len'] = config.set_param(bm_config, 'FK', 'sub_window_len', None, 'float')
     bm_params['window_step'] = config.set_param(bm_config, 'FK', 'window_step', None, 'float')
-    bm_params['cpu_cnt'] = config.set_param(bm_config, 'FK', 'cpu_cnt', None, 'int')
 
     det_params = {}
     det_params['window_len'] = config.set_param(bm_config, 'FD', 'window_len', None, 'float')
@@ -262,6 +264,29 @@ def set_bm_config(cnfg_file):
     det_params['merge_dets'] = config.set_param(bm_config, 'FD', 'merge_dets', None, 'bool')
 
     return bm_params, det_params
+
+
+def set_ev_bld_config(cnfg_file):
+    hjl_cnfg = cnfg.ConfigParser()
+    hjl_cnfg.read(cnfg_file)
+
+    hjl_params = {}
+    hjl_params['celerity_model'] = config.set_param(hjl_cnfg, 'ASSOC', 'celerity_model', None, 'string')
+
+    hjl_params['back_az_width'] = config.set_param(hjl_cnfg, 'ASSOC', 'back_az_width', None, 'float')
+    hjl_params['range_max'] = config.set_param(hjl_cnfg, 'ASSOC', 'range_max', None, 'float')
+    hjl_params['resolution'] = config.set_param(hjl_cnfg, 'ASSOC', 'resolution', None, 'int')
+
+    hjl_params['distance_matrix_max'] = config.set_param(hjl_cnfg, 'ASSOC', 'distance_matrix_max', None, 'float')
+    hjl_params['cluster_linkage'] = config.set_param(hjl_cnfg, 'ASSOC', 'cluster_linkage', None, 'string')
+    hjl_params['cluster_threshold'] = config.set_param(hjl_cnfg, 'ASSOC', 'cluster_threshold', None, 'float')
+
+    hjl_params['trimming_threshold'] = config.set_param(hjl_cnfg, 'ASSOC', 'trimming_threshold', None, 'float')
+    hjl_params['ev_population_min'] = config.set_param(hjl_cnfg, 'ASSOC', 'ev_population_min', None, 'int')
+    hjl_params['ev_station_min'] = config.set_param(hjl_cnfg, 'ASSOC', 'ev_station_min', None, 'int')
+
+    return hjl_params
+
 
 
 @click.command('infrapype', short_help="Automated infrapy analysis pipeline (prototype)",context_settings={'help_option_names': ['-h', '--help']})
@@ -338,13 +363,14 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 click.echo("  " + key + ": " + str(pipe_params[key]))
 
     # Set automatic output label if needed
-    if pipe_params['starttime'] is not None:
-        t0 = UTCDateTime(pipe_params['starttime'])
-        pipe_params['out_label'] = str(t0.datetime).replace(" ","T").replace(":",".")
-    else:
-        click.echo('\n' + "Warning!! Configuration file does not incluce 'starttime' or 'out_label' parameter.")
-        click.echo('\t' + "Using general 'infrapype' output label.")
-        pipe_params['out_label'] = 'infrapype'
+    if pipe_params['out_label'] is None:
+        if pipe_params['starttime'] is not None:
+            t0 = UTCDateTime(pipe_params['starttime'])
+            pipe_params['out_label'] = str(t0.datetime).replace(" ","T").replace(":",".")
+        else:
+            click.echo('\n' + "Warning!! Configuration file does not incluce 'starttime' or 'out_label' parameter.")
+            click.echo('\t' + "Using general 'infrapype' output label.")
+            pipe_params['out_label'] = 'infrapype'
 
     # Build directories if needed
     for dir_key in ['det_dir', 'ev_dir', 'figs_dir']:
@@ -383,8 +409,11 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     wvfrm_sets[-1]['cha'] = ",".join(np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")]))
 
         # Run detection, merge, and plot
-        for info in wvfrm_sets:
-            click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
+        click.echo('\n' + '*' * 50 + '\n**' + ' ' * 14 + 'Detection Analysis' + ' ' * 14 + '**\n' + '*' * 50)
+
+        for k, info in enumerate(wvfrm_sets):
+            if k > 0:
+                click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
             stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_config"],
                                                 info['net'], info['sta'], info['loc'], info['cha'],
                                                 pipe_params['starttime'], pipe_params['endtime'], None)
@@ -432,6 +461,9 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 det_output = {'det_info' : beam.merge_dets(det_combined)}
                 with gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
                     json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+            else:
+                click.echo("Existing results found for " + pipe_params["det_dir"] + det_label + ".dets.json.gz")
+
 
             if not os.path.isfile(pipe_params["figs_dir"] + det_label.replace(".","_") + "_det0.png"):
                 det_data = json.load(gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'rt'))
@@ -439,25 +471,53 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     det = det_data["det_info"][k]
                     det_vis.plot_det_json(det_data, k, output_path=pipe_params["figs_dir"] + det_label.replace(".","_") + "_det" + str(k), show_fig=False)
 
-        '''
         # Build and analyze events if config file(s) are specified
         if "ev_build_cnfgs" not in pipe_params.keys(): return
-
+        click.echo('\n' + '*' * 50 + '\n**' + ' ' * 16 + 'Event Analysis' + ' ' * 16 + '**\n' + '*' * 50 + '\n')
         for ev_j, ev_config in enumerate(pipe_params["ev_build_cnfgs"]):
             ev_j_id = "_ev-bld-cnfg-" + str(ev_j) if len(pipe_params['ev_build_cnfgs']) > 1 else ""
 
-            if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + ".ev.json.gz"):
-                command = "infrapy event build --dets-files '" + pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz' --ev-label " + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
-                command = command + " --cnfg-file " + pipe_params["config_dir"] + ev_config
+            if not os.path.isfile(pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + "-0.ev.json.gz"):
+                ev_label =  pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id
+                ev_bld_params = set_ev_bld_config(pipe_params["config_dir"] + ev_config)
+                ev_bld_params['starttime'], ev_bld_params['endtime'] = None, None
 
-                click.echo('\n' + command)
-                if not test_commands:
-                    os.system(command)
+                click.echo("Loading detections from " + pipe_params["det_dir"] + pipe_params['out_label'] + '*.dets.json.gz\n')
+                det_data = data_io._load_dets_json(pipe_params["det_dir"] + pipe_params['out_label'] + "*.dets.json.gz")
+
+                det_dicts = []
+                for entry in det_data:
+                    for det in entry["det_info"]:
+                        det_dicts = det_dicts + [det]
+                        if 'fk_params' in entry.keys():
+                            det_dicts[-1]["wvfrm_info"] = entry["wvfrm_info"]
+                            det_dicts[-1]["fk_params"] = entry["fk_params"]
+                            det_dicts[-1]["det_params"] = entry["det_params"]
+                det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
+
+                infrasound._load_celerity_model(ev_bld_params['celerity_model'])
+                events, ev_qls = hjl.id_events_dict(det_list, ev_bld_params, cpu_cnt, verbose=True)
+
+                click.echo('\nIdentified ' + str(len(events)) + ' event(s):')
+                for j, ev in enumerate(events):
+                    dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=ev_bld_params['back_az_width'],
+                                                         rng_max=ev_bld_params['range_max'], rad_min=100.0, rad_max=(ev_bld_params['range_max'] / 4.0),
+                                                         resol=ev_bld_params['resolution'],  cpu_cnt=cpu_cnt, progress=False)
+
+                    ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : ev_bld_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
+                    click.echo('  Writing event into ' + ev_label + '-' + str(j) +'.ev.json.gz')
+                    with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                        json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+            else:
+                click.echo("Warning!  Existing event file (" + pipe_params["ev_dir"] + pipe_params['out_label'] + ev_j_id + '-0.ev.json.gz) found.  Exiting pipeline analysis.')
+                return 0
 
         # Cycle through events, plot the projections and compute localizations
         if "ev_loc_cnfgs" not in pipe_params.keys(): return
         ev_files = [file for file in np.sort(os.listdir(pipe_params["ev_dir"])) if fnmatch.fnmatch(file,"*.ev.json.gz")]
         for ev_file in ev_files:
+            click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
+
             fig_path = pipe_params["figs_dir"] + ev_file.split(".ev")[0]
 
             command = "infrapy plot event --ev-file " + pipe_params["ev_dir"] + ev_file + " --figure-out " + fig_path + ".back-proj.png --show-figure False"
@@ -477,6 +537,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 if not test_commands:
                     os.system(command)
 
+            '''
             if "ev_char_cnfgs" not in pipe_params.keys(): return
             for l, char_config in enumerate(pipe_params["ev_char_cnfgs"]):
                 # run yield estimation
@@ -484,7 +545,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 click.echo(command)
                 if not test_commands:
                     os.system(command)
-        '''
+            '''
 
 if __name__ == '__main__':
-    pipeline2()
+    pipeline()

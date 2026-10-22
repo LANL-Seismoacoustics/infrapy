@@ -313,8 +313,6 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
             Distance matrix describing joint-likelihood separations for all pairs
 
         """
-    if progress:
-        print('\tComputing joint-likelihoods...')
     det_cnt = len(det_list)
     n_tot, n_ref = det_cnt * (det_cnt - 1) / 2, 0
 
@@ -330,7 +328,6 @@ def build_distance_matrix(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0,
         n_ref += 1
 
     if progress:
-        print('\t\tProgress: \t', end='')
         prog_bar.prep(50)
 
     if cpu_cnt > 1:
@@ -570,7 +567,7 @@ def summarize_clusters(labels, distance_matrix, population_min=3, show_result=Fa
 
     return clusters, qualities
 
-def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, prg_bar=False, cpu_cnt=1):
+def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=100.0, rad_max=1000.0, resol=180, show_result=None, file_id=None, linkage_method='weighted', trimming_thresh=None, trim_thresh_scalar=1.0, prg_bar=False, cpu_cnt=1, verbose=True):
     """Run the Hierarchical Joint-Likelihood (HJL) association analysis
 
         Runs the clustering analysis on a list of detecctions and returns the
@@ -620,17 +617,14 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
             dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, cpu_cnt=cpu_cnt, progress=prg_bar))
             np.save(file_id + "-dm", dists)
         dists[dists > dist_max] = dist_max
-        print('\t' + "Clustering detections into events...")
         _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result, file_id=file_id + "-orig")
     else :
         dists = np.array(build_distance_matrix(det_list, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol, cpu_cnt=cpu_cnt, progress=prg_bar))
         dists[dists > dist_max] = dist_max
-        print('\t' + "Clustering detections into events...")
         _, labels, sorted_dists = cluster(dists, threshold, linkage_method=linkage_method, show_result=show_result)
 
     # Trim clusters with poor shape
     if trimming_thresh:
-        print('\t' + "Trimming poor linkages and repeating clustering analysis...")
         dists_new = dists.copy()
         trim_indices = []
         while True:
@@ -654,7 +648,7 @@ def run(det_list, threshold, dist_max=10.0, bm_width=10.0, rng_max=np.pi / 2.0 *
 
 
 def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, bm_width=10.0, rng_max=2500.0, rad_min=100.0, rad_max=1000.0,
-    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, cpu_cnt=1):
+    resol=180, linkage_method='weighted', trimming_thresh=3.8, cluster_det_population=3, cluster_array_population=2, prg_bar=True, cpu_cnt=1, verbose=True):
     """
 
 
@@ -682,7 +676,8 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
     for dt in range(0, duration, analysis_window):
         window_start = starttime +  dt # np.timedelta64(dt, 'm')
         window_end = starttime + (dt + analysis_window + max_prop_time) # np.timedelta64(dt + int(analysis_window + max_prop_time), 'm')
-        print('\n' + "Running event identification for:", window_start, "-", window_end)
+        if verbose:
+            print("Computing joint-likelihoods for: " + str(window_start).split(".")[0] + " - " + str(window_end).split(".")[0] + '\t', end='')
 
         temp = [(n, det) for n, det in enumerate(det_list) if np.logical_and(window_start <= UTCDateTime(det.peakF_UTCtime.astype(datetime)), UTCDateTime(det.peakF_UTCtime.astype(datetime)) <= window_end)]
         key = [pair[0] for pair in temp]
@@ -690,7 +685,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
 
         if len(temp) >= cluster_det_population:
             labels, dists = run(new_list, threshold, dist_max=dist_max, bm_width=bm_width, rng_max=rng_max, rad_min=rad_min, rad_max=rad_max, resol=resol,
-                linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, cpu_cnt=cpu_cnt)
+                linkage_method=linkage_method, trimming_thresh=trimming_thresh, prg_bar=prg_bar, cpu_cnt=cpu_cnt, verbose=verbose)
             clusters, qualities = summarize_clusters(labels, dists, population_min=cluster_det_population)
 
             for n in range(len(clusters)):
@@ -698,7 +693,8 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
                 ev_qls += [10.0**(-qualities[n])]
 
     # clean up clusters
-    print('\n' + "Cleaning up and merging clusters...")
+    if verbose:
+        print("Cleaning up and merging clusters...")
     ev_cnt = len(events)
     for n1 in range(ev_cnt):
         for n2 in range(n1 + 1, ev_cnt):
@@ -724,7 +720,7 @@ def id_events(det_list, threshold, starttime=None, endtime=None, dist_max=10.0, 
     return events, ev_qls
 
 
-def id_events_dict(det_list, assoc_params, cpu_cnt):
+def id_events_dict(det_list, assoc_params, cpu_cnt, verbose=True):
 
     return id_events(det_list,
                      assoc_params['cluster_threshold'],
@@ -740,4 +736,5 @@ def id_events_dict(det_list, assoc_params, cpu_cnt):
                      trimming_thresh=assoc_params['trimming_threshold'],
                      cluster_det_population=assoc_params['ev_population_min'],
                      cluster_array_population=assoc_params['ev_station_min'],
-                     cpu_cnt=cpu_cnt)
+                     cpu_cnt=cpu_cnt,
+                     verbose=verbose)
