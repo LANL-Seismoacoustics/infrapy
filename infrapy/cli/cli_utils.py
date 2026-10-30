@@ -134,21 +134,8 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     db_info = cnfg.ConfigParser()
     db_info.read(db_config)
 
-    print("Setting up database configuration...")
     # set up the session and check connection
-    if 'url' in db_info['DATABASE'].keys():
-        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
-        db_session = database.db_connect_url( db_info['DATABASE']['url'])
-    else:
-        # clean up the above to simplify this or just require a url?
-        db_session = database.db_connect2(db_info)
-
-    # check the session works
-    try:
-        db_session.get_bind().connect()
-    except Exception as e:
-        print("Database connection failed")
-        return
+    db_session = database.set_session(dict(db_info['DATABASE']))
 
     det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list, db_schema="kbcore")
 
@@ -192,14 +179,7 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
     db_info.read(db_config)
 
     # set up the session and check connection
-    print("Setting up database configuration...")
     db_session = database.set_session(dict(db_info['DATABASE']))
-
-    try:
-        db_session.get_bind().connect()
-    except:
-        print("Database connection failed")
-        return
 
     # Pull arrival information
     ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list)

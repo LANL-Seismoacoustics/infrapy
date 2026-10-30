@@ -10,6 +10,7 @@ import os
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
 
 import pisces as ps
 import pisces.tables.css3 as css_tables
@@ -19,8 +20,115 @@ import pandas as pd
 from obspy import Stream, UTCDateTime
 
 DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
+AUTHENTICATION_LIST = ['password', 'os', 'wallet']
 
-def db_connect_url(url):
+def db_connect(db_info):
+    """
+        Function to set up a database connection session using a dictionary of connection information.
+        The current configuration file format is below ([DATABASE] block passed to this function):
+
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...] (required)
+            alias = [...]
+            authentication = [...] (required)
+            url = [...]
+
+        Though a dictionary of key/value pairs matching the above keys can also be passed into the function.
+        
+        Dialect and authentication fields are always required and must be in the DIALECT_LIST and 
+        AUTHENTICATION_LIST as follows:
+
+            DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
+            AUTHENTICATION_LIST = ['password', 'os', 'wallet']
+
+        If a url is not provided in the dictionary block, an attempt will be made to construct one based on 
+        the other variables, in which case, hostname, database_name, and port are required unless 
+        an alias is provided.  If the authentication method is 'password', a username is also required.
+
+        Additional information for Oracle databases:
+            1) Driver is required for Oracle databases and must be one of cx_oracle or oracledb if a url is 
+               not provided.  Note that cx_oracle is deprecated in it's entirety in favor of oracledb.
+            2) Authentication methods 'os' and 'wallet' are specific to oracle databases.  If your 
+               authentication method is 'wallet' and that wallet is pointed to an alias, that alias must be 
+               provided or used in the provided url.
+            3) For 'os' and 'wallet' authentications, username and password are automatically set to ''.
+
+        Parameters
+        ----------
+        db_dict: dict
+            Dictionary of database connection information following the above constraints and requirements.
+
+        Returns
+        -------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+
+    """
+
+    # assign dialect, authenticaion, and driver at start since they are needed for all steps of
+    # decision tree
+    dialect = db_info['dialect']
+    authentication = db_info['authentication']
+    
+    if 'driver' not in db_info.keys():
+        driver = ''
+        driverStr= driver
+    else:
+        driver = db_info['driver']
+        driverStr = '+{}'.format(driver)
+
+    # is dialect oracle? Does thick mode need to be enabled?
+    # this is true for os authentication and wallets
+    if dialect == 'oracle' and authentication in ['os', 'wallet'] and driver == 'oracledb':
+        ex_auth = True
+    else:
+        ex_auth = False
+
+    # find or assemble url
+    if 'url' not in db_info.keys() or db_info['url'] == '':
+        if authentication in ['os', 'wallet']:
+            username = ''
+            password = ''
+        else:
+            username = db_info['username']
+        
+        hostname = db_info['hostname']
+        db_name = db_info['database_name']
+        port = db_info['port']
+
+        if 'password' not in db_info.keys():
+            password = ''
+        else:
+            password = db_info['password']
+
+           
+
+        if 'alias' not in db_info.keys():
+            alias = None
+        else:
+            alias = db_info['alias']
+
+        if alias is None or alias == '':
+            dburl = '{}{}://{}:{}@{}:{}/{}'.format(dialect, driverStr, username, password, hostname, port, db_name)
+
+        else:
+            dburl = '{}{}://{}:{}@{}'.format(dialect, driverStr, username, password, alias)
+        
+    else:
+        dburl = db_info['url']
+
+    print("  Connecting to database through url: " + dburl)
+
+    session = db_connect_url(dburl, ex_auth = ex_auth)
+
+    return session
+
+def db_connect_url(url, ex_auth = False):
     """
     connect to a database to do database things...
 
@@ -33,80 +141,20 @@ def db_connect_url(url):
     -------
     session : bound SQLAlchemy session instance
     """
-    session = ps.db_connect(url)
+    if ex_auth == True:
+        engine = create_engine(url, thick_mode = True, connect_args = {"externalauth": True} )
+        session = Session(bind=engine)
+    else:
+        engine = create_engine(url)
+        session = Session(bind=engine)
+    
     return session
-
-
-def db_connect(dialect="", hostname="", db_name="", port="", username="", password="", driver=""):
-    '''
-        Connect to a database to do database things...
-
-        Parameters
-        ----------
-        dialect: str
-            Type of database.   (examples: oracle, mysql)
-        hostname : str
-            The url of the database. (example: mydb.home.org)local branch
-
-        Returns
-        -------
-        session : bound SQLAlchemy session instance
-
-    '''
-    # my_dialect = dialect + "://"
-    # url = sa.engine.url.make_url(my_dialect)
-    # print(url)
-    # url.username = username
-    # # url.drivername = driver
-    # url.password = password
-    # url.host = hostname
-    # url.port = port
-    # url.database = db_name
-
-    # print(url)
-    # engine = sa.create_engine(url)
-    # return Session(bind=engine)
-
-    return ps.db_connect(assemble_db_url(dialect, hostname, db_name=db_name, port=port, username=username, password=password, driver=driver))
-
-
-def assemble_db_url(dialect, hostname, db_name, port=None, username="", password="", driver=""):
-    '''
-        Assemble a database connection url given the supplied parts.
-        All inputs are strings
-    '''
-    if driver:
-        driver = '+' + driver
-    return dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
 
 def set_db_env_variables(env_vars):
     # env_vars is a dictionary containing the environment variable as the key, and what to set it to as the value
     # Note that the environment variables will only last for the duration of the session.
     for key, value in env_vars.items():
             os.environ[key] = value
-
-def db_connect2(db_info):
-    dialect = db_info['DATABASE']['dialect']
-    hostname = db_info['DATABASE']['hostname']
-    db_name = db_info['DATABASE']['database_name']
-    port = db_info['DATABASE']['port']
-
-    try:
-        username = db_info['DATABASE']['username']
-    except:
-        username = ''
-
-    try:
-        password = db_info['DATABASE']['password']
-    except:
-        password = ''
-
-    try:
-        driver = db_info['DATABASE']['driver']
-    except:
-        driver = ''
-
-    return ps.db_connect(assemble_db_url(dialect, hostname, db_name, port, username, password, driver))
 
 def check_connection(session):
     """
@@ -311,30 +359,20 @@ def set_session(db_info):
 
     """
 
-
     print("Setting up database configuration...")
     for key in db_info.keys():
         print('  ' + key + '\t' + db_info[key])
 
-    # set up the session and check connection
-    if 'url' in db_info.keys():
-        print("  Connecting to database through url: " + db_info['url'])
-        db_session = ps.db_connect(db_info['url'])
-    else:
-        # clean up the above to simplify this or just require a url?
-        db_session = db_connect2(db_info)
+    session = db_connect(db_info)
 
     # check the session works
     try:
-        db_session.get_bind().connect()
+        session.get_bind().connect()
     except Exception as e:
         print("Database connection failed")
         return
 
-    return db_session
-
-
-
+    return session
 
 
 # Methods to write arrivals into JSON files for use in InfraPy
