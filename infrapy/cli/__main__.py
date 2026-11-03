@@ -101,6 +101,7 @@ plot.add_command(cli_visualization.map_dets)
 # utils.add_command(cli_utils.check_db_wvfrm)
 # utils.add_command(cli_utils.write_wvfrms)
 
+utils.add_command(cli_utils.db2wvfrms)
 utils.add_command(cli_utils.db2dets)
 utils.add_command(cli_utils.db2ev)
 

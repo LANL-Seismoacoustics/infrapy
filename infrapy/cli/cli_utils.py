@@ -121,6 +121,17 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     click.echo("#################################")
     click.echo("")
 
+    # set up the session and check connection
+    if os.path.isfile(db_config):
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+    else:
+        click.echo("Invalid database config file ('" + db_config + "' not found)")
+        return 0
+
+    db_session = database.set_session(db_info['DATABASE'])
+
+    # pull arrivals information for specified region and time
     lat_lims = [float(val) for val in lat_bnds.split(",")]
     lon_lims = [float(val) for val in lon_bnds.split(",")]
     starttime = UTCDateTime(starttime)
@@ -131,13 +142,7 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     print("  Time bounds:", starttime, ",", endtime)
     print("  Phase list:", phase_list)
 
-    db_info = cnfg.ConfigParser()
-    db_info.read(db_config)
-
-    # set up the session and check connection
-    db_session = database.set_session(dict(db_info['DATABASE']))
-
-    det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list, db_schema="kbcore")
+    det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list)
 
     if len(det_dicts) > 0:
         if verbose:
@@ -151,11 +156,11 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
                 print(np.round(np.array(det['f-stat'], dtype=float), 1))
 
         if output_label is not None:
-            print("Writing " + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
+            print('\nWriting ' + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
             with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump({"det_info" : det_dicts}, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
-        print('\n' + "No arrivals matched criterion.")
+        print('\nNo arrivals matching specified region and time.')
 
 
 @click.command('db2ev', short_help="Write from arrivals table to ev.json.gz file")
@@ -175,13 +180,17 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
     click.echo("#################################")
     click.echo("")
 
-    db_info = cnfg.ConfigParser()
-    db_info.read(db_config)
-
     # set up the session and check connection
-    db_session = database.set_session(dict(db_info['DATABASE']))
+    if os.path.isfile(db_config):
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+    else:
+        click.echo("Invalid database config file ('" + db_config + "' not found)")
+        return 0
 
-    # Pull arrival information
+    db_session = database.set_session(db_info['DATABASE'])
+
+    # pull arrival information for this evid
     ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list)
 
     if len(ev_output['det_info']) > 0:
@@ -211,6 +220,72 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
                 json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
 # Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+@click.command('db2wvfrms', short_help="Pull waveforms from a database (or FDSN)")
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+@click.option("--output-label", help="Output prefix for [...].sac files", default=None)
+def db2wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime, output_label):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##          db2wvfrms          ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")
+
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(cnfg_file)
+        else:
+            click.echo("Invalid configuration file ('" + cnfg_file + "' not found)")
+            return 0
+    else:
+        user_config = None
+
+    # Load from config file and/or CLI values
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')
+
+    if db_config is not None:
+        if os.path.isfile(db_config):
+            db_info = cnfg.ConfigParser()
+            db_info.read(db_config)
+        else:
+            click.echo("Invalid database config file ('" + db_config + "' not found)")
+            return 0
+    else:
+        db_info = None
+
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
+
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
+
+    # Load from FDSN or
+    stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
+
+    click.echo("Data summary:")
+    for tr in stream:
+        click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+
+    if output_label is not None:
+        click.echo('\n' + "Writing waveform data to local SAC files...")
+        data_io.write_stream_to_sac(stream, latlon)
+
 
 @click.command('write_wvfrms', short_help="Save waveforms from FDSN or database")
 @click.option("--cnfg-file", help="Configuration file", default=None)

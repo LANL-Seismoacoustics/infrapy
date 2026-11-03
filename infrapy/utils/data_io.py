@@ -190,8 +190,8 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
     ## if database extraction, pass to database methods
     elif db_info is not None:
         print('\n' + "Loading data from database...")
-        session, db_tables = database.prep_session(db_info)
-        stream, latlon = database.wvfrms_from_db(session, db_tables, station, channel, UTCDateTime(starttime), UTCDateTime(endtime))
+        db_session = database.set_session(db_info['DATABASE'])
+        stream, latlon = database.db2wvfrms(db_session, db_info['DBTABLES'], station, channel, UTCDateTime(starttime), UTCDateTime(endtime))
 
     # return error if no waveform data was specified
     else:
