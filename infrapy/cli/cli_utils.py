@@ -137,30 +137,30 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     starttime = UTCDateTime(starttime)
     endtime = UTCDateTime(endtime)
 
-    print("Pulling arrivals for criterion:")
-    print("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
-    print("  Time bounds:", starttime, ",", endtime)
-    print("  Phase list:", phase_list)
+    click.echo("Pulling arrivals for criterion:")
+    click.echo("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
+    click.echo("  Time bounds:" + str(starttime) + ", " + str(endtime))
+    click.echo("  Phase list:" + phase_list)
 
     det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list)
 
     if len(det_dicts) > 0:
         if verbose:
-            print('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
+            click.echo('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
             for det in det_dicts:
-                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
-                print(det['phase id'], end='\t')
-                print(det['peak f-stat time'], end='\t')
-                print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
-                print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
-                print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                click.echo("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])) + '\t', nl=False)
+                click.echo(det['phase id'] + '\t', nl=False)
+                click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['back az'], dtype=float), 1)) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['tr vel'], dtype=float), 3)) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['f-stat'], dtype=float), 1)))
 
         if output_label is not None:
-            print('\nWriting ' + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
+            click.echo('\nWriting ' + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
             with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump({"det_info" : det_dicts}, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
-        print('\nNo arrivals matching specified region and time.')
+        click.echo('\nNo arrivals found for specified parameters.')
 
 
 @click.command('db2ev', short_help="Write from arrivals table to ev.json.gz file")
@@ -195,31 +195,33 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
 
     if len(ev_output['det_info']) > 0:
         if verbose:
-            print('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
-            print('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
-            print('  Origin time: ' + str(ev_output['ground truth']['origin time']))
-            print('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
+            click.echo('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
+            click.echo('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
+            click.echo('  Origin time: ' + str(ev_output['ground truth']['origin time']))
+            click.echo('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
 
             for det in ev_output['det_info']:
-                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
-                print(det['phase id'], end='\t')
+                click.echo("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])) + '\t', nl=False)
+                click.echo(det['phase id'] + '\t', nl=False)
                 if "I" in det['phase id']:
-                    print(det['peak f-stat time'], end='\t')
-                    print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
-                    print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
-                    print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                    click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['back az'], dtype=float), 1)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['tr vel'], dtype=float), 3)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['f-stat'], dtype=float), 1)))
                 else:
-                    print(det['peak f-stat time'], end='\t')
-                    print(np.round(np.array(det['azimuth'], dtype=float), 1), end='\t')
-                    print(np.round(np.array(det['slow'], dtype=float), 3), end='\t')
-                    print(np.round(np.array(det['snr'], dtype=float), 1))
+                    click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['azimuth'], dtype=float), 1)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['slow'], dtype=float), 3)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['snr'], dtype=float), 1)))
 
         if output_label is not None:
-            print("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
+            click.echo("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
             with gzip.open(output_label + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+    else:
+        click.echo('\nNo arrivals found for specified evid and parameters.')
 
-# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+
 @click.command('db2wvfrms', short_help="Pull waveforms from a database (or FDSN)")
 @click.option("--cnfg-file", help="Configuration file", default=None)
 @click.option("--db-config", help="Database configuration file", default=None)
@@ -230,8 +232,8 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
 @click.option("--channel", help="Channel code for FDSN and database", default=None)
 @click.option("--starttime", help="Start time of analysis window", default=None)
 @click.option("--endtime", help="End time of analysis window", default=None)
-@click.option("--output-label", help="Output prefix for [...].sac files", default=None)
-def db2wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime, output_label):
+@click.option("--output-prefix", help="Output prefix for [...].sac files", default=None)
+def db2wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime, output_prefix):
 
     click.echo("")
     click.echo("#################################")
@@ -278,13 +280,15 @@ def db2wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, s
     # Load from FDSN or
     stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
 
-    click.echo("Data summary:")
-    for tr in stream:
-        click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+    if len(stream) > 0:
+        click.echo("Data summary:")
+        for tr in stream:
+            click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo('')
 
-    if output_label is not None:
-        click.echo('\n' + "Writing waveform data to local SAC files...")
-        data_io.write_stream_to_sac(stream, latlon)
+        if output_prefix is not None:
+            click.echo('Writing waveform data to local SAC files...\n')
+            data_io.write_stream_to_sac(stream, latlon, prefix=output_prefix)
 
 
 @click.command('write_wvfrms', short_help="Save waveforms from FDSN or database")

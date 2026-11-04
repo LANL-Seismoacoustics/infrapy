@@ -374,9 +374,28 @@ def db2wvfrms(session, db_tbls, stations, channel, starttime, endtime):
             schema = KBCore
             wfdisc = global.wfdisc_raw
             site = global.site
-            origin = global.origin
-            event = global.event
 
+        Parameters
+        ----------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+        db_tbls: dict
+            Dictionary of database connection information
+        stations: string
+            Station information passed to pisces request get_stations function
+        channel: string
+            Channel information passed to pisces request get_stations function
+        starttime: obspy.UTCDatetime
+            Minimum time for search
+        endtime: obspy.UTCDatetime
+            Maximum time for search
+
+        Returns
+        -------
+        st : ObsPy stream
+            Iterable of ObsPy Trace objects containing waveform data and extracted meta data
+        latlon : iterable float
+            2 x N list of latitude and longitude for each trace
 
     '''
 
@@ -389,7 +408,15 @@ def db2wvfrms(session, db_tbls, stations, channel, starttime, endtime):
         print("Invalid database schema.")
         return None
 
-    # need a catch if these aren't in the user config file...
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['site', 'wfdisc']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2wvfrm usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return Stream(), []
+
     class site(db_schema.Site):
         __tablename__ = db_tbls['site']
 
@@ -534,15 +561,23 @@ def db2dets(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_l
         print("Invalid database schema.")
         return None
 
-    # need a catch if these aren't in the user config file...
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['arrival', 'site', 'sitechan', 'sensor']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2dets usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return []
+
     class arrival(db_schema.Arrival):
         __tablename__ = db_tbls['arrival']
 
-    class sitechan(db_schema.Sitechan):
-        __tablename__ = db_tbls['sitechan']
-
     class site(db_schema.Site):
         __tablename__ = db_tbls['site']
+
+    class sitechan(db_schema.Sitechan):
+        __tablename__ = db_tbls['sitechan']
 
     class sensor(db_schema.Sensor):
         __tablename__ = db_tbls['sensor']
@@ -617,6 +652,18 @@ def db2ev(db_session, db_tbls, evid, phase_list="I"):
         return None
 
     # need a catch if these aren't in the user config file...
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['event', 'origin', 'assoc', 'arrival', 'site', 'sitechan', 'sensor']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2ev usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return {'ground truth' : {},
+                 'det_info' : [],
+                 'location' : [],
+                 'characterization' : []}
+
     class event(db_schema.Event):
         __tablename__ = db_tbls['event']
 
@@ -629,11 +676,11 @@ def db2ev(db_session, db_tbls, evid, phase_list="I"):
     class arrival(db_schema.Arrival):
         __tablename__ = db_tbls['arrival']
 
-    class sitechan(db_schema.Sitechan):
-        __tablename__ = db_tbls['sitechan']
-
     class site(db_schema.Site):
         __tablename__ = db_tbls['site']
+
+    class sitechan(db_schema.Sitechan):
+        __tablename__ = db_tbls['sitechan']
 
     class sensor(db_schema.Sensor):
         __tablename__ = db_tbls['sensor']

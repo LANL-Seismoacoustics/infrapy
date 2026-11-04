@@ -187,6 +187,9 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
 
     # Read in data
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
+    if len(stream) == 0:
+        click.echo('No data to beamform.\n')
+        return 0
 
     # Check if using a noise window for analysis (only used for GLS analysis)
     ns_covar_inv = None
@@ -435,6 +438,9 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             click.echo("  " + key + ": " + str(sd_params[key]))
 
     stream, latlon = data_io.set_stream(local_wvfrms, fdsn, db_info, network, station, location, channel, starttime, endtime, local_latlon)
+    if len(stream) == 0:
+        click.echo('No data to beamform.\n')
+        return 0
 
     # Check if using a signal window
     if sd_params["signal_start"] is not None or sd_params["signal_end"] is not None:
