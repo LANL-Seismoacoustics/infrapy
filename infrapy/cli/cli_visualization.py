@@ -727,7 +727,7 @@ def ev_loc(cnfg_file, ev_file, loc_index, range_max, confidence_level, figure_ou
 
 @click.command('characterize', short_help="Plot characterization result for an event")
 @click.option("--cnfg-file", help="Configuration file", default=None)
-@click.option("--ev-file", help="Detection path and pattern", default=None)
+@click.option("--ev-file", help="Event path and pattern", default=None)
 @click.option("--loc-index", help="Index of location results", default=None, type=int)
 @click.option("--char-index", help="Index of characterization results", default=None, type=int)
 @click.option("--range-max", help="Max source-receiver range (default: " + config.defaults['LOC']['range_max'] + " [km])", default=None, type=float)
@@ -856,7 +856,7 @@ def ev_char(cnfg_file, ev_file, loc_index, char_index, range_max, confidence_lev
 
 
 @click.command('event', short_help="Visualize event analysis results")
-@click.option("--ev-file", help="Detection path and pattern", default=None)
+@click.option("--ev-file", help="Evemt path and pattern", default=None)
 @click.option("--loc-index", help="Index of location results", default=None, type=int)
 @click.option("--char-index", help="Index of characterization results", default=None, type=int)
 @click.option("--confidence-level", help="Confidence level (default 90%)", default=90.0)

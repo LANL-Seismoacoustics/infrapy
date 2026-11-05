@@ -23,10 +23,10 @@ if find_spec('stochprop'):
     import stochprop.propagation as sp_prop
 
 
-def location_wrapper(det_list, loc_params, tm_lims, pgm):
+def location_wrapper(det_list, loc_params, tm_lims, pgm, verbose=True):
     if loc_params['atmo_data'] is None:
         # Run BISL if no atmosphere file is specified
-        result = bisl.run_dict(det_list, loc_params, tm_lims, pgm)
+        result = bisl.run_dict(det_list, loc_params, tm_lims, pgm, verbose=verbose)
     else:
         # Run TRIBL if atmosphere data is specified
         if not find_spec('infraga'):
@@ -54,7 +54,8 @@ def location_wrapper(det_list, loc_params, tm_lims, pgm):
                             dir_files = os.listdir(".")
                         file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
 
-                        click.echo('\n' + "Computing localization using atmosphere ensemble:")
+                        if verbose:
+                            click.echo('\n' + "Computing localization using atmosphere ensemble:")
                         norms = []
                         for k, file_name in enumerate(file_list):
                             print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
@@ -68,7 +69,8 @@ def location_wrapper(det_list, loc_params, tm_lims, pgm):
                             norms = norms + [temp['norm']]
                         norms = norms / np.sum(norms)
 
-                        print('\n' + "Merging PDFs across the ensemble...")
+                        if verbose:
+                            print('\n' + "Merging PDFs across the ensemble...")
                         tmp_0 = np.load(temp_path + "-0.pdf.npz")
 
                         lat_grid, lon_grid, alt_grid, tm_grid = np.meshgrid(tmp_0['lat_vals'], tmp_0['lon_vals'], tmp_0['alt_vals'], tmp_0['tm_vals'], indexing='ij')
@@ -83,8 +85,8 @@ def location_wrapper(det_list, loc_params, tm_lims, pgm):
                             tmp_k = np.load(temp_path + "-" + str(k + 1) + ".pdf.npz")
                             pdf = pdf + tmp_k['pdf']
                             print('\t' + str(k + 2) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t' + str(norms[k + 1]))
-
-                        click.echo('\n' + "Analyzing combined localization PDF...")
+                        if verbose:
+                            click.echo('\n' + "Analyzing combined localization PDF...")
                         result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
 
                         # Add ensemble information tp location dictionary
@@ -97,7 +99,7 @@ def location_wrapper(det_list, loc_params, tm_lims, pgm):
                                                 temp_path,
                                                 loc_params,
                                                 tm_lims,
-                                                verbose=True,
+                                                verbose=verbose,
                                                 show_prog=True)
     return result
 
@@ -513,7 +515,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     if loc_index is not None:
         src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
     else:
-        loc_std = [loc['result']['NS_stdev'] * loc['result']['NS_stdev'] for loc in ev_data['location']]
+        loc_std = [loc['result']['NS_stdev'] * loc['result']['EW_stdev'] for loc in ev_data['location']]
         loc_lats = [loc['result']['lat_mean'] for loc in ev_data['location']]
         loc_lons = [loc['result']['lon_mean'] for loc in ev_data['location']]
 
