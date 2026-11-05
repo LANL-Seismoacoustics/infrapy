@@ -8,9 +8,12 @@ beamforming methods.
 Author            Philip Blom (pblom@lanl.gov)
 
 """
+import os
 import warnings
 
 import numpy as np
+
+from concurrent.futures import ProcessPoolExecutor
 
 from numba import jit, float64, complex128
 
@@ -896,7 +899,7 @@ def beam_window_wrapper(args):
     return beam_window(*args)
 
 
-def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, pl):
+def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_step, method, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, cpu_cnt, verbose=True):
     """Run the beamforming (fk) analysis on a stream with various parameter specifications
 
         Convert a stream to an array data set on a consistent set of time samples
@@ -929,8 +932,8 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
             Noise covariance inverse used in GLS beam
         signal_cnt: int
             Number of assumed signals for MUSIC beam
-        pl: multiprocessing.Pool
-            Multiprocessing pool for simulatenous analysis of windows
+        cpu_cnt: int
+            Number of CPUs used by concurrent.futures for multithreading
 
 
         Returns:
@@ -941,7 +944,9 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
             Residual across the array once beamed signal is extracted
         """
 
-    print('\n' + "Running beamforming analysis..." + '\n\t' + "Progress: ", end = '')
+    if verbose:
+        print('\n' + "Running beamforming analysis..." + '\n\t' + "Progress: ", end = '')
+
     if method == "time_domain":
         st_copy = stream.copy()
         st_copy.detrend().filter("bandpass", freqmin=freq_band[0], freqmax=freq_band[1])
@@ -954,33 +959,25 @@ def run_fk(stream, latlon, freq_band, window_length, sub_window_length, window_s
     slowness = build_slowness(back_az_vals, trc_vel_vals)
     delays = compute_delays(geom, slowness)
 
-    prog_bar_len, win_cnt = 50, int((t[-1] - t[0]) / window_step) - 1
+    prog_bar_len, win_cnt = 50, int((t[-1] - t[0] - window_step) / window_step) - 1
+
+    beam_times, args = [], []
+    for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
+        if window_start + window_length > t[-1]: break
+
+        beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
+        args = args + [[x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len)]]
+
     prog_bar.prep(prog_bar_len)
-
-    beam_times = []
-    if pl:
-        args = []
-        for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
-            if window_start + window_length > t[-1]:
-                break
-
-            beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
-            args = args + [[x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len)]]
-        beam_peaks = np.array(pl.map(beam_window_wrapper, args)).reshape(len(beam_times), 3)
+    if cpu_cnt > 1:
+        with ProcessPoolExecutor(max_workers=min(cpu_cnt, os.cpu_count() - 1)) as executor:
+            futures = [executor.submit(beam_window, *arg_set) for arg_set in args]
+            beam_peaks = np.array([future.result() for future in futures]).reshape(len(beam_times), 3)
     else:
-        beam_peaks = []
-        for win_n, window_start in enumerate(np.arange(t[0], t[-1], window_step)):
-            if window_start + window_length > t[-1]:
-                break
-
-            peaks = beam_window(x, t, geom, freq_band, method, [window_start, window_start + window_length], sub_window_length, delays, back_az_vals, trc_vel_vals, ns_covar_inv, signal_cnt, prog_bar.set_step(win_n, win_cnt, prog_bar_len))
-            beam_times = beam_times + [[t0 + np.timedelta64(int(window_start + window_length / 2.0), 's')]]
-            beam_peaks = beam_peaks + [[peaks[0][0], peaks[0][1], peaks[0][2]]]
-        beam_peaks = np.array(beam_peaks)
-
+        beam_peaks = np.array([beam_window(*arg_set) for arg_set in args]).reshape(len(beam_times), 3)
     prog_bar.close()
-    beam_times = np.array(beam_times)[:, 0]
 
+    beam_times = np.array(beam_times)[:, 0]
     beam_peaks[:, 2][beam_peaks[:, 2] > 0.999] = 0.999
     beam_peaks[:, 2] = beam_peaks[:, 2] / (1.0 - beam_peaks[:, 2]) * (M - 1)
 
@@ -1223,11 +1220,8 @@ def det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info):
 
 def merge_dets(det_list):
     dets_out = []
-
     while len(det_list) > 0:
         merge_indices = [0]
-        print("")
-
         for k, det_k in enumerate(det_list[1:]):
             # check at least one station ID matches
             ids_0 = [ch['trace id'] for ch in det_list[0]['wvfrm_info'][0]]
@@ -1247,13 +1241,11 @@ def merge_dets(det_list):
                     daz = daz - 360.0
                 daz = daz / 30.0
 
-                # print("   ", det_list[0]["peak f-stat time"], '\t', det_k["peak f-stat time"], '\t', dt, '\t', daz, '\t', np.sqrt(dt**2 + daz**2))
-
                 if np.sqrt(dt**2 + daz**2) < 0.75:
                     merge_indices = merge_indices + [k + 1]
 
         dets_to_merge = [det_list[j] for j in merge_indices]
-        print('\n' + "Detections to merge:")
+        print("Detections to merge:")
         for det in dets_to_merge:
             print("  " + det["peak f-stat time"] + ", " + str(det["back az"]))
 
@@ -1301,7 +1293,7 @@ def merge_dets(det_list):
 ## Dictionary Wrappers ##
 #########################
 
-def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
+def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt, verbose=True):
 
     back_az_vals = np.arange(fk_params['back_az_min'],
                              fk_params['back_az_max'],
@@ -1321,7 +1313,8 @@ def run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl):
                   trc_vel_vals,
                   ns_covar_inv,
                   1, # hard code picking only 1 peak
-                  pl)
+                  cpu_cnt,
+                  verbose)
 
 
 def run_afd_dict(beam_times, beam_peaks, fk_params, det_params, chan_cnt):

@@ -13,6 +13,8 @@ from importlib.util import find_spec
 
 import numpy as np
 
+from concurrent.futures import ProcessPoolExecutor
+
 from pyproj import Geod
 
 from scipy.interpolate import interp1d
@@ -26,7 +28,7 @@ from ..utils import prog_bar
 sph_proj = Geod(ellps='sphere')
 resol = '100m'  # use data at this scale (not working at the moment)
 
-def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latlon_bnds=None, bounces=100, cpu_cnt=None):
+def _compute_projections(det_list, atmo_file, temp_dest, grnd_snd_spd=None, latlon_bnds=None, bounces=100, cpu_cnt=1):
     lat_vals = [det.latitude for det in det_list]
     lon_vals = [det.longitude for det in det_list]
 
@@ -160,7 +162,7 @@ def eval_on_grid_wrapper(args):
 
 
 def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0,
-            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, az_limit=2.0, verbose=True, show_prog=True, pool=None):
+            grnd_snd_spd=340.0, c0_stdev=10.0, det_time_stdev=10.0, az_limit=2.0, verbose=True, show_prog=True, cpu_cnt=1):
 
     if verbose:
         print("Running Time-Reversed Infrasonic Bayesian Localization (TRIBL) Analysis...")
@@ -180,30 +182,26 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
 
     if verbose:
         print('\t' + "Computing back projections for detection list...")
-
-    if pool is not None:
-        cpu_cnt = pool._processes
-    else:
-        cpu_cnt = None
-
     projs = build_projections(det_list, atmo_file, temp_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=[[lat_vals[0], lat_vals[-1]], [lon_vals[0], lon_vals[-1]]], cpu_cnt=cpu_cnt, c0_stdev=c0_stdev, det_time_std_dev=det_time_stdev, az_limit=az_limit)
 
-    if verbose:
-        print('\t' + "Evaluating localization probability on grid...")
-        print('\t\t Progress: ', end='')
+    if show_prog or verbose:
+        if verbose:
+            print('\t' + "Evaluating localization probability on grid...")
+            print('\t\tProgress: \t', end='')
+        prog_bar.prep(5 * len(det_list))
+        args = [[proj, lat_grid, lon_grid, alt_grid, tm_grid, 5] for proj in projs]
+    else:
+        args = [[proj, lat_grid, lon_grid, alt_grid, tm_grid, 0] for proj in projs]
+
+    if cpu_cnt > 1:
+        with ProcessPoolExecutor(max_workers=min(cpu_cnt, os.cpu_count() - 1)) as executor:
+            futures = [executor.submit(eval_on_grid, *arg_set) for arg_set in args]
+            det_pdfs = np.array([future.result() for future in futures])
+    else:
+        det_pdfs = np.array([eval_on_grid(*arg_set) for arg_set in args])
 
     if show_prog or verbose:
-        prog_bar.prep(5 * len(det_list))
-        if pool:
-            det_pdfs = pool.map(eval_on_grid_wrapper, [[proj, lat_grid, lon_grid, alt_grid, tm_grid, 5] for proj in projs])
-        else:
-            det_pdfs = np.array([eval_on_grid(proj, lat_grid, lon_grid, alt_grid, tm_grid, prog_step=5) for proj in projs])
         prog_bar.close()
-    else:
-        if pool:
-            det_pdfs = pool.map(eval_on_grid_wrapper, [[proj, lat_grid, lon_grid, alt_grid, tm_grid, 0] for proj in projs])
-        else:
-            det_pdfs = np.array([eval_on_grid(proj, lat_grid, lon_grid, alt_grid, tm_grid, prog_step=0) for proj in projs])
 
     pdf = np.prod(det_pdfs, axis=0)
     pdf = pdf.reshape(lat_grid.shape)
@@ -226,7 +224,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
 
 
 
-def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, show_prog=True, pool=None):
+def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, show_prog=True):
 
     return run(det_list,
                output_id,
@@ -245,9 +243,9 @@ def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, s
                c0_stdev=loc_params['c0_stdev'],
                det_time_stdev=loc_params['det_tm_stdev'],
                az_limit=loc_params['az_limit'],
+               cpu_cnt=loc_params['cpu_cnt'],
                verbose=verbose,
-               show_prog=show_prog,
-               pool=pool)
+               show_prog=show_prog)
 
 
 

@@ -1,5 +1,5 @@
 
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, 
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
                              QTabWidget, QAction,
                              QScrollArea, QToolBar, QToolButton)
 
@@ -184,7 +184,7 @@ class IPBeamformingWidget(QWidget):
 
         self.timeRangeLRI = pg.LinearRegionItem()
         self.timeRangeLRI.setMovable(False)
-        brush = QtGui.QBrush(QtGui.QColor(50, 50, 50, 50)) 
+        brush = QtGui.QBrush(QtGui.QColor(50, 50, 50, 50))
         self.timeRangeLRI.setBrush(brush)
 
         # --------------------------------------------
@@ -206,13 +206,13 @@ class IPBeamformingWidget(QWidget):
 
         # Create the slowness widget and its dataitem
         self.projectionPlot = IPPlotItem.IPPlotItem()
-        
+
         self.projectionCurve = pg.PlotDataItem(x=[],
                                                y=[],
                                                pen=(150, 150, 150),
                                                width=1,
                                                symbol=None)
-        
+
         self.max_projectionCurve = pg.PlotDataItem(x=[],
                                                    y=[],
                                                    pen=(40, 40, 40),
@@ -241,7 +241,7 @@ class IPBeamformingWidget(QWidget):
         self.slownessWidget.addItem(self.slowness_traceV_label)
         self.slownessWidget.nextRow()
         self.slownessWidget.addItem(self.projectionPlot)
-        
+
 
         # ---------------------------------------------
         # Add the detection widget to the bottom
@@ -298,7 +298,7 @@ class IPBeamformingWidget(QWidget):
 
     @pyqtSlot(str)
     def update_theme(self, t):
-    
+
         if t == 'light':
             self.lhWidget.setBackground((255,255,255))
             self.slownessWidget.setBackground((255,255,255))
@@ -308,7 +308,7 @@ class IPBeamformingWidget(QWidget):
 
     def make_toolbar(self):
         self.toolbar = QToolBar()
-        
+
         toolButton_start = QToolButton()
         toolButton_stop = QToolButton()
         toolButton_clear = QToolButton()
@@ -342,7 +342,7 @@ class IPBeamformingWidget(QWidget):
     def addCrosshairs(self):
         # This adds the crosshairs that follow the mouse around, as well as the position labels which display the
         # UTC time in the top right corner of the plots
-        
+
         self.vline = pg.InfiniteLine(angle=90, movable=False, pen='k')
         self.hline = pg.InfiniteLine(angle=0, movable=False, pen='k')
         self.position_label = pg.TextItem(html=None, anchor=(1, 0))
@@ -418,9 +418,9 @@ class IPBeamformingWidget(QWidget):
         # somebody moved a detection line, so we need to first find the nearest _t value to the new position, and set the detection line
         # to that _t value
         nearest_idx = self.nearest_in_t(pos)
-        self.detectionWidget.detectionLineMoved(self._t[nearest_idx], 
-                                                self._f_stats[nearest_idx], 
-                                                self._back_az[nearest_idx], 
+        self.detectionWidget.detectionLineMoved(self._t[nearest_idx],
+                                                self._f_stats[nearest_idx],
+                                                self._back_az[nearest_idx],
                                                 self._trace_vel[nearest_idx])
         self.plot_slowness_at_idx(nearest_idx)
         self.plot_projection_at_idx(nearest_idx)
@@ -437,7 +437,7 @@ class IPBeamformingWidget(QWidget):
         self.fstatPlot.addItem(self.fstat_slowness_marker)
         self.backAzPlot.addItem(self.backAz_slowness_marker)
         self.traceVPlot.addItem(self.traceV_slowness_marker)
-        
+
 
     def clearDetectionLines(self):
         """
@@ -471,7 +471,7 @@ class IPBeamformingWidget(QWidget):
             self.waveform_data_item = pg.PlotDataItem()
             initial = True
 
-        # bringing in a new waveform, we might have a new earliest_start_time, so update that in the 
+        # bringing in a new waveform, we might have a new earliest_start_time, so update that in the
         # plots so that the x-axes will be correct
         est = self.get_earliest_start_time()
         self.waveformPlot.setEarliestStartTime(est)
@@ -489,7 +489,7 @@ class IPBeamformingWidget(QWidget):
             self.waveformPlot.addItem(self.waveform_data_item)
         if plot_label is not None:
             self.waveformPlot.setPlotLabel(plot_label)
-        
+
         self.waveformPlot.setXRange(region[0], region[1], padding=0)
         self.region_range = region
 
@@ -522,7 +522,7 @@ class IPBeamformingWidget(QWidget):
             self.plot_slowness_at_idx(new_idx)
             self.update_markers(new_idx)
             self.update_time_range(new_idx)
-            
+
             evt.accept()
         except AttributeError:
             # no slowness plots yet, so we can just bail out
@@ -573,7 +573,7 @@ class IPBeamformingWidget(QWidget):
 
         myRange = self.waveformPlot.viewRange()
         self.position_label.setPos(myRange[0][1], myRange[1][1])
-        
+
         self.position_label.setText("UTC = {0}".format(e_s_t + mouse_point_x))
         self.vline.setPos(mouse_point_x)
         self.hline.setPos(mouse_point_y)
@@ -634,7 +634,7 @@ class IPBeamformingWidget(QWidget):
             # the plot
             if evt.button() == QtCore.Qt.LeftButton:
                 self.mouseClick_ControlLeft(evt)
-            
+
         elif modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
             # Cntrl+Shift+Click
             pass
@@ -889,7 +889,7 @@ class IPBeamformingWidget(QWidget):
         self._projection_collection = []
 
         # do any checks of the input here before you create the worker object.
-        # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle 
+        # The first check is to make sure the back azimuth start angle is less than the back azimuth end angle
         baz_start, baz_end = self.bottomSettings.getBackAzRange()
         if baz_start >= baz_end:
             IPUtils.errorPopup('The back azimuth start angle must be less than the end angle. Please correct this in the Beamformer Settings tab.')
@@ -901,7 +901,7 @@ class IPBeamformingWidget(QWidget):
         if tv_min >= tv_max:
             IPUtils.errorPopup('The minimum trace velocity must be less than the max.  Please correct this in the Beamformer Settings tab.')
             return
-        
+
         # setup the Threshold worker
         self.thWorker = ThresholdWorkerObject(self.bottomSettings.detector_settings.is_auto_threshold(),
                                               self._mp_pool,
@@ -919,7 +919,7 @@ class IPBeamformingWidget(QWidget):
                                               self.bottomSettings.getBackAzResolution(),
                                               self.parent.waveformWidget.stationViewer.get_inventory(),
                                               self.bottomSettings.detector_settings.pval_spin.value())
-        
+
         self.thWorker.moveToThread(self.threshThread)
         self.thWorker.signal_threshold_calc_is_running.connect(self.show_calculating_threshold_label)
         self.thWorker.signal_threshold_calculated.connect(self.bottomSettings.detector_settings.set_auto_threshold_level)
@@ -1009,12 +1009,12 @@ class IPBeamformingWidget(QWidget):
         # adds slowness to the slowness_collection
         self.slowness = slowness
 
-        sj_vals = np.linspace(-1/self.bottomSettings.tracev_min_spin.value(), 
-                               1/self.bottomSettings.tracev_min_spin.value(), 
+        sj_vals = np.linspace(-1/self.bottomSettings.tracev_min_spin.value(),
+                               1/self.bottomSettings.tracev_min_spin.value(),
                                self.beam_resolution)
-        
+
         self.sx_proj, self.sy_proj = np.meshgrid(sj_vals, sj_vals)
-        
+
         self.sx_proj = self.sx_proj.flatten()
         self.sy_proj = self.sy_proj.flatten()
 
@@ -1022,15 +1022,15 @@ class IPBeamformingWidget(QWidget):
         self.backaz = np.degrees(np.arctan2(self.sx_proj, self.sy_proj))
 
         self.calc_proj_index_worker = Calc_Proj_Index_Worker(self.slowness, self.sx_proj, self.sy_proj)
-        
+
         self.calc_proj_index_worker.sig_finished.connect(self.calc_proj_index_thread.quit)
 
         self.calc_proj_index_worker.sig_finished.connect(self.update_proj_index)
 
         self.calc_proj_index_worker.moveToThread(self.calc_proj_index_thread)
-        
+
         self.calc_proj_index_thread.started.connect(self.calc_proj_index_worker.run)
-        
+
         self.proj_indexing = None
         self.calc_proj_index_thread.start()
 
@@ -1047,7 +1047,7 @@ class IPBeamformingWidget(QWidget):
     def update_markers(self, idx):
         if idx < 0 or idx > len(self._t)-1:
             return
-        
+
         t_nearest = self._t[idx]
         f_nearest = self._f_stats[idx]
         ba_nearest = self._back_az[idx]
@@ -1064,7 +1064,7 @@ class IPBeamformingWidget(QWidget):
     def update_time_range(self, idx):
         if idx < 0 or idx > len(self._t)-1:
             return
-        
+
         # move the waveform time region to reflect the location of the current selected point
         t_nearest = self._t[idx]
         t_range = self.timeRangeLRI.getRegion()
@@ -1079,10 +1079,10 @@ class IPBeamformingWidget(QWidget):
 
         if idx < 0:
             return
-        
+
         if idx > len(self._beam_collection)-1:
             return
-        
+
         self.idx = idx
 
         beam_proj = np.array([self._beam_collection[idx][self.proj_indexing[j]] for j in range(len(self.sx_proj))])
@@ -1130,10 +1130,10 @@ class IPBeamformingWidget(QWidget):
 
         if idx < 0:
             return
-        
+
         if idx > len(self._projection_collection)-1:
             return
-        
+
         if len(self._projection_collection) > 0:
             self.projectionCurve.setData(self._projection_collection[idx])
 
@@ -1155,7 +1155,7 @@ class IPBeamformingWidget(QWidget):
         '''The beamformer is finished, so we need to run the detector, update slowness, update projection plot and update the time region.'''
 
         if len(self._f_stats) < 1:
-            # For some reason the beamformer didn't get any points. There's nothing to do, bail out.  
+            # For some reason the beamformer didn't get any points. There's nothing to do, bail out.
             return
 
         self.reset_run_buttons()
@@ -1188,7 +1188,7 @@ class IPBeamformingWidget(QWidget):
         ''' collect required info, run the detector, and add results to the detection widget'''
 
         if len(self._f_stats) < 1:
-            # No points in f-stats. There's nothing to do, bail out.  
+            # No points in f-stats. There's nothing to do, bail out.
             return
 
         # gather the beam results into a single matrix
@@ -1197,7 +1197,7 @@ class IPBeamformingWidget(QWidget):
         # the detections will be placed at the center of the array
         center = self.parent.waveformWidget.stationViewer.get_current_center()
 
-        # beam uses numpy datetime64 to hold the times, so we have to 
+        # beam uses numpy datetime64 to hold the times, so we have to
         # convert our times to that format
         numpy_times = []
         for t in self._t:
@@ -1227,21 +1227,21 @@ class IPBeamformingWidget(QWidget):
         self.plot_threshold_line(threshold=threshold)
 
         with warnings.catch_warnings(record=True) as w_array:
-            dets = beam.run_fd(numpy_times, 
-                                            beam_results, 
-                                            det_window_length, 
-                                            tb_prod, 
-                                            channel_count, 
-                                            det_p_val=self.bottomSettings.detector_settings.pval_spin.value(), 
-                                            min_seq=min_seq, 
+            dets = beam.run_fd(numpy_times,
+                                            beam_results,
+                                            det_window_length,
+                                            tb_prod,
+                                            channel_count,
+                                            det_p_val=self.bottomSettings.detector_settings.pval_spin.value(),
+                                            min_seq=min_seq,
                                             back_az_lim=self.bottomSettings.detector_settings.back_az_limit.value(),
                                             fixed_thresh=threshold,
                                             merge_dets=self.bottomSettings.detector_settings.merge_detections_cb.isChecked())
 
-            
+
             for w in w_array:
                 IPUtils.errorPopup(str(w.message), "Warning")
-        
+
 
         if len(dets) == 0:
             IPUtils.errorPopup("No Detections Found", "Results")
@@ -1274,19 +1274,19 @@ class IPBeamformingWidget(QWidget):
             t_utc = []
             for t in self._t:
                 t_utc.append(earliest_start_time + t)
-            
+
             data_io.export_beam_results_to_csv(filename, t_utc, self._f_stats, self._back_az, self._trace_vel)
 
             if self.save_results_dialog.wavefileIsChecked():
                 # here we want to save the data that is in the visible portion of the waveform chart at the top of the beamfinder window
                 wavefilename = self.save_results_dialog.getWaveFilename()
-                
+
                 xdata, ydata = self.waveform_data_item.getData()
 
                 t_utc =[]
                 for t in xdata:
                     t_utc.append(earliest_start_time + t)
-                    
+
                 data_io.export_waveform_to_csv(wavefilename, t_utc, ydata)
         else:
             pass
@@ -1407,8 +1407,8 @@ class ThresholdWorkerObject(QtCore.QObject):
                     if window_start + self.win_length > self.noiseRange[1]:
                         break
 
-                    args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv, 
-                                        self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange, 
+                    args = args + [[x, t, [window_start, window_start + self.win_length], geom, delays, ns_covar_inv,
+                                        self.sub_window_len, self.sub_window_overlap, self.fft_window, self.normalize_windowing, self.freqRange,
                                         self.method, self.signal_cnt, self.normalize_beam, back_az_vals, trc_vel_vals]]
 
                 try:
@@ -1447,7 +1447,7 @@ class ThresholdWorkerObject(QtCore.QObject):
     @staticmethod
     def window_beamforming_map_wrapper(args):
         return window_beamforming_map(*args)
-    
+
 class Calc_Proj_Index_Worker(QtCore.QObject):
     sig_finished = pyqtSignal(np.ndarray)
 
@@ -1456,7 +1456,7 @@ class Calc_Proj_Index_Worker(QtCore.QObject):
         self.slowness = slowness
         self.sx_proj = sx_proj
         self.sy_proj = sy_proj
-        
+
     def run(self):
         proj_indexing = np.array([np.argmin(np.sqrt((self.slowness[:, 0] - self.sx_proj[j])**2 + (self.slowness[:, 1] - self.sy_proj[j])**2)) for j in range(len(self.sx_proj))])
         self.sig_finished.emit(proj_indexing)
@@ -1577,17 +1577,16 @@ class BeamformingWorkerObject(QtCore.QObject):
             X, S, f = beam.fft_array_data(x, t, window=[self.window_start, self.window_start + self.win_length], sub_window_len=self.sub_window_len)
 
             beam_power = beam.run(X,
-                                             S,
-                                             f,
-                                             geom,
-                                             delays,
-                                             self.freqRange,
-                                             method=self.method,
-                                             normalize_beam=True,
-                                             signal_cnt=self.signal_cnt,
-                                             pool=self._pool,
-                                             ns_covar_inv=ns_covar_inv)
-            
+                                    S,
+                                    f,
+                                    geom,
+                                    delays,
+                                    self.freqRange,
+                                    method=self.method,
+                                    normalize_beam=True,
+                                    signal_cnt=self.signal_cnt,
+                                    ns_covar_inv=ns_covar_inv)
+
             # Compute relative beam power and average over frequencies
             avg_beam_power = np.average(beam_power, axis=0)
 
@@ -1616,7 +1615,7 @@ class BeamformingWorkerObject(QtCore.QObject):
 
             # signal projection plot to update
             self.signal_projectionUpdated.emit(projection)
-        
+
             # signal beam_power update+
             self.signal_beamUpdated.emit(avg_beam_power)
 
@@ -1625,15 +1624,15 @@ class BeamformingWorkerObject(QtCore.QObject):
 # as a result we must make this a static method and pass all variables through the call instead of using the
 # standard "self.x" way.
 
-def window_beamforming_map(x, 
-                           t, 
-                           window, 
-                           geom, 
-                           delays, 
-                           ns_covar_inv, 
-                           sub_win_len, 
-                           sub_win_over, 
-                           fft_win, 
+def window_beamforming_map(x,
+                           t,
+                           window,
+                           geom,
+                           delays,
+                           ns_covar_inv,
+                           sub_win_len,
+                           sub_win_over,
+                           fft_win,
                            norm_win,
                            f_range,
                            method,
@@ -1645,22 +1644,21 @@ def window_beamforming_map(x,
     X, S, f = beam.fft_array_data(x,
                                              t,
                                              window,
-                                             sub_window_len=sub_win_len, 
-                                             sub_window_overlap=sub_win_over, 
-                                             fft_window=fft_win, 
+                                             sub_window_len=sub_win_len,
+                                             sub_window_overlap=sub_win_over,
+                                             fft_window=fft_win,
                                              normalize_windowing=norm_win)
-        
-    beam_power = beam.run(X, 
-                                     S, 
-                                     f, 
+
+    beam_power = beam.run(X,
+                                     S,
+                                     f,
                                      geom,
-                                     delays, 
-                                     f_range, 
-                                     method=method, 
-                                     ns_covar_inv=ns_covar_inv, 
-                                     signal_cnt=sig_count, 
+                                     delays,
+                                     f_range,
+                                     method=method,
+                                     ns_covar_inv=ns_covar_inv,
+                                     signal_cnt=sig_count,
                                      normalize_beam=norm_beam)
-       
+
     return beam.find_peaks(beam_power, back_az_vals, trace_vel_vals, signal_cnt=sig_count)
 
-    

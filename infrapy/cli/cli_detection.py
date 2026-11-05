@@ -49,7 +49,7 @@ from ..detection import spectral
 @click.option("--fk-window-len", help="Analysis window length (default: " + config.defaults['FK']['window_len'] + " [s])", default=None, type=float)
 @click.option("--fk-sub-window-len", help="Analysis sub-window length (default: None [s])", default=None, type=float)
 @click.option("--fk-window-step", help="Step between analysis windows (default: " + config.defaults['FK']['window_step'] + " [s])", default=None, type=float)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
 
 @click.option("--fd-window-len", help="Adaptive window length (default: " + config.defaults['FD']['window_len'] + " [s])", default=None, type=float)
 @click.option("--p-value", help="Detection p-value (default: " + config.defaults['FD']['p_value'] + ")", default=None, type=float)
@@ -166,11 +166,6 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     fk_params['window_step'] = config.set_param(user_config, 'FK', 'window_step', fk_window_step, 'float')
     fk_params['cpu_cnt'] = config.set_param(user_config, 'FK', 'cpu_cnt', cpu_cnt, 'int')
 
-    if fk_params['cpu_cnt'] is not None:
-        pl = Pool(fk_params['cpu_cnt'])
-    else:
-        pl = None
-
     click.echo('\n' + "fk (beam) parameters:")
     for key in fk_params.keys():
         if fk_params[key] is not None:
@@ -271,7 +266,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 
     # Run beamforming (fk)
-    beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, pl)
+    beam_times, beam_peaks = fkd.run_fk_dict(stream, latlon, fk_params, ns_covar_inv, cpu_cnt)
 
     print("Running adaptive f-detector..." + '\n')
     dets, thresh_vals = fkd.run_afd_dict(beam_times, beam_peaks, fk_params, det_params, len(stream))
@@ -292,10 +287,6 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     det_output = {'wvfrm_info' : [wvfrm_info], 'fk_params' : [fk_params], 'det_params' : [det_params], 'fk' : fk_out, 'det_info' : dets_out}
     with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
-    if pl is not None:
-        pl.terminate()
-        pl.close()
 
 
 @click.command('spectral', short_help="Run spectral detection on a single channel")
@@ -330,7 +321,7 @@ def run_beam_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
 @click.option("--cluster-eps", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_eps'] + ")", default=None, type=float)
 @click.option("--cluster-min-samples", help="Clustering minimum samples (default: " + config.defaults['SD']['cluster_min_samples'] + ")", default=None, type=int)
 @click.option("--cluster-window-len", help="Clustering linkage distance (default: " + config.defaults['SD']['cluster_window_len'] + ")", default=None, type=float)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
 @click.option("--auto-overwrite", help="Automatically overwrite existing results", default=None, type=bool)
 def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, network, station, location, channel, starttime, endtime,
     det_label, signal_start, signal_end, spectral_option, morlet_omega0, freq_min, freq_max, window_len, window_step,
@@ -417,11 +408,6 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
         click.echo("  db_url (and other database info)")
 
     click.echo("  det_label: " + str(det_label))
-    if cpu_cnt is not None:
-        click.echo("  cpu_cnt: " + str(cpu_cnt))
-        pl = Pool(cpu_cnt)
-    else:
-        pl = None
 
     # Algorithm parameters
     sd_params = {}
@@ -439,11 +425,6 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
     sd_params["cluster_min_samples"] = config.set_param(user_config, 'SD', 'cluster_min_samples', cluster_min_samples, 'int')
     sd_params["cluster_window_len"] = config.set_param(user_config, 'SD', 'cluster_window_len', cluster_window_len, 'float')
     sd_params["cpu_cnt"] = config.set_param(user_config, 'SD', 'cpu_cnt', cpu_cnt, 'int')
-
-    if sd_params['cpu_cnt'] is not None:
-        pl = Pool(sd_params['cpu_cnt'])
-    else:
-        pl = None
 
     if 'cwt' not in sd_params['spectral_option']:
         sd_params['morlet_omega0'] = None
@@ -513,12 +494,8 @@ def run_spec_detect(cnfg_file, local_wvfrms, fdsn, db_config, local_latlon, netw
             else:
                 user_opt = input('Invalid input. Proceed and overwrite detection file? (y/n): ').lower().strip()
 
-    det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, pl)
+    det_list, spectrogram, history = spectral.spec_det_dict(stream[0], sd_params, cpu_cnt)
     det_output = {'wvfrm_info' : wvfrm_info, 'sd_params' : sd_params, 'spectrogram': spectrogram, 'history': history, 'det_info' : det_list}
     with gzip.open(det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
         json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
-    if pl is not None:
-        pl.terminate()
-        pl.close()
 

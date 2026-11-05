@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os 
+import os
 import click
 import json
 import gzip
@@ -10,9 +10,6 @@ import warnings
 import configparser as cnfg
 import numpy as np
 
-import matplotlib.pyplot as plt 
-
-from multiprocessing import Pool
 from importlib.util import find_spec
 
 from ..propagation import infrasound
@@ -24,6 +21,87 @@ from ..utils import config, data_io
 
 if find_spec('stochprop'):
     import stochprop.propagation as sp_prop
+
+
+def location_wrapper(det_list, loc_params, tm_lims, pgm, verbose=True):
+    if loc_params['atmo_data'] is None:
+        # Run BISL if no atmosphere file is specified
+        result = bisl.run_dict(det_list, loc_params, tm_lims, pgm, verbose=verbose)
+    else:
+        # Run TRIBL if atmosphere data is specified
+        if not find_spec('infraga'):
+            click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
+            result = {'norm' : None}
+        else:
+            if not os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/bin/infraga-sph"):
+                click.echo("InfraGA methods not compiled.  Run 'infraga compile' and try again.")
+            else:
+                with tempfile.TemporaryDirectory(prefix='infraga_') as tmpdirname:
+                    if loc_params['local_temp_dir'] is not None:
+                        if not os.path.isdir(loc_params['local_temp_dir']):
+                            os.mkdir(loc_params['local_temp_dir'])
+                        tmpdirname = loc_params['local_temp_dir']
+                    temp_path = tmpdirname + "/temp"
+
+                    if "*" in loc_params['atmo_data']:
+                        if len(os.path.dirname(loc_params['atmo_data'])) > 0:
+                            file_path = os.path.dirname(loc_params['atmo_data']) + "/"
+                        else:
+                            file_path = ""
+                        if "/" in loc_params['atmo_data']:
+                            dir_files = os.listdir(os.path.dirname(loc_params['atmo_data']))
+                        else:
+                            dir_files = os.listdir(".")
+                        file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
+
+                        if verbose:
+                            click.echo('\n' + "Computing localization using atmosphere ensemble:")
+                        norms = []
+                        for k, file_name in enumerate(file_list):
+                            print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
+                            temp = tribl.run_dict(det_list,
+                                                    file_path + file_name,
+                                                    temp_path + "-" + str(k),
+                                                    loc_params,
+                                                    tm_lims,
+                                                    verbose=False,
+                                                    show_prog=True)
+                            norms = norms + [temp['norm']]
+                        norms = norms / np.sum(norms)
+
+                        if verbose:
+                            print('\n' + "Merging PDFs across the ensemble...")
+                        tmp_0 = np.load(temp_path + "-0.pdf.npz")
+
+                        lat_grid, lon_grid, alt_grid, tm_grid = np.meshgrid(tmp_0['lat_vals'], tmp_0['lon_vals'], tmp_0['alt_vals'], tmp_0['tm_vals'], indexing='ij')
+                        lat_grid = np.squeeze(lat_grid)
+                        lon_grid = np.squeeze(lon_grid)
+                        alt_grid = np.squeeze(alt_grid)
+                        tm_grid = np.squeeze(tm_grid)
+
+                        pdf = tmp_0['pdf']
+                        print('\t1/' + str(len(file_list)) + '\t' + file_path + file_list[0] + '\t' + str(norms[0]))
+                        for k, file_name in enumerate(file_list[1:]):
+                            tmp_k = np.load(temp_path + "-" + str(k + 1) + ".pdf.npz")
+                            pdf = pdf + tmp_k['pdf']
+                            print('\t' + str(k + 2) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t' + str(norms[k + 1]))
+                        if verbose:
+                            click.echo('\n' + "Analyzing combined localization PDF...")
+                        result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
+
+                        # Add ensemble information tp location dictionary
+                        result['atmo ensemble'] = file_list
+                        result['atmo norms'] = norms
+
+                    else:
+                        result = tribl.run_dict(det_list,
+                                                loc_params['atmo_data'],
+                                                temp_path,
+                                                loc_params,
+                                                tm_lims,
+                                                verbose=verbose,
+                                                show_prog=True)
+    return result
 
 
 @click.command('build', short_help="Associate detections into events")
@@ -42,8 +120,8 @@ if find_spec('stochprop'):
 @click.option("--trimming-threshold", help="Mishapen cluster threshold (default: " + config.defaults['ASSOC']['trimming_threshold'] + ")", default=None, type=float)
 @click.option("--ev-population-min", help="Minimum detection count in event (default: " + config.defaults['ASSOC']['ev_population_min'] + ")", default=None, type=int)
 @click.option("--ev-station-min", help="Minimum station count in event (default: " + config.defaults['ASSOC']['ev_station_min'] + ")", default=None, type=int)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
-def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,  
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
+def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, back_az_width, range_max, resolution, distance_matrix_max,
                 cluster_linkage, cluster_threshold, trimming_threshold, ev_population_min, ev_station_min, cpu_cnt):
     '''
     Run association analysis to identify events in a detection set
@@ -60,7 +138,7 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
     click.echo("##         Event Building         ##")
     click.echo("##                                ##")
     click.echo("####################################")
-    click.echo("")    
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -111,12 +189,6 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
     for key in assoc_params.keys():
         if assoc_params[key] is not None:
             click.echo("  " + key + ": " + str(assoc_params[key]))
-
-    if assoc_params['cpu_cnt'] is not None:
-        pl = Pool(assoc_params['cpu_cnt'])
-    else:
-        pl = None
-
     click.echo("")
 
     det_data = data_io._load_dets_json(dets_files)
@@ -136,17 +208,17 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
         param_check = False
         try:
             np.testing.assert_equal(assoc_params, ev0_data['assoc_params'])
-            param_check = True 
+            param_check = True
         except:
             pass
 
         if not param_check:
             click.echo("  Note: parameters don't match between existing result and this event build")
-                       
+
         dets_check = True
         for ev_det in ev0_data['det_info']:
             check = np.any([np.all([ev_det[key] == list_det[key] for key in ['peak f-stat time', 'f-stat', 'back az', 'tr vel']]) for list_det in det_dicts])
-            dets_check = dets_check and check 
+            dets_check = dets_check and check
 
         if not dets_check:
             click.echo("  Note: detection sets don't match between existing result and this event build")
@@ -157,27 +229,23 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
                 break
             elif user_opt in ['n', 'no']:
                 click.echo("")
-                return 
+                return
             else:
                 user_opt = input('  Invalid input. Proceed and overwrite event file(s)? (y/n): ').lower().strip()
-            
-    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
 
+    det_list = [data_io._det_dict_to_likelihood(dict) for dict in det_dicts]
     infrasound._load_celerity_model(assoc_params['celerity_model'])
-    events, ev_qls = hjl.id_events_dict(det_list, assoc_params, pl)
-    
+    events, ev_qls = hjl.id_events_dict(det_list, assoc_params, cpu_cnt)
+
     click.echo("Identified " + str(len(events)) + " event(s)." + '\n')
     for j, ev in enumerate(events):
         dist_mat = hjl.build_distance_matrix([det_list[k] for k in ev], bm_width=assoc_params['back_az_width'], rng_max=assoc_params['range_max'],
-                                            rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  pool=pl, progress=False)
+                                            rad_min=100.0, rad_max=(assoc_params['range_max'] / 4.0), resol=assoc_params['resolution'],  cpu_cnt=cpu_cnt, progress=False)
 
         ev_output = {'ground truth' : {}, 'det_info' : [det_dicts[k] for k in ev], 'assoc_params' : assoc_params, 'dist_matrix' : dist_mat, 'location' : [], 'characterization' : []}
         with gzip.open(ev_label + "-" + str(j) + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
             json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
-    if pl is not None:
-        pl.terminate()
-        pl.close()
 
 
 @click.command('locate', short_help="Estimate source location and origin time")
@@ -207,7 +275,7 @@ def build(cnfg_file, dets_files, ev_label, starttime, endtime, celerity_model, b
 @click.option("--det-tm-stdev", help="Detection time uncertainty", default=None)
 @click.option("--az-limit", help="Azimuth resolution limit", default=None)
 @click.option("--local-temp-dir", help="Local temporary directory if using TRIBL", default=None)
-@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=None, type=int)
+@click.option("--cpu-cnt", help="CPU count for multithreading (default: None)", default=1, type=int)
 
 def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, ur_corner, latlon_resol, tm_min, tm_max, tm_resol, celerity_model, pgm_file, atmo_data, alt_lims, alt_resol, grnd_snd_spd, c0_stdev, det_tm_stdev, az_limit, local_temp_dir, cpu_cnt):
     '''
@@ -215,11 +283,11 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
     \b
     Example usage (run from infrapy/examples directory):
-    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz 
+    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz
     \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --celerity-model infgem
-    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config 
-    \tinfrapy event locate --ev-file data/HRR-5.ev.json.gz 
-    
+    \tinfrapy event locate --ev-file data/Blom_etal2024_GJI/SY.UTTR_2010.01.01T12.00.00.ev.json.gz --cnfg-file config/tribl_example.config
+    \tinfrapy event locate --ev-file data/HRR-5.ev.json.gz
+
     '''
 
     click.echo("")
@@ -229,7 +297,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     click.echo("##      Localization Analysis      ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")    
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -244,7 +312,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
     # Data IO parameters
     ev_file = config.set_param(user_config, 'DATA IO', 'ev_file', ev_file, 'string')
-            
+
     click.echo('\n' + "Data summary:")
     click.echo("  ev_file: " + str(ev_file))
 
@@ -281,11 +349,6 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     loc_params['local_temp_dir'] = config.set_param(user_config, 'LOC', 'local_temp_dir', local_temp_dir, 'str')
     loc_params['cpu_cnt'] = config.set_param(user_config, 'LOC', 'cpu_cnt', cpu_cnt, 'int')
 
-    if loc_params['cpu_cnt'] is not None:
-        pl = Pool(loc_params['cpu_cnt'])
-    else:
-        pl = None
-
     if loc_params['ll_corner'] is not None:
         # set grid from corners
         loc_params['ll_corner'] = np.array([float(val) for val in loc_params['ll_corner'].replace(" ","").split(",")])
@@ -297,16 +360,16 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
         loc_params['back_az_width'] = None
         loc_params['range_max'] = None
-        loc_params['grid_resol'] = None 
+        loc_params['grid_resol'] = None
     else:
         # set automatically
         loc_params['alt_resol'] = None
         loc_params['c0_stdev'] = None
         loc_params['az_limit'] = None
-        
+
         tm_lims = None
 
-    if loc_params['atmo_data'] is None:               
+    if loc_params['atmo_data'] is None:
         if loc_params['pgm_file'] is not None:
             if find_spec('stochprop'):
                 click.echo("  pgm_file: " + str(loc_params['pgm_file']))
@@ -314,7 +377,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
                 pgm.load(loc_params['pgm_file'])
             else:
                 click.echo('\n' + "Can't use a PGM without stochprop installed." + '\n' + "Built-in celerity model options are: 'regional_hf', 'regional_lf', and 'infGEM'" + '\n')
-                return 
+                return
         else:
             if "auto" in loc_params['celerity_model']:
                 # pre-load the infGEM model and update once integration region is identified
@@ -324,6 +387,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
             pgm = None
     else:
         loc_params["celerity_model"] = None
+        pgm = None
 
     click.echo('\n' + "localization parameters:")
     for key in loc_params.keys():
@@ -334,12 +398,12 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
     # Set optimal celerity model if needed
     det_list = [data_io._det_dict_to_likelihood(dict) for dict in ev_data['det_info']]
-    if loc_params['celerity_model'] is not None:   
+    if loc_params['celerity_model'] is not None:
         if "auto" in loc_params['celerity_model']:
             infgem_rng_thresh = 1000.0
             low_freq_thresh = 0.5
 
-            click.echo("Optimizing celerity model for analysis")         
+            click.echo("Optimizing celerity model for analysis")
             prop_dist = bisl.prop_distance(det_list, loc_params['back_az_width'], loc_params['range_max'])
             rng_bnds = [np.min(prop_dist), np.max(prop_dist)]
 
@@ -352,7 +416,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
             if rng_bnds[0] > infgem_rng_thresh:
                 click.echo('  Using infGEM global-scale celerity model.\n')
                 loc_params['celerity_model'] = 'infgem'
-            elif snr_band[0] < low_freq_thresh:                  
+            elif snr_band[0] < low_freq_thresh:
                 click.echo('  Using regional low-frequency celerity model.\n')
                 loc_params['celerity_model'] = 'regional_lf'
             else:
@@ -362,9 +426,9 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
     # Check if results already exist for this parameter set
     new_param_set = True
     param_index = 0
-    for k, result_set in enumerate(ev_data['location']):        
+    for k, result_set in enumerate(ev_data['location']):
         try:
-            new_param_set = False 
+            new_param_set = False
             param_index = k
             np.testing.assert_equal(loc_params, result_set['params'])
             break
@@ -374,87 +438,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
     if new_param_set:
         click.echo("")
-        if loc_params['atmo_data'] is None:
-            result = bisl.run_dict(det_list, loc_params, tm_lims, pgm)         
-        else:
-            if find_spec('infraga'):
-                if not os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/bin/infraga-sph"):
-                    click.echo("InfraGA methods not compiled.  Run 'infraga compile' and try again.")
-                else:                               
-                    with tempfile.TemporaryDirectory(prefix='infraga_') as tmpdirname:
-                        if loc_params['local_temp_dir'] is not None:
-                            if not os.path.isdir(loc_params['local_temp_dir']):
-                                os.mkdir(loc_params['local_temp_dir'])
-                            tmpdirname = loc_params['local_temp_dir']
-
-                        temp_path = tmpdirname + "/temp"
-
-                        if "*" in loc_params['atmo_data']:
-                            if len(os.path.dirname(loc_params['atmo_data'])) > 0:
-                                file_path = os.path.dirname(loc_params['atmo_data']) + "/"
-                            else:
-                                file_path = ""
-
-                            if "/" in loc_params['atmo_data']:
-                                dir_files = os.listdir(os.path.dirname(loc_params['atmo_data']))
-                            else:
-                                dir_files = os.listdir(".")
-
-                            file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
-
-                            click.echo('\n' + "Computing localization using atmosphere ensemble:")
-                            norms = []
-                            for k, file_name in enumerate(file_list):                            
-                                print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
-                                temp = tribl.run_dict(det_list,
-                                                      file_path + file_name,
-                                                      temp_path,
-                                                      loc_params,
-                                                      tm_lims,
-                                                      verbose=False,
-                                                      show_prog=True,
-                                                      pool=pl)
-                                norms = norms + [temp['norm']]
-
-                            norms = norms / np.sum(norms)
-
-                            print('\n' + "Merging PDFs across the ensemble...")
-                            tmp_0 = np.load(temp_path + "-0.pdf.npz")
-
-                            lat_grid, lon_grid, alt_grid, tm_grid = np.meshgrid(tmp_0['lat_vals'], tmp_0['lon_vals'], tmp_0['alt_vals'], tmp_0['tm_vals'], indexing='ij')
-                            lat_grid = np.squeeze(lat_grid)
-                            lon_grid = np.squeeze(lon_grid)
-                            alt_grid = np.squeeze(alt_grid)
-                            tm_grid = np.squeeze(tm_grid)
-
-                            pdf = tmp_0['pdf']
-
-                            print('\t1/' + str(len(file_list)) + '\t' + file_path + file_list[0] + '\t' + str(norms[0]))
-
-                            for k, file_name in enumerate(file_list[1:]):                            
-                                tmp_k = np.load(temp_path + "-" + str(k + 1) + ".pdf.npz")
-                                pdf = pdf + tmp_k['pdf']
-                                print('\t' + str(k + 2) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t' + str(norms[k + 1]))
-                        
-                            click.echo('\n' + "Analyzing combined localization PDF...")
-                            result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
-
-                            # Add ensemble information tp location dictionary
-                            result['atmo ensemble'] = file_list
-                            result['atmo norms'] = norms 
-
-                        else:
-                            result = tribl.run_dict(det_list,
-                                                    loc_params['atmo_data'],
-                                                    temp_path,
-                                                    loc_params,
-                                                    tm_lims,
-                                                    verbose=True,
-                                                    show_prog=True,
-                                                    pool=pl)
-            else:
-                click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
-                return
+        result = location_wrapper(det_list, loc_params, tm_lims, pgm)
 
         # Determine output format for BISL results
         if result['norm'] > 0.0:
@@ -494,7 +478,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
 
     \b
     Example usage (run from infrapy/examples directory; run location on HRR-5 event file first):
-    \tinfrapy event characterize --ev-file data/HRR-5.ev.json.gz  --cnfg-file config/SpYE_HRR.cnfg 
+    \tinfrapy event characterize --ev-file data/HRR-5.ev.json.gz  --cnfg-file config/SpYE_HRR.cnfg
     '''
 
     click.echo("")
@@ -504,7 +488,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     click.echo("##    Characterization Analysis    ##")
     click.echo("##                                 ##")
     click.echo("#####################################")
-    click.echo("")    
+    click.echo("")
 
     if cnfg_file:
         click.echo('\n' + "Loading configuration info from: " + cnfg_file)
@@ -515,7 +499,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
             click.echo("Invalid configuration file (file not found)")
             return 0
     else:
-        user_config = None    
+        user_config = None
 
     ev_file = config.set_param(user_config, 'DATA IO', 'ev_file', ev_file, 'string')
     det_mask = config.set_param(user_config, 'YIELD', 'det_mask', det_mask, 'string')
@@ -527,11 +511,11 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         det_mask = np.ones(len(ev_data['det_info']))
     else:
         det_mask = [int(val) for val in det_mask.strip(' ()[]').split(',')]
-            
+
     if loc_index is not None:
         src_loc = [loc_lats[loc_index], loc_lons[loc_index]]
     else:
-        loc_std = [loc['result']['NS_stdev'] * loc['result']['NS_stdev'] for loc in ev_data['location']]
+        loc_std = [loc['result']['NS_stdev'] * loc['result']['EW_stdev'] for loc in ev_data['location']]
         loc_lats = [loc['result']['lat_mean'] for loc in ev_data['location']]
         loc_lons = [loc['result']['lon_mean'] for loc in ev_data['location']]
 
@@ -540,7 +524,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
 
     if not find_spec('stochprop'):
         click.echo('\n' + "Can't load transmission loss model (TLM) file without stochprop installed." + '\n')
-        return 
+        return
 
     click.echo('\n' + "Data summary:")
     click.echo("  ev_file: " + str(ev_file))
@@ -599,9 +583,9 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
     # Check if a result for this parameter set already exists.
     new_param_set = True
     param_index = 0
-    for k, result_set in enumerate(ev_data['characterization']):        
+    for k, result_set in enumerate(ev_data['characterization']):
         try:
-            new_param_set = False 
+            new_param_set = False
             param_index = k
             np.testing.assert_equal(char_params, result_set['params'])
             break
@@ -626,12 +610,12 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
             models[1][n] = sp_prop.TLossModel()
             models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
         print('')
-        
+
         # ######################## #
         #         Run Yield        #
         #    Estimation Methods    #
         # ######################## #
-        spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models, 
+        spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
                             yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                             ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
                             p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])

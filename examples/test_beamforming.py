@@ -8,158 +8,101 @@
 # Created 01/06/2016
 # Last Modified 01/06/2016
 
+import json
+import gzip
+
 import numpy as np
-
-import multiprocessing as mp
-from multiprocessing import cpu_count
-from multiprocess import Pool
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
 
-from obspy.core import read
-
-from scipy import signal
-
-from infrapy.detection import beam
+from infrapy.detection import beam, visualization
+from infrapy.utils import config, data_io
 
 if __name__ == '__main__':
+
     # ######################### #
     #     Define Parameters     #
     # ######################### #
     sac_glob = "data/*.SAC"
+    output_label = "beam_test"
+    cpu_cnt = 4
 
-    freq_min, freq_max = 0.5, 2.5
-    window_length, window_step = 10.0, 2.5
+    fk_params = dict(config.defaults['FK'])
+    fk_params['freq_min'] = 0.5
+    fk_params['freq_max'] = 2.5
 
-    ns_start, ns_end = 100.0, 400.0
-    sig_start, sig_end = 600, 800
+    fk_params['window_len'] = 10.0
+    fk_params['window_step'] = 2.5
 
-    back_az_vals = np.arange(-180.0, 180.0, 1.5)
-    trc_vel_vals = np.arange(300.0, 600.0, 2.5)
+    fk_params['back_az_min'] = -180.0
+    fk_params['back_az_max'] = 180.0
+    fk_params['back_az_step'] = 2.5
 
-    method="bartlett"
+    fk_params['trace_vel_min'] = 300.0
+    fk_params['trace_vel_max'] = 600.0
+    fk_params['trace_vel_step'] = 2.5
 
-    p = Pool(cpu_count() - 1)
-    # ######################### #
-    #  Read, Shift Start Time,  #
-    #      and Filter Data      #
-    # ######################### #
-    x, t, t0, geom = beam.stream_to_array_data(read(sac_glob))
-    M, N = x.shape
+    det_params = dict(config.defaults['FD'])
+    det_params['window_len'] = 3600.0
+    det_params['p_value'] = 0.02
+    det_params['back_az_width'] = 15.0
+    det_params['min_duration'] = 20.0
+    det_params['merge_dets'] = True
 
-    # ######################### #
-    #         View Data         #
-    # ######################### #
-    plt.figure(1)
-    for m in range(M):
-        plt.subplot(M, 1, m + 1)
-        plt.xlim([0, t[-1]])
-        plt.plot(t, x[m], 'k-')
-        plt.axvspan(xmin = sig_start , xmax = sig_end, alpha = 0.25, color = 'blue')
-        if method == "gls":
-            plt.axvspan(xmin = ns_start , xmax = ns_end, alpha = 0.25, color = 'red')
-        if m < (M - 1) : plt.setp(plt.subplot(M, 1, m + 1).get_xticklabels(), visible=False)
-
-    if method == "gls":
-        plt.suptitle("Data windows for signal (blue) and noise (red) \n Filtered in frequency range: " + str(freq_min) + " - " + str(freq_max) + "  Hz \n ")
-    else:
-        plt.suptitle("Data window for analysis \n Filtered in frequency range: " + str(freq_min) + " - " + str(freq_max) + "  Hz \n ")
-
-    plt.show(block=False)
-    plt.pause(0.1)
+    # convert string 'None' to Python None for logic flow
+    for key in det_params.keys():
+        if 'none' in str(det_params[key]).lower():
+            det_params[key] = None
 
     # ######################### #
-    #        Run Methods        #
+    #  Read Data and Summarize  #
     # ######################### #
+    stream, latlon = data_io.set_stream(sac_glob, None, None)
+    wvfrm_info = data_io.wvfrm_info(stream, latlon)
 
-    # define slowness and delays
-    slowness = beam.build_slowness(back_az_vals, trc_vel_vals)
-    delays = beam.compute_delays(geom, slowness)
+    print('\n' + "Data summary:")
+    for tr in stream:
+        print(tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
 
-    # define the noise covariance if using generalized least squares method
-    if method == "gls":
-        _, S, _ = beam.fft_array_data(x, t, window=[ns_start, ns_end], sub_window_len=window_length)
+    # ####################### #
+    #     Run Beamforming     #
+    # ####################### #
+    beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, fk_params, None, cpu_cnt)
+    dets, thresh_vals = beam.run_afd_dict(beam_times, beam_peaks, fk_params, det_params, len(stream))
 
-        ns_covar_inv = np.empty_like(S)
-        for n in range(S.shape[2]):
-            S[:, :, n] += 1.0e-3 * np.mean(np.diag(S[:, :, n])) * np.eye(S.shape[0])
-            ns_covar_inv[:, :, n] = np.linalg.inv(S[:, :, n])
-    else:
-        ns_covar_inv = None
+    # extract fk results for the full duration
+    fk = {}
+    fk['time'] = np.array([(tn - np.datetime64(stream[0].stats.starttime)).astype('m8[ms]').astype(float) * 1.0e-3 for tn in beam_times])
+    fk['back az'] = beam_peaks[:, 0]
+    fk['tr vel'] = beam_peaks[:, 1]
+    fk['f-stat'] = beam_peaks[:, 2]
+    fk['thresh'] = thresh_vals
 
-    # Prep figure
-    f, a = plt.subplots(4, sharex=True)
-    plt.xlim([sig_start, sig_end])
-    a[3].set_xlabel("Time [s]")
-    a[3].set_ylabel("Pr. [Pa]")
-    a[2].set_ylabel("Back Az. [deg.]")
-    a[1].set_ylabel("Tr. Vel. [m/s]")
-    if method == "music":
-        a[0].set_ylabel("Beam Power")
-    else:
-        a[0].set_ylabel("log10(F-value)")
+    dets = [beam.det2dict(stream, latlon, beam_times, beam_peaks, fk_params, det_info) for det_info in dets]
+    dets_dict = {'wvfrm_info' : [wvfrm_info],
+                 'fk_params' : [fk_params],
+                 'det_params' : [det_params],
+                 'fk' : fk,
+                 'det_info' : dets}
 
-    a[3].plot(t, x[1,:], '-k')
-    plt.suptitle("Frequency range: " + str(freq_min) + " - " + str(freq_max) + " Hz \n window size " + str(window_length) + " seconds, window step " + str(window_step) +  " seconds")
-    plt.show(block=False)
+    with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+        json.dump(dets_dict, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
 
-    # Run beamforming in windowed data and write to file
-    times, beam_results = [],[]
-    for window_start in np.arange(sig_start, sig_end, window_step):
-        if window_start + window_length > sig_end:
-            break
+    # ################### #
+    #    Summarize and    #
+    #     Plot Results    #
+    # ################### #
+    det_data = json.load(gzip.open(output_label + ".dets.json.gz", 'rt'))
 
-        print("Running analysis on time window " + str(window_start) + " - " + str(window_start + window_length), end=' ')
-        print(" seconds in frequency band " + str(freq_min) + " - " + str(freq_max) + " Hz...")
-        times = times + [[t0 + np.timedelta64(int(window_start), 's')]]
-        X, S, f = beam.fft_array_data(x, t, window=[window_start, window_start + window_length])
-        beam_power = beam.run(X, S, f, geom, delays, [freq_min, freq_max], method="bartlett", pool=p, normalize_beam=True, ns_covar_inv=ns_covar_inv)
-        peaks = beam.find_peaks(beam_power, back_az_vals, trc_vel_vals, signal_cnt=1)
-        beam_results = beam_results + [[peaks[0][0], peaks[0][1], peaks[0][2] / (1.0 - peaks[0][2]) * (x.shape[0] - 1)]]
+    print('\n' + "Detection summary:")
+    for k, det in enumerate(det_data['det_info']):
+        print("  time: " + str(det['peak f-stat time']).split(".")[0], end='\t')
+        print("  back az [deg]: " + f"{det["back az"]:>8.2f}", end='\t')
+        print("  tr vel [m/s]: " + f"{det["tr vel"]:.1f}", end='\t')
+        print("  f-stat: " + f"{det["f-stat"]:>5.1f}")
+    print('')
 
-        if method == "music":
-            a[2].plot([window_start + 1.0 / 2.0 * window_length], [peaks[0][0]], 'ok', markersize=3.3)
-            a[1].plot([window_start + 1.0 / 2.0 * window_length], [peaks[0][1]], 'ok', markersize=3.3)
-            a[0].plot([window_start + 1.0 / 2.0 * window_length], [peaks[0][2]], 'ok', markersize=3.3)
-            plt.pause(0.1)
-        else:
-            fisher_val = peaks[0][2] / (1.0 - peaks[0][2]) * (M - 1)
-            a[2].plot([window_start + 1.0 / 2.0 * window_length], [peaks[0][0]], 'ok', markersize=3.3)
-            a[1].plot([window_start + 1.0 / 2.0 * window_length], [peaks[0][1]], 'ok', markersize=3.3)
-            a[0].plot([window_start + 1.0 / 2.0 * window_length], [np.log10(fisher_val)], 'ok', markersize=3.3)
-            plt.pause(0.1)
-        plt.pause(0.1)
-    times = np.array(times)[:, 0]
-    beam_results = np.array(beam_results)
-
-    np.save("data/times", times)
-    np.save("data/beam_results", beam_results)
-    # Define best beam time series and residuals
-    back_az = beam_results[np.argmax(beam_results[:, 2]), 0]
-    tr_vel = beam_results[np.argmax(beam_results[:, 2]), 1]
-
-    X, S, f = beam.fft_array_data(x, t, window=[sig_start, sig_end], fft_window="boxcar")
-    sig_est, residual = beam.extract_signal(X, f, np.array([back_az, tr_vel]), geom)
-
-    plt.figure(3)
-    plt.loglog(f, abs(sig_est), '-b', linewidth=1.0)
-    plt.loglog(f, np.mean(abs(residual), axis=0), '-k', linewidth=0.5)
-
-    signal_wvfrm = np.fft.irfft(sig_est) / (t[1] - t[0])
-    resid_wvfrms = np.fft.irfft(residual, axis=1) / (t[1] - t[0])
-    t_mask = np.logical_and(sig_start < t, t < sig_end)
-
-    plt.figure(4)
-    for m in range(M):
-        plt.subplot(M + 1, 1, m + 1)
-        plt.xlim([t[t_mask][0], t[t_mask][-1]])
-        plt.plot(t[t_mask], x[m, t_mask], '0.5')
-        plt.plot(t[t_mask], resid_wvfrms[m, :len(t[t_mask])], 'k-')
-        plt.setp(plt.subplot(M + 1, 1, m + 1).get_xticklabels(), visible=False)
-    plt.subplot(M + 1, 1, M + 1)
-    plt.xlim([t[t_mask][0], t[t_mask][-1]])
-    plt.plot(t[t_mask], signal_wvfrm[:len(t[t_mask])], 'b-')
-    plt.pause(230.0)
-
-    plt.close()
-    p.close()
+    # Plot beam results
+    visualization.plot_fk_json(det_data, show_fig=False)
+    for k in range(len(dets)):
+        visualization.plot_det_json(det_data, k, show_fig=False)
+    plt.show()

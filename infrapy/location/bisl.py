@@ -8,7 +8,6 @@
 #
 # Author            Philip Blom (pblom@lanl.gov)
 
-
 import numpy as np
 
 from scipy.integrate import simpson
@@ -107,11 +106,11 @@ def set_region(det_list, bm_width=10.0, rng_max=np.pi / 2.0 * 6370.0, rad_min=10
                 beam_intersects[pair_index * 8 + 5] = ll.gcarc_intersect(latlon1, proj1dn, latlon2, proj2dn)[0]
                 beam_intersects[pair_index * 8 + 6] = ll.gcarc_intersect(latlon1, proj1up, latlon2, proj2dn)[0]
                 beam_intersects[pair_index * 8 + 7] = ll.gcarc_intersect(latlon1, proj1dn, latlon2, proj2up)[0]
-    
+
     all_intersects = np.vstack((main_intersects, beam_intersects))
     if np.all(np.isnan(all_intersects)):
         raise ValueError('Detection set contains no beam intersects. Can not run BISL')
-    
+
     # Compute geographic mean of the intersections to define the center of the region
     x, y, z = 0.0, 0.0, 0.0
     for n in range (9):
@@ -207,7 +206,7 @@ def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner
             LA, LO = LA.flatten(), LO.flatten()
 
             for det in det_list:
-                rngs = np.array(sph_proj.inv(det.longitude * np.ones_like(LO), det.latitude * np.ones_like(LA), LO, LA, radians=False))[2] / 1000.0             
+                rngs = np.array(sph_proj.inv(det.longitude * np.ones_like(LO), det.latitude * np.ones_like(LA), LO, LA, radians=False))[2] / 1000.0
                 t_min = t_min + [det.peakF_UTCtime - np.timedelta64(int(np.max(rngs) / 0.22 * 1.0e3), 'ms')]
                 t_max = t_max + [det.peakF_UTCtime - np.timedelta64(int(np.min(rngs) / 0.36 * 1.0e3), 'ms')]
             tm_lims = [max(t_min), min(t_max)]
@@ -239,7 +238,7 @@ def build_grid(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner
     lon_grid = np.squeeze(lon_grid)
     alt_grid = np.squeeze(alt_grid)
     tm_grid = np.squeeze(tm_grid)
-    
+
     return lat_grid, lon_grid, alt_grid, tm_grid
 
 
@@ -306,7 +305,7 @@ def find_confidence(func, lims, conf_lvl):
 
     x_vals = np.linspace(lims[0], lims[1], resol)
     f_vals = func(x_vals)
- 
+
     f_vals = f_vals / simpson(f_vals, x_vals)
 
     thresh_vals = np.linspace(min(f_vals), max(f_vals), resol)
@@ -326,14 +325,14 @@ def find_confidence(func, lims, conf_lvl):
         plt.show()
         '''
 
-        x_temp = x_vals[f_vals > thresh] 
+        x_temp = x_vals[f_vals > thresh]
         bnds = [x_temp[0], x_temp[-1]]
-        
+
 
         if conf < conf_lvl:
             # plt.show()
             break
-            
+
     return bnds, conf, thresh
 
 
@@ -353,7 +352,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
         spatial_pdf = simpson(pdf, x=dt_vals)
         tm_pdf = simpson(simpson(pdf * np.cos(np.radians(lat_grid)), x=lon_vals, axis=1), x=lat_vals, axis=0)
         norm = simpson(tm_pdf, dt_vals)
-        
+
         spatial_pdf = spatial_pdf / norm
         tm_pdf = tm_pdf / norm
 
@@ -365,7 +364,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
         if verbose:
             print('\t\t' + "Analyzing spatial PDF...")
 
-        lat_grid2, lon_grid2 = np.meshgrid(lat_vals, lon_vals, indexing='ij') 
+        lat_grid2, lon_grid2 = np.meshgrid(lat_vals, lon_vals, indexing='ij')
         lat_mean, lon_mean = [simps_spatial(grid_vals * spatial_pdf) for grid_vals in [lat_grid2, lon_grid2]]
 
         temp = np.array(sph_proj.inv(lon_mean * np.ones_like(lon_grid2), lat_mean * np.ones_like(lat_grid2), lon_grid2, lat_grid2, return_back_azimuth=True, radians=False))
@@ -382,7 +381,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
         tm_mask = np.logical_and(dt_mean - 3.0 * dt_stdev - 2.0 * dt_step < dt_vals, dt_vals < dt_mean + 3.0 * dt_stdev + 2.0 * dt_step)
 
         time_bnds_90 = find_confidence(interp1d(dt_vals[tm_mask], tm_pdf[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], 0.90)
-        
+
         MaP_index = np.argmax(pdf.flatten())
 
         return {'lat_mean': lat_mean, 'lon_mean' : lon_mean,
@@ -401,7 +400,7 @@ def analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=False):
                 'norm' : norm}
 
 
-def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, path_geo_model=None, verbose=True):
+def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, path_geo_model=None, verbose=True, show_prog=True):
     """Run analysis of the posterior pdf for BISL
 
         Compute the marginal disribution...
@@ -461,6 +460,8 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
         if verbose:
             print('\t' + "Evaluating localization probability on grid...")
             print('\t\t Progress: ', end='')
+
+        if show_prog:
             prog_bar.prep(5 * len(det_list))
             pdf = np.array([det.pdf(lat_grid, lon_grid, tm_grid, path_geo_model=path_geo_model, prog_step=5) for det in det_list if type(det) == lklhds.InfrasoundDetection]).prod(axis=0)
             prog_bar.close()
@@ -493,7 +494,7 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
             result = simpson(vals, x=lon_vals)
             result = simpson(result, x=lat_vals)
             return result
-        
+
         integrand = pdf * np.cos(np.radians(lat_grid))
         integrand = integrand / simps_2dim(integrand)
 
@@ -520,10 +521,11 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
                     'lon_MaP': lon_grid.flatten()[MaP_index],
                     'MaP_val' : spatial_pdf.flatten()[MaP_index],
                     'spatial_pdf' : spatial_pdf}
-        
-    return result 
-    
-def run_dict(det_list, loc_params, tm_lims, pgm):
+
+    return result
+
+
+def run_dict(det_list, loc_params, tm_lims, pgm, verbose=True):
     return run(det_list,
                bm_width=loc_params['back_az_width'],
                rng_max=loc_params['range_max'],
@@ -533,7 +535,9 @@ def run_dict(det_list, loc_params, tm_lims, pgm):
                latlon_resol=loc_params['latlon_resol'],
                tm_lims=tm_lims,
                tm_resol=loc_params['tm_resol'],
-               path_geo_model=pgm)
+               path_geo_model=pgm,
+               verbose=verbose)
+
 
 def summarize(result, confidence_level=90):
     """Outputs results of BISL analysis
@@ -553,10 +557,10 @@ def summarize(result, confidence_level=90):
             dt_mean = (np.datetime64(result['t_mean']) - np.datetime64(result['temporal_pdf'][0][0])).astype('m8[ms]').astype(float) / 1.0e3
             tm_mask = np.logical_and(dt_mean - 4.0 * result['t_stdev'] < dt_vals, dt_vals < dt_mean + 4.0 * result['t_stdev'])
 
-            tm_conf = find_confidence(interp1d(dt_vals[tm_mask], np.array(result['temporal_pdf'][1])[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)            
+            tm_conf = find_confidence(interp1d(dt_vals[tm_mask], np.array(result['temporal_pdf'][1])[tm_mask], kind='linear'), [dt_vals[tm_mask][0], dt_vals[tm_mask][-1]], confidence_level / 100.0)
 
             tm_min_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(min(tm_conf[0]) * 1e3), 'ms')
-            tm_max_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms') 
+            tm_max_val = np.datetime64(result['temporal_pdf'][0][0]) + np.timedelta64(int(max(tm_conf[0]) * 1e3), 'ms')
         else:
             tm_min_val = result['t_min']
             tm_max_val = result['t_max']
@@ -592,7 +596,7 @@ def summarize(result, confidence_level=90):
             ex95confmin = tm_min_val,
             ex95confmax = tm_max_val
             )
-        
+
     else:
         summary = ('Maximum a posteriori analysis: \n'
                     '\tSource location: {slat}, {slon} \n\n'
