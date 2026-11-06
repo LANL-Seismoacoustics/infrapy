@@ -20,13 +20,13 @@ from ..utils import prog_bar, confidence
 from scipy.special import gamma
 
 #########################
-##   Kinney & Graham   ## 
+##   Kinney & Graham   ##
 ##   Blastwave Model   ##
 #########################
 def kg_op(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """
         Kinney & Graham scaling law peak overpressure model
-                
+
         Parameters
         ----------
         W: float
@@ -39,27 +39,27 @@ def kg_op(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
             Ambient atmospheric temperature [deg K]
         exp_type: string
             Type of explosion modeled, options are "chemical" or "nuclear"
-        
+
         Returns
         -------
         p0: float
-            Peak overpressure [Pa]    
+            Peak overpressure [Pa]
     """
-    
+
     fd = (p_amb / 101.325)**(1.0 / 3.0) * (T_amb / 288.15)**(1.0 / 3.0)
     sc_rng = fd / W**(1.0 / 3.0) * r * 1000.0
-    
+
     if exp_type=="chemical":
         term1 = 1.0 + (sc_rng / 4.5)**2
         term2 = np.sqrt(1.0 + (sc_rng / 0.048)**2)
         term3 = np.sqrt(1.0 + (sc_rng / 0.32)**2)
         term4 = np.sqrt(1.0 + (sc_rng / 1.35)**2)
-        
+
         result = 808.0 * term1 / (term2 * term3 * term4)
     else:
         term1 = (1.0 + sc_rng / 800.0)
         term2 = np.sqrt(1.0 + (sc_rng / 87.0)**2)
-        
+
         result = 3.2e6 / sc_rng**3 * term1 * term2
 
     return p_amb * 1.0e3 * result
@@ -68,7 +68,7 @@ def kg_op(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
 def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
     """
         Kinney & Graham scaling law positive phase duration model
-                
+
         Parameters
         ----------
         W : float
@@ -81,7 +81,7 @@ def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
             Ambient atmospheric temperature [deg K]
         exp_type : string
             Type of explosion modeled, options are "chemical" or "nuclear"
-            
+
         Returns
         -------
         t0 : float
@@ -90,34 +90,34 @@ def kg_ppd(W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
 
     fd = (p_amb / 101.325)**(1.0 / 3.0) * (T_amb / 288.15)**(1.0 / 3.0)
     sc_rng = fd / W**(1.0 / 3.0) * r * 1000.0
-    
+
     if exp_type=="chemical":
         term1 = 1.0 + (sc_rng / 0.54)**10
         term2 = 1.0 + (sc_rng / 0.02)**3
         term3 = 1.0 + (sc_rng / 0.74)**6
         term4 = np.sqrt(1.0 + (sc_rng / 6.9)**2)
-        
+
         result = 980.0 * term1 / (term2 * term3 * term4)
     else:
         term1 = np.sqrt(1.0 + (sc_rng / 100.0)**3)
         term2 = np.sqrt(1.0 + (sc_rng / 40.0))
         term3 = (1.0 + (sc_rng / 285.0)**5)**(1.0 / 6.0)
         term4 = (1.0 + (sc_rng / 50000.0))**(1.0 / 6.0)
-        
+
         result = 180.0 * term1 / (term2 * term3 * term4)
 
     return result * W**(1.0 / 3.0) / 1e3
 
 
 def blastwave(t, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping_param=0.0):
-    """ 
+    """
         Acoustic blastwave that can be used as a source
             for surface explosions out to several scale
             kilometers.
-        
+
         Note: alpha = 0 produces the Friedlander
             blastwave model.
-        
+
         Parameters
         ----------
         t: float
@@ -138,16 +138,16 @@ def blastwave(t, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping
         Returns
         -------
         p : float
-            Overpressure at time t            
+            Overpressure at time t
     """
 
     p0 = kg_op(W, r, p_amb, T_amb, exp_type)
     t0 = kg_ppd(W, r, p_amb, T_amb, exp_type)
-    
+
     x = t / t0 + (1.0 + shaping_param)
     x0 = (1.0 + shaping_param) - np.sqrt(1.0 + shaping_param)
     norm = x0**shaping_param * (1.0 - x0 / (1.0 + shaping_param)) * np.exp(-x0)
-    
+
     result = np.empty_like(x)
     if len(np.atleast_1d(result)) == 1:
         if x >= 0.0:
@@ -161,18 +161,18 @@ def blastwave(t, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping
 
 
 def blastwave_spectrum(f, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical", shaping_param=0.0):
-    """ 
+    """
         Fourier transform amplitude for the acoustic
             blastwave in sasm.acoustic.blastwave().
-        
+
         Note: shaping_param = 0 produces the Friedlander
         blastwave model.
-        
+
         Note: the peak of the spectrum occurs at
         f_0 = \\frac{1}{2 \\pi t_0} \\frac{1}{\\sqrt{\\alpha + 1}
         and t0 corresponding to a given peak frequency is
         t_0 = \\frac{1}{2 \\pi f_0} \\frac{1}{\\sqrt{\\alpha + 1}
-        
+
         Parameters
         ----------
         f: float
@@ -189,7 +189,7 @@ def blastwave_spectrum(f, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"
             Type of explosion modeled, options are "chemical" or "nuclear"
         shaping_param: float
             Shaping parameter for waveform that controls high frequency trend (set to 0 for original Friedlander blastwave)
-        
+
         Returns
         -------
         P : float
@@ -202,20 +202,20 @@ def blastwave_spectrum(f, W, r, p_amb=101.325, T_amb=288.15, exp_type="chemical"
     omega = 2.0 * np.pi * f
     x0 = (1.0 + shaping_param) - np.sqrt(1.0 + shaping_param)
     norm = x0**shaping_param * (1.0 - x0 / (1.0 + shaping_param)) * np.exp(-x0)
-    
+
     return p0 / norm * t0 * gamma(shaping_param + 1.0) * (omega * t0) / (1.0 + (omega**2 * t0**2))**(shaping_param / 2.0 + 1.0)
 
 
 #################################
 ##        Spectral Yield       ##
-##  Estimation (SpYE) Methods  ## 
+##  Estimation (SpYE) Methods  ##
 #################################
 def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
-    """ 
+    """
         Extract spectra for a list of detections using a list of
             obspy streams with a defined window buffer and noise
             window option
-        
+
         Parameters
         ----------
         det_list : :obj:`list` of :obj:`InfrasoundDetection`
@@ -223,7 +223,7 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
         st_list : :obj:`list` of :obj:`obspy.Stream`
             Iterable of Obspy streams containing the array channels for each detection
         win_buffer : float
-            Scaling factor defining the window buffer (a 20 second detection with a 
+            Scaling factor defining the window buffer (a 20 second detection with a
                 buffer of 0.25 adds 5 seconds to the start and end of the window)
         ns_opt : string
             Option defining how the noise window is defined.  Options include "pre",
@@ -232,7 +232,7 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
         Returns
         -------
         smn_spec : ndarray
-            Spectral amplitude of the signal-minus-noise            
+            Spectral amplitude of the signal-minus-noise
     """
     print("Computing detection spectra...")
     det_cnt = len(det_list)
@@ -242,9 +242,9 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
         st = st_list[j]
         t_ref = (det_list[j].peakF_UTCtime - np.datetime64(st[j].stats.starttime)).astype('m8[s]').astype(float)
         det_len = det_list[j].end - det_list[j].start
-        
+
         x, t, t0, geom = beam.stream_to_array_data(st)
-        
+
         sig_t1 = t_ref + det_list[j].start - det_len * win_buffer
         sig_t2 = t_ref + det_list[j].end + det_len * win_buffer
         if ns_opt == "pre" or ns_opt == "post":
@@ -258,11 +258,11 @@ def extract_spectra(det_list, st_list, win_buffer=0.25, ns_opt="pre"):
                 ns_t2 = t_ref + det_list[j].end + det_len * win_buffer + det_len * (1.0 + 2.0 * win_buffer)
             X_ns, _, f_ns = beam.fft_array_data(x, t, window=[ns_t1, ns_t2], fft_window="tukey")
             X_ns = np.mean(abs(X_ns), axis=0)
-    
+
         elif ns_opt == "beam":
             X_temp, _, f_sig = beam.fft_array_data(x, t, window=[sig_t1, sig_t2], fft_window="tukey")
             X_sig, residual = beam.extract_signal(X_temp, f_sig, np.array([det_list[j].back_azimuth, det_list[j].trace_velocity]), geom)
-            
+
             X_sig = abs(X_sig)
             f_ns = f_sig
             X_ns = np.mean(abs(residual), axis=0)
@@ -291,7 +291,7 @@ def extract_json_spectra(det_spec):
         spec_freq = det_spec[0]["freq"]
         spec_sig = det_spec[0]["signal"]
         spec_res = det_spec[0]["resid"]
-    
+
     return spec_freq, spec_sig, spec_res
 
 
@@ -325,19 +325,19 @@ def find_snr_band(det_info):
         '''
     # plt.show()
 
-    return bands 
+    return bands
 
 
 def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng=np.array([10.0, 10.0e3]), ref_src_rng=1.0, grnd_brst=True, p_amb=101.325, T_amb=288.15, exp_type="chemical"):
-    """ 
+    """
         Run Spectral Yield Estimation (SpYE) methods to estimate explosive yield
-        
+
         Parameters
         ----------
         det_list: :obj:`list` of :obj:`InfrasoundDetection`
             Iterable of detections with defined start and end times
         smn_spec: ndarray
-            Spectral amplitude of the signal-minus-noise  
+            Spectral amplitude of the signal-minus-noise
         freq_band: iterable
             List or tuple with minimum and maximum frequency (e.g.,  [f_min, f_max])
         tloss_models: list of frequencies and infrapy.propagation.TLossModel instances
@@ -361,34 +361,34 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
 
         Returns
         -------
-        yld_vals: 
-            Values of explosive yield for the PDF                    
-        yld_pdf: 
-            Probability of the observed source having a given yield                    
+        yld_vals:
+            Values of explosive yield for the PDF
+        yld_pdf:
+            Probability of the observed source having a given yield
         conf_bnds: ndarray
-            Limits for the 68% and 95% confidence bounds on yield            
+            Limits for the 68% and 95% confidence bounds on yield
     """
 
-    print("Estimating yield using spectral amplitudes...")
     det_cnt = len(det_list)
-    
-    freqs = np.logspace(np.log10(max(tloss_models[0][0], freq_band[0])), np.log10(min(tloss_models[0][-1], freq_band[1])), resol)   
-    obs_spec_ref = np.mean([max(smn_spec[j][1]) for j in range(det_cnt)])    
+
+    freqs = np.logspace(np.log10(max(tloss_models[0][0], freq_band[0])), np.log10(min(tloss_models[0][-1], freq_band[1])), resol)
+    obs_spec_ref = np.mean([max(smn_spec[j][1]) for j in range(det_cnt)])
     src_spec_vals = np.linspace(obs_spec_ref - 10.0, obs_spec_ref + 40.0, resol)
 
-    # Compute the combined near-source spectral amplitude   
+    # Compute the combined near-source spectral amplitude
     pdf = np.empty((det_cnt, resol**2))
     for j in range(det_cnt):
         _, _, pdf[j] = det_list[j].src_spec_pdf(src_loc[0], src_loc[1], freqs, src_spec_vals, smn_spec[j], tloss_models)
+
     pdf_combined = np.prod(pdf, axis=0).reshape((resol, resol))
-    psd_fit = RegularGridInterpolator((freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng)), pdf_combined)   
+    psd_fit = RegularGridInterpolator((freqs, src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng)), pdf_combined)
 
     yld_vals = np.logspace(np.log10(yld_rng[0]), np.log10(yld_rng[1]), resol)
     if grnd_brst:
         yld_scaling = 2.0
     else:
         yld_scaling = 1.0
-        
+
     yld_pdf = np.empty_like(yld_vals)
     for n in range(len(yld_vals)):
         psd_pdf = psd_fit(np.stack([freqs, 10.0 * np.log10(blastwave_spectrum(freqs, yld_vals[n] * yld_scaling, ref_src_rng, p_amb, T_amb, exp_type))], axis=-1)).T / freqs
@@ -404,7 +404,7 @@ def run(det_list, smn_spec, src_loc, freq_band, tloss_models, resol=150, yld_rng
     result = {'spec_freqs': freqs, 'spec_vals': src_spec_vals + 10.0 * np.log10(1.0 / ref_src_rng), 'spec_pdf': np.prod(pdf, axis=0).reshape((resol, resol)).T,
                 'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
 
-    return result 
+    return result
 
 def _single_station(det, src_spec, src_loc, tlms, freq_lims, resolution, ref_rng):
     f_grid, spec_grid, pdf = det.src_spec_pdf(src_loc[0], src_loc[1], np.logspace(np.log10(max(freq_lims[0], tlms[0][0])), np.log10(min(freq_lims[1], tlms[0][-1])), resolution),
@@ -415,8 +415,8 @@ def _single_station(det, src_spec, src_loc, tlms, freq_lims, resolution, ref_rng
 
 
 def _combine(file_list, yld_rng, ref_rng, resolution, p_amb, T_amb, grnd_burst, exp_type):
-    freq_min, freq_max = 0.0, np.inf 
-    P_min, P_max = -np.inf, np.inf 
+    freq_min, freq_max = 0.0, np.inf
+    P_min, P_max = -np.inf, np.inf
     PDF_interp = []
     for file in file_list:
         print('\t' + "Loading results from " + file)
@@ -428,13 +428,13 @@ def _combine(file_list, yld_rng, ref_rng, resolution, p_amb, T_amb, grnd_burst, 
             P_max = min(P_max, max(data['arr_1']))
 
             PDF_interp = PDF_interp + [LinearNDInterpolator(list(zip(data['arr_0'], data['arr_1'])), data['arr_2'], fill_value=0.0)]
-    
+
     def psd_fit(f, P):
         return np.prod(np.array([PDF(f, P) for PDF in PDF_interp]), axis=0)
 
     f_vals = np.logspace(np.log10(freq_min), np.log10(freq_max), resolution)
     P_vals = np.linspace(P_min, P_max, resolution)
-    
+
     f_grid, P_grid = np.meshgrid(f_vals, P_vals)
     jnt_pdf_grid = psd_fit(f_grid.flatten(), P_grid.flatten())
 
@@ -465,4 +465,4 @@ def _combine(file_list, yld_rng, ref_rng, resolution, p_amb, T_amb, grnd_burst, 
     result = {'spec_freqs': f_vals, 'spec_vals': P_vals, 'spec_pdf': jnt_pdf_grid,
                 'yld_vals': yld_vals / 1.0e3, 'yld_pdf' : yld_pdf, 'conf_bnds': np.array(conf_bnds) / 1.0e3}
 
-    return result 
+    return result

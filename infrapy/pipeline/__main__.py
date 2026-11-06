@@ -12,13 +12,11 @@ import configparser as cnfg
 
 from obspy import UTCDateTime
 
-from ..utils import config, data_io
+from ..utils import config, data_io, prog_bar
 from ..propagation import infrasound
 
 from ..detection import beam
-from ..association import hjl
-from ..cli import cli_event
-from ..characterization import spye
+from ..event import hjl, tribl, spye
 
 from importlib.util import find_spec
 if find_spec('stochprop'):
@@ -97,6 +95,9 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     click.echo('\n' + "pipeline parameters:")
     for key in pipe_params.keys():
         if pipe_params[key] is not None:
+            if 'dir' in key and not os.path.isdir(pipe_params[key]):
+                os.makedirs(pipe_params[key])
+
             if type(pipe_params[key]) is str:
                 if '|' in pipe_params[key]:
                     pipe_params[key] = pipe_params[key].replace('\n','').replace(' ','').split('|')
@@ -127,14 +128,8 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             click.echo('\t' + "Using general 'infrapype' output label.")
             pipe_params['out_label'] = 'infrapype'
 
-    # Build directories if needed
-    for dir_key in ['det_dir', 'ev_dir', 'figs_dir']:
-        if not os.path.isdir(pipe_params[dir_key]):
-            click.echo("Creating directory: " + pipe_params[dir_key])
-            os.makedirs(pipe_params[dir_key])
-
     # Define temporary directory (if needed)
-    with tempfile.TemporaryDirectory(prefix='infraga_') as temp_path:
+    with tempfile.TemporaryDirectory(prefix='infrapype_') as temp_path:
         if 'temp_dir' in pipe_params.keys():
             if not os.path.isdir(pipe_params['temp_dir']):
                 os.makedirs(pipe_params['temp_dir'])
@@ -151,7 +146,14 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             # Parse network, station, channel, location info and set local_wvfrm to Nones
             wvfrm_sets = []
             for id in pipe_params['trace_ids']:
-                wvfrm_sets = wvfrm_sets + [{"local_wvfrms" : None, "fdsn": pipe_params['fdsn'], "db_config" : pipe_params['db_config']}]
+                if pipe_params["db_config"] is not None:
+                    db_info = cnfg.ConfigParser()
+                    db_info.read(pipe_params["db_config"])
+                else:
+                    db_info = None
+
+                wvfrm_sets = wvfrm_sets + [{"local_wvfrms" : None, "fdsn": pipe_params['fdsn'], "db_info" : db_info}]
+
                 if '*' in id:
                     wvfrm_sets[-1]['net'] = id.split(".")[0]
                     wvfrm_sets[-1]['sta'] = id.split(".")[1]
@@ -170,7 +172,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
         for k, info in enumerate(wvfrm_sets):
             if k > 0:
                 click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
-            stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_config"],
+            stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_info"],
                                                 info['net'], info['sta'], info['loc'], info['cha'],
                                                 pipe_params['starttime'], pipe_params['endtime'], None)
 
@@ -219,16 +221,6 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
             else:
                 click.echo("Existing results found for " + pipe_params["det_dir"] + det_label + ".dets.json.gz")
-
-            '''
-            # maybe move visualization out of the pipeline loop?
-            # make a separate plotting pipeline method?
-            if not os.path.isfile(pipe_params["figs_dir"] + det_label.replace(".","_") + "_det0.png"):
-                det_data = json.load(gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'rt'))
-                for k in range(len(det_data['det_info'])):
-                    det = det_data["det_info"][k]
-                    det_vis.plot_det_json(det_data, k, output_path=pipe_params["figs_dir"] + det_label.replace(".","_") + "_det" + str(k), show_fig=False)
-            '''
 
         ####################
         ## EVENT BUILDING ##
@@ -297,7 +289,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 loc_params['cpu_cnt'] = cpu_cnt
 
                 click.echo('  Running location analysis using ' + loc_config + '\t', nl=False)
-                result = cli_event.location_wrapper(det_list, loc_params, tm_lims, pgm, verbose=False)
+                result = tribl.loc_wrapper(det_list, loc_params, tm_lims, pgm, verbose=False)
 
                 if result['norm'] > 0.0:
                     loc_info = loc_info + [{'params' : loc_params, 'result' : result}]
@@ -305,7 +297,10 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             char_info = []
             for char_config in pipe_params["ev_char_cnfgs"]:
                 click.echo('  Running characterization analysis using ' + char_config + '\t', nl=False)
+                prog_bar.prep(40)
+
                 char_params = config.set_ev_char_config(pipe_params["config_dir"] + char_config)
+                prog_bar.increment(5)
 
                 if char_params['det_mask'] is None:
                     char_params['det_mask'] = np.ones(len(ev_data['det_info']))
@@ -321,6 +316,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 det_list2 = [data_io._det_dict_to_likelihood(dict) for dict in det_info2]
                 det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info2]
                 det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
+                prog_bar.increment(10)
 
                 # set up TLMs
                 tlm_dir = os.path.dirname(char_params['tlm_label'])
@@ -333,13 +329,16 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 for n in range(len(tlm_files)):
                     models[1][n] = sp_prop.TLossModel()
                     models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
+                prog_bar.increment(10)
 
                 spye_result = spye.run(det_list2, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
                                     yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                                     ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
                                     p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
+                prog_bar.increment(15)
 
                 char_info = char_info + [{'params' : char_params, 'result' : spye_result}]
+                prog_bar.close()
 
             click.echo('  Writing results into event file...')
             ev_data['location'] = loc_info

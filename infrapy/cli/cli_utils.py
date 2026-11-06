@@ -18,10 +18,12 @@ import numpy as np
 
 from obspy import UTCDateTime
 
-from infrapy.characterization import spye
-from infrapy.detection import beam
-from infrapy.propagation import likelihoods as lklhds
-from infrapy.utils import config, data_io, database
+from ..detection import beam
+from ..event import spye
+
+from ..propagation import likelihoods as lklhds
+from ..utils import config, data_io, database
+
 
 # Rewrite this as "db2wvfrms" with option to summarize or write to SAC
 @click.command('check_db_wvfrms', short_help="Check waveform pull from database")

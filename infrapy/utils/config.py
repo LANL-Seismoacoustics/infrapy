@@ -11,9 +11,6 @@ from importlib.util import find_spec
 if find_spec('stochprop'):
     import stochprop.propagation as sp_prop
 
-
-
-
 # Set up default configuation
 defaults = cnfg.ConfigParser()
 defaults.read(str(Path(__file__).parent.parent / "resources" / "default.config"))
@@ -35,7 +32,7 @@ def set_param(user_config, section, param, cli_val, format='float'):
                 elif format == 'bool':
                     return user_config[section].getboolean(param)
                 else:
-                    return user_config[section][param]
+                    return user_config[section][param].strip('"\'')
         except:
             try:
                 if defaults[section][param] == "None":
@@ -48,7 +45,7 @@ def set_param(user_config, section, param, cli_val, format='float'):
                     elif format == 'bool':
                         return defaults[section].getboolean(param)
                     else:
-                        return defaults[section][param]
+                        return defaults[section][param].strip('"\'')
             except:
                 return None
     else:
@@ -64,9 +61,10 @@ def set_param(user_config, section, param, cli_val, format='float'):
                 elif format == 'bool':
                     return defaults[section].getboolean(param)
                 else:
-                    return defaults[section][param]
+                    return defaults[section][param].strip('"\'')
         except:
             return None
+
 
 ###################################
 ##  Configure Without CLI Input  ##

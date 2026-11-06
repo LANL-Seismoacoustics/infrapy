@@ -295,7 +295,7 @@ def db_connect(db_info):
     else:
         dburl = db_info['url']
 
-    print("  Connecting to database through url: " + dburl + '\n')
+    print("Connecting to database through url: " + dburl + '\n')
 
     if ex_auth == True:
         engine = create_engine(dburl, thick_mode = True, connect_args = {"externalauth": True} )
@@ -307,7 +307,7 @@ def db_connect(db_info):
     return session
 
 
-def set_session(db_info):
+def set_session(db_info, verbose=False):
     """
         Function to set up a database connection session using a dictionary of connection information.
         Provided information is printed to screen and the session is tested to ensure it's working.
@@ -340,10 +340,11 @@ def set_session(db_info):
             A bound SQLAlchemy session instance that can be passed to pisces for queries
 
     """
-    print("Setting up database connection...")
-    for key in db_info.keys():
-        print('  ' + key + ' ' * (20 - len(key)) + str(db_info[key]))
-    print('')
+    if verbose:
+        print("Setting up database connection...")
+        for key in db_info.keys():
+            print('  ' + key + ' ' * (20 - len(key)) + str(db_info[key]))
+        print('')
 
     db_session = db_connect(db_info)
 
@@ -441,7 +442,6 @@ def db2wvfrms(session, db_tbls, stations, channel, starttime, endtime):
     st = Stream()
     for sta_n in sta_list:
         temp_st = ps.request.get_waveforms(session, wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
-
         for tr in temp_st:
             tr.data = tr.data - np.mean(tr.data)
             tr.stats['_format'] = 'SAC'

@@ -29,7 +29,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 from . import bisl
 from ..utils import data_io
-from ..characterization import spye
+from ..event import spye
 
 sph_proj = Geod(ellps='sphere')
 

@@ -12,11 +12,12 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import chi2
 
-from ..utils import config, data_io
 from ..detection import visualization as det_vis
-from ..location import visualization as loc_vis
-from ..location import bisl
+from ..event import visualization as loc_vis
+from ..event import bisl
+
 from ..propagation import likelihoods as lklhds
+from ..utils import config, data_io
 
 
 warnings.filterwarnings(
