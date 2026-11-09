@@ -16,7 +16,7 @@ from ..utils import config, data_io, prog_bar
 from ..propagation import infrasound
 
 from ..detection import beam
-from ..event import hjl, tribl, spye
+from ..event import hjl, bisl, tribl, spye
 
 from importlib.util import find_spec
 if find_spec('stochprop'):
@@ -299,51 +299,51 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     loc_info = loc_info + [{'params' : loc_params, 'result' : result}]
 
             char_info = []
-            if "ev_char_cnfgs" not in pipe_params.keys(): break
-            for char_config in pipe_params["ev_char_cnfgs"]:
-                click.echo('  Running characterization analysis using ' + char_config + '\t', nl=False)
-                prog_bar.prep(40)
+            if "ev_char_cnfgs" in pipe_params.keys():
+                for char_config in pipe_params["ev_char_cnfgs"]:
+                    click.echo('  Running characterization analysis using ' + char_config + '\t', nl=False)
+                    prog_bar.prep(40)
 
-                char_params = config.set_ev_char_config(pipe_params["config_dir"] + char_config)
-                prog_bar.increment(5)
+                    char_params = config.set_ev_char_config(pipe_params["config_dir"] + char_config)
+                    prog_bar.increment(5)
 
-                if char_params['det_mask'] is None:
-                    char_params['det_mask'] = np.ones(len(ev_data['det_info']))
-                else:
-                    char_params['det_mask'] = [int(val) for val in char_params['det_mask'].strip(' ()[]').split(',')]
+                    if char_params['det_mask'] is None:
+                        char_params['det_mask'] = np.ones(len(ev_data['det_info']))
+                    else:
+                        char_params['det_mask'] = [int(val) for val in char_params['det_mask'].strip(' ()[]').split(',')]
 
-                loc_index = np.argmin([loc['result']['NS_stdev'] * loc['result']['EW_stdev'] for loc in loc_info])
-                src_loc = [loc_info[loc_index]['result']['lat_mean'],
-                           loc_info[loc_index]['result']['lon_mean']]
+                    loc_index = np.argmin([loc['result']['NS_stdev'] * loc['result']['EW_stdev'] for loc in loc_info])
+                    src_loc = [loc_info[loc_index]['result']['lat_mean'],
+                            loc_info[loc_index]['result']['lon_mean']]
 
-                # extract spectra and scale to dB
-                det_info2 = [dict for k, dict in enumerate(ev_data['det_info']) if bool(char_params['det_mask'][k])]
-                det_list2 = [data_io._det_dict_to_likelihood(dict) for dict in det_info2]
-                det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info2]
-                det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
-                prog_bar.increment(10)
+                    # extract spectra and scale to dB
+                    det_info2 = [dict for k, dict in enumerate(ev_data['det_info']) if bool(char_params['det_mask'][k])]
+                    det_list2 = [data_io._det_dict_to_likelihood(dict) for dict in det_info2]
+                    det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info2]
+                    det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
+                    prog_bar.increment(10)
 
-                # set up TLMs
-                tlm_dir = os.path.dirname(char_params['tlm_label'])
-                tlm_pattern = char_params['tlm_label'].split("/")[-1]
-                tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
+                    # set up TLMs
+                    tlm_dir = os.path.dirname(char_params['tlm_label'])
+                    tlm_pattern = char_params['tlm_label'].split("/")[-1]
+                    tlm_files = [file_name for file_name in np.sort(os.listdir(tlm_dir)) if fnmatch.fnmatch(file_name, tlm_pattern + "*")]
 
-                models = [0] * 2
-                models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
-                models[1] = [0] * len(tlm_files)
-                for n in range(len(tlm_files)):
-                    models[1][n] = sp_prop.TLossModel()
-                    models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
-                prog_bar.increment(10)
+                    models = [0] * 2
+                    models[0] = [float(file_name.split("Hz")[0][len(tlm_pattern):]) for file_name in tlm_files]
+                    models[1] = [0] * len(tlm_files)
+                    for n in range(len(tlm_files)):
+                        models[1][n] = sp_prop.TLossModel()
+                        models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
+                    prog_bar.increment(10)
 
-                spye_result = spye.run(det_list2, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
-                                    yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
-                                    ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
-                                    p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
-                prog_bar.increment(15)
+                    spye_result = spye.run(det_list2, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
+                                        yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
+                                        ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
+                                        p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
+                    prog_bar.increment(15)
 
-                char_info = char_info + [{'params' : char_params, 'result' : spye_result}]
-                prog_bar.close()
+                    char_info = char_info + [{'params' : char_params, 'result' : spye_result}]
+                    prog_bar.close()
 
             click.echo('  Writing results into event file...')
             ev_data['location'] = loc_info
