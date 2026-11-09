@@ -1,4 +1,4 @@
-# infrapy.location.projection.py
+# infrapy.event.tribl.py
 #
 # Back projection localization methods using the infraGA ray
 # tracing with auxiliary parameters to map direction-of-arrival

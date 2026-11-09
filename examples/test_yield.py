@@ -15,8 +15,7 @@ import numpy as np
 
 from importlib.util import find_spec
 
-from infrapy.characterization import spye
-from infrapy.location import visualization
+from infrapy.event import spye, visualization
 from infrapy.utils import config, data_io
 
 if find_spec('stochprop'):

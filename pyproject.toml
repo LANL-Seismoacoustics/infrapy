@@ -57,11 +57,9 @@ infraview = "InfraView.__main__:main"
 [tool.setuptools]
 packages = [
     "infrapy",
-    "infrapy.association",
-    "infrapy.characterization",
     "infrapy.cli",
     "infrapy.detection",
-    "infrapy.location",
+    "infrapy.event",
     "infrapy.pipeline",
     "infrapy.propagation",
     "infrapy.resources",
