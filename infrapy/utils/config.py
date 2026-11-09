@@ -90,7 +90,7 @@ def set_bm_config(cnfg_file):
     bm_params['signal_start'] = set_param(bm_cnfg, 'FK', 'signal_start', None, 'string')
     bm_params['signal_end'] = set_param(bm_cnfg, 'FK', 'signal_end', None, 'string')
     bm_params['noise_start'] = set_param(bm_cnfg, 'FK', 'noise_start', None, 'string')
-    bm_params['noise_end'] = set_param(bm_config, 'FK', 'noise_end', None, 'string')
+    bm_params['noise_end'] = set_param(bm_cnfg, 'FK', 'noise_end', None, 'string')
     bm_params['window_len'] = set_param(bm_cnfg, 'FK', 'window_len', None, 'float')
     bm_params['sub_window_len'] = set_param(bm_cnfg, 'FK', 'sub_window_len', None, 'float')
     bm_params['window_step'] = set_param(bm_cnfg, 'FK', 'window_step', None, 'float')
