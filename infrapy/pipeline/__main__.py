@@ -67,15 +67,15 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     click.echo("")
 
     if cnfg_file:
-        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        click.echo('\nLoading configuration info from: ' + cnfg_file)
         if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
             user_config.read(cnfg_file)
         else:
-            click.echo('\n' + "Invalid configuration file (file not found)")
+            click.echo('\nInvalid configuration file (' + cnfg_file + ' not found).')
             return 0
     else:
-        click.echo('\n' + "Pipeline methods require configuration file.")
+        click.echo('\nPipeline methods require configuration file.')
         return 0
 
     pipe_params = dict(user_config["PIPELINE"])
@@ -92,11 +92,15 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     pipe_params['db_config'] = config.set_param(user_config, 'PIPELINE', 'db_config', None, 'string')
 
     # summarize pipeline parameters
-    click.echo('\n' + "pipeline parameters:")
+    click.echo('\npipeline parameters:')
     for key in pipe_params.keys():
         if pipe_params[key] is not None:
-            if 'dir' in key and not os.path.isdir(pipe_params[key]):
-                os.makedirs(pipe_params[key])
+            if 'dir' in key:
+                if pipe_params[key][-1] != "/":
+                    pipe_params[key] = pipe_params[key] + "/"
+
+                if not os.path.isdir(pipe_params[key]):
+                    os.makedirs(pipe_params[key])
 
             if type(pipe_params[key]) is str:
                 if '|' in pipe_params[key]:
@@ -191,7 +195,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             # Run beamforming and combine results
             if not os.path.isfile(pipe_params["det_dir"] + det_label + ".dets.json.gz"):
                 for bm_j, bm_config_file in enumerate(pipe_params["beam_cnfgs"]):
-                    click.echo("Running beam analysis using " + bm_config_file + '\t', nl=False)
+                    click.echo("Running beam analysis using " + pipe_params["config_dir"] + bm_config_file + '\t', nl=False)
 
                     bm_params, det_params = config.set_bm_config(pipe_params["config_dir"] + bm_config_file)
                     beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, bm_params, None, cpu_cnt, verbose=False)
@@ -295,6 +299,7 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                     loc_info = loc_info + [{'params' : loc_params, 'result' : result}]
 
             char_info = []
+            if "ev_char_cnfgs" not in pipe_params.keys(): break
             for char_config in pipe_params["ev_char_cnfgs"]:
                 click.echo('  Running characterization analysis using ' + char_config + '\t', nl=False)
                 prog_bar.prep(40)

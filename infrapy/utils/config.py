@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import configparser as cnfg
 import numpy as np
 
@@ -70,42 +71,48 @@ def set_param(user_config, section, param, cli_val, format='float'):
 ##  Configure Without CLI Input  ##
 ###################################
 def set_bm_config(cnfg_file):
-    bm_config = cnfg.ConfigParser()
-    bm_config.read(cnfg_file)
+    bm_cnfg = cnfg.ConfigParser()
+    if os.path.isfile(cnfg_file):
+        bm_cnfg.read(cnfg_file)
+    else:
+        print('\nInvalid configuration file (' + cnfg_file + ' not found).\nDefault parameters will be used.\n')
 
     bm_params = {}
-    bm_params['freq_min'] = set_param(bm_config, 'FK', 'freq_min', None, 'float')
-    bm_params['freq_max'] = set_param(bm_config, 'FK', 'freq_max', None, 'float')
-    bm_params['back_az_min'] = set_param(bm_config, 'FK', 'back_az_min', None, 'float')
-    bm_params['back_az_max'] = set_param(bm_config, 'FK', 'back_az_max', None, 'float')
-    bm_params['back_az_step'] = set_param(bm_config, 'FK', 'back_az_step', None, 'float')
-    bm_params['trace_vel_min'] = set_param(bm_config, 'FK', 'trace_vel_min', None, 'float')
-    bm_params['trace_vel_max'] = set_param(bm_config, 'FK', 'trace_vel_max', None, 'float')
-    bm_params['trace_vel_step'] = set_param(bm_config, 'FK', 'trace_vel_step', None, 'float')
-    bm_params['method'] = set_param(bm_config, 'FK', 'method', None, 'string')
-    bm_params['signal_start'] = set_param(bm_config, 'FK', 'signal_start', None, 'string')
-    bm_params['signal_end'] = set_param(bm_config, 'FK', 'signal_end', None, 'string')
-    bm_params['noise_start'] = set_param(bm_config, 'FK', 'noise_start', None, 'string')
+    bm_params['freq_min'] = set_param(bm_cnfg, 'FK', 'freq_min', None, 'float')
+    bm_params['freq_max'] = set_param(bm_cnfg, 'FK', 'freq_max', None, 'float')
+    bm_params['back_az_min'] = set_param(bm_cnfg, 'FK', 'back_az_min', None, 'float')
+    bm_params['back_az_max'] = set_param(bm_cnfg, 'FK', 'back_az_max', None, 'float')
+    bm_params['back_az_step'] = set_param(bm_cnfg, 'FK', 'back_az_step', None, 'float')
+    bm_params['trace_vel_min'] = set_param(bm_cnfg, 'FK', 'trace_vel_min', None, 'float')
+    bm_params['trace_vel_max'] = set_param(bm_cnfg, 'FK', 'trace_vel_max', None, 'float')
+    bm_params['trace_vel_step'] = set_param(bm_cnfg, 'FK', 'trace_vel_step', None, 'float')
+    bm_params['method'] = set_param(bm_cnfg, 'FK', 'method', None, 'string')
+    bm_params['signal_start'] = set_param(bm_cnfg, 'FK', 'signal_start', None, 'string')
+    bm_params['signal_end'] = set_param(bm_cnfg, 'FK', 'signal_end', None, 'string')
+    bm_params['noise_start'] = set_param(bm_cnfg, 'FK', 'noise_start', None, 'string')
     bm_params['noise_end'] = set_param(bm_config, 'FK', 'noise_end', None, 'string')
-    bm_params['window_len'] = set_param(bm_config, 'FK', 'window_len', None, 'float')
-    bm_params['sub_window_len'] = set_param(bm_config, 'FK', 'sub_window_len', None, 'float')
-    bm_params['window_step'] = set_param(bm_config, 'FK', 'window_step', None, 'float')
+    bm_params['window_len'] = set_param(bm_cnfg, 'FK', 'window_len', None, 'float')
+    bm_params['sub_window_len'] = set_param(bm_cnfg, 'FK', 'sub_window_len', None, 'float')
+    bm_params['window_step'] = set_param(bm_cnfg, 'FK', 'window_step', None, 'float')
 
     det_params = {}
-    det_params['window_len'] = set_param(bm_config, 'FD', 'window_len', None, 'float')
-    det_params['p_value'] = set_param(bm_config, 'FD', 'p_value', None, 'float')
-    det_params['min_duration'] = set_param(bm_config, 'FD', 'min_duration', None, 'float')
-    det_params['back_az_width'] = set_param(bm_config, 'FD', 'back_az_width', None, 'float')
-    det_params['fixed_thresh'] = set_param(bm_config, 'FD', 'fixed_thresh', None, 'float')
-    det_params['thresh_ceil'] = set_param(bm_config, 'FD', 'thresh_ceil', None, 'float')
-    det_params['merge_dets'] = set_param(bm_config, 'FD', 'merge_dets', None, 'bool')
+    det_params['window_len'] = set_param(bm_cnfg, 'FD', 'window_len', None, 'float')
+    det_params['p_value'] = set_param(bm_cnfg, 'FD', 'p_value', None, 'float')
+    det_params['min_duration'] = set_param(bm_cnfg, 'FD', 'min_duration', None, 'float')
+    det_params['back_az_width'] = set_param(bm_cnfg, 'FD', 'back_az_width', None, 'float')
+    det_params['fixed_thresh'] = set_param(bm_cnfg, 'FD', 'fixed_thresh', None, 'float')
+    det_params['thresh_ceil'] = set_param(bm_cnfg, 'FD', 'thresh_ceil', None, 'float')
+    det_params['merge_dets'] = set_param(bm_cnfg, 'FD', 'merge_dets', None, 'bool')
 
     return bm_params, det_params
 
 
 def set_ev_bld_config(cnfg_file):
     hjl_cnfg = cnfg.ConfigParser()
-    hjl_cnfg.read(cnfg_file)
+    if os.path.isfile(cnfg_file):
+        hjl_cnfg.read(cnfg_file)
+    else:
+        print('\nInvalid configuration file (' + cnfg_file + ' not found).\nDefault parameters will be used.\n')
 
     hjl_params = {}
     hjl_params['celerity_model'] = set_param(hjl_cnfg, 'ASSOC', 'celerity_model', None, 'string')
@@ -124,7 +131,10 @@ def set_ev_bld_config(cnfg_file):
 
 def set_ev_loc_config(cnfg_file):
     loc_cnfg = cnfg.ConfigParser()
-    loc_cnfg.read(cnfg_file)
+    if os.path.isfile(cnfg_file):
+        loc_cnfg.read(cnfg_file)
+    else:
+        print('\nInvalid configuration file (' + cnfg_file + ' not found).\nDefault parameters will be used.\n')
 
     loc_params = {}
     loc_params['back_az_width'] = set_param(loc_cnfg, 'LOC', 'back_az_width', None, 'float')
@@ -189,7 +199,10 @@ def set_ev_loc_config(cnfg_file):
 
 def set_ev_char_config(cnfg_file):
     char_cnfg = cnfg.ConfigParser()
-    char_cnfg.read(cnfg_file)
+    if os.path.isfile(cnfg_file):
+        char_cnfg.read(cnfg_file)
+    else:
+        print('\nInvalid configuration file (' + cnfg_file + ' not found).\nDefault parameters will be used.\n')
 
     char_params = {}
     char_params['det_mask'] = set_param(char_cnfg, 'YIELD', 'det_mask', None, 'string')
