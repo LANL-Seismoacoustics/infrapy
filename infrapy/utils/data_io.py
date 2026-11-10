@@ -189,9 +189,9 @@ def set_stream(local_opt, fdsn_opt, db_info, network=None, station=None, locatio
 
     ## if database extraction, pass to database methods
     elif db_info is not None:
-        print('\n' + "Loading data from database...")
-        session, db_tables = database.prep_session(db_info)
-        stream, latlon = database.wvfrms_from_db(session, db_tables, station, channel, UTCDateTime(starttime), UTCDateTime(endtime))
+        print('')
+        db_session = database.set_session(db_info['DATABASE'])
+        stream, latlon = database.db2wvfrms(db_session, db_info['DBTABLES'], station, channel, UTCDateTime(starttime), UTCDateTime(endtime))
 
     # return error if no waveform data was specified
     else:
@@ -284,9 +284,10 @@ def _det_dict_to_likelihood(det_dict):
 ##  Data Writing Methods  ##
 ############################
 
-def write_stream_to_sac(stream, latlon):
+def write_stream_to_sac(stream, latlon, prefix=''):
     """
-    Write info from an obspy.core.stream.Stream instance into local sac files with populated header info.  Defines the output label from the network, station, and start/end times of the stream
+    Write info from an obspy.core.stream.Stream instance into local sac files with populated header info.
+    Defines the output label from the network, station, and start/end times of the stream and can add a prefix path and ID
 
     Parameters
     ----------
@@ -328,7 +329,7 @@ def write_stream_to_sac(stream, latlon):
 
         label = labels[m] + tr.stats.starttime.strftime('_%Y.%m.%d_%H.%M.%S')
 
-        tr.write(label + ".sac", format='SAC')
+        tr.write(prefix + label + ".sac", format='SAC')
 
 
 #######################

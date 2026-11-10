@@ -5,11 +5,12 @@
 
 
 import numpy as np
-import fnmatch 
+import fnmatch
 import os
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
 
 import pisces as ps
 import pisces.tables.css3 as css_tables
@@ -18,99 +19,17 @@ import pandas as pd
 
 from obspy import Stream, UTCDateTime
 
-DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
-
-def db_connect_url(url):
-    """
-    connect to a database to do database things...
-
-    Parameters
-    ----------
-    url: str
-        Properly formed string containing the connection url for the database
-
-    Returns
-    -------
-    session : bound SQLAlchemy session instance
-    """
-    session = ps.db_connect(url)
-    return session
 
 
-def db_connect(dialect="", hostname="", db_name="", port="", username="", password="", driver=""):
-    '''
-        Connect to a database to do database things...
-
-        Parameters
-        ----------
-        dialect: str
-            Type of database.   (examples: oracle, mysql)
-        hostname : str
-            The url of the database. (example: mydb.home.org)local branch
-
-        Returns
-        -------
-        session : bound SQLAlchemy session instance
-
-    '''
-    # my_dialect = dialect + "://"
-    # url = sa.engine.url.make_url(my_dialect)
-    # print(url)
-    # url.username = username
-    # # url.drivername = driver
-    # url.password = password
-    # url.host = hostname
-    # url.port = port
-    # url.database = db_name
-
-    # print(url)
-    # engine = sa.create_engine(url)
-    # return Session(bind=engine)
-
-    return ps.db_connect(assemble_db_url(dialect, hostname, db_name=db_name, port=port, username=username, password=password, driver=driver))
-
-
-def assemble_db_url(dialect, hostname, db_name, port=None, username="", password="", driver=""):
-    '''
-        Assemble a database connection url given the supplied parts.
-        All inputs are strings
-    '''
-    if driver:
-        driver = '+' + driver
-    return dialect + driver + "://" + username + ":" + password + "@" + hostname + ":" + port + "/" + db_name
- 
 def set_db_env_variables(env_vars):
     # env_vars is a dictionary containing the environment variable as the key, and what to set it to as the value
     # Note that the environment variables will only last for the duration of the session.
     for key, value in env_vars.items():
             os.environ[key] = value
 
-def db_connect2(db_info):
-    dialect = db_info['DATABASE']['dialect']
-    hostname = db_info['DATABASE']['hostname']
-    db_name = db_info['DATABASE']['database_name']
-    port = db_info['DATABASE']['port']
-
-    try:
-        username = db_info['DATABASE']['username']
-    except:
-        username = ''
-
-    try:
-        password = db_info['DATABASE']['password']
-    except:
-        password = ''
-
-    try:
-        driver = db_info['DATABASE']['driver']
-    except:
-        driver = ''
-
-    return ps.db_connect(assemble_db_url(dialect, hostname, db_name, port, username, password, driver))
-
 def check_connection(session):
     """
-        Simple function to check that there is a valid connection by 
+        Simple function to check that there is a valid connection by
         calling engine.connect() to see if it returns true
     """
     try:
@@ -119,14 +38,13 @@ def check_connection(session):
     except Exception as e:
         return False
 
-
 def query_db(session, tables, start_time, end_time, sta="%", cha="%", return_type='dataframe', asquery=False):
 
     db_tables = make_tables_from_dict(tables=tables, schema='kbcore')
 
     if session is None:
         return None
-    
+
     if return_type == 'dataframe':
         my_query = session.query(db_tables['wfdisc']).filter(db_tables['wfdisc'].sta.like(sta)\
                                         .filter(db_tables['wfdisc'].time < end_time.timestamp)\
@@ -159,18 +77,18 @@ def prep_session(db_info, check_connection=False):
             print("Database connection check passed")
         except Exception as e:
             print("Database connection check failed")
-        
+
     db_tables = make_tables_from_dict(tables=db_info['DBTABLES'], schema=db_info['DATABASE']['schema'])
 
     return session, db_tables
 
 
 def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
-    ''' 
-        function to pull obspy streams from the database.  
+    '''
+        function to pull obspy streams from the database.
         stations: str
         channel: str
-        starttime: UTCDateTime 
+        starttime: UTCDateTime
     '''
 
     Site = db_tables['site']
@@ -216,7 +134,7 @@ def wvfrms_from_db(session, db_tables, stations, channel, starttime, endtime):
                 st.append(tr)
     st.merge()
     st.split()
-    
+
     # Set the latlon info
     latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in st]
 
@@ -236,7 +154,7 @@ def make_tables_from_dict(tables=None, schema=None):
         core_tables = kb_tables.CORETABLES
     elif schema.lower() == 'css3' or schema.lower() == 'css':
         core_tables = css_tables.CORETABLES
-    
+
     if tables is None:
         return core_tables
     else:
@@ -244,7 +162,7 @@ def make_tables_from_dict(tables=None, schema=None):
         for table, tablename in tables.items():
             prototype = core_tables[table.lower()].prototype
             dict_of_classes[table] = type(table, (prototype,), {'__tablename__': tablename})
-    
+
     return dict_of_classes
 
 def eventID_query(session, eventID, db_tables, asquery):
@@ -264,85 +182,296 @@ def eventID_query(session, eventID, db_tables, asquery):
     else:
         print("no event found")
         return None
-    
 
 def ev_query_area(session, center_lat, center_lon, minr, maxr, db_tables):
 
     if 'Origin' not in db_tables or 'Event' not in db_tables:
         raise KeyError
-    
+
     events = ps.request.get_events(session, db_tables['origin'], db_tables['events'], km=(center_lat, center_lon, minr, maxr), etime=(startt, endt))
 
-##################################
-## NEW STUFF PHIL IS WORKING ON ##
-##################################
-def set_session(db_info, db_schema='css3'):
 
-    print("Setting up database configuration...")
-    # set up the session and check connection
-    if 'url' in db_info['DATABASE'].keys():
-        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
-        db_session = ps.db_connect( db_info['DATABASE']['url'])
+
+#####################################
+## New stuff with Christine's help ##
+#####################################
+DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
+AUTHENTICATION_LIST = ['password', 'os', 'wallet']
+
+def db_connect(db_info):
+    """
+        Function to set up a database connection session using a dictionary of connection information.
+        The current configuration file format is below ([DATABASE] block passed to this function):
+
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...] (required)
+            alias = [...]
+            authentication = [...] (required)
+            url = [...]
+
+        Though a dictionary of key/value pairs matching the above keys can also be passed into the function.
+
+        Dialect and authentication fields are always required and must be in the DIALECT_LIST and
+        AUTHENTICATION_LIST as follows:
+
+            DIALECT_LIST = ['oracle', 'mysql', 'mssql', 'sqllite', 'postgresql']
+            AUTHENTICATION_LIST = ['password', 'os', 'wallet']
+
+        If a url is not provided in the dictionary block, an attempt will be made to construct one based on
+        the other variables, in which case, hostname, database_name, and port are required unless
+        an alias is provided.  If the authentication method is 'password', a username is also required.
+
+        Additional information for Oracle databases:
+            1) Driver is required for Oracle databases and must be one of cx_oracle or oracledb if a url is
+               not provided.  Note that cx_oracle is deprecated in it's entirety in favor of oracledb.
+            2) Authentication methods 'os' and 'wallet' are specific to oracle databases.  If your
+               authentication method is 'wallet' and that wallet is pointed to an alias, that alias must be
+               provided or used in the provided url.
+            3) For 'os' and 'wallet' authentications, username and password are automatically set to ''.
+
+        Parameters
+        ----------
+        db_dict: dict
+            Dictionary of database connection information following the above constraints and requirements.
+
+        Returns
+        -------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+
+    """
+
+    # assign dialect, authenticaion, and driver at start since they are needed for all steps of
+    # decision tree
+    dialect = db_info['dialect']
+    authentication = db_info['authentication']
+
+    if 'driver' not in db_info.keys():
+        driver = ''
+        driverStr= driver
     else:
-        # clean up the above to simplify this or just require a url?
-        db_session = db_connect2(db_info)
+        driver = db_info['driver']
+        driverStr = '+{}'.format(driver)
 
-    # check the session works
+    # is dialect oracle? Does thick mode need to be enabled?
+    # this is true for os authentication and wallets
+    if dialect == 'oracle' and authentication in ['os', 'wallet'] and driver == 'oracledb':
+        ex_auth = True
+    else:
+        ex_auth = False
+
+    # find or assemble url
+    if 'url' not in db_info.keys() or db_info['url'] == '':
+        if authentication in ['os', 'wallet']:
+            username = ''
+            password = ''
+        else:
+            username = db_info['username']
+
+        hostname = db_info['hostname']
+        db_name = db_info['database_name']
+        port = db_info['port']
+
+        if 'password' not in db_info.keys():
+            password = ''
+        else:
+            password = db_info['password']
+
+        if 'alias' not in db_info.keys():
+            alias = None
+        else:
+            alias = db_info['alias']
+
+        if alias is None or alias == '':
+            dburl = '{}{}://{}:{}@{}:{}/{}'.format(dialect, driverStr, username, password, hostname, port, db_name)
+        else:
+            dburl = '{}{}://{}:{}@{}'.format(dialect, driverStr, username, password, alias)
+
+    else:
+        dburl = db_info['url']
+
+    print("Connecting to database through url: " + dburl + '\n')
+
+    if ex_auth == True:
+        engine = create_engine(dburl, thick_mode = True, connect_args = {"externalauth": True} )
+        session = Session(bind=engine)
+    else:
+        engine = create_engine(dburl)
+        session = Session(bind=engine)
+
+    return session
+
+
+def set_session(db_info, verbose=False):
+    """
+        Function to set up a database connection session using a dictionary of connection information.
+        Provided information is printed to screen and the session is tested to ensure it's working.
+        The current configuration file format is below ([DATABASE] block passed to this function):
+
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...]
+            url = [...]
+
+            [DBTABLES]
+            schema = KBCore
+            wfdisc = global.wfdisc_raw
+            site = global.site
+            origin = global.origin
+            event = global.event
+
+        Parameters
+        ----------
+        db_info: dict
+            Dictionary of database connection information
+
+        Returns
+        -------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+
+    """
+    if verbose:
+        print("Setting up database connection...")
+        for key in db_info.keys():
+            print('  ' + key + ' ' * (20 - len(key)) + str(db_info[key]))
+        print('')
+
+    db_session = db_connect(db_info)
+
     try:
         db_session.get_bind().connect()
     except Exception as e:
         print("Database connection failed")
-        return 
+        return
 
-    db_tables = {}
+    return db_session
 
-    if 'css3' in db_schema:
-        core_tbls = ps.tables.css3.CORETABLES
-        print(core_tbls)
 
-        # core_tbls["sensor"] = ps.tables.css3.Sensor
+def db2wvfrms(session, db_tbls, stations, channel, starttime, endtime):
+    '''
+        Function to pull waveform data into an obspy stream and perform some simple QC.
+        Uses the same config file structure as above, and expects the [DBTABLES] block.
 
-    elif 'kbcore' in db_schema:
-        core_tbls = ps.tables.kbcore.CORETABLES
-        print(core_tbls)
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...]
+            url = [...]
 
-        # core_tbls["sensor"] = ps.tables.kbcore.Sensor
+            [DBTABLES]
+            schema = KBCore
+            wfdisc = global.wfdisc_raw
+            site = global.site
+
+        Parameters
+        ----------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+        db_tbls: dict
+            Dictionary of database connection information
+        stations: string
+            Station information passed to pisces request get_stations function
+        channel: string
+            Channel information passed to pisces request get_stations function
+        starttime: obspy.UTCDatetime
+            Minimum time for search
+        endtime: obspy.UTCDatetime
+            Maximum time for search
+
+        Returns
+        -------
+        st : ObsPy stream
+            Iterable of ObsPy Trace objects containing waveform data and extracted meta data
+        latlon : iterable float
+            2 x N list of latitude and longitude for each trace
+
+    '''
+
+    # define tables needed for query
+    if 'css3' in db_tbls['schema'].lower():
+        db_schema = ps.schema.css3
+    elif 'kbcore' in db_tbls['schema'].lower():
+        db_schema = ps.schema.kbcore
     else:
-        print("Unrecognized database schema! Options are 'css3' and 'kbcore'")
+        print("Invalid database schema.")
+        return None
 
-    for tbl_name in core_tbls:
-        print(tbl_name)
-        if tbl_name in db_info['DBTABLES']:
-            print("  Setting " + tbl_name + " table from: " + db_info['DBTABLES'][tbl_name])
-            class tbl(core_tbls[tbl_name].prototype):
-                __tablename__ = db_info['DBTABLES'][tbl_name]
-            db_tables[tbl_name] = tbl
-    
-    if 'sensor' in db_info['DBTABLES']:
-        print("  Setting sensor table from: " + db_info['DBTABLES']['sensor'])
-        if 'css3' in db_schema:
-            class tbl(ps.schema.css3.Sensor):
-                __tablename__ = db_info['DBTABLES']['sensor']
-        else: 
-            class tbl(ps.schema.kbcore.Sensor):
-                __tablename__ = db_info['DBTABLES']['sensor']
-        db_tables['sensor'] = tbl
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['site', 'wfdisc']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2wvfrm usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return Stream(), []
 
-    return db_session, db_tables
+    class site(db_schema.Site):
+        __tablename__ = db_tbls['site']
+
+    class wfdisc(db_schema.Wfdisc):
+        __tablename__ = db_tbls['wfdisc']
+
+    # convert station wildcards to SQL and check that channel is not None
+    if type(stations) is str:
+        stations = stations.replace('*','%')
+
+    if channel is None:
+        channel = "*"
+
+    # the pisces.request.get_stations function requires the start/end days to be an integer in jdate format (YYYYDDD)
+    julian_start = starttime.year * 1000 + starttime.julday
+    julian_end = endtime.year * 1000 + endtime.julday
+    wtime = (julian_start, julian_end)
+
+    sta_list = ps.request.get_stations(session, site, stations=stations, time_span=wtime)
+
+    # pull data into the stream and merge to combine time segments
+    st = Stream()
+    for sta_n in sta_list:
+        temp_st = ps.request.get_waveforms(session, wfdisc, station=sta_n.sta, starttime=UTCDateTime(starttime).timestamp, endtime=UTCDateTime(endtime).timestamp)
+        for tr in temp_st:
+            tr.data = tr.data - np.mean(tr.data)
+            tr.stats['_format'] = 'SAC'
+            if  fnmatch.fnmatch(tr.stats.channel, channel.replace("%","*")):
+                tr.stats.sac = {'stla': sta_n.lat, 'stlo': sta_n.lon}
+                if len(tr.stats.network) == 0:
+                    tr.stats.network = "__"
+                st.append(tr)
+
+    st.merge()
+    st.split()
+
+    # Set the latlon info
+    latlon = [[tr.stats.sac['stla'], tr.stats.sac['stlo']] for tr in st]
+
+    return st, latlon
 
 
 
 # Methods to write arrivals into JSON files for use in InfraPy
-def query2det_dict(query_line, array_dim):
+def _query2det_dict(query_line, array_dim):
 
     wvfrm_info = [{"trace id" : "__." + query_line.arrival.sta + ".." + query_line.arrival.chan,
                    "latitude" : query_line.site.lat,
-                   "longitude" : query_line.site.lon}]                   
+                   "longitude" : query_line.site.lon}]
 
     if "I" in query_line.arrival.iphase:
         # infrasound detection entry
 
-        # if direciton-of-arrival is defined, convert slowness s/deg to s/km and invert to get trace velocity 
+        # if direciton-of-arrival is defined, convert slowness s/deg to s/km and invert to get trace velocity
         if query_line.arrival.azimuth > 0.0:
             back_az = query_line.arrival.azimuth
             tr_vel = 111.32 / query_line.arrival.slow
@@ -356,7 +485,7 @@ def query2det_dict(query_line, array_dim):
         else:
             f_stat = None
 
-        det = {'wvfrm_info' : wvfrm_info, 
+        det = {'wvfrm_info' : wvfrm_info,
                'peak f-stat time': UTCDateTime(query_line.arrival.time),
                'f-stat': f_stat,
                'tr vel': tr_vel,
@@ -373,31 +502,82 @@ def query2det_dict(query_line, array_dim):
                'phase id' : query_line.arrival.iphase,
                }
 
-    return det 
-    
+    return det
 
-def db2dets(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_list="I", db_schema="css3"):
 
-    array_dim = 5 
-    
+def db2dets(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_list="I"):
+    """
+        Function to pull all detections within lat/lon bounds and between start and end times into a dictionary form usable in InfraPy (writable into event JSON)
+        Uses the same config file structure as above, and expects the [DBTABLES] block.
+
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...]
+            url = [...]
+
+            [DBTABLES]
+            schema = KBCore
+            wfdisc = global.wfdisc_raw
+            site = global.site
+            origin = global.origin
+            event = global.event
+
+        Parameters
+        ----------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+        db_tbls: dict
+            Dictionary of database connection information
+        lat_bnds: iterable float
+            Minimum and maximum latitude bounds for search
+        lon_bnds: iterable float
+            Minimum and maximum longitude bounds for search
+        starttime: obspy.UTCDatetime
+            Minimum time for search
+        endtime: obspy.UTCDatetime
+            Maximum time for search
+        phase_list: string
+           Comma separated string of phases to include (e.g., 'I,P,S')
+
+        Returns
+        -------
+        det_dicts : iterable dicts
+            List of dictionaries with detection information
+
+    """
+
+    array_dim = 5
+
     # define tables needed for query
-    if 'css3' in db_schema.lower():
+    if 'css3' in db_tbls['schema'].lower():
         db_schema = ps.schema.css3
-    elif 'kbcore' in db_schema.lower(): 
+    elif 'kbcore' in db_tbls['schema'].lower():
         db_schema = ps.schema.kbcore
-    else: 
+    else:
         print("Invalid database schema.")
         return None
 
-    # need a catch if these aren't in the user config file...
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['arrival', 'site', 'sitechan', 'sensor']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2dets usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return []
+
     class arrival(db_schema.Arrival):
         __tablename__ = db_tbls['arrival']
 
-    class sitechan(db_schema.Sitechan):
-        __tablename__ = db_tbls['sitechan']
-
     class site(db_schema.Site):
         __tablename__ = db_tbls['site']
+
+    class sitechan(db_schema.Sitechan):
+        __tablename__ = db_tbls['sitechan']
 
     class sensor(db_schema.Sensor):
         __tablename__ = db_tbls['sensor']
@@ -416,25 +596,74 @@ def db2dets(db_session, db_tbls, lat_bnds, lon_bnds, starttime, endtime, phase_l
     det_dicts = []
     for line in arrQuery:
         if line.arrival.iphase in phase_list.replace(" ","").split(","):
-            det_dicts = det_dicts + [query2det_dict(line, array_dim)]
+            det_dicts = det_dicts + [_query2det_dict(line, array_dim)]
 
     return det_dicts
 
 
-def db2ev(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
+def db2ev(db_session, db_tbls, evid, phase_list="I"):
+    """
+        Function to pull all detections associated with an event and return in a dictionary form usable in InfraPy (writable into event JSON)
+        Uses the same config file structure as above, and expects the [DBTABLES] block.
+
+            [DATABASE]
+            hostname = [...]
+            username = [...]
+            database_name = [...]
+            port = [...]
+            driver = [...]
+            dialect = [...]
+            url = [...]
+
+            [DBTABLES]
+            schema = KBCore
+            wfdisc = global.wfdisc_raw
+            site = global.site
+            origin = global.origin
+            event = global.event
+
+        Parameters
+        ----------
+        session : SQLAlchemy session
+            A bound SQLAlchemy session instance that can be passed to pisces for queries
+        db_tbls: dict
+            Dictionary of database connection information
+        evid: int
+            Event identifier in the database for event of interest
+        phase_list: string
+           Comma separated string of phases to include (e.g., 'I,P,S')
+
+        Returns
+        -------
+        det_dicts : iterable dicts
+            List of dictionaries with detection information
+
+    """
 
     array_dim = 5
 
     # define tables needed for query
-    if 'css3' in db_schema.lower():
+    if 'css3' in db_tbls['schema'].lower():
         db_schema = ps.schema.css3
-    elif 'kbcore' in db_schema.lower(): 
+    elif 'kbcore' in db_tbls['schema'].lower():
         db_schema = ps.schema.kbcore
-    else: 
+    else:
         print("Invalid database schema.")
         return None
 
     # need a catch if these aren't in the user config file...
+    # check tables are defined and initialize them for query
+    tbls_defined = True
+    for req_tbl in ['event', 'origin', 'assoc', 'arrival', 'site', 'sitechan', 'sensor']:
+        if req_tbl not in db_tbls.keys():
+            print("Insufficient DB table information: '"  + req_tbl + "' is required for db2ev usage.")
+            tbls_defined = False
+    if not tbls_defined:
+        return {'ground truth' : {},
+                 'det_info' : [],
+                 'location' : [],
+                 'characterization' : []}
+
     class event(db_schema.Event):
         __tablename__ = db_tbls['event']
 
@@ -447,11 +676,11 @@ def db2ev(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
     class arrival(db_schema.Arrival):
         __tablename__ = db_tbls['arrival']
 
-    class sitechan(db_schema.Sitechan):
-        __tablename__ = db_tbls['sitechan']
-
     class site(db_schema.Site):
         __tablename__ = db_tbls['site']
+
+    class sitechan(db_schema.Sitechan):
+        __tablename__ = db_tbls['sitechan']
 
     class sensor(db_schema.Sensor):
         __tablename__ = db_tbls['sensor']
@@ -467,7 +696,7 @@ def db2ev(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
                 .filter(sensor.chanid == sitechan.chanid) \
                 .filter(site.sta == sitechan.sta) \
                 .filter(sitechan.ondate.between(site.ondate, site.offdate))
-	
+
     ev_output = {'ground truth' : {},
                  'det_info' : [],
                  'location' : [],
@@ -482,7 +711,7 @@ def db2ev(db_session, db_tbls, evid, phase_list="I", db_schema="css3"):
     # Extract pick information
     for line in arrQuery:
         if line.arrival.iphase in phase_list.replace(" ","").split(","):
-            ev_output['det_info'] = ev_output['det_info'] + [query2det_dict(line, array_dim)]
+            ev_output['det_info'] = ev_output['det_info'] + [_query2det_dict(line, array_dim)]
 
     return ev_output
 

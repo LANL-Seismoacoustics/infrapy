@@ -18,10 +18,12 @@ import numpy as np
 
 from obspy import UTCDateTime
 
-from infrapy.characterization import spye
-from infrapy.detection import beam
-from infrapy.propagation import likelihoods as lklhds
-from infrapy.utils import config, data_io, database
+from ..detection import beam
+from ..event import spye
+
+from ..propagation import likelihoods as lklhds
+from ..utils import config, data_io, database
+
 
 # Rewrite this as "db2wvfrms" with option to summarize or write to SAC
 @click.command('check_db_wvfrms', short_help="Check waveform pull from database")
@@ -121,54 +123,46 @@ def db2dets(db_config, lat_bnds, lon_bnds, starttime, endtime, phase_list, outpu
     click.echo("#################################")
     click.echo("")
 
+    # set up the session and check connection
+    if os.path.isfile(db_config):
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
+    else:
+        click.echo("Invalid database config file ('" + db_config + "' not found)")
+        return 0
+
+    db_session = database.set_session(db_info['DATABASE'])
+
+    # pull arrivals information for specified region and time
     lat_lims = [float(val) for val in lat_bnds.split(",")]
     lon_lims = [float(val) for val in lon_bnds.split(",")]
     starttime = UTCDateTime(starttime)
     endtime = UTCDateTime(endtime)
 
-    print("Pulling arrivals for criterion:")
-    print("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
-    print("  Time bounds:", starttime, ",", endtime)
-    print("  Phase list:", phase_list)
+    click.echo("Pulling arrivals for criterion:")
+    click.echo("  Lat/Lon bounds: [" + str(lat_lims[0]) + ", " + str(lon_lims[0]) + "] - [" + str(lat_lims[1]) + ", " + str(lon_lims[1]) + "]")
+    click.echo("  Time bounds:" + str(starttime) + ", " + str(endtime))
+    click.echo("  Phase list:" + phase_list)
 
-    db_info = cnfg.ConfigParser()
-    db_info.read(db_config)
-
-    print("Setting up database configuration...")
-    # set up the session and check connection
-    if 'url' in db_info['DATABASE'].keys():
-        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
-        db_session = database.db_connect_url( db_info['DATABASE']['url'])
-    else:
-        # clean up the above to simplify this or just require a url?
-        db_session = database.db_connect2(db_info)
-
-    # check the session works
-    try:
-        db_session.get_bind().connect()
-    except Exception as e:
-        print("Database connection failed")
-        return
-
-    det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list, db_schema="kbcore")
+    det_dicts = database.db2dets(db_session, db_info['DBTABLES'], lat_lims, lon_lims, starttime, endtime, phase_list=phase_list)
 
     if len(det_dicts) > 0:
         if verbose:
-            print('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
+            click.echo('\n' + str(len(det_dicts)) + " phase(s) found for criterion...")
             for det in det_dicts:
-                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
-                print(det['phase id'], end='\t')
-                print(det['peak f-stat time'], end='\t')
-                print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
-                print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
-                print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                click.echo("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])) + '\t', nl=False)
+                click.echo(det['phase id'] + '\t', nl=False)
+                click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['back az'], dtype=float), 1)) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['tr vel'], dtype=float), 3)) + '\t', nl=False)
+                click.echo(str(np.round(np.array(det['f-stat'], dtype=float), 1)))
 
         if output_label is not None:
-            print("Writing " + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
+            click.echo('\nWriting ' + str(len(det_dicts)) + " arrival entries into " + output_label + ".dets.json.gz")
             with gzip.open(output_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump({"det_info" : det_dicts}, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
     else:
-        print('\n' + "No arrivals matched criterion.")
+        click.echo('\nNo arrivals found for specified parameters.')
 
 
 @click.command('db2ev', short_help="Write from arrivals table to ev.json.gz file")
@@ -188,54 +182,116 @@ def db2ev(db_config, evid, phase_list, output_label, verbose):
     click.echo("#################################")
     click.echo("")
 
-    db_info = cnfg.ConfigParser()
-    db_info.read(db_config)
-
-    print("Setting up database configuration...")
     # set up the session and check connection
-    if 'url' in db_info['DATABASE'].keys():
-        print("  Connecting to database through url: " + db_info['DATABASE']['url'])
-        db_session = database.db_connect_url( db_info['DATABASE']['url'])
+    if os.path.isfile(db_config):
+        db_info = cnfg.ConfigParser()
+        db_info.read(db_config)
     else:
-        # clean up the above to simplify this or just require a url?
-        db_session = database.db_connect2(db_info)
+        click.echo("Invalid database config file ('" + db_config + "' not found)")
+        return 0
 
-    # check the session works
-    try:
-        db_session.get_bind().connect()
-    except:
-        print("Database connection failed")
-        return
+    db_session = database.set_session(db_info['DATABASE'])
 
-    ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list, db_schema="kbcore")
+    # pull arrival information for this evid
+    ev_output = database.db2ev(db_session, db_info['DBTABLES'], evid, phase_list=phase_list)
 
     if len(ev_output['det_info']) > 0:
         if verbose:
-            print('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
-            print('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
-            print('  Origin time: ' + str(ev_output['ground truth']['origin time']))
-            print('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
+            click.echo('\n\n' + str(len(ev_output['det_info'])) + " included phase(s) found for evid: " + str(evid))
+            click.echo('Preferred origin info:\n  Location: ' + str(ev_output['ground truth']['latitude']) + ', ' + str(ev_output['ground truth']['longitude']))
+            click.echo('  Origin time: ' + str(ev_output['ground truth']['origin time']))
+            click.echo('  Name: ' + str(ev_output['ground truth']['name'] + '\n\nDetections list:'))
 
             for det in ev_output['det_info']:
-                print("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])), end='\t')
-                print(det['phase id'], end='\t')
+                click.echo("  " + det['wvfrm_info'][0]['trace id'] + ' ' * (16 - len(det['wvfrm_info'][0]['trace id'])) + '\t', nl=False)
+                click.echo(det['phase id'] + '\t', nl=False)
                 if "I" in det['phase id']:
-                    print(det['peak f-stat time'], end='\t')
-                    print(np.round(np.array(det['back az'], dtype=float), 1), end='\t')
-                    print(np.round(np.array(det['tr vel'], dtype=float), 3), end='\t')
-                    print(np.round(np.array(det['f-stat'], dtype=float), 1))
+                    click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['back az'], dtype=float), 1)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['tr vel'], dtype=float), 3)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['f-stat'], dtype=float), 1)))
                 else:
-                    print(det['peak f-stat time'], end='\t')
-                    print(np.round(np.array(det['azimuth'], dtype=float), 1), end='\t')
-                    print(np.round(np.array(det['slow'], dtype=float), 3), end='\t')
-                    print(np.round(np.array(det['snr'], dtype=float), 1))
+                    click.echo(str(det['peak f-stat time']) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['azimuth'], dtype=float), 1)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['slow'], dtype=float), 3)) + '\t', nl=False)
+                    click.echo(str(np.round(np.array(det['snr'], dtype=float), 1)))
 
         if output_label is not None:
-            print("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
+            click.echo("Writing event info including " + str(len(ev_output['det_info'])) + " arrival entries into " + output_label + ".ev.json.gz")
             with gzip.open(output_label + ".ev.json.gz", 'wt', encoding='UTF-8') as zipfile:
                 json.dump(ev_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+    else:
+        click.echo('\nNo arrivals found for specified evid and parameters.')
 
-# Rewrite this as "db2wvfrms" with option to summarize or write to SAC
+
+@click.command('db2wvfrms', short_help="Pull waveforms from a database (or FDSN)")
+@click.option("--cnfg-file", help="Configuration file", default=None)
+@click.option("--db-config", help="Database configuration file", default=None)
+@click.option("--fdsn", help="FDSN source for waveform data files", default=None)
+@click.option("--network", help="Network code for FDSN and database", default=None)
+@click.option("--station", help="Station code for FDSN and database", default=None)
+@click.option("--location", help="Location code for FDSN and database", default=None)
+@click.option("--channel", help="Channel code for FDSN and database", default=None)
+@click.option("--starttime", help="Start time of analysis window", default=None)
+@click.option("--endtime", help="End time of analysis window", default=None)
+@click.option("--output-prefix", help="Output prefix for [...].sac files", default=None)
+def db2wvfrms(cnfg_file, db_config, fdsn, network, station, location, channel, starttime, endtime, output_prefix):
+
+    click.echo("")
+    click.echo("#################################")
+    click.echo("##                             ##")
+    click.echo("##      InfraPy Utilities      ##")
+    click.echo("##          db2wvfrms          ##")
+    click.echo("##                             ##")
+    click.echo("#################################")
+    click.echo("")
+
+    if cnfg_file:
+        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        if os.path.isfile(cnfg_file):
+            user_config = cnfg.ConfigParser()
+            user_config.read(cnfg_file)
+        else:
+            click.echo("Invalid configuration file ('" + cnfg_file + "' not found)")
+            return 0
+    else:
+        user_config = None
+
+    # Load from config file and/or CLI values
+    db_config = config.set_param(user_config, 'DATA IO', 'db_config', db_config, 'string')
+    fdsn = config.set_param(user_config, 'DATA IO', 'fdsn', fdsn, 'string')
+
+    if db_config is not None:
+        if os.path.isfile(db_config):
+            db_info = cnfg.ConfigParser()
+            db_info.read(db_config)
+        else:
+            click.echo("Invalid database config file ('" + db_config + "' not found)")
+            return 0
+    else:
+        db_info = None
+
+    network = config.set_param(user_config, 'DATA IO', 'network', network, 'string')
+    station = config.set_param(user_config, 'DATA IO', 'station', station, 'string')
+    location = config.set_param(user_config, 'DATA IO', 'location', location, 'string')
+    channel = config.set_param(user_config, 'DATA IO', 'channel', channel, 'string')
+
+    starttime = config.set_param(user_config, 'DATA IO', 'starttime', starttime, 'string')
+    endtime = config.set_param(user_config, 'DATA IO', 'endtime', endtime, 'string')
+
+    # Load from FDSN or
+    stream, latlon = data_io.set_stream(None, fdsn, db_info, network, station, location, channel, starttime, endtime, None)
+
+    if len(stream) > 0:
+        click.echo("Data summary:")
+        for tr in stream:
+            click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
+        click.echo('')
+
+        if output_prefix is not None:
+            click.echo('Writing waveform data to local SAC files...\n')
+            data_io.write_stream_to_sac(stream, latlon, prefix=output_prefix)
+
 
 @click.command('write_wvfrms', short_help="Save waveforms from FDSN or database")
 @click.option("--cnfg-file", help="Configuration file", default=None)
@@ -474,7 +530,10 @@ def ev_summary(ev_file):
         if det_specs is not None:
             freq = np.array(det_specs[k][0])
             mask = np.array((np.array(det_specs[k][1]) / np.array(det_specs[k][2])) > 2.0)
-            click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
+            if len(freq[mask]) > 10:
+                click.echo("  high snr band: " + f"{np.round(freq[mask][0], 3):.3f}" + " - " + f"{np.round(freq[mask][-1], 3):.3f}" + ' Hz')
+            else:
+                click.echo("  high snr band: undefined")
         else:
             click.echo('')
 

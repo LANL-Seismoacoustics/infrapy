@@ -1,4 +1,4 @@
-# infrapy.location.projection.py
+# infrapy.event.tribl.py
 #
 # Back projection localization methods using the infraGA ray
 # tracing with auxiliary parameters to map direction-of-arrival
@@ -6,8 +6,10 @@
 #
 # Author            Philip Blom (pblom@lanl.gov)
 
+import fnmatch
 import os
 import subprocess
+import tempfile
 
 from importlib.util import find_spec
 
@@ -146,7 +148,6 @@ class BackProjection(object):
 
 
 def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, latlon_bnds=None, cpu_cnt=None, c0_stdev=2.5, det_time_std_dev=5.0, az_limit=2.0):
-
     c0 = _compute_projections(dets_list, atmo_file, temp_dest=projection_path, grnd_snd_spd=grnd_snd_spd, latlon_bnds=latlon_bnds, cpu_cnt=cpu_cnt)
     if c0 is not None:
         return [BackProjection(det, projection_path + ".det-" + str(n) + ".projection.dat", det_time_std_dev=det_time_std_dev, c0=c0[n], c0_stdev=c0_stdev, az_limit=az_limit) for n, det in enumerate(dets_list)]
@@ -156,9 +157,6 @@ def build_projections(dets_list, atmo_file, projection_path, grnd_snd_spd=None, 
 
 def eval_on_grid(proj, lat_grid, lon_grid, alt_grid, tm_grid, prog_step):
     return proj.likelihood(lat_grid.flatten(), lon_grid.flatten(), alt_grid.flatten(), tm_grid.flatten(), prog_step=prog_step)
-
-def eval_on_grid_wrapper(args):
-    return eval_on_grid(*args)
 
 
 def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, ur_corner=None, latlon_resol=None, tm_lims=None, tm_resol=None, alt_lims=None, alt_resol=1.0,
@@ -223,9 +221,7 @@ def run(det_list, atmo_file, temp_path, bm_width=10.0, rng_max=2000.0, grid_reso
     return result
 
 
-
 def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, show_prog=True):
-
     return run(det_list,
                output_id,
                temp_id,
@@ -248,5 +244,85 @@ def run_dict(det_list, output_id, temp_id, loc_params, tm_lims, verbose=False, s
                show_prog=show_prog)
 
 
+def loc_wrapper(det_list, loc_params, tm_lims, pgm, verbose=True):
+    if loc_params['atmo_data'] is None:
+        # Run BISL if no atmosphere file is specified
+        result = bisl.run_dict(det_list, loc_params, tm_lims, pgm, verbose=verbose)
+    else:
+        # Run TRIBL if atmosphere data is specified
+        if not find_spec('infraga'):
+            print('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
+            result = {'norm' : None}
+        else:
+            if not os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/bin/infraga-sph"):
+                print("InfraGA methods not compiled.  Run 'infraga compile' and try again.")
+            else:
+                with tempfile.TemporaryDirectory(prefix='infraga_') as tmpdirname:
+                    if loc_params['local_temp_dir'] is not None:
+                        if not os.path.isdir(loc_params['local_temp_dir']):
+                            os.mkdir(loc_params['local_temp_dir'])
+                        tmpdirname = loc_params['local_temp_dir']
+                    temp_path = tmpdirname + "/temp"
+
+                    if "*" in loc_params['atmo_data']:
+                        if len(os.path.dirname(loc_params['atmo_data'])) > 0:
+                            file_path = os.path.dirname(loc_params['atmo_data']) + "/"
+                        else:
+                            file_path = ""
+
+                        if "/" in loc_params['atmo_data']:
+                            dir_files = os.listdir(os.path.dirname(loc_params['atmo_data']))
+                        else:
+                            dir_files = os.listdir(".")
+                        file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
+
+                        if verbose:
+                            print('\n' + "Computing localization using atmosphere ensemble:")
+                        norms = []
+                        for k, file_name in enumerate(file_list):
+                            print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
+                            temp = run_dict(det_list,
+                                           file_path + file_name,
+                                           temp_path + "-" + str(k),
+                                           loc_params,
+                                           tm_lims,
+                                           verbose=False,
+                                           show_prog=True)
+                            norms = norms + [temp['norm']]
+                        norms = norms / np.sum(norms)
+
+                        if verbose:
+                            print('\n' + "Merging PDFs across the ensemble...")
+                        tmp_0 = np.load(temp_path + "-0.pdf.npz")
+
+                        lat_grid, lon_grid, alt_grid, tm_grid = np.meshgrid(tmp_0['lat_vals'], tmp_0['lon_vals'], tmp_0['alt_vals'], tmp_0['tm_vals'], indexing='ij')
+                        lat_grid = np.squeeze(lat_grid)
+                        lon_grid = np.squeeze(lon_grid)
+                        alt_grid = np.squeeze(alt_grid)
+                        tm_grid = np.squeeze(tm_grid)
+
+                        pdf = tmp_0['pdf']
+                        print('\t1/' + str(len(file_list)) + '\t' + file_path + file_list[0] + '\t' + str(norms[0]))
+                        for k, file_name in enumerate(file_list[1:]):
+                            tmp_k = np.load(temp_path + "-" + str(k + 1) + ".pdf.npz")
+                            pdf = pdf + tmp_k['pdf']
+                            print('\t' + str(k + 2) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t' + str(norms[k + 1]))
+                        if verbose:
+                            print('\n' + "Analyzing combined localization PDF...")
+                        result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
+
+                        # Add ensemble information tp location dictionary
+                        result['atmo ensemble'] = file_list
+                        result['atmo norms'] = norms
+
+                    else:
+                        result = run_dict(det_list,
+                                       loc_params['atmo_data'],
+                                       temp_path,
+                                       loc_params,
+                                       tm_lims,
+                                       verbose=verbose,
+                                       show_prog=True)
+    return result
 
 

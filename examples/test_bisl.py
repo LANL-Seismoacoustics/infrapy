@@ -6,7 +6,7 @@
 import json
 import gzip
 
-from infrapy.location import bisl, visualization
+from infrapy.event import bisl, visualization
 from infrapy.propagation import infrasound
 from infrapy.utils import config, data_io
 

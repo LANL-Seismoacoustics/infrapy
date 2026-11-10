@@ -1,4 +1,4 @@
-# infrapy.location.bisl.py
+# infrapy.event.bisl.py
 #
 # The bisl methods utilized to analyze the posterior pdf
 # obtained by combining detection likelihood pdfs.  The

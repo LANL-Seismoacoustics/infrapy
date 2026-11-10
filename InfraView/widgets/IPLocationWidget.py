@@ -24,8 +24,7 @@ import cartopy.feature as cfeature
 
 from obspy.core.event.origin import Origin
 
-from infrapy.location import bisl
-from infrapy.association import hjl
+from infrapy.event import hjl, bisl
 
 from InfraView.widgets import IPBaseWidgets
 from InfraView.widgets import IPMapWidget

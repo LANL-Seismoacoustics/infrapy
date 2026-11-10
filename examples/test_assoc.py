@@ -7,7 +7,7 @@
 import json
 import gzip
 
-from infrapy.association import hjl
+from infrapy.event import hjl
 from infrapy.propagation import infrasound
 from infrapy.utils import config, data_io
 

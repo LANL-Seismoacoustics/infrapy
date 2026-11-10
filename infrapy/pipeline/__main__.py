@@ -12,13 +12,11 @@ import configparser as cnfg
 
 from obspy import UTCDateTime
 
-from ..utils import config, data_io
+from ..utils import config, data_io, prog_bar
 from ..propagation import infrasound
 
 from ..detection import beam
-from ..association import hjl
-from ..cli import cli_event
-from ..characterization import spye
+from ..event import hjl, bisl, tribl, spye
 
 from importlib.util import find_spec
 if find_spec('stochprop'):
@@ -69,15 +67,15 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     click.echo("")
 
     if cnfg_file:
-        click.echo('\n' + "Loading configuration info from: " + cnfg_file)
+        click.echo('\nLoading configuration info from: ' + cnfg_file)
         if os.path.isfile(cnfg_file):
             user_config = cnfg.ConfigParser()
             user_config.read(cnfg_file)
         else:
-            click.echo('\n' + "Invalid configuration file (file not found)")
+            click.echo('\nInvalid configuration file (' + cnfg_file + ' not found).')
             return 0
     else:
-        click.echo('\n' + "Pipeline methods require configuration file.")
+        click.echo('\nPipeline methods require configuration file.')
         return 0
 
     pipe_params = dict(user_config["PIPELINE"])
@@ -94,16 +92,20 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
     pipe_params['db_config'] = config.set_param(user_config, 'PIPELINE', 'db_config', None, 'string')
 
     # summarize pipeline parameters
-    click.echo('\n' + "pipeline parameters:")
+    click.echo('\npipeline parameters:')
     for key in pipe_params.keys():
         if pipe_params[key] is not None:
+            if 'dir' in key:
+                if pipe_params[key][-1] != "/":
+                    pipe_params[key] = pipe_params[key] + "/"
+                if not os.path.isdir(pipe_params[key]):
+                    os.makedirs(pipe_params[key])
+
             if type(pipe_params[key]) is str:
                 if '|' in pipe_params[key]:
                     pipe_params[key] = pipe_params[key].replace('\n','').replace(' ','').split('|')
-
                 if "," in pipe_params[key]:
                     pipe_params[key] = pipe_params[key].replace('\n','').replace(' ','').split(',')
-
                 if 'cnfgs' in key and not isinstance(pipe_params[key], list):
                     pipe_params[key] = [pipe_params[key]]
 
@@ -127,114 +129,98 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
             click.echo('\t' + "Using general 'infrapype' output label.")
             pipe_params['out_label'] = 'infrapype'
 
-    # Build directories if needed
-    for dir_key in ['det_dir', 'ev_dir', 'figs_dir']:
-        if not os.path.isdir(pipe_params[dir_key]):
-            click.echo("Creating directory: " + pipe_params[dir_key])
-            os.makedirs(pipe_params[dir_key])
+    # Check if any analysis steps are skipped (not in config file)
+    for cnfgs_opt in ['beam_cnfgs', 'ev_build_cnfgs', 'ev_loc_cnfgs', 'ev_char_cnfgs']:
+        if cnfgs_opt not in pipe_params.keys():
+            pipe_params[cnfgs_opt] = []
 
     # Define temporary directory (if needed)
-    with tempfile.TemporaryDirectory(prefix='infraga_') as temp_path:
+    with tempfile.TemporaryDirectory(prefix='infrapype_') as temp_path:
         if 'temp_dir' in pipe_params.keys():
-            if not os.path.isdir(pipe_params['temp_dir']):
-                os.makedirs(pipe_params['temp_dir'])
             temp_path = pipe_params['temp_dir']
-        if temp_path[-1] != "/":
-            temp_path = temp_path + "/"
-
-        # Extract waveform info and set up for iterating over
-        if pipe_params['local_wvfrm_data'] is not None:
-            wvfrm_sets = [{'local_wvfrms': wvfrms, "fdsn": None, "db_config" : None,
-                           'net' : None, 'sta' : None, 'loc' : None, 'cha' : None} for wvfrms in pipe_params['local_wvfrm_data']]
-
-        elif pipe_params['fdsn'] is not None or pipe_params['db_config'] is not None:
-            # Parse network, station, channel, location info and set local_wvfrm to Nones
-            wvfrm_sets = []
-            for id in pipe_params['trace_ids']:
-                wvfrm_sets = wvfrm_sets + [{"local_wvfrms" : None, "fdsn": pipe_params['fdsn'], "db_config" : pipe_params['db_config']}]
-                if '*' in id:
-                    wvfrm_sets[-1]['net'] = id.split(".")[0]
-                    wvfrm_sets[-1]['sta'] = id.split(".")[1]
-                    wvfrm_sets[-1]['loc'] = id.split(".")[2]
-                    wvfrm_sets[-1]['cha'] = id.split(".")[3]
-                else:
-                    wvfrm_sets[-1]['net'] = ",".join(np.unique([item.split(".")[0] for item in id.replace(" ","").split(",")]))
-                    wvfrm_sets[-1]['sta'] = ",".join(np.unique([item.split(".")[1] for item in id.replace(" ","").split(",")]))
-                    wvfrm_sets[-1]['loc'] = ",".join(np.unique([item.split(".")[2] for item in id.replace(" ","").split(",")]))
-                    wvfrm_sets[-1]['cha'] = ",".join(np.unique([item.split(".")[3] for item in id.replace(" ","").split(",")]))
 
         #################
         ##  DETECTION  ##
         #################
-        click.echo('\n' + '*' * 50 + '\n**' + ' ' * 14 + 'Detection Analysis' + ' ' * 14 + '**\n' + '*' * 50)
-        for k, info in enumerate(wvfrm_sets):
-            if k > 0:
-                click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
-            stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_config"],
-                                                info['net'], info['sta'], info['loc'], info['cha'],
-                                                pipe_params['starttime'], pipe_params['endtime'], None)
+        if len(pipe_params['beam_cnfgs']) > 0:
+            # Extract waveform info and set up for iterating over
+            if pipe_params['local_wvfrm_data'] is not None:
+                wvfrm_sets = [{'local_wvfrms': wvfrms, "fdsn": None, "db_config" : None,
+                               'net' : None, 'sta' : None, 'loc' : None, 'cha' : None} for wvfrms in pipe_params['local_wvfrm_data']]
+            elif pipe_params['fdsn'] is not None or pipe_params['db_config'] is not None:
+                # Parse network, station, channel, location info and set local_wvfrm to Nones
+                wvfrm_sets = []
+                for id in pipe_params['trace_ids']:
+                    if pipe_params["db_config"] is not None:
+                        db_info = cnfg.ConfigParser()
+                        db_info.read(pipe_params["db_config"])
+                    else:
+                        db_info = None
 
-            wvfrm_info = data_io.wvfrm_info(stream, latlon)
-            click.echo("Data summary:")
-            for tr in stream:
-                click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
-            click.echo('')
+                    wvfrm_sets = wvfrm_sets + [{"local_wvfrms" : None, "fdsn": pipe_params['fdsn'], "db_info" : db_info}]
+                    if '*' in id:
+                        wvfrm_sets[-1] = wvfrm_sets[-1] | {key : id.split(".")[k] for k, key in enumerate(['net', 'sta', 'loc', 'cha'])}
+                    else:
+                        wvfrm_sets[-1] = wvfrm_sets[-1] | {key : ",".join(np.unique([item.split(".")[k] for item in id.replace(" ","").split(",")])) for k, key in enumerate(['net', 'sta', 'loc', 'cha'])}
 
-            det_label = pipe_params['out_label'] + "_"
-            det_label = det_label + comm_str(np.unique([tr.id.split(".")[0] for tr in stream])) + "."
-            det_label = det_label + comm_str(np.unique([tr.id.split(".")[1] for tr in stream])) + "."
-            det_label = det_label + comm_str(np.unique([tr.id.split(".")[2] for tr in stream])) + "."
-            det_label = det_label + comm_str(np.unique([tr.id.split(".")[3] for tr in stream]))
+            click.echo('\n' + '*' * 50 + '\n**' + ' ' * 14 + 'Detection Analysis' + ' ' * 14 + '**\n' + '*' * 50)
+            for k, info in enumerate(wvfrm_sets):
+                if k > 0:
+                    click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
+                stream, latlon = data_io.set_stream(info['local_wvfrms'], info["fdsn"], info["db_info"],
+                                                    info['net'], info['sta'], info['loc'], info['cha'],
+                                                    pipe_params['starttime'], pipe_params['endtime'], None)
 
-            # Run beamforming and combine results
-            if not os.path.isfile(pipe_params["det_dir"] + det_label + ".dets.json.gz"):
-                for bm_j, bm_config_file in enumerate(pipe_params["beam_cnfgs"]):
-                    click.echo("Running beam analysis using " + bm_config_file + '\t', nl=False)
-
-                    bm_params, det_params = config.set_bm_config(pipe_params["config_dir"] + bm_config_file)
-                    beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, bm_params, None, cpu_cnt, verbose=False)
-                    dets, _ = beam.run_afd_dict(beam_times, beam_peaks, bm_params, det_params, len(stream))
-                    dets_out = [beam.det2dict(stream, latlon, beam_times, beam_peaks, bm_params, det_info) for det_info in dets]
-
-                    det_output = {'wvfrm_info' : [wvfrm_info],
-                                  'fk_params' : [bm_params],
-                                  'det_params' : [det_params],
-                                  'det_info' : dets_out}
-
-                    with gzip.open(temp_path + det_label + "-" + str(bm_j) + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
-                        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-
+                wvfrm_info = data_io.wvfrm_info(stream, latlon)
+                click.echo("Data summary:")
+                for tr in stream:
+                    click.echo('  ' + tr.id + '\t' + str(tr.stats.starttime) + " - " + str(tr.stats.endtime))
                 click.echo('')
-                dets_all = data_io._load_dets_json(temp_path + det_label + "-*.dets.json.gz")
-                det_combined = []
-                for entry in dets_all:
-                    for det in entry["det_info"]:
-                        det_combined = det_combined + [det]
-                        det_combined[-1]["wvfrm_info"] = entry["wvfrm_info"]
-                        det_combined[-1]["fk_params"] = entry["fk_params"]
-                        det_combined[-1]["det_params"] = entry["det_params"]
 
-                det_output = {'det_info' : beam.merge_dets(det_combined)}
-                with gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
-                    json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
-            else:
-                click.echo("Existing results found for " + pipe_params["det_dir"] + det_label + ".dets.json.gz")
+                det_label = pipe_params['out_label'] + "_"
+                det_label = det_label + ".".join(comm_str(np.unique([tr.id.split(".")[k] for tr in stream])) for k in range(4))
 
-            '''
-            # maybe move visualization out of the pipeline loop?
-            # make a separate plotting pipeline method?
-            if not os.path.isfile(pipe_params["figs_dir"] + det_label.replace(".","_") + "_det0.png"):
-                det_data = json.load(gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'rt'))
-                for k in range(len(det_data['det_info'])):
-                    det = det_data["det_info"][k]
-                    det_vis.plot_det_json(det_data, k, output_path=pipe_params["figs_dir"] + det_label.replace(".","_") + "_det" + str(k), show_fig=False)
-            '''
+                if not os.path.isfile(pipe_params["det_dir"] + det_label + ".dets.json.gz"):
+                    # Run beamforming for each beam configuration
+                    for bm_j, bm_config_file in enumerate(pipe_params["beam_cnfgs"]):
+                        click.echo("Running beam analysis using " + pipe_params["config_dir"] + bm_config_file + '\t', nl=False)
+
+                        bm_params, det_params = config.set_bm_config(pipe_params["config_dir"] + bm_config_file)
+                        beam_times, beam_peaks = beam.run_fk_dict(stream, latlon, bm_params, None, cpu_cnt, verbose=False)
+                        dets, _ = beam.run_afd_dict(beam_times, beam_peaks, bm_params, det_params, len(stream))
+                        dets_out = [beam.det2dict(stream, latlon, beam_times, beam_peaks, bm_params, det_info) for det_info in dets]
+
+                        det_output = {'wvfrm_info' : [wvfrm_info],
+                                    'fk_params' : [bm_params],
+                                    'det_params' : [det_params],
+                                    'det_info' : dets_out}
+
+                        with gzip.open(temp_path + det_label + "-" + str(bm_j) + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                            json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+
+                    # Load and merge detections across beam configurations
+                    click.echo('')
+                    dets_all = data_io._load_dets_json(temp_path + det_label + "-*.dets.json.gz")
+                    det_combined = []
+                    for entry in dets_all:
+                        for det in entry["det_info"]:
+                            det_combined = det_combined + [det]
+                            det_combined[-1]["wvfrm_info"] = entry["wvfrm_info"]
+                            det_combined[-1]["fk_params"] = entry["fk_params"]
+                            det_combined[-1]["det_params"] = entry["det_params"]
+
+                    det_output = {'det_info' : beam.merge_dets(det_combined)}
+                    with gzip.open(pipe_params["det_dir"] + det_label + ".dets.json.gz", 'wt', encoding='UTF-8') as zipfile:
+                        json.dump(det_output, zipfile, indent=4, cls=data_io.Infrapy_Encoder)
+                else:
+                    click.echo("Existing results found for " + pipe_params["det_dir"] + det_label + ".dets.json.gz")
 
         ####################
         ## EVENT BUILDING ##
         ####################
-        if "ev_build_cnfgs" not in pipe_params.keys():
-            return
+        # if no event methods are specified, exit
+        if len(pipe_params['ev_build_cnfgs']) + len(pipe_params['ev_loc_cnfgs']) + len(pipe_params['ev_char_cnfgs']) == 0:
+            return 0
 
         click.echo('\n' + '*' * 50 + '\n**' + ' ' * 16 + 'Event Analysis' + ' ' * 16 + '**\n' + '*' * 50 + '\n')
         for ev_j, ev_config in enumerate(pipe_params["ev_build_cnfgs"]):
@@ -279,12 +265,17 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
         ##   LOCATION AND   ##
         ## CHARACTERIZATION ##
         ######################
-        if "ev_loc_cnfgs" not in pipe_params.keys():
-            return
+        # if location and characterization aren't specified, exit
+        if len(pipe_params['ev_loc_cnfgs']) + len(pipe_params['ev_char_cnfgs']) == 0:
+            return 0
 
-        click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
-        ev_files = [file for file in np.sort(os.listdir(pipe_params["ev_dir"])) if fnmatch.fnmatch(file,"*.ev.json.gz")]
+        ev_files = [file for file in np.sort(os.listdir(pipe_params["ev_dir"])) if fnmatch.fnmatch(file, "*.ev.json.gz")]
+        if len(ev_files) == 0:
+            click.echo("No event files available.")
+            return 0
+
         for ev_j, ev_file in enumerate(ev_files):
+            click.echo('\n' + '=' * 50 + '\n' + '=' * 50)
             click.echo('\nLoading event from ' + pipe_params["ev_dir"] + ev_file)
 
             ev_data = data_io._load_dets_json(pipe_params["ev_dir"] + ev_file)[0]
@@ -297,15 +288,16 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 loc_params['cpu_cnt'] = cpu_cnt
 
                 click.echo('  Running location analysis using ' + loc_config + '\t', nl=False)
-                result = cli_event.location_wrapper(det_list, loc_params, tm_lims, pgm, verbose=False)
-
-                if result['norm'] > 0.0:
-                    loc_info = loc_info + [{'params' : loc_params, 'result' : result}]
+                result = tribl.loc_wrapper(det_list, loc_params, tm_lims, pgm, verbose=False)
+                loc_info = loc_info + [{'params' : loc_params, 'result' : result}]
 
             char_info = []
             for char_config in pipe_params["ev_char_cnfgs"]:
                 click.echo('  Running characterization analysis using ' + char_config + '\t', nl=False)
+                prog_bar.prep(40)
+
                 char_params = config.set_ev_char_config(pipe_params["config_dir"] + char_config)
+                prog_bar.increment(5)
 
                 if char_params['det_mask'] is None:
                     char_params['det_mask'] = np.ones(len(ev_data['det_info']))
@@ -319,8 +311,10 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 # extract spectra and scale to dB
                 det_info2 = [dict for k, dict in enumerate(ev_data['det_info']) if bool(char_params['det_mask'][k])]
                 det_list2 = [data_io._det_dict_to_likelihood(dict) for dict in det_info2]
+
                 det_specs = [spye.extract_json_spectra(det['spec']) for det in det_info2]
                 det_specs = [np.array([spec[0], 10.0 * np.log10(spec[1])]) for spec in det_specs]
+                prog_bar.increment(10)
 
                 # set up TLMs
                 tlm_dir = os.path.dirname(char_params['tlm_label'])
@@ -333,13 +327,17 @@ def pipeline(cnfg_file, out_label, starttime, endtime, cpu_cnt):
                 for n in range(len(tlm_files)):
                     models[1][n] = sp_prop.TLossModel()
                     models[1][n].load(tlm_dir + "/" + tlm_files[n], verbose=False)
+                prog_bar.increment(10)
 
+                # run spectral yield analysis
                 spye_result = spye.run(det_list2, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
                                     yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                                     ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
                                     p_amb= char_params['amb_press'], T_amb= char_params['amb_temp'], exp_type= char_params['exp_type'])
+                prog_bar.increment(15)
 
                 char_info = char_info + [{'params' : char_params, 'result' : spye_result}]
+                prog_bar.close()
 
             click.echo('  Writing results into event file...')
             ev_data['location'] = loc_info

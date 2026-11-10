@@ -1116,7 +1116,7 @@ def run_fd(times, beam_peaks, win_len, TB_prod, channel_cnt, det_p_val=0.99, min
                     dt = (t2 - t1).astype('m8[s]').astype(float)
 
                     dt_thresh = max(dets[j][2] - dets[j][1], dets[j + 1][2] - dets[j + 1][1])
-                    dt_thresh = max(60.0, dt_thresh)
+                    dt_thresh = max(120.0, 3.0 * dt_thresh)
 
                     if dt < dt_thresh:
                         if dets[j][5] >= dets[j + 1][5]:

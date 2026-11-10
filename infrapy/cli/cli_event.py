@@ -14,94 +14,11 @@ from importlib.util import find_spec
 
 from ..propagation import infrasound
 
-from ..association import hjl
-from ..location import bisl, tribl
-from ..characterization import spye
+from ..event import hjl, bisl, tribl, spye
 from ..utils import config, data_io
 
 if find_spec('stochprop'):
     import stochprop.propagation as sp_prop
-
-
-def location_wrapper(det_list, loc_params, tm_lims, pgm, verbose=True):
-    if loc_params['atmo_data'] is None:
-        # Run BISL if no atmosphere file is specified
-        result = bisl.run_dict(det_list, loc_params, tm_lims, pgm, verbose=verbose)
-    else:
-        # Run TRIBL if atmosphere data is specified
-        if not find_spec('infraga'):
-            click.echo('\n' + "Can't run TRIBL methods without infraGA installed for ray tracing")
-            result = {'norm' : None}
-        else:
-            if not os.path.isfile(find_spec('infraga').submodule_search_locations[0] + "/bin/infraga-sph"):
-                click.echo("InfraGA methods not compiled.  Run 'infraga compile' and try again.")
-            else:
-                with tempfile.TemporaryDirectory(prefix='infraga_') as tmpdirname:
-                    if loc_params['local_temp_dir'] is not None:
-                        if not os.path.isdir(loc_params['local_temp_dir']):
-                            os.mkdir(loc_params['local_temp_dir'])
-                        tmpdirname = loc_params['local_temp_dir']
-                    temp_path = tmpdirname + "/temp"
-
-                    if "*" in loc_params['atmo_data']:
-                        if len(os.path.dirname(loc_params['atmo_data'])) > 0:
-                            file_path = os.path.dirname(loc_params['atmo_data']) + "/"
-                        else:
-                            file_path = ""
-                        if "/" in loc_params['atmo_data']:
-                            dir_files = os.listdir(os.path.dirname(loc_params['atmo_data']))
-                        else:
-                            dir_files = os.listdir(".")
-                        file_list = np.sort([file for file in dir_files if fnmatch.fnmatch(file, os.path.basename(loc_params['atmo_data']))])
-
-                        if verbose:
-                            click.echo('\n' + "Computing localization using atmosphere ensemble:")
-                        norms = []
-                        for k, file_name in enumerate(file_list):
-                            print('\t' + str(k + 1) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t', end='')
-                            temp = tribl.run_dict(det_list,
-                                                    file_path + file_name,
-                                                    temp_path + "-" + str(k),
-                                                    loc_params,
-                                                    tm_lims,
-                                                    verbose=False,
-                                                    show_prog=True)
-                            norms = norms + [temp['norm']]
-                        norms = norms / np.sum(norms)
-
-                        if verbose:
-                            print('\n' + "Merging PDFs across the ensemble...")
-                        tmp_0 = np.load(temp_path + "-0.pdf.npz")
-
-                        lat_grid, lon_grid, alt_grid, tm_grid = np.meshgrid(tmp_0['lat_vals'], tmp_0['lon_vals'], tmp_0['alt_vals'], tmp_0['tm_vals'], indexing='ij')
-                        lat_grid = np.squeeze(lat_grid)
-                        lon_grid = np.squeeze(lon_grid)
-                        alt_grid = np.squeeze(alt_grid)
-                        tm_grid = np.squeeze(tm_grid)
-
-                        pdf = tmp_0['pdf']
-                        print('\t1/' + str(len(file_list)) + '\t' + file_path + file_list[0] + '\t' + str(norms[0]))
-                        for k, file_name in enumerate(file_list[1:]):
-                            tmp_k = np.load(temp_path + "-" + str(k + 1) + ".pdf.npz")
-                            pdf = pdf + tmp_k['pdf']
-                            print('\t' + str(k + 2) + '/' + str(len(file_list)) + '\t' + file_path + file_name + '\t' + str(norms[k + 1]))
-                        if verbose:
-                            click.echo('\n' + "Analyzing combined localization PDF...")
-                        result = bisl.analyze_pdf(pdf, lat_grid, lon_grid, tm_grid, verbose=True)
-
-                        # Add ensemble information tp location dictionary
-                        result['atmo ensemble'] = file_list
-                        result['atmo norms'] = norms
-
-                    else:
-                        result = tribl.run_dict(det_list,
-                                                loc_params['atmo_data'],
-                                                temp_path,
-                                                loc_params,
-                                                tm_lims,
-                                                verbose=verbose,
-                                                show_prog=True)
-    return result
 
 
 @click.command('build', short_help="Associate detections into events")
@@ -438,7 +355,7 @@ def locate(ev_file, cnfg_file, back_az_width, range_max, grid_resol, ll_corner, 
 
     if new_param_set:
         click.echo("")
-        result = location_wrapper(det_list, loc_params, tm_lims, pgm)
+        result = tribl.loc_wrapper(det_list, loc_params, tm_lims, pgm)
 
         # Determine output format for BISL results
         if result['norm'] > 0.0:
@@ -615,6 +532,7 @@ def characterize(ev_file, cnfg_file, det_mask, loc_index, tlm_label, freq_min, f
         #         Run Yield        #
         #    Estimation Methods    #
         # ######################## #
+        click.echo('\nComputing spectral amplitude and mapping to yield...')
         spye_result = spye.run(det_list, det_specs, src_loc, np.array([char_params['freq_min'], char_params['freq_max']]), models,
                             yld_rng=np.array([char_params['yld_min'] * 1.0e3, char_params['yld_max'] * 1.0e3]),
                             ref_src_rng=char_params['ref_rng'], resol=char_params['resolution'], grnd_brst= char_params['grnd_burst'],
