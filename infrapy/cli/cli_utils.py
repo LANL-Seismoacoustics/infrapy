@@ -530,7 +530,10 @@ def ev_summary(ev_file):
         if det_specs is not None:
             freq = np.array(det_specs[k][0])
             mask = np.array((np.array(det_specs[k][1]) / np.array(det_specs[k][2])) > 2.0)
-            click.echo("  high snr band: " + f"{np.round(freq[mask][0], 2):.2f}" + " - " + f"{np.round(freq[mask][-1], 2):.2f}" + ' Hz')
+            if len(freq[mask]) > 10:
+                click.echo("  high snr band: " + f"{np.round(freq[mask][0], 3):.3f}" + " - " + f"{np.round(freq[mask][-1], 3):.3f}" + ' Hz')
+            else:
+                click.echo("  high snr band: undefined")
         else:
             click.echo('')
 
