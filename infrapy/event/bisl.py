@@ -496,7 +496,8 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
             return result
 
         integrand = pdf * np.cos(np.radians(lat_grid))
-        integrand = integrand / simps_2dim(integrand)
+        norm = simps_2dim(integrand)
+        integrand = integrand / norm
 
         # Spatial statistics
         lat_mean, lon_mean = [simps_2dim(grid_vals * integrand) for grid_vals in [lat_grid, lon_grid]]
@@ -509,18 +510,18 @@ def run(det_list, bm_width=10.0, rng_max=2000.0, grid_resol=50, ll_corner=None, 
         y_stdev = np.sqrt(simps_2dim(dy**2 * integrand))
         covar = simps_2dim(dx * dy * integrand) / (x_stdev * y_stdev)
 
-        LAT, LON = np.meshgrid(np.unique(lat_grid), np.unique(lon_grid))
-        spatial_pdf = np.vstack((LON.flatten(), LAT.flatten(), pdf.flatten()))
+        spatial_pdf = np.vstack((lon_grid.flatten(), lat_grid.flatten(), pdf.flatten()))
 
-        MaP_index = np.argmax(spatial_pdf.flatten())
+        MaP_index = np.argmax(pdf.flatten())
 
         result = {'lat_mean': lat_mean, 'lon_mean' : lon_mean,
                     'EW_stdev': x_stdev, 'NS_stdev': y_stdev,
                     'covar': covar,
                     'lat_MaP': lat_grid.flatten()[MaP_index],
                     'lon_MaP': lon_grid.flatten()[MaP_index],
-                    'MaP_val' : spatial_pdf.flatten()[MaP_index],
-                    'spatial_pdf' : spatial_pdf}
+                    'MaP_val' : pdf.flatten()[MaP_index],
+                    'spatial_pdf' : spatial_pdf,
+                    'norm' : norm}
 
     return result
 
